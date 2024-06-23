@@ -2,6 +2,11 @@
     "files.associations": {
         "time.h": "c",
         "tickernelengine.h": "c",
-        "stdio.h": "c"
+        "stdio.h": "c",
+        "stdbool.h": "c",
+        "stdlib.h": "c",
+        "windows.h": "c",
+        "tickernelio.h": "c",
+        "stdint.h": "c"
     }
 }
