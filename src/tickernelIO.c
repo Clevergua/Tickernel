@@ -1,6 +1,9 @@
 #pragma once
 
 #include <tickernelIO.h>
+#include <stdarg.h>
+
+FILE *const stream;
 
 void Log(char const *const format, ...)
 {
