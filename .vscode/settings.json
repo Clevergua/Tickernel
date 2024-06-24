@@ -8,6 +8,11 @@
         "windows.h": "c",
         "tickernelio.h": "c",
         "stdint.h": "c",
-        "stdarg.h": "c"
+        "stdarg.h": "c",
+        "unistd.h": "c",
+        "tickernelcore.h": "c",
+        "targetconditionals.h": "c",
+        "tickernelplatformmacros.h": "c",
+        "tickernelplatform.h": "c"
     }
 }

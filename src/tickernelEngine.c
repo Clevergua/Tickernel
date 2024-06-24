@@ -1,15 +1,21 @@
 #include <tickernelEngine.h>
-#include <windows.h>
-#include <tickernelIO.h>
-void TickTickernelEngine()
-{
-    uint32_t tickernelFrameCount = 0;
+#include <tickernelCore.h>
 
-    while (tickernelFrameCount < UINT32_MAX)
+#define MILLISECONDS_PER_SECOND 1000
+
+void RunTickernelEngine()
+{
+    printf("Tickernel Engine Start!\n");
+    uint32_t tickernelFrameCount = 0;
+    bool canTick = true;
+    uint32_t targetFrameRate = 60;
+    uint32_t millisecondsPerFrame = MILLISECONDS_PER_SECOND / targetFrameRate;
+    printf("%d\n", millisecondsPerFrame);
+    while (canTick && tickernelFrameCount < UINT32_MAX)
     {
-        Sleep(1000);
+        TickernelSleep(1000);
         tickernelFrameCount++;
-        printf("TickTickernelEngine %u\n", tickernelFrameCount);
+        printf("Tickernel Engine Tick! Framecount: %u\n", tickernelFrameCount);
     }
-    Log("TickTickernelEngine %u\n", tickernelFrameCount);
+    printf("Tickernel Engine End!\n");
 }

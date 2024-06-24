@@ -2,6 +2,6 @@
 
 int main()
 {
-    TickTickernelEngine();
+    RunTickernelEngine();
     return EXIT_SUCCESS;
 }
