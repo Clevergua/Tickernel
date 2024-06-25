@@ -16,7 +16,7 @@ static void TickernelUpdate(TickernelEngine *pTickernelEngine)
 
 static void TickernelEnd(TickernelEngine *pTickernelEngine)
 {
-    EndGFXDevice(pTickernelEngine->pGFXDevice);
+    // EndGFXDevice(pTickernelEngine->pGFXDevice);
     printf("Tickernel End!\n");
 }
 

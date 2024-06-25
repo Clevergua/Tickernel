@@ -32,6 +32,7 @@ static void CreateGLFWWindow(GFXDevice *pGFXDevice)
     glfwInitHint(GLFW_RESIZABLE, GLFW_FALSE);
     pGFXDevice->pGLFWWindow = glfwCreateWindow(pGFXDevice->width, pGFXDevice->height, pGFXDevice->name, NULL, NULL);
 }
+
 static void DestroyGLFWWindow(GFXDevice *pGFXDevice)
 {
     glfwDestroyWindow(pGFXDevice->pGLFWWindow);
@@ -43,6 +44,7 @@ static void CreateVKSurface(GFXDevice *pGFXDevice)
     VkResult result = glfwCreateWindowSurface(pGFXDevice->vkInstance, pGFXDevice->pGLFWWindow, NULL, &pGFXDevice->vkSurface);
     TRY_THROW_VULKAN_ERROR(result);
 }
+
 static void DestroyVKSurface(GFXDevice *pGFXDevice)
 {
     vkDestroySurfaceKHR(pGFXDevice->vkInstance, pGFXDevice->vkSurface, NULL);
@@ -946,15 +948,16 @@ static void CreateVkInstance(GFXDevice *pGFXDevice)
     uint32_t enabledLayerNamesCountInStack;
     uint32_t engineExtensionNamesCountInStack;
     void *pVkInstanceCreateInfoNext;
+    char *engineExtensionNamesInStack[] = {
+        VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
+        VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME,
+    };
     if (pGFXDevice->enableValidationLayers)
     {
         char *enabledLayerNamesInStack[] = {
             "VK_LAYER_KHRONOS_validation",
         };
-        char *engineExtensionNamesInStack[] = {
-            VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
-            VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME,
-        };
+
         enabledLayerNamesCountInStack = GETARRAYCOUNT(enabledLayerNamesInStack);
         engineExtensionNamesCountInStack = GETARRAYCOUNT(engineExtensionNamesInStack);
         enabledLayerNames = enabledLayerNamesInStack;
@@ -978,10 +981,6 @@ static void CreateVkInstance(GFXDevice *pGFXDevice)
         enabledLayerNamesCountInStack = 0;
         enabledLayerNames = NULL;
 
-        char *engineExtensionNamesInStack[] = {
-            VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
-            VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME,
-        };
         engineExtensionNamesCountInStack = GETARRAYCOUNT(engineExtensionNamesInStack);
         engineExtensionNames = engineExtensionNamesInStack;
 
@@ -1032,29 +1031,18 @@ static void CreateVkInstance(GFXDevice *pGFXDevice)
 }
 void StartGFXDevice(GFXDevice *pGFXDevice)
 {
-    //944kb
     pGFXDevice->commandBufferList = malloc(sizeof(VkCommandBuffer) * pGFXDevice->maxCommandBufferListCount);
-    //952kb
     CreateGLFWWindow(pGFXDevice);
-    //5.3mb
     CreateVkInstance(pGFXDevice);
-    //14.9mb
-    CreateVKSurface(pGFXDevice);
-    //14.9mb
-    PickPhysicalDevice(pGFXDevice);
-    //15.7mb
-    CreateLogicalDevice(pGFXDevice);
-    //18.4mb
-    CreateSwapchain(pGFXDevice);
-    //18.4mb
-    CreateDepthResources(pGFXDevice);
-    //18.4mb
-    // CreateRenderPass(pGFXDevice);
-    // CreateFramebuffers(pGFXDevice);
-    CreateSemaphores(pGFXDevice);
-    //18.4mb
-    CreateCommandPools(pGFXDevice);
-    //18.5mb
+    // CreateVKSurface(pGFXDevice);
+    // PickPhysicalDevice(pGFXDevice);
+    // CreateLogicalDevice(pGFXDevice);
+    // CreateSwapchain(pGFXDevice);
+    // CreateDepthResources(pGFXDevice);
+    // // CreateRenderPass(pGFXDevice);
+    // // CreateFramebuffers(pGFXDevice);
+    // CreateSemaphores(pGFXDevice);
+    // CreateCommandPools(pGFXDevice);
 }
 
 void UpdateGFXDevice(GFXDevice *pGFXDevice, bool *pShouldQuit)
@@ -1071,15 +1059,15 @@ void UpdateGFXDevice(GFXDevice *pGFXDevice, bool *pShouldQuit)
 
 void EndGFXDevice(GFXDevice *pGFXDevice)
 {
-    DestroyCommandPools(pGFXDevice);
-    DestroySemaphores(pGFXDevice);
-    // DestroyFramebuffers(pGFXDevice);
-    // DestroyRenderPass(pGFXDevice);
-    DestroyDepthResources(pGFXDevice);
-    DestroySwapchain(pGFXDevice);
-    DestroyLogicalDevice(pGFXDevice);
-    // Destroy vkPhysicsDevice
-    DestroyVKSurface(pGFXDevice);
+    // DestroyCommandPools(pGFXDevice);
+    // DestroySemaphores(pGFXDevice);
+    // // DestroyFramebuffers(pGFXDevice);
+    // // DestroyRenderPass(pGFXDevice);
+    // DestroyDepthResources(pGFXDevice);
+    // DestroySwapchain(pGFXDevice);
+    // DestroyLogicalDevice(pGFXDevice);
+    // // Destroy vkPhysicsDevice
+    // DestroyVKSurface(pGFXDevice);
     DestroyVKInstance(pGFXDevice);
     DestroyGLFWWindow(pGFXDevice);
     free(pGFXDevice->commandBufferList);
