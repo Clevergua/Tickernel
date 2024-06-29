@@ -2,8 +2,7 @@
 
 int main()
 {
-    // for (uint16_t i = 0; i < 10; i++)
-    // {
+    getchar();
     GFXDevice gfxDevice = {
         .enableValidationLayers = true,
         .name = "Tickernel Engine",
@@ -51,13 +50,15 @@ int main()
     };
     TickernelEngine tickernelEngine = {
         .targetFrameRate = 1,
-        .frameCount = 0,
+        .frameCount = 4294967295,
+        // .frameCount = 0,
         .canTick = true,
         .assetsPath = "",
         .pGFXDevice = &gfxDevice,
     };
+    // void *a = malloc(400000);
     RunTickernelEngine(&tickernelEngine);
-    // }
+    getchar();
 
     return EXIT_SUCCESS;
 }

@@ -20,6 +20,97 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL LogMessenger(VkDebugUtilsMessageSeverityFl
     return VK_TRUE;
 }
 
+static void CreateVkInstance(GFXDevice *pGFXDevice)
+{
+    FILE *logStream = pGFXDevice->logStream;
+    char **enabledLayerNames;
+    char **engineExtensionNames;
+    PFN_vkDebugUtilsMessengerCallbackEXT pfnUserCallback;
+
+    uint32_t enabledLayerNamesCountInStack;
+    uint32_t engineExtensionNamesCountInStack;
+    void *pVkInstanceCreateInfoNext;
+    char *engineExtensionNamesInStack[] = {
+        VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
+        VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME,
+    };
+    if (pGFXDevice->enableValidationLayers)
+    {
+        char *enabledLayerNamesInStack[] = {
+            "VK_LAYER_KHRONOS_validation",
+        };
+
+        enabledLayerNamesCountInStack = GETARRAYCOUNT(enabledLayerNamesInStack);
+        engineExtensionNamesCountInStack = GETARRAYCOUNT(engineExtensionNamesInStack);
+        enabledLayerNames = enabledLayerNamesInStack;
+        engineExtensionNames = engineExtensionNamesInStack;
+        pfnUserCallback = LogMessenger;
+
+        VkDebugUtilsMessengerCreateInfoEXT messengerCreateInfo =
+            {
+                .sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT,
+                .pNext = NULL,
+                .flags = 0,
+                .messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT,
+                .messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT,
+                .pfnUserCallback = pfnUserCallback,
+                .pUserData = logStream,
+            };
+        pVkInstanceCreateInfoNext = &messengerCreateInfo;
+    }
+    else
+    {
+        enabledLayerNamesCountInStack = 0;
+        enabledLayerNames = NULL;
+
+        engineExtensionNamesCountInStack = GETARRAYCOUNT(engineExtensionNamesInStack);
+        engineExtensionNames = engineExtensionNamesInStack;
+
+        pfnUserCallback = NULL;
+        pVkInstanceCreateInfoNext = NULL;
+    }
+
+    uint32_t enabledLayerCount = enabledLayerNamesCountInStack;
+    uint32_t engineExtensionCount = engineExtensionNamesCountInStack;
+
+    uint32_t extensionCount = 0;
+    extensionCount += engineExtensionCount;
+    uint32_t glfwExtensionCount = 0;
+    const char **glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
+    extensionCount += glfwExtensionCount;
+
+    char **extensionNames = malloc(extensionCount * sizeof(char *));
+    memcpy(extensionNames, engineExtensionNames, engineExtensionCount * sizeof(char *));
+    memcpy(extensionNames + engineExtensionCount, glfwExtensions, glfwExtensionCount * sizeof(char *));
+    for (int i = 0; i < extensionCount; i++)
+    {
+        printf("Add extension: %s\n", extensionNames[i]);
+    }
+    VkApplicationInfo appInfo =
+        {
+            .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
+            .pNext = NULL,
+            .pApplicationName = pGFXDevice->name,
+            .applicationVersion = 0,
+            .pEngineName = NULL,
+            .engineVersion = 0,
+            .apiVersion = VK_API_VERSION_1_3,
+        };
+
+    VkInstanceCreateInfo vkInstanceCreateInfo =
+        {
+            .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
+            .pNext = pVkInstanceCreateInfoNext,
+            .flags = VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR,
+            .pApplicationInfo = &appInfo,
+            .enabledLayerCount = enabledLayerCount,
+            .ppEnabledLayerNames = (const char *const *)enabledLayerNames,
+            .enabledExtensionCount = extensionCount,
+            .ppEnabledExtensionNames = (const char *const *)extensionNames,
+        };
+    VkResult result = vkCreateInstance(&vkInstanceCreateInfo, NULL, &pGFXDevice->vkInstance);
+    free(extensionNames);
+}
 static void DestroyVKInstance(GFXDevice *pGFXDevice)
 {
     vkDestroyInstance(pGFXDevice->vkInstance, NULL);
@@ -938,111 +1029,20 @@ static void Present(GFXDevice *pGFXDevice)
     TRY_THROW_VULKAN_ERROR(result);
 }
 
-static void CreateVkInstance(GFXDevice *pGFXDevice)
-{
-    FILE *logStream = pGFXDevice->logStream;
-    char **enabledLayerNames;
-    char **engineExtensionNames;
-    PFN_vkDebugUtilsMessengerCallbackEXT pfnUserCallback;
-
-    uint32_t enabledLayerNamesCountInStack;
-    uint32_t engineExtensionNamesCountInStack;
-    void *pVkInstanceCreateInfoNext;
-    char *engineExtensionNamesInStack[] = {
-        VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
-        VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME,
-    };
-    if (pGFXDevice->enableValidationLayers)
-    {
-        char *enabledLayerNamesInStack[] = {
-            "VK_LAYER_KHRONOS_validation",
-        };
-
-        enabledLayerNamesCountInStack = GETARRAYCOUNT(enabledLayerNamesInStack);
-        engineExtensionNamesCountInStack = GETARRAYCOUNT(engineExtensionNamesInStack);
-        enabledLayerNames = enabledLayerNamesInStack;
-        engineExtensionNames = engineExtensionNamesInStack;
-        pfnUserCallback = LogMessenger;
-
-        VkDebugUtilsMessengerCreateInfoEXT messengerCreateInfo =
-            {
-                .sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT,
-                .pNext = NULL,
-                .flags = 0,
-                .messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT,
-                .messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT,
-                .pfnUserCallback = pfnUserCallback,
-                .pUserData = logStream,
-            };
-        pVkInstanceCreateInfoNext = &messengerCreateInfo;
-    }
-    else
-    {
-        enabledLayerNamesCountInStack = 0;
-        enabledLayerNames = NULL;
-
-        engineExtensionNamesCountInStack = GETARRAYCOUNT(engineExtensionNamesInStack);
-        engineExtensionNames = engineExtensionNamesInStack;
-
-        pfnUserCallback = NULL;
-        pVkInstanceCreateInfoNext = NULL;
-    }
-
-    uint32_t enabledLayerCount = enabledLayerNamesCountInStack;
-    uint32_t engineExtensionCount = engineExtensionNamesCountInStack;
-
-    uint32_t extensionCount = 0;
-    extensionCount += engineExtensionCount;
-    uint32_t glfwExtensionCount = 0;
-    const char **glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
-    extensionCount += glfwExtensionCount;
-
-    const char **extensionNames = malloc(extensionCount * sizeof(char *));
-    memcpy(extensionNames, engineExtensionNames, engineExtensionCount * sizeof(char *));
-    memcpy(extensionNames + engineExtensionCount, glfwExtensions, glfwExtensionCount * sizeof(char *));
-    for (int i = 0; i < extensionCount; i++)
-    {
-        printf("Add extension: %s\n", extensionNames[i]);
-    }
-    VkApplicationInfo appInfo =
-        {
-            .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
-            .pNext = NULL,
-            .pApplicationName = pGFXDevice->name,
-            .applicationVersion = 0,
-            .pEngineName = NULL,
-            .engineVersion = 0,
-            .apiVersion = VK_API_VERSION_1_3,
-        };
-
-    VkInstanceCreateInfo vkInstanceCreateInfo =
-        {
-            .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
-            .pNext = pVkInstanceCreateInfoNext,
-            .flags = VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR,
-            .pApplicationInfo = &appInfo,
-            .enabledLayerCount = enabledLayerCount,
-            .ppEnabledLayerNames = (const char *const *)enabledLayerNames,
-            .enabledExtensionCount = extensionCount,
-            .ppEnabledExtensionNames = (const char *const *)extensionNames,
-        };
-    VkResult result = vkCreateInstance(&vkInstanceCreateInfo, NULL, &pGFXDevice->vkInstance);
-    free(extensionNames);
-}
 void StartGFXDevice(GFXDevice *pGFXDevice)
 {
     pGFXDevice->commandBufferList = malloc(sizeof(VkCommandBuffer) * pGFXDevice->maxCommandBufferListCount);
     CreateGLFWWindow(pGFXDevice);
     CreateVkInstance(pGFXDevice);
-    // CreateVKSurface(pGFXDevice);
-    // PickPhysicalDevice(pGFXDevice);
-    // CreateLogicalDevice(pGFXDevice);
-    // CreateSwapchain(pGFXDevice);
-    // CreateDepthResources(pGFXDevice);
-    // // CreateRenderPass(pGFXDevice);
-    // // CreateFramebuffers(pGFXDevice);
-    // CreateSemaphores(pGFXDevice);
-    // CreateCommandPools(pGFXDevice);
+    CreateVKSurface(pGFXDevice);
+    PickPhysicalDevice(pGFXDevice);
+    CreateLogicalDevice(pGFXDevice);
+    CreateSwapchain(pGFXDevice);
+    CreateDepthResources(pGFXDevice);
+    // CreateRenderPass(pGFXDevice);
+    // CreateFramebuffers(pGFXDevice);
+    CreateSemaphores(pGFXDevice);
+    CreateCommandPools(pGFXDevice);
 }
 
 void UpdateGFXDevice(GFXDevice *pGFXDevice, bool *pShouldQuit)
@@ -1059,15 +1059,15 @@ void UpdateGFXDevice(GFXDevice *pGFXDevice, bool *pShouldQuit)
 
 void EndGFXDevice(GFXDevice *pGFXDevice)
 {
-    // DestroyCommandPools(pGFXDevice);
-    // DestroySemaphores(pGFXDevice);
-    // // DestroyFramebuffers(pGFXDevice);
-    // // DestroyRenderPass(pGFXDevice);
-    // DestroyDepthResources(pGFXDevice);
-    // DestroySwapchain(pGFXDevice);
-    // DestroyLogicalDevice(pGFXDevice);
-    // // Destroy vkPhysicsDevice
-    // DestroyVKSurface(pGFXDevice);
+    DestroyCommandPools(pGFXDevice);
+    DestroySemaphores(pGFXDevice);
+    // DestroyFramebuffers(pGFXDevice);
+    // DestroyRenderPass(pGFXDevice);
+    DestroyDepthResources(pGFXDevice);
+    DestroySwapchain(pGFXDevice);
+    DestroyLogicalDevice(pGFXDevice);
+    // Destroy vkPhysicsDevice
+    DestroyVKSurface(pGFXDevice);
     DestroyVKInstance(pGFXDevice);
     DestroyGLFWWindow(pGFXDevice);
     free(pGFXDevice->commandBufferList);

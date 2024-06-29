@@ -1,5 +1,7 @@
 日志及报错处理工作流
 CPU消耗检测重构
+内存泄露查询
+    
 内存检测重构
     //944kb
     pGFXDevice->commandBufferList = malloc(sizeof(VkCommandBuffer) * pGFXDevice->maxCommandBufferListCount);
