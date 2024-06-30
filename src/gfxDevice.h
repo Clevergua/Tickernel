@@ -51,8 +51,8 @@ typedef struct GFXDeviceStruct
     VkDeviceMemory depthImageMemory;
 
     VkCommandPool *vkCommandPools;
-    uint32_t commandBufferCount;
-    VkCommandBuffer *commandBufferList;
+    uint32_t vkCommandBufferCount;
+    VkCommandBuffer *vkCommandBuffers;
 
     uint32_t acquiredImageIndex;
     VkSemaphore *imageAvailableSemaphores;

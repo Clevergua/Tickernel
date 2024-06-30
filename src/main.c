@@ -36,8 +36,8 @@ int main()
         .depthImageMemory = NULL,
         // .vkFramebuffers = NULL,
         .vkCommandPools = NULL,
-        .commandBufferCount = 0,
-        .commandBufferList = NULL,
+        .vkCommandBufferCount = 0,
+        .vkCommandBuffers = NULL,
 
         .acquiredImageIndex = -1,
         .imageAvailableSemaphores = NULL,
@@ -56,9 +56,7 @@ int main()
         .assetsPath = "",
         .pGFXDevice = &gfxDevice,
     };
-    // void *a = malloc(400000);
     RunTickernelEngine(&tickernelEngine);
     getchar();
-
     return EXIT_SUCCESS;
 }

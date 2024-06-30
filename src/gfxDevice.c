@@ -1000,8 +1000,8 @@ static void SubmitCommandBuffers(GFXDevice *pGFXDevice)
         .waitSemaphoreCount = 1,
         .pWaitSemaphores = (VkSemaphore[]){pGFXDevice->imageAvailableSemaphores[frameIndex]},
         .pWaitDstStageMask = (VkPipelineStageFlags[]){VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT},
-        .commandBufferCount = pGFXDevice->commandBufferCount,
-        .pCommandBuffers = pGFXDevice->commandBufferList,
+        .commandBufferCount = pGFXDevice->vkCommandBufferCount,
+        .pCommandBuffers = pGFXDevice->vkCommandBuffers,
         .signalSemaphoreCount = 1,
         .pSignalSemaphores = (VkSemaphore[]){pGFXDevice->renderFinishedSemaphores[frameIndex]},
     };
@@ -1031,7 +1031,7 @@ static void Present(GFXDevice *pGFXDevice)
 
 void StartGFXDevice(GFXDevice *pGFXDevice)
 {
-    pGFXDevice->commandBufferList = malloc(sizeof(VkCommandBuffer) * pGFXDevice->maxCommandBufferListCount);
+    pGFXDevice->vkCommandBuffers = malloc(sizeof(VkCommandBuffer) * pGFXDevice->maxCommandBufferListCount);
     CreateGLFWWindow(pGFXDevice);
     CreateVkInstance(pGFXDevice);
     CreateVKSurface(pGFXDevice);
@@ -1070,5 +1070,5 @@ void EndGFXDevice(GFXDevice *pGFXDevice)
     DestroyVKSurface(pGFXDevice);
     DestroyVKInstance(pGFXDevice);
     DestroyGLFWWindow(pGFXDevice);
-    free(pGFXDevice->commandBufferList);
+    free(pGFXDevice->vkCommandBuffers);
 }
