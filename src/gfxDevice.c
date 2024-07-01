@@ -666,7 +666,7 @@ static void FindDepthFormat(GFXDevice *pGFXDevice, VkFormat *pDepthFormat)
     FindSupportedFormat(pGFXDevice, candidates, candidatesCount, VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT, pDepthFormat);
 }
 
-void FindMemoryType(GFXDevice *pGFXDevice, uint32_t typeFilter, VkMemoryPropertyFlags memoryPropertyFlags, uint32_t *memoryTypeIndex)
+static void FindMemoryType(GFXDevice *pGFXDevice, uint32_t typeFilter, VkMemoryPropertyFlags memoryPropertyFlags, uint32_t *memoryTypeIndex)
 {
     FILE *logStream = pGFXDevice->logStream;
     VkPhysicalDeviceMemoryProperties physicalDeviceMemoryProperties;
@@ -737,6 +737,7 @@ static void CreateDepthResources(GFXDevice *pGFXDevice)
 
     CreateImageView(pGFXDevice, pGFXDevice->depthImage, pGFXDevice->depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT, &pGFXDevice->depthImageView);
 }
+
 static void DestroyDepthResources(GFXDevice *pGFXDevice)
 {
     VkDevice vkDevice = pGFXDevice->vkDevice;
@@ -745,83 +746,73 @@ static void DestroyDepthResources(GFXDevice *pGFXDevice)
     vkFreeMemory(vkDevice, pGFXDevice->depthImageMemory, NULL);
 }
 
-// static void CreateRenderPass(GFXDevice *pGFXDevice)
-// {
-//     VkResult result = VK_SUCCESS;
-//     VkAttachmentDescription colorAttachmentDescription = {
-//         .flags = 0,
-//         .format = pGFXDevice->surfaceFormat.format,
-//         .samples = VK_SAMPLE_COUNT_1_BIT,
-//         .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
-//         .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
-//         .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
-//         .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
-//         .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-//         .finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-//     };
-//     VkAttachmentDescription depthAttachmentDescription = {
-//         .flags = 0,
-//         .format = pGFXDevice->depthFormat,
-//         .samples = VK_SAMPLE_COUNT_1_BIT,
-//         .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
-//         .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
-//         .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
-//         .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
-//         .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-//         .finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
-//     };
-//     VkSubpassDependency subpassDependency = {
-//         .srcSubpass = VK_SUBPASS_EXTERNAL,
-//         .dstSubpass = 0,
-//         .srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT,
-//         .dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT,
-//         .srcAccessMask = 0,
-//         .dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
-//         .dependencyFlags = 0,
-//     };
+static void CreateRenderPass(GFXDevice *pGFXDevice, VkRenderPass *pVkRenderPass)
+{
+    VkResult result = VK_SUCCESS;
+    VkAttachmentDescription colorAttachmentDescription = {
+        .flags = 0,
+        .format = pGFXDevice->surfaceFormat.format,
+        .samples = VK_SAMPLE_COUNT_1_BIT,
+        .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+        .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+        .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+        .stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE,
+        .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+        .finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+    };
 
-//     VkAttachmentReference colorAttachmentReference = {
-//         .attachment = 0,
-//         .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-//     };
-//     VkAttachmentReference depthAttachmentReference = {
-//         .attachment = 1,
-//         .layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
-//     };
+    VkSubpassDependency subpassDependency = {
+        .srcSubpass = VK_SUBPASS_EXTERNAL,
+        .dstSubpass = 0,
+        .srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT,
+        .dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT,
+        .srcAccessMask = 0,
+        .dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+        .dependencyFlags = 0,
+    };
 
-//     VkSubpassDescription subpassDescription = {
-//         .flags = 0,
-//         .pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
-//         .inputAttachmentCount = 0,
-//         .pInputAttachments = NULL,
-//         .colorAttachmentCount = 1,
-//         .pColorAttachments = &colorAttachmentReference,
-//         .pResolveAttachments = NULL,
-//         .pDepthStencilAttachment = &depthAttachmentReference,
-//         .preserveAttachmentCount = 0,
-//         .pPreserveAttachments = NULL,
-//     };
+    VkAttachmentReference colorAttachmentReference = {
+        .attachment = 0,
+        .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+    };
+    VkAttachmentReference depthAttachmentReference = {
+        .attachment = 1,
+        .layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+    };
 
-//     VkRenderPassCreateInfo renderPassCreateInfo = {
-//         .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
-//         .pNext = NULL,
-//         .flags = 0,
-//         .attachmentCount = 2,
-//         .pAttachments = (VkAttachmentDescription[]){colorAttachmentDescription, depthAttachmentDescription},
-//         .subpassCount = 1,
-//         .pSubpasses = &subpassDescription,
-//         .dependencyCount = 1,
-//         .pDependencies = &subpassDependency,
-//     };
+    VkSubpassDescription subpassDescription = {
+        .flags = 0,
+        .pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
+        .inputAttachmentCount = 0,
+        .pInputAttachments = NULL,
+        .colorAttachmentCount = 1,
+        .pColorAttachments = &colorAttachmentReference,
+        .pResolveAttachments = NULL,
+        .pDepthStencilAttachment = &depthAttachmentReference,
+        .preserveAttachmentCount = 0,
+        .pPreserveAttachments = NULL,
+    };
 
-//     result = vkCreateRenderPass(pGFXDevice->vkDevice, &renderPassCreateInfo, NULL, &pGFXDevice->vkRenderPass);
-//     TRY_THROW_VULKAN_ERROR(pGFXDevice->logStream, result)
-// }
+    VkRenderPassCreateInfo renderPassCreateInfo = {
+        .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
+        .pNext = NULL,
+        .flags = 0,
+        .attachmentCount = 1,
+        .pAttachments = (VkAttachmentDescription[]){colorAttachmentDescription},
+        .subpassCount = 1,
+        .pSubpasses = &subpassDescription,
+        .dependencyCount = 1,
+        .pDependencies = &subpassDependency,
+    };
 
-// static void DestroyRenderPass(GFXDevice *pGFXDevice)
-// {
-//     vkDestroyRenderPass(pGFXDevice->vkDevice, pGFXDevice->vkRenderPass, NULL);
-// }
+    result = vkCreateRenderPass(pGFXDevice->vkDevice, &renderPassCreateInfo, NULL, pVkRenderPass);
+    TRY_THROW_VULKAN_ERROR(result)
+}
+
+static void DestroyRenderPass(GFXDevice *pGFXDevice, VkRenderPass *pVkRenderPass)
+{
+    vkDestroyRenderPass(pGFXDevice->vkDevice, *pVkRenderPass, NULL);
+}
 
 // static void CreateFramebuffers(GFXDevice *pGFXDevice)
 // {
@@ -1045,7 +1036,7 @@ void StartGFXDevice(GFXDevice *pGFXDevice)
     CreateCommandPools(pGFXDevice);
 }
 
-void UpdateGFXDevice(GFXDevice *pGFXDevice, bool *pShouldQuit)
+void UpdateGFXDevice(GFXDevice *pGFXDevice)
 {
     pGFXDevice->frameIndex = pGFXDevice->frameCount % pGFXDevice->waitFrameCount;
 

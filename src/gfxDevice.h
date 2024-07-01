@@ -66,6 +66,5 @@ typedef struct GFXDeviceStruct
 } GFXDevice;
 
 void StartGFXDevice(GFXDevice *pGFXDevice);
-void UpdateGFXDevice(GFXDevice *pGFXDevice, bool *pShouldQuit);
+void UpdateGFXDevice(GFXDevice *pGFXDevice);
 void EndGFXDevice(GFXDevice *pGFXDevice);
-void FindMemoryType(GFXDevice *pGFXDevice, uint32_t typeFilter, VkMemoryPropertyFlags memoryPropertyFlags, uint32_t *memoryTypeIndex);

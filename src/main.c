@@ -50,8 +50,8 @@ int main()
     };
     TickernelEngine tickernelEngine = {
         .targetFrameRate = 1,
-        .frameCount = 4294967295,
-        // .frameCount = 0,
+        // .frameCount = 4294967295,
+        .frameCount = 0,
         .canTick = true,
         .assetsPath = "",
         .pGFXDevice = &gfxDevice,

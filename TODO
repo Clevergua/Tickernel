@@ -1,7 +1,6 @@
 日志及报错处理工作流
-CPU消耗检测重构
-内存泄露查询
-    
+实现一个每帧清理的管线并运行引擎且不报错
+阅读VkRenderPass及CreateGraphicPipeline了解所有参数以及使用方式
 内存检测重构
     //944kb
     pGFXDevice->commandBufferList = malloc(sizeof(VkCommandBuffer) * pGFXDevice->maxCommandBufferListCount);
