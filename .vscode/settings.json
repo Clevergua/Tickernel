@@ -24,6 +24,7 @@
         "new": "c",
         "ostream": "c",
         "__locale": "c",
-        "cstring": "c"
+        "cstring": "c",
+        "todo": "c"
     }
 }
