@@ -755,8 +755,20 @@ static void CreateRenderPass(GFXDevice *pGFXDevice, VkRenderPass *pVkRenderPass)
         .samples = VK_SAMPLE_COUNT_1_BIT,
         .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
         .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
-        .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
-        .stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE,
+        .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+        .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+        .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+        .finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+    };
+
+    VkAttachmentDescription depthAttachmentDescription = {
+        .flags = 0,
+        .format = pGFXDevice->surfaceFormat.format,
+        .samples = VK_SAMPLE_COUNT_1_BIT,
+        .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+        .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+        .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+        .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
         .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
         .finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
     };
@@ -764,8 +776,8 @@ static void CreateRenderPass(GFXDevice *pGFXDevice, VkRenderPass *pVkRenderPass)
     VkSubpassDependency subpassDependency = {
         .srcSubpass = VK_SUBPASS_EXTERNAL,
         .dstSubpass = 0,
-        .srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT,
-        .dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT,
+        .srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+        .dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
         .srcAccessMask = 0,
         .dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
         .dependencyFlags = 0,
@@ -798,7 +810,10 @@ static void CreateRenderPass(GFXDevice *pGFXDevice, VkRenderPass *pVkRenderPass)
         .pNext = NULL,
         .flags = 0,
         .attachmentCount = 1,
-        .pAttachments = (VkAttachmentDescription[]){colorAttachmentDescription},
+        .pAttachments = (VkAttachmentDescription[]){
+            colorAttachmentDescription,
+            depthAttachmentDescription,
+        },
         .subpassCount = 1,
         .pSubpasses = &subpassDescription,
         .dependencyCount = 1,
@@ -834,7 +849,7 @@ static void DestroyRenderPass(GFXDevice *pGFXDevice, VkRenderPass *pVkRenderPass
 //             .layers = 1,
 //         };
 //         result = vkCreateFramebuffer(pGFXDevice->vkDevice, &framebufferCreateInfo, NULL, &pGFXDevice->vkFramebuffers[i]);
-//         TRY_THROW_VULKAN_ERROR(pGFXDevice->logStream, result);
+//         TRY_THROW_VULKAN_ERROR(result);
 //     }
 // }
 
@@ -974,7 +989,7 @@ static void AcquireImage(GFXDevice *pGFXDevice)
     }
     else
     {
-        printf("Try return engine gfx error because of vulkan error code: %d\n", result);
+        TRY_THROW_VULKAN_ERROR(result);
     }
 }
 
@@ -1030,10 +1045,10 @@ void StartGFXDevice(GFXDevice *pGFXDevice)
     CreateLogicalDevice(pGFXDevice);
     CreateSwapchain(pGFXDevice);
     CreateDepthResources(pGFXDevice);
-    // CreateRenderPass(pGFXDevice);
-    // CreateFramebuffers(pGFXDevice);
     CreateSemaphores(pGFXDevice);
     CreateCommandPools(pGFXDevice);
+    // CreateRenderPass(pGFXDevice);
+    // CreateFramebuffers(pGFXDevice);
 }
 
 void UpdateGFXDevice(GFXDevice *pGFXDevice)
@@ -1050,10 +1065,10 @@ void UpdateGFXDevice(GFXDevice *pGFXDevice)
 
 void EndGFXDevice(GFXDevice *pGFXDevice)
 {
-    DestroyCommandPools(pGFXDevice);
-    DestroySemaphores(pGFXDevice);
     // DestroyFramebuffers(pGFXDevice);
     // DestroyRenderPass(pGFXDevice);
+    DestroyCommandPools(pGFXDevice);
+    DestroySemaphores(pGFXDevice);
     DestroyDepthResources(pGFXDevice);
     DestroySwapchain(pGFXDevice);
     DestroyLogicalDevice(pGFXDevice);
