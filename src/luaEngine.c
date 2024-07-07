@@ -46,49 +46,46 @@ void StartLua(LuaEngine *pLuaEngine, const char *assetPath)
     lua_getglobal(pLuaState, "package");
     lua_pushstring(pLuaState, packagePath);
     lua_setfield(pLuaState, -2, "path");
-    top = lua_gettop(pLuaState);
+
     lua_pop(pLuaState, 1);
 
-    // Call start function
+    // Do file main.lua
     char luaMainFilePath[FILENAME_MAX];
     strcpy_s(luaMainFilePath, FILENAME_MAX, pLuaEngine->luaAssetsPath);
     TKNCombinePaths(luaMainFilePath, FILENAME_MAX, "main.lua", NULL);
+    // Put engine state on the stack
     int luaResult = luaL_dofile(pLuaState, luaMainFilePath);
     TryThrowLuaError(luaResult);
 
     // Call start
-    top = lua_gettop(pLuaState);
     int startFunctionType = lua_getfield(pLuaState, -1, "Start");
     AssertLuaType(startFunctionType, LUA_TFUNCTION);
-    top = lua_gettop(pLuaState);
     luaResult = lua_pcall(pLuaState, 0, 0, 0);
     TryThrowLuaError(luaResult);
-    top = lua_gettop(pLuaState);
-    printf("After start lua stack,Keep engine state on stack.\nStack count:%d \n", lua_gettop(pLuaState));
 }
 
 void UpdateLua(LuaEngine *pLuaEngine)
 {
     lua_State *pLuaState = pLuaEngine->pLuaState;
-    top = lua_gettop(pLuaState);
+
     int startFunctionType = lua_getfield(pLuaState, -1, "Update");
     AssertLuaType(startFunctionType, LUA_TFUNCTION);
-    top = lua_gettop(pLuaState);
     int luaResult = lua_pcall(pLuaState, 0, 0, 0);
     TryThrowLuaError(luaResult);
-    top = lua_gettop(pLuaState);
 }
 
 void EndLua(LuaEngine *pLuaEngine)
 {
+    // Call End
     lua_State *pLuaState = pLuaEngine->pLuaState;
-    top = lua_gettop(pLuaState);
     int startFunctionType = lua_getfield(pLuaState, -1, "End");
     AssertLuaType(startFunctionType, LUA_TFUNCTION);
-    top = lua_gettop(pLuaState);
     int luaResult = lua_pcall(pLuaState, 0, 0, 0);
     TryThrowLuaError(luaResult);
-    top = lua_gettop(pLuaState);
+
+    //  Pop engine state off the stack
+    lua_pop(pLuaState, 1);
+
     lua_close(pLuaEngine->pLuaState);
     TKNFree(pLuaEngine->luaAssetsPath);
 }

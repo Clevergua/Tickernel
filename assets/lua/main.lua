@@ -1,19 +1,19 @@
-local engineState = {};
+local gameState = {};
 table.empty = {};
 
-function engineState.Start()
+function gameState.Start()
     print("Lua Start");
 end
 
-function engineState.End()
+function gameState.End()
     print("Lua Start");
 end
 
-function engineState.Update()
+function gameState.Update()
     print("Lua Update");
 end
 
-_G.engineState = engineState;
+_G.gameState = gameState;
 
 print("Lua initialized!");
-return engineState;
+return gameState;

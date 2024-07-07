@@ -2,7 +2,7 @@
 #include <assert.h>
 int main()
 {
-    // getchar();
+    getchar();
     GFXEngine gfxEngine = {
         .enableValidationLayers = true,
         .name = "Tickernel Engine",
@@ -64,7 +64,7 @@ int main()
         .pLuaEngine = &luaEngine,
     };
     RunTickernelEngine(&tickernelEngine);
-    // getchar();
+    getchar();
 
     return EXIT_SUCCESS;
 }
