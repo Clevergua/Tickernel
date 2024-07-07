@@ -1766,7 +1766,7 @@ static void OnRecreateSwapchain(int *pWidth, int *pHeight)
     }
 }
 
-FEResult StartGFXDevice(int width, int height)
+FEResult StartGFXEngine(int width, int height)
 {
     FEResult result = FESUCCESS;
 
@@ -1856,7 +1856,7 @@ FEResult StartGFXDevice(int width, int height)
     return result;
 }
 
-FEResult UpdateGFXDevice(bool *pShouldFurnaceEngineQuit)
+FEResult UpdateGFXEngine(bool *pShouldFurnaceEngineQuit)
 {
     FEResult result = FESUCCESS;
 
@@ -1884,7 +1884,7 @@ FEResult UpdateGFXDevice(bool *pShouldFurnaceEngineQuit)
     }
 }
 
-FEResult EndGFXDevice()
+FEResult EndGFXEngine()
 {
     FEResult result = FESUCCESS;
 

@@ -7,18 +7,26 @@
 static void TickernelStart(TickernelEngine *pTickernelEngine)
 {
     printf("Tickernel Start!\n");
-    StartGFXDevice(pTickernelEngine->pGFXDevice);
+    pTickernelEngine->assetsPath = TKNMalloc(FILENAME_MAX);
+    TKNGetCurrentDirectory(pTickernelEngine->assetsPath, FILENAME_MAX);
+    TKNCombinePaths(pTickernelEngine->assetsPath, FILENAME_MAX, "assets", NULL);
+
+    StartGFXEngine(pTickernelEngine->pGFXEngine);
+    StartLua(pTickernelEngine->pLuaEngine, pTickernelEngine->assetsPath);
 }
 
 static void TickernelUpdate(TickernelEngine *pTickernelEngine)
 {
     printf("Tickernel Update!\n");
-    UpdateGFXDevice(pTickernelEngine->pGFXDevice);
+    UpdateLua(pTickernelEngine->pLuaEngine);
+    UpdateGFXEngine(pTickernelEngine->pGFXEngine);
 }
 
 static void TickernelEnd(TickernelEngine *pTickernelEngine)
 {
-    EndGFXDevice(pTickernelEngine->pGFXDevice);
+    EndLua(pTickernelEngine->pLuaEngine);
+    EndGFXEngine(pTickernelEngine->pGFXEngine);
+    TKNFree(pTickernelEngine->assetsPath);
     printf("Tickernel End!\n");
 }
 
@@ -31,7 +39,6 @@ void RunTickernelEngine(TickernelEngine *pTickernelEngine)
         struct timespec frameStartTime;
         timespec_get(&frameStartTime, TIME_UTC);
         TickernelUpdate(pTickernelEngine);
-        TickernelSleep(500);
         struct timespec frameEndTime;
         timespec_get(&frameEndTime, TIME_UTC);
         uint32_t deltaMilliseconds = (frameEndTime.tv_sec - frameStartTime.tv_sec) * MILLISECONDS_PER_SECOND + (frameEndTime.tv_nsec - frameStartTime.tv_nsec) / NANOSECONDS_PER_MILLISECOND;
@@ -45,7 +52,7 @@ void RunTickernelEngine(TickernelEngine *pTickernelEngine)
             sleepMilliseconds = 0;
         }
         printf("Tickernel Tick!\n    Framecount: %u\n    TimeCost/Total: %ums/%ums\n", pTickernelEngine->frameCount, deltaMilliseconds, millisecondsPerFrame);
-        TickernelSleep(sleepMilliseconds);
+        TKNSleep(sleepMilliseconds);
         pTickernelEngine->frameCount++;
     }
     TickernelEnd(pTickernelEngine);

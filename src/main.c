@@ -1,9 +1,9 @@
 #include <tickernelEngine.h>
-
+#include <assert.h>
 int main()
 {
-    getchar();
-    GFXDevice gfxDevice = {
+    // getchar();
+    GFXEngine gfxEngine = {
         .enableValidationLayers = true,
         .name = "Tickernel Engine",
         .targetPresentMode = VK_PRESENT_MODE_FIFO_RELAXED_KHR,
@@ -48,15 +48,23 @@ int main()
         .frameIndex = -1,
         .hasRecreateSwapchain = false,
     };
+
+    LuaEngine luaEngine = {
+        .pLuaState = NULL,
+        .luaAssetsPath = NULL,
+    };
+
     TickernelEngine tickernelEngine = {
         .targetFrameRate = 1,
-        // .frameCount = 4294967295,
-        .frameCount = 0,
+        .frameCount = 4294967290,
+        // .frameCount = 0,
         .canTick = true,
-        .assetsPath = "",
-        .pGFXDevice = &gfxDevice,
+        .assetsPath = NULL,
+        .pGFXEngine = &gfxEngine,
+        .pLuaEngine = &luaEngine,
     };
     RunTickernelEngine(&tickernelEngine);
-    getchar();
+    // getchar();
+
     return EXIT_SUCCESS;
 }

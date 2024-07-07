@@ -1,6 +1,15 @@
-#include <gfxDevice.h>
+#include <gfxEngine.h>
 
 #define GETARRAYCOUNT(array) (NULL == array) ? 0 : (sizeof(array) / sizeof(array[0]))
+
+static void TryThrowVulkanError(VkResult vkResult)
+{
+    if (vkResult != VK_SUCCESS)
+    {
+        printf("Vulkan error code: %d\n", vkResult);
+        abort();
+    }
+}
 
 static VKAPI_ATTR VkBool32 VKAPI_CALL LogMessenger(VkDebugUtilsMessageSeverityFlagBitsEXT severity, VkDebugUtilsMessageTypeFlagsEXT type, const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData, void *pUserData)
 {
@@ -20,9 +29,8 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL LogMessenger(VkDebugUtilsMessageSeverityFl
     return VK_TRUE;
 }
 
-static void CreateVkInstance(GFXDevice *pGFXDevice)
+static void CreateVkInstance(GFXEngine *pGFXEngine)
 {
-    FILE *logStream = pGFXDevice->logStream;
     char **enabledLayerNames;
     char **engineExtensionNames;
     PFN_vkDebugUtilsMessengerCallbackEXT pfnUserCallback;
@@ -34,7 +42,7 @@ static void CreateVkInstance(GFXDevice *pGFXDevice)
         VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
         VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME,
     };
-    if (pGFXDevice->enableValidationLayers)
+    if (pGFXEngine->enableValidationLayers)
     {
         char *enabledLayerNamesInStack[] = {
             "VK_LAYER_KHRONOS_validation",
@@ -54,7 +62,7 @@ static void CreateVkInstance(GFXDevice *pGFXDevice)
                 .messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT,
                 .messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT,
                 .pfnUserCallback = pfnUserCallback,
-                .pUserData = logStream,
+                .pUserData = NULL,
             };
         pVkInstanceCreateInfoNext = &messengerCreateInfo;
     }
@@ -79,7 +87,7 @@ static void CreateVkInstance(GFXDevice *pGFXDevice)
     const char **glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
     extensionCount += glfwExtensionCount;
 
-    char **extensionNames = malloc(extensionCount * sizeof(char *));
+    char **extensionNames = TKNMalloc(extensionCount * sizeof(char *));
     memcpy(extensionNames, engineExtensionNames, engineExtensionCount * sizeof(char *));
     memcpy(extensionNames + engineExtensionCount, glfwExtensions, glfwExtensionCount * sizeof(char *));
     for (int i = 0; i < extensionCount; i++)
@@ -90,7 +98,7 @@ static void CreateVkInstance(GFXDevice *pGFXDevice)
         {
             .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
             .pNext = NULL,
-            .pApplicationName = pGFXDevice->name,
+            .pApplicationName = pGFXEngine->name,
             .applicationVersion = 0,
             .pEngineName = NULL,
             .engineVersion = 0,
@@ -108,43 +116,42 @@ static void CreateVkInstance(GFXDevice *pGFXDevice)
             .enabledExtensionCount = extensionCount,
             .ppEnabledExtensionNames = (const char *const *)extensionNames,
         };
-    VkResult result = vkCreateInstance(&vkInstanceCreateInfo, NULL, &pGFXDevice->vkInstance);
-    free(extensionNames);
+    VkResult result = vkCreateInstance(&vkInstanceCreateInfo, NULL, &pGFXEngine->vkInstance);
+    TKNFree(extensionNames);
 }
-static void DestroyVKInstance(GFXDevice *pGFXDevice)
+static void DestroyVKInstance(GFXEngine *pGFXEngine)
 {
-    vkDestroyInstance(pGFXDevice->vkInstance, NULL);
+    vkDestroyInstance(pGFXEngine->vkInstance, NULL);
 }
 
-static void CreateGLFWWindow(GFXDevice *pGFXDevice)
+static void CreateGLFWWindow(GFXEngine *pGFXEngine)
 {
     glfwInit();
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     glfwInitHint(GLFW_RESIZABLE, GLFW_FALSE);
-    pGFXDevice->pGLFWWindow = glfwCreateWindow(pGFXDevice->width, pGFXDevice->height, pGFXDevice->name, NULL, NULL);
+    pGFXEngine->pGLFWWindow = glfwCreateWindow(pGFXEngine->width, pGFXEngine->height, pGFXEngine->name, NULL, NULL);
 }
 
-static void DestroyGLFWWindow(GFXDevice *pGFXDevice)
+static void DestroyGLFWWindow(GFXEngine *pGFXEngine)
 {
-    glfwDestroyWindow(pGFXDevice->pGLFWWindow);
+    glfwDestroyWindow(pGFXEngine->pGLFWWindow);
     glfwTerminate();
 }
 
-static void CreateVKSurface(GFXDevice *pGFXDevice)
+static void CreateVKSurface(GFXEngine *pGFXEngine)
 {
-    VkResult result = glfwCreateWindowSurface(pGFXDevice->vkInstance, pGFXDevice->pGLFWWindow, NULL, &pGFXDevice->vkSurface);
-    TRY_THROW_VULKAN_ERROR(result);
+    VkResult result = glfwCreateWindowSurface(pGFXEngine->vkInstance, pGFXEngine->pGLFWWindow, NULL, &pGFXEngine->vkSurface);
+    TryThrowVulkanError(result);
 }
 
-static void DestroyVKSurface(GFXDevice *pGFXDevice)
+static void DestroyVKSurface(GFXEngine *pGFXEngine)
 {
-    vkDestroySurfaceKHR(pGFXDevice->vkInstance, pGFXDevice->vkSurface, NULL);
+    vkDestroySurfaceKHR(pGFXEngine->vkInstance, pGFXEngine->vkSurface, NULL);
 }
 
-static void HasAllRequiredExtensions(GFXDevice *pGFXDevice, VkPhysicalDevice vkPhysicalDevice, bool *pHasAllRequiredExtensions)
+static void HasAllRequiredExtensions(GFXEngine *pGFXEngine, VkPhysicalDevice vkPhysicalDevice, bool *pHasAllRequiredExtensions)
 {
     VkResult result = VK_SUCCESS;
-    FILE *logStream = pGFXDevice->logStream;
     char *requiredExtensionNames[] = {
         VK_KHR_SWAPCHAIN_EXTENSION_NAME,
     };
@@ -152,10 +159,10 @@ static void HasAllRequiredExtensions(GFXDevice *pGFXDevice, VkPhysicalDevice vkP
 
     uint32_t extensionCount = 0;
     result = vkEnumerateDeviceExtensionProperties(vkPhysicalDevice, NULL, &extensionCount, NULL);
-    TRY_THROW_VULKAN_ERROR(result);
-    VkExtensionProperties *extensionProperties = malloc(extensionCount * sizeof(VkExtensionProperties));
+    TryThrowVulkanError(result);
+    VkExtensionProperties *extensionProperties = TKNMalloc(extensionCount * sizeof(VkExtensionProperties));
     result = vkEnumerateDeviceExtensionProperties(vkPhysicalDevice, NULL, &extensionCount, extensionProperties);
-    TRY_THROW_VULKAN_ERROR(result);
+    TryThrowVulkanError(result);
 
     uint32_t foundCount = 0;
     for (uint32_t i = 0; i < extensionCount; i++)
@@ -176,19 +183,19 @@ static void HasAllRequiredExtensions(GFXDevice *pGFXDevice, VkPhysicalDevice vkP
         }
     }
     *pHasAllRequiredExtensions = foundCount == requiredExtensionCount;
-    free(extensionProperties);
+    TKNFree(extensionProperties);
 }
 
-static void HasGraphicsAndPresentQueueFamilies(GFXDevice *pGFXDevice, VkPhysicalDevice vkPhysicalDevice, bool *pHasGraphicsAndPresentQueueFamilies, uint32_t *pGraphicsQueueFamilyIndex, uint32_t *pPresentQueueFamilyIndex)
+static void HasGraphicsAndPresentQueueFamilies(GFXEngine *pGFXEngine, VkPhysicalDevice vkPhysicalDevice, bool *pHasGraphicsAndPresentQueueFamilies, uint32_t *pGraphicsQueueFamilyIndex, uint32_t *pPresentQueueFamilyIndex)
 {
-    FILE *logStream = pGFXDevice->logStream;
-    VkSurfaceKHR vkSurface = pGFXDevice->vkSurface;
-    uint32_t *pQueueFamilyPropertyCount = &pGFXDevice->queueFamilyPropertyCount;
+
+    VkSurfaceKHR vkSurface = pGFXEngine->vkSurface;
+    uint32_t *pQueueFamilyPropertyCount = &pGFXEngine->queueFamilyPropertyCount;
 
     VkResult result = VK_SUCCESS;
 
     vkGetPhysicalDeviceQueueFamilyProperties(vkPhysicalDevice, pQueueFamilyPropertyCount, NULL);
-    VkQueueFamilyProperties *vkQueueFamilyPropertiesList = malloc(*pQueueFamilyPropertyCount * sizeof(VkQueueFamilyProperties));
+    VkQueueFamilyProperties *vkQueueFamilyPropertiesList = TKNMalloc(*pQueueFamilyPropertyCount * sizeof(VkQueueFamilyProperties));
     vkGetPhysicalDeviceQueueFamilyProperties(vkPhysicalDevice, pQueueFamilyPropertyCount, vkQueueFamilyPropertiesList);
 
     int graphicIndexCount = 0;
@@ -208,7 +215,7 @@ static void HasGraphicsAndPresentQueueFamilies(GFXDevice *pGFXDevice, VkPhysical
         }
         VkBool32 presentSupport = VK_FALSE;
         result = vkGetPhysicalDeviceSurfaceSupportKHR(vkPhysicalDevice, i, vkSurface, &presentSupport);
-        TRY_THROW_VULKAN_ERROR(result);
+        TryThrowVulkanError(result);
         if (vkQueueFamilyProperties.queueCount > 0 && presentSupport)
         {
             *pPresentQueueFamilyIndex = i;
@@ -225,16 +232,16 @@ static void HasGraphicsAndPresentQueueFamilies(GFXDevice *pGFXDevice, VkPhysical
             break;
         }
     }
-    free(vkQueueFamilyPropertiesList);
+    TKNFree(vkQueueFamilyPropertiesList);
 }
 
-static void PickPhysicalDevice(GFXDevice *pGFXDevice)
+static void PickPhysicalDevice(GFXEngine *pGFXEngine)
 {
-    FILE *logStream = pGFXDevice->logStream;
+
     VkResult result = VK_SUCCESS;
     uint32_t deviceCount = -1;
-    result = vkEnumeratePhysicalDevices(pGFXDevice->vkInstance, &deviceCount, NULL);
-    TRY_THROW_VULKAN_ERROR(result);
+    result = vkEnumeratePhysicalDevices(pGFXEngine->vkInstance, &deviceCount, NULL);
+    TryThrowVulkanError(result);
 
     if (deviceCount <= 0)
     {
@@ -242,9 +249,9 @@ static void PickPhysicalDevice(GFXDevice *pGFXDevice)
     }
     else
     {
-        VkPhysicalDevice *devices = malloc(deviceCount * sizeof(VkPhysicalDevice));
-        result = vkEnumeratePhysicalDevices(pGFXDevice->vkInstance, &deviceCount, devices);
-        TRY_THROW_VULKAN_ERROR(result);
+        VkPhysicalDevice *devices = TKNMalloc(deviceCount * sizeof(VkPhysicalDevice));
+        result = vkEnumeratePhysicalDevices(pGFXEngine->vkInstance, &deviceCount, devices);
+        TryThrowVulkanError(result);
 
         uint32_t graphicQueueFamilyIndex = -1;
         uint32_t presentQueueFamilyIndex = -1;
@@ -252,7 +259,7 @@ static void PickPhysicalDevice(GFXDevice *pGFXDevice)
         uint32_t maxScore = 0;
         char *targetDeviceName;
 
-        VkSurfaceKHR vkSurface = pGFXDevice->vkSurface;
+        VkSurfaceKHR vkSurface = pGFXEngine->vkSurface;
         for (uint32_t i = 0; i < deviceCount; i++)
         {
             VkPhysicalDevice vkPhysicalDevice = devices[i];
@@ -261,27 +268,27 @@ static void PickPhysicalDevice(GFXDevice *pGFXDevice)
             vkGetPhysicalDeviceProperties(vkPhysicalDevice, &deviceProperties);
 
             bool hasAllRequiredExtensions;
-            HasAllRequiredExtensions(pGFXDevice, vkPhysicalDevice, &hasAllRequiredExtensions);
-            TRY_THROW_VULKAN_ERROR(result);
+            HasAllRequiredExtensions(pGFXEngine, vkPhysicalDevice, &hasAllRequiredExtensions);
+            TryThrowVulkanError(result);
             bool hasGraphicsAndPresentQueueFamilies;
-            HasGraphicsAndPresentQueueFamilies(pGFXDevice, vkPhysicalDevice, &hasGraphicsAndPresentQueueFamilies, &graphicQueueFamilyIndex, &presentQueueFamilyIndex);
+            HasGraphicsAndPresentQueueFamilies(pGFXEngine, vkPhysicalDevice, &hasGraphicsAndPresentQueueFamilies, &graphicQueueFamilyIndex, &presentQueueFamilyIndex);
 
             uint32_t surfaceFormatCount;
             result = vkGetPhysicalDeviceSurfaceFormatsKHR(vkPhysicalDevice, vkSurface, &surfaceFormatCount, NULL);
-            TRY_THROW_VULKAN_ERROR(result);
+            TryThrowVulkanError(result);
             bool hasSurfaceFormat = surfaceFormatCount > 0;
             uint32_t presentModeCount;
             result = vkGetPhysicalDeviceSurfacePresentModesKHR(vkPhysicalDevice, vkSurface, &presentModeCount, NULL);
-            TRY_THROW_VULKAN_ERROR(result);
+            TryThrowVulkanError(result);
             bool hasPresentMode = presentModeCount > 0;
             if (hasAllRequiredExtensions && hasGraphicsAndPresentQueueFamilies && hasSurfaceFormat && hasPresentMode)
             {
                 uint32_t formatCount = 0;
                 uint32_t modeCount = 0;
                 result = vkGetPhysicalDeviceSurfaceFormatsKHR(vkPhysicalDevice, vkSurface, &formatCount, NULL);
-                TRY_THROW_VULKAN_ERROR(result);
+                TryThrowVulkanError(result);
                 result = vkGetPhysicalDeviceSurfacePresentModesKHR(vkPhysicalDevice, vkSurface, &modeCount, NULL);
-                TRY_THROW_VULKAN_ERROR(result);
+                TryThrowVulkanError(result);
 
                 if (formatCount > 0 && modeCount > 0)
                 {
@@ -315,35 +322,35 @@ static void PickPhysicalDevice(GFXDevice *pGFXDevice)
                 // Dont select this device
             }
         }
-        free(devices);
+        TKNFree(devices);
         if (NULL == targetDevice)
         {
             printf("failed to find GPUs with Vulkan support!");
         }
         else
         {
-            pGFXDevice->vkPhysicalDevice = targetDevice;
-            pGFXDevice->graphicQueueFamilyIndex = graphicQueueFamilyIndex;
-            pGFXDevice->presentQueueFamilyIndex = presentQueueFamilyIndex;
+            pGFXEngine->vkPhysicalDevice = targetDevice;
+            pGFXEngine->graphicQueueFamilyIndex = graphicQueueFamilyIndex;
+            pGFXEngine->presentQueueFamilyIndex = presentQueueFamilyIndex;
             printf("Selected target physical device named %s\n", targetDeviceName);
         }
     }
 }
 
-static void CreateLogicalDevice(GFXDevice *pGFXDevice)
+static void CreateLogicalDevice(GFXEngine *pGFXEngine)
 {
     VkResult result = VK_SUCCESS;
-    FILE *logStream = pGFXDevice->logStream;
-    VkPhysicalDevice vkPhysicalDevice = pGFXDevice->vkPhysicalDevice;
-    uint32_t graphicQueueFamilyIndex = pGFXDevice->graphicQueueFamilyIndex;
-    uint32_t presentQueueFamilyIndex = pGFXDevice->presentQueueFamilyIndex;
+
+    VkPhysicalDevice vkPhysicalDevice = pGFXEngine->vkPhysicalDevice;
+    uint32_t graphicQueueFamilyIndex = pGFXEngine->graphicQueueFamilyIndex;
+    uint32_t presentQueueFamilyIndex = pGFXEngine->presentQueueFamilyIndex;
     float queuePriority = 1.0f;
     VkDeviceQueueCreateInfo *queueCreateInfos;
     uint32_t queueCount;
     if (graphicQueueFamilyIndex == presentQueueFamilyIndex)
     {
         queueCount = 1;
-        queueCreateInfos = malloc(sizeof(VkDeviceQueueCreateInfo) * queueCount);
+        queueCreateInfos = TKNMalloc(sizeof(VkDeviceQueueCreateInfo) * queueCount);
         VkDeviceQueueCreateInfo graphicCreateInfo =
             {
                 .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
@@ -358,7 +365,7 @@ static void CreateLogicalDevice(GFXDevice *pGFXDevice)
     else
     {
         queueCount = 2;
-        queueCreateInfos = malloc(sizeof(VkDeviceQueueCreateInfo) * queueCount);
+        queueCreateInfos = TKNMalloc(sizeof(VkDeviceQueueCreateInfo) * queueCount);
         VkDeviceQueueCreateInfo graphicCreateInfo =
             {
                 .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
@@ -389,7 +396,7 @@ static void CreateLogicalDevice(GFXDevice *pGFXDevice)
     char **enabledLayerNames;
     uint32_t enabledLayerCount;
 
-    if (pGFXDevice->enableValidationLayers)
+    if (pGFXEngine->enableValidationLayers)
     {
         char *enabledLayerNamesInStack[] = {
             "VK_LAYER_KHRONOS_validation",
@@ -420,16 +427,16 @@ static void CreateLogicalDevice(GFXDevice *pGFXDevice)
             .ppEnabledExtensionNames = (const char *const *)extensionNames,
             .pEnabledFeatures = &deviceFeatures,
         };
-    result = vkCreateDevice(vkPhysicalDevice, &vkDeviceCreateInfo, NULL, &pGFXDevice->vkDevice);
-    TRY_THROW_VULKAN_ERROR(result);
-    vkGetDeviceQueue(pGFXDevice->vkDevice, graphicQueueFamilyIndex, 0, &pGFXDevice->vkGraphicQueue);
-    vkGetDeviceQueue(pGFXDevice->vkDevice, presentQueueFamilyIndex, 0, &pGFXDevice->vkPresentQueue);
-    free(queueCreateInfos);
+    result = vkCreateDevice(vkPhysicalDevice, &vkDeviceCreateInfo, NULL, &pGFXEngine->vkDevice);
+    TryThrowVulkanError(result);
+    vkGetDeviceQueue(pGFXEngine->vkDevice, graphicQueueFamilyIndex, 0, &pGFXEngine->vkGraphicQueue);
+    vkGetDeviceQueue(pGFXEngine->vkDevice, presentQueueFamilyIndex, 0, &pGFXEngine->vkPresentQueue);
+    TKNFree(queueCreateInfos);
 }
 
-static void DestroyLogicalDevice(GFXDevice *pGFXDevice)
+static void DestroyLogicalDevice(GFXEngine *pGFXEngine)
 {
-    vkDestroyDevice(pGFXDevice->vkDevice, NULL);
+    vkDestroyDevice(pGFXEngine->vkDevice, NULL);
 }
 
 static void ChooseSurfaceFormat(VkSurfaceFormatKHR *surfaceFormats, uint32_t surfaceFormatCount, VkSurfaceFormatKHR *pSurfaceFormat)
@@ -478,10 +485,10 @@ static void ChoosePresentMode(VkPresentModeKHR *supportPresentModes, uint32_t su
     }
 }
 
-static void CreateImageView(GFXDevice *pGFXDevice, VkImage image, VkFormat format, VkImageAspectFlags imageAspectFlags, VkImageView *pImageView)
+static void CreateImageView(GFXEngine *pGFXEngine, VkImage image, VkFormat format, VkImageAspectFlags imageAspectFlags, VkImageView *pImageView)
 {
-    FILE *logStream = pGFXDevice->logStream;
-    VkDevice vkDevice = pGFXDevice->vkDevice;
+
+    VkDevice vkDevice = pGFXEngine->vkDevice;
     VkComponentMapping components = {
         .r = VK_COMPONENT_SWIZZLE_IDENTITY,
         .g = VK_COMPONENT_SWIZZLE_IDENTITY,
@@ -506,40 +513,40 @@ static void CreateImageView(GFXDevice *pGFXDevice, VkImage image, VkFormat forma
         .subresourceRange = subresourceRange,
     };
     VkResult result = vkCreateImageView(vkDevice, &imageViewCreateInfo, NULL, pImageView);
-    TRY_THROW_VULKAN_ERROR(result);
+    TryThrowVulkanError(result);
 }
 
-static void CreateSwapchain(GFXDevice *pGFXDevice)
+static void CreateSwapchain(GFXEngine *pGFXEngine)
 {
     VkResult result = VK_SUCCESS;
-    FILE *logStream = pGFXDevice->logStream;
-    VkPhysicalDevice vkPhysicalDevice = pGFXDevice->vkPhysicalDevice;
-    VkSurfaceKHR vkSurface = pGFXDevice->vkSurface;
-    VkDevice vkDevice = pGFXDevice->vkDevice;
-    uint32_t graphicQueueFamilyIndex = pGFXDevice->graphicQueueFamilyIndex;
-    uint32_t presentQueueFamilyIndex = pGFXDevice->presentQueueFamilyIndex;
+
+    VkPhysicalDevice vkPhysicalDevice = pGFXEngine->vkPhysicalDevice;
+    VkSurfaceKHR vkSurface = pGFXEngine->vkSurface;
+    VkDevice vkDevice = pGFXEngine->vkDevice;
+    uint32_t graphicQueueFamilyIndex = pGFXEngine->graphicQueueFamilyIndex;
+    uint32_t presentQueueFamilyIndex = pGFXEngine->presentQueueFamilyIndex;
 
     VkSurfaceCapabilitiesKHR vkSurfaceCapabilities;
     uint32_t supportSurfaceFormatCount;
     uint32_t supportPresentModeCount;
     result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(vkPhysicalDevice, vkSurface, &vkSurfaceCapabilities);
-    TRY_THROW_VULKAN_ERROR(result);
+    TryThrowVulkanError(result);
     result = vkGetPhysicalDeviceSurfaceFormatsKHR(vkPhysicalDevice, vkSurface, &supportSurfaceFormatCount, NULL);
-    TRY_THROW_VULKAN_ERROR(result);
+    TryThrowVulkanError(result);
     result = vkGetPhysicalDeviceSurfacePresentModesKHR(vkPhysicalDevice, vkSurface, &supportPresentModeCount, NULL);
-    TRY_THROW_VULKAN_ERROR(result);
-    VkSurfaceFormatKHR *supportSurfaceFormats = malloc(supportSurfaceFormatCount * sizeof(VkSurfaceFormatKHR));
-    VkPresentModeKHR *supportPresentModes = malloc(supportPresentModeCount * sizeof(VkPresentModeKHR));
+    TryThrowVulkanError(result);
+    VkSurfaceFormatKHR *supportSurfaceFormats = TKNMalloc(supportSurfaceFormatCount * sizeof(VkSurfaceFormatKHR));
+    VkPresentModeKHR *supportPresentModes = TKNMalloc(supportPresentModeCount * sizeof(VkPresentModeKHR));
 
     result = vkGetPhysicalDeviceSurfaceFormatsKHR(vkPhysicalDevice, vkSurface, &supportSurfaceFormatCount, supportSurfaceFormats);
-    TRY_THROW_VULKAN_ERROR(result);
+    TryThrowVulkanError(result);
     result = vkGetPhysicalDeviceSurfacePresentModesKHR(vkPhysicalDevice, vkSurface, &supportPresentModeCount, supportPresentModes);
-    TRY_THROW_VULKAN_ERROR(result);
+    TryThrowVulkanError(result);
 
     VkPresentModeKHR presentMode;
-    ChooseSurfaceFormat(supportSurfaceFormats, supportSurfaceFormatCount, &pGFXDevice->surfaceFormat);
-    ChoosePresentMode(supportPresentModes, supportPresentModeCount, pGFXDevice->targetPresentMode, &presentMode);
-    uint32_t swapchainImageCount = pGFXDevice->targetSwapchainImageCount;
+    ChooseSurfaceFormat(supportSurfaceFormats, supportSurfaceFormatCount, &pGFXEngine->surfaceFormat);
+    ChoosePresentMode(supportPresentModes, supportPresentModeCount, pGFXEngine->targetPresentMode, &presentMode);
+    uint32_t swapchainImageCount = pGFXEngine->targetSwapchainImageCount;
     if (swapchainImageCount < vkSurfaceCapabilities.minImageCount)
     {
         swapchainImageCount = vkSurfaceCapabilities.minImageCount;
@@ -553,7 +560,7 @@ static void CreateSwapchain(GFXDevice *pGFXDevice)
         // Do nothing.
     }
 
-    pGFXDevice->swapchainExtent = vkSurfaceCapabilities.currentExtent;
+    pGFXEngine->swapchainExtent = vkSurfaceCapabilities.currentExtent;
     VkSharingMode imageSharingMode;
     uint32_t queueFamilyIndexCount;
     uint32_t *pQueueFamilyIndices;
@@ -577,9 +584,9 @@ static void CreateSwapchain(GFXDevice *pGFXDevice)
             .flags = 0,
             .surface = vkSurface,
             .minImageCount = swapchainImageCount,
-            .imageFormat = pGFXDevice->surfaceFormat.format,
-            .imageColorSpace = pGFXDevice->surfaceFormat.colorSpace,
-            .imageExtent = pGFXDevice->swapchainExtent,
+            .imageFormat = pGFXEngine->surfaceFormat.format,
+            .imageColorSpace = pGFXEngine->surfaceFormat.colorSpace,
+            .imageExtent = pGFXEngine->swapchainExtent,
             .imageArrayLayers = 1,
             .imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
             .imageSharingMode = imageSharingMode,
@@ -592,52 +599,52 @@ static void CreateSwapchain(GFXDevice *pGFXDevice)
             .oldSwapchain = VK_NULL_HANDLE,
         };
 
-    result = vkCreateSwapchainKHR(vkDevice, &swapchainCreateInfo, NULL, &pGFXDevice->vkSwapchain);
-    TRY_THROW_VULKAN_ERROR(result);
+    result = vkCreateSwapchainKHR(vkDevice, &swapchainCreateInfo, NULL, &pGFXEngine->vkSwapchain);
+    TryThrowVulkanError(result);
 
-    free(supportSurfaceFormats);
-    free(supportPresentModes);
+    TKNFree(supportSurfaceFormats);
+    TKNFree(supportPresentModes);
 
-    result = vkGetSwapchainImagesKHR(vkDevice, pGFXDevice->vkSwapchain, &pGFXDevice->swapchainImageCount, NULL);
-    TRY_THROW_VULKAN_ERROR(result);
-    pGFXDevice->swapchainImages = malloc(swapchainImageCount * sizeof(VkImage));
-    result = vkGetSwapchainImagesKHR(vkDevice, pGFXDevice->vkSwapchain, &pGFXDevice->swapchainImageCount, pGFXDevice->swapchainImages);
-    TRY_THROW_VULKAN_ERROR(result);
-    pGFXDevice->swapchainImageViews = malloc(swapchainImageCount * sizeof(VkImageView));
+    result = vkGetSwapchainImagesKHR(vkDevice, pGFXEngine->vkSwapchain, &pGFXEngine->swapchainImageCount, NULL);
+    TryThrowVulkanError(result);
+    pGFXEngine->swapchainImages = TKNMalloc(swapchainImageCount * sizeof(VkImage));
+    result = vkGetSwapchainImagesKHR(vkDevice, pGFXEngine->vkSwapchain, &pGFXEngine->swapchainImageCount, pGFXEngine->swapchainImages);
+    TryThrowVulkanError(result);
+    pGFXEngine->swapchainImageViews = TKNMalloc(swapchainImageCount * sizeof(VkImageView));
     for (uint32_t i = 0; i < swapchainImageCount; i++)
     {
-        CreateImageView(pGFXDevice, pGFXDevice->swapchainImages[i], pGFXDevice->surfaceFormat.format, VK_IMAGE_ASPECT_COLOR_BIT, &pGFXDevice->swapchainImageViews[i]);
+        CreateImageView(pGFXEngine, pGFXEngine->swapchainImages[i], pGFXEngine->surfaceFormat.format, VK_IMAGE_ASPECT_COLOR_BIT, &pGFXEngine->swapchainImageViews[i]);
     }
 
-    if (pGFXDevice->targetWaitFrameCount > pGFXDevice->swapchainImageCount)
+    if (pGFXEngine->targetWaitFrameCount > pGFXEngine->swapchainImageCount)
     {
-        pGFXDevice->waitFrameCount = pGFXDevice->swapchainImageCount;
+        pGFXEngine->waitFrameCount = pGFXEngine->swapchainImageCount;
     }
-    else if (pGFXDevice->targetWaitFrameCount < 1)
+    else if (pGFXEngine->targetWaitFrameCount < 1)
     {
-        pGFXDevice->waitFrameCount = 1;
+        pGFXEngine->waitFrameCount = 1;
     }
     else
     {
-        pGFXDevice->waitFrameCount = pGFXDevice->targetWaitFrameCount;
+        pGFXEngine->waitFrameCount = pGFXEngine->targetWaitFrameCount;
     }
 }
-static void DestroySwapchain(GFXDevice *pGFXDevice)
+static void DestroySwapchain(GFXEngine *pGFXEngine)
 {
-    for (uint32_t i = 0; i < pGFXDevice->swapchainImageCount; i++)
+    for (uint32_t i = 0; i < pGFXEngine->swapchainImageCount; i++)
     {
-        vkDestroyImageView(pGFXDevice->vkDevice, pGFXDevice->swapchainImageViews[i], NULL);
+        vkDestroyImageView(pGFXEngine->vkDevice, pGFXEngine->swapchainImageViews[i], NULL);
     }
-    free(pGFXDevice->swapchainImageViews);
-    free(pGFXDevice->swapchainImages);
-    vkDestroySwapchainKHR(pGFXDevice->vkDevice, pGFXDevice->vkSwapchain, NULL);
+    TKNFree(pGFXEngine->swapchainImageViews);
+    TKNFree(pGFXEngine->swapchainImages);
+    vkDestroySwapchainKHR(pGFXEngine->vkDevice, pGFXEngine->vkSwapchain, NULL);
 }
 
-static void FindSupportedFormat(GFXDevice *pGFXDevice, VkFormat *candidates, uint32_t candidatesCount, VkImageTiling tiling, VkFormatFeatureFlags features, VkFormat *vkFormat)
+static void FindSupportedFormat(GFXEngine *pGFXEngine, VkFormat *candidates, uint32_t candidatesCount, VkImageTiling tiling, VkFormatFeatureFlags features, VkFormat *vkFormat)
 {
     VkResult result = VK_SUCCESS;
-    VkPhysicalDevice vkPhysicalDevice = pGFXDevice->vkPhysicalDevice;
-    FILE *logStream = pGFXDevice->logStream;
+    VkPhysicalDevice vkPhysicalDevice = pGFXEngine->vkPhysicalDevice;
+
     for (uint32_t i = 0; i < candidatesCount; i++)
     {
         VkFormat format = candidates[i];
@@ -659,18 +666,18 @@ static void FindSupportedFormat(GFXDevice *pGFXDevice, VkFormat *candidates, uin
     printf("Target format not found!");
 }
 
-static void FindDepthFormat(GFXDevice *pGFXDevice, VkFormat *pDepthFormat)
+static void FindDepthFormat(GFXEngine *pGFXEngine, VkFormat *pDepthFormat)
 {
     uint32_t candidatesCount = 3;
     VkFormat *candidates = (VkFormat[]){VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT};
-    FindSupportedFormat(pGFXDevice, candidates, candidatesCount, VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT, pDepthFormat);
+    FindSupportedFormat(pGFXEngine, candidates, candidatesCount, VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT, pDepthFormat);
 }
 
-static void FindMemoryType(GFXDevice *pGFXDevice, uint32_t typeFilter, VkMemoryPropertyFlags memoryPropertyFlags, uint32_t *memoryTypeIndex)
+static void FindMemoryType(GFXEngine *pGFXEngine, uint32_t typeFilter, VkMemoryPropertyFlags memoryPropertyFlags, uint32_t *memoryTypeIndex)
 {
-    FILE *logStream = pGFXDevice->logStream;
+
     VkPhysicalDeviceMemoryProperties physicalDeviceMemoryProperties;
-    vkGetPhysicalDeviceMemoryProperties(pGFXDevice->vkPhysicalDevice, &physicalDeviceMemoryProperties);
+    vkGetPhysicalDeviceMemoryProperties(pGFXEngine->vkPhysicalDevice, &physicalDeviceMemoryProperties);
     for (uint32_t i = 0; i < physicalDeviceMemoryProperties.memoryTypeCount; i++)
     {
         if ((typeFilter & (1 << i)) && (physicalDeviceMemoryProperties.memoryTypes[i].propertyFlags & memoryPropertyFlags) == memoryPropertyFlags)
@@ -682,11 +689,11 @@ static void FindMemoryType(GFXDevice *pGFXDevice, uint32_t typeFilter, VkMemoryP
     printf("Failed to find suitable memory type!");
 }
 
-static void CreateImage(GFXDevice *pGFXDevice, int32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage *pImage, VkDeviceMemory *pImageMemory)
+static void CreateImage(GFXEngine *pGFXEngine, int32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage *pImage, VkDeviceMemory *pImageMemory)
 {
     VkResult result = VK_SUCCESS;
-    FILE *logStream = pGFXDevice->logStream;
-    VkDevice vkDevice = pGFXDevice->vkDevice;
+
+    VkDevice vkDevice = pGFXEngine->vkDevice;
     VkExtent3D extent = {
         .width = width,
         .height = height,
@@ -711,11 +718,11 @@ static void CreateImage(GFXDevice *pGFXDevice, int32_t width, uint32_t height, V
         .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
     };
     result = vkCreateImage(vkDevice, &imageCreateInfo, NULL, pImage);
-    TRY_THROW_VULKAN_ERROR(result);
+    TryThrowVulkanError(result);
     VkMemoryRequirements memoryRequirements;
     vkGetImageMemoryRequirements(vkDevice, *pImage, &memoryRequirements);
     uint32_t memoryTypeIndex;
-    FindMemoryType(pGFXDevice, memoryRequirements.memoryTypeBits, properties, &memoryTypeIndex);
+    FindMemoryType(pGFXEngine, memoryRequirements.memoryTypeBits, properties, &memoryTypeIndex);
 
     VkMemoryAllocateInfo memoryAllocateInfo = {
         .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
@@ -725,33 +732,33 @@ static void CreateImage(GFXDevice *pGFXDevice, int32_t width, uint32_t height, V
     };
 
     result = vkAllocateMemory(vkDevice, &memoryAllocateInfo, NULL, pImageMemory);
-    TRY_THROW_VULKAN_ERROR(result);
+    TryThrowVulkanError(result);
     result = vkBindImageMemory(vkDevice, *pImage, *pImageMemory, 0);
-    TRY_THROW_VULKAN_ERROR(result);
+    TryThrowVulkanError(result);
 }
 
-static void CreateDepthResources(GFXDevice *pGFXDevice)
+static void CreateDepthResources(GFXEngine *pGFXEngine)
 {
-    FindDepthFormat(pGFXDevice, &pGFXDevice->depthFormat);
-    CreateImage(pGFXDevice, pGFXDevice->swapchainExtent.width, pGFXDevice->swapchainExtent.height, pGFXDevice->depthFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &pGFXDevice->depthImage, &pGFXDevice->depthImageMemory);
+    FindDepthFormat(pGFXEngine, &pGFXEngine->depthFormat);
+    CreateImage(pGFXEngine, pGFXEngine->swapchainExtent.width, pGFXEngine->swapchainExtent.height, pGFXEngine->depthFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &pGFXEngine->depthImage, &pGFXEngine->depthImageMemory);
 
-    CreateImageView(pGFXDevice, pGFXDevice->depthImage, pGFXDevice->depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT, &pGFXDevice->depthImageView);
+    CreateImageView(pGFXEngine, pGFXEngine->depthImage, pGFXEngine->depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT, &pGFXEngine->depthImageView);
 }
 
-static void DestroyDepthResources(GFXDevice *pGFXDevice)
+static void DestroyDepthResources(GFXEngine *pGFXEngine)
 {
-    VkDevice vkDevice = pGFXDevice->vkDevice;
-    vkDestroyImageView(vkDevice, pGFXDevice->depthImageView, NULL);
-    vkDestroyImage(vkDevice, pGFXDevice->depthImage, NULL);
-    vkFreeMemory(vkDevice, pGFXDevice->depthImageMemory, NULL);
+    VkDevice vkDevice = pGFXEngine->vkDevice;
+    vkDestroyImageView(vkDevice, pGFXEngine->depthImageView, NULL);
+    vkDestroyImage(vkDevice, pGFXEngine->depthImage, NULL);
+    vkFreeMemory(vkDevice, pGFXEngine->depthImageMemory, NULL);
 }
 
-static void CreateRenderPass(GFXDevice *pGFXDevice, VkRenderPass *pVkRenderPass)
+static void CreateRenderPass(GFXEngine *pGFXEngine, VkRenderPass *pVkRenderPass)
 {
     VkResult result = VK_SUCCESS;
     VkAttachmentDescription colorAttachmentDescription = {
         .flags = 0,
-        .format = pGFXDevice->surfaceFormat.format,
+        .format = pGFXEngine->surfaceFormat.format,
         .samples = VK_SAMPLE_COUNT_1_BIT,
         .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
         .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
@@ -763,7 +770,7 @@ static void CreateRenderPass(GFXDevice *pGFXDevice, VkRenderPass *pVkRenderPass)
 
     VkAttachmentDescription depthAttachmentDescription = {
         .flags = 0,
-        .format = pGFXDevice->surfaceFormat.format,
+        .format = pGFXEngine->surfaceFormat.format,
         .samples = VK_SAMPLE_COUNT_1_BIT,
         .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
         .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
@@ -771,16 +778,6 @@ static void CreateRenderPass(GFXDevice *pGFXDevice, VkRenderPass *pVkRenderPass)
         .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
         .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
         .finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-    };
-
-    VkSubpassDependency subpassDependency = {
-        .srcSubpass = VK_SUBPASS_EXTERNAL,
-        .dstSubpass = 0,
-        .srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-        .dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-        .srcAccessMask = 0,
-        .dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
-        .dependencyFlags = 0,
     };
 
     VkAttachmentReference colorAttachmentReference = {
@@ -805,11 +802,21 @@ static void CreateRenderPass(GFXDevice *pGFXDevice, VkRenderPass *pVkRenderPass)
         .pPreserveAttachments = NULL,
     };
 
+    VkSubpassDependency subpassDependency = {
+        .srcSubpass = VK_SUBPASS_EXTERNAL,
+        .dstSubpass = 0,
+        .srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+        .dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+        .srcAccessMask = 0,
+        .dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+        .dependencyFlags = 0,
+    };
+
     VkRenderPassCreateInfo renderPassCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
         .pNext = NULL,
         .flags = 0,
-        .attachmentCount = 1,
+        .attachmentCount = 2,
         .pAttachments = (VkAttachmentDescription[]){
             colorAttachmentDescription,
             depthAttachmentDescription,
@@ -820,261 +827,261 @@ static void CreateRenderPass(GFXDevice *pGFXDevice, VkRenderPass *pVkRenderPass)
         .pDependencies = &subpassDependency,
     };
 
-    result = vkCreateRenderPass(pGFXDevice->vkDevice, &renderPassCreateInfo, NULL, pVkRenderPass);
-    TRY_THROW_VULKAN_ERROR(result)
+    result = vkCreateRenderPass(pGFXEngine->vkDevice, &renderPassCreateInfo, NULL, pVkRenderPass);
+    TryThrowVulkanError(result);
 }
 
-static void DestroyRenderPass(GFXDevice *pGFXDevice, VkRenderPass *pVkRenderPass)
+static void DestroyRenderPass(GFXEngine *pGFXEngine, VkRenderPass *pVkRenderPass)
 {
-    vkDestroyRenderPass(pGFXDevice->vkDevice, *pVkRenderPass, NULL);
+    vkDestroyRenderPass(pGFXEngine->vkDevice, *pVkRenderPass, NULL);
 }
 
-// static void CreateFramebuffers(GFXDevice *pGFXDevice)
+// static void CreateFramebuffers(GFXEngine *pGFXEngine)
 // {
 //     VkResult result = VK_SUCCESS;
-//     pGFXDevice->vkFramebuffers = malloc(sizeof(VkFramebuffer) * pGFXDevice->swapchainImageCount);
-//     for (int32_t i = 0; i < pGFXDevice->swapchainImageCount; i++)
+//     pGFXEngine->vkFramebuffers = TickernelMalloc(sizeof(VkFramebuffer) * pGFXEngine->swapchainImageCount);
+//     for (int32_t i = 0; i < pGFXEngine->swapchainImageCount; i++)
 //     {
 //         uint32_t attachmentCount = 2;
-//         VkImageView attachments[] = {pGFXDevice->swapchainImageViews[i], pGFXDevice->depthImageView};
+//         VkImageView attachments[] = {pGFXEngine->swapchainImageViews[i], pGFXEngine->depthImageView};
 //         VkFramebufferCreateInfo framebufferCreateInfo = {
 //             .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
 //             .pNext = NULL,
 //             .flags = 0,
-//             .renderPass = pGFXDevice->vkRenderPass,
+//             .renderPass = pGFXEngine->vkRenderPass,
 //             .attachmentCount = attachmentCount,
 //             .pAttachments = attachments,
-//             .width = pGFXDevice->width,
-//             .height = pGFXDevice->height,
+//             .width = pGFXEngine->width,
+//             .height = pGFXEngine->height,
 //             .layers = 1,
 //         };
-//         result = vkCreateFramebuffer(pGFXDevice->vkDevice, &framebufferCreateInfo, NULL, &pGFXDevice->vkFramebuffers[i]);
+//         result = vkCreateFramebuffer(pGFXEngine->vkDevice, &framebufferCreateInfo, NULL, &pGFXEngine->vkFramebuffers[i]);
 //         TRY_THROW_VULKAN_ERROR(result);
 //     }
 // }
 
-// static void DestroyFramebuffers(GFXDevice *pGFXDevice)
+// static void DestroyFramebuffers(GFXEngine *pGFXEngine)
 // {
-//     for (int32_t i = 0; i < pGFXDevice->swapchainImageCount; i++)
+//     for (int32_t i = 0; i < pGFXEngine->swapchainImageCount; i++)
 //     {
-//         vkDestroyFramebuffer(pGFXDevice->vkDevice, pGFXDevice->vkFramebuffers[i], NULL);
+//         vkDestroyFramebuffer(pGFXEngine->vkDevice, pGFXEngine->vkFramebuffers[i], NULL);
 //     }
-//     free(pGFXDevice->vkFramebuffers);
+//     TickernelFree(pGFXEngine->vkFramebuffers);
 // }
 
-static void CreateSemaphores(GFXDevice *pGFXDevice)
+static void CreateSemaphores(GFXEngine *pGFXEngine)
 {
     VkResult result = VK_SUCCESS;
-    FILE *logStream = pGFXDevice->logStream;
+
     VkSemaphoreCreateInfo semaphoreCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
         .pNext = NULL,
         .flags = 0,
     };
-    VkDevice vkDevice = pGFXDevice->vkDevice;
+    VkDevice vkDevice = pGFXEngine->vkDevice;
 
     VkFenceCreateInfo fenceCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
         .pNext = NULL,
         .flags = VK_FENCE_CREATE_SIGNALED_BIT,
     };
-    pGFXDevice->imageAvailableSemaphores = malloc(sizeof(VkSemaphore) * pGFXDevice->waitFrameCount);
-    pGFXDevice->renderFinishedSemaphores = malloc(sizeof(VkSemaphore) * pGFXDevice->waitFrameCount);
-    pGFXDevice->renderFinishedFences = malloc(sizeof(VkFence) * pGFXDevice->waitFrameCount);
-    for (uint32_t i = 0; i < pGFXDevice->waitFrameCount; i++)
+    pGFXEngine->imageAvailableSemaphores = TKNMalloc(sizeof(VkSemaphore) * pGFXEngine->waitFrameCount);
+    pGFXEngine->renderFinishedSemaphores = TKNMalloc(sizeof(VkSemaphore) * pGFXEngine->waitFrameCount);
+    pGFXEngine->renderFinishedFences = TKNMalloc(sizeof(VkFence) * pGFXEngine->waitFrameCount);
+    for (uint32_t i = 0; i < pGFXEngine->waitFrameCount; i++)
     {
-        result = vkCreateSemaphore(vkDevice, &semaphoreCreateInfo, NULL, &pGFXDevice->imageAvailableSemaphores[i]);
-        TRY_THROW_VULKAN_ERROR(result);
-        result = vkCreateSemaphore(vkDevice, &semaphoreCreateInfo, NULL, &pGFXDevice->renderFinishedSemaphores[i]);
-        TRY_THROW_VULKAN_ERROR(result);
-        result = vkCreateFence(vkDevice, &fenceCreateInfo, NULL, &pGFXDevice->renderFinishedFences[i]);
-        TRY_THROW_VULKAN_ERROR(result);
+        result = vkCreateSemaphore(vkDevice, &semaphoreCreateInfo, NULL, &pGFXEngine->imageAvailableSemaphores[i]);
+        TryThrowVulkanError(result);
+        result = vkCreateSemaphore(vkDevice, &semaphoreCreateInfo, NULL, &pGFXEngine->renderFinishedSemaphores[i]);
+        TryThrowVulkanError(result);
+        result = vkCreateFence(vkDevice, &fenceCreateInfo, NULL, &pGFXEngine->renderFinishedFences[i]);
+        TryThrowVulkanError(result);
     }
 }
 
-static void DestroySemaphores(GFXDevice *pGFXDevice)
+static void DestroySemaphores(GFXEngine *pGFXEngine)
 {
-    VkDevice vkDevice = pGFXDevice->vkDevice;
-    for (uint32_t i = 0; i < pGFXDevice->waitFrameCount; i++)
+    VkDevice vkDevice = pGFXEngine->vkDevice;
+    for (uint32_t i = 0; i < pGFXEngine->waitFrameCount; i++)
     {
-        vkDestroySemaphore(vkDevice, pGFXDevice->imageAvailableSemaphores[i], NULL);
-        vkDestroySemaphore(vkDevice, pGFXDevice->renderFinishedSemaphores[i], NULL);
-        vkDestroyFence(vkDevice, pGFXDevice->renderFinishedFences[i], NULL);
+        vkDestroySemaphore(vkDevice, pGFXEngine->imageAvailableSemaphores[i], NULL);
+        vkDestroySemaphore(vkDevice, pGFXEngine->renderFinishedSemaphores[i], NULL);
+        vkDestroyFence(vkDevice, pGFXEngine->renderFinishedFences[i], NULL);
     }
-    free(pGFXDevice->imageAvailableSemaphores);
-    free(pGFXDevice->renderFinishedSemaphores);
-    free(pGFXDevice->renderFinishedFences);
+    TKNFree(pGFXEngine->imageAvailableSemaphores);
+    TKNFree(pGFXEngine->renderFinishedSemaphores);
+    TKNFree(pGFXEngine->renderFinishedFences);
 }
 
-static void RecreateSwapchain(GFXDevice *pGFXDevice)
+static void RecreateSwapchain(GFXEngine *pGFXEngine)
 {
     VkResult result = VK_SUCCESS;
-    FILE *logStream = pGFXDevice->logStream;
+
     int width, height;
-    glfwGetFramebufferSize(pGFXDevice->pGLFWWindow, &width, &height);
+    glfwGetFramebufferSize(pGFXEngine->pGLFWWindow, &width, &height);
     while (0 == width || 0 == height)
     {
-        glfwGetFramebufferSize(pGFXDevice->pGLFWWindow, &width, &height);
+        glfwGetFramebufferSize(pGFXEngine->pGLFWWindow, &width, &height);
         glfwWaitEvents();
     }
 
-    result = vkDeviceWaitIdle(pGFXDevice->vkDevice);
-    TRY_THROW_VULKAN_ERROR(result);
+    result = vkDeviceWaitIdle(pGFXEngine->vkDevice);
+    TryThrowVulkanError(result);
 
-    DestroyDepthResources(pGFXDevice);
-    DestroySwapchain(pGFXDevice);
+    DestroyDepthResources(pGFXEngine);
+    DestroySwapchain(pGFXEngine);
 
-    CreateSwapchain(pGFXDevice);
-    CreateDepthResources(pGFXDevice);
+    CreateSwapchain(pGFXEngine);
+    CreateDepthResources(pGFXEngine);
 
-    pGFXDevice->hasRecreateSwapchain = true;
+    pGFXEngine->hasRecreateSwapchain = true;
 }
 
-static void CreateCommandPools(GFXDevice *pGFXDevice)
+static void CreateCommandPools(GFXEngine *pGFXEngine)
 {
-    FILE *logStream = pGFXDevice->logStream;
-    pGFXDevice->vkCommandPools = malloc(sizeof(VkCommandBuffer) * pGFXDevice->queueFamilyPropertyCount);
+
+    pGFXEngine->vkCommandPools = TKNMalloc(sizeof(VkCommandBuffer) * pGFXEngine->queueFamilyPropertyCount);
 
     VkCommandPoolCreateInfo vkCommandPoolCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
         .pNext = NULL,
         .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
-        .queueFamilyIndex = pGFXDevice->graphicQueueFamilyIndex,
+        .queueFamilyIndex = pGFXEngine->graphicQueueFamilyIndex,
     };
-    VkResult result = vkCreateCommandPool(pGFXDevice->vkDevice, &vkCommandPoolCreateInfo, NULL, &pGFXDevice->vkCommandPools[pGFXDevice->graphicQueueFamilyIndex]);
-    TRY_THROW_VULKAN_ERROR(result);
+    VkResult result = vkCreateCommandPool(pGFXEngine->vkDevice, &vkCommandPoolCreateInfo, NULL, &pGFXEngine->vkCommandPools[pGFXEngine->graphicQueueFamilyIndex]);
+    TryThrowVulkanError(result);
 }
 
-static void DestroyCommandPools(GFXDevice *pGFXDevice)
+static void DestroyCommandPools(GFXEngine *pGFXEngine)
 {
-    for (size_t i = 0; i < pGFXDevice->queueFamilyPropertyCount; i++)
+    for (size_t i = 0; i < pGFXEngine->queueFamilyPropertyCount; i++)
     {
-        VkCommandPool vkCommandPool = pGFXDevice->vkCommandPools[i];
+        VkCommandPool vkCommandPool = pGFXEngine->vkCommandPools[i];
         if (vkCommandPool != NULL)
         {
-            vkDestroyCommandPool(pGFXDevice->vkDevice, pGFXDevice->vkCommandPools[i], NULL);
+            vkDestroyCommandPool(pGFXEngine->vkDevice, pGFXEngine->vkCommandPools[i], NULL);
         }
     }
-    free(pGFXDevice->vkCommandPools);
+    TKNFree(pGFXEngine->vkCommandPools);
 }
 
-static void WaitForGPU(GFXDevice *pGFXDevice)
+static void WaitForGPU(GFXEngine *pGFXEngine)
 {
     VkResult result = VK_SUCCESS;
-    FILE *logStream = pGFXDevice->logStream;
+
     // Wait for gpu
-    uint32_t frameIndex = pGFXDevice->frameIndex;
-    result = vkWaitForFences(pGFXDevice->vkDevice, 1, &pGFXDevice->renderFinishedFences[frameIndex], VK_TRUE, UINT64_MAX);
-    TRY_THROW_VULKAN_ERROR(result);
-    result = vkResetFences(pGFXDevice->vkDevice, 1, &pGFXDevice->renderFinishedFences[frameIndex]);
-    TRY_THROW_VULKAN_ERROR(result);
+    uint32_t frameIndex = pGFXEngine->frameIndex;
+    result = vkWaitForFences(pGFXEngine->vkDevice, 1, &pGFXEngine->renderFinishedFences[frameIndex], VK_TRUE, UINT64_MAX);
+    TryThrowVulkanError(result);
+    result = vkResetFences(pGFXEngine->vkDevice, 1, &pGFXEngine->renderFinishedFences[frameIndex]);
+    TryThrowVulkanError(result);
 }
 
-static void AcquireImage(GFXDevice *pGFXDevice)
+static void AcquireImage(GFXEngine *pGFXEngine)
 {
-    FILE *logStream = pGFXDevice->logStream;
+
     VkResult result = VK_SUCCESS;
-    VkDevice vkDevice = pGFXDevice->vkDevice;
-    uint32_t frameIndex = pGFXDevice->frameIndex;
+    VkDevice vkDevice = pGFXEngine->vkDevice;
+    uint32_t frameIndex = pGFXEngine->frameIndex;
     // Acquire next image
-    result = vkAcquireNextImageKHR(vkDevice, pGFXDevice->vkSwapchain, UINT64_MAX, pGFXDevice->imageAvailableSemaphores[frameIndex], VK_NULL_HANDLE, &pGFXDevice->acquiredImageIndex);
+    result = vkAcquireNextImageKHR(vkDevice, pGFXEngine->vkSwapchain, UINT64_MAX, pGFXEngine->imageAvailableSemaphores[frameIndex], VK_NULL_HANDLE, &pGFXEngine->acquiredImageIndex);
     if (VK_SUCCESS == result || VK_SUBOPTIMAL_KHR == result)
     {
         return;
     }
     else if (VK_ERROR_OUT_OF_DATE_KHR == result)
     {
-        RecreateSwapchain(pGFXDevice);
+        RecreateSwapchain(pGFXEngine);
         return;
     }
     else
     {
-        TRY_THROW_VULKAN_ERROR(result);
+        TryThrowVulkanError(result);
     }
 }
 
-static void SubmitCommandBuffers(GFXDevice *pGFXDevice)
+static void SubmitCommandBuffers(GFXEngine *pGFXEngine)
 {
     VkResult result = VK_SUCCESS;
-    FILE *logStream = pGFXDevice->logStream;
-    VkDevice vkDevice = pGFXDevice->vkDevice;
-    uint32_t frameIndex = pGFXDevice->frameIndex;
+
+    VkDevice vkDevice = pGFXEngine->vkDevice;
+    uint32_t frameIndex = pGFXEngine->frameIndex;
     // Submit workflow...
     VkSubmitInfo submitInfo = {
         .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
         .pNext = NULL,
         .waitSemaphoreCount = 1,
-        .pWaitSemaphores = (VkSemaphore[]){pGFXDevice->imageAvailableSemaphores[frameIndex]},
+        .pWaitSemaphores = (VkSemaphore[]){pGFXEngine->imageAvailableSemaphores[frameIndex]},
         .pWaitDstStageMask = (VkPipelineStageFlags[]){VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT},
-        .commandBufferCount = pGFXDevice->vkCommandBufferCount,
-        .pCommandBuffers = pGFXDevice->vkCommandBuffers,
+        .commandBufferCount = pGFXEngine->vkCommandBufferCount,
+        .pCommandBuffers = pGFXEngine->vkCommandBuffers,
         .signalSemaphoreCount = 1,
-        .pSignalSemaphores = (VkSemaphore[]){pGFXDevice->renderFinishedSemaphores[frameIndex]},
+        .pSignalSemaphores = (VkSemaphore[]){pGFXEngine->renderFinishedSemaphores[frameIndex]},
     };
-    result = vkQueueSubmit(pGFXDevice->vkGraphicQueue, 1, &submitInfo, pGFXDevice->renderFinishedFences[frameIndex]);
-    TRY_THROW_VULKAN_ERROR(result);
+    result = vkQueueSubmit(pGFXEngine->vkGraphicQueue, 1, &submitInfo, pGFXEngine->renderFinishedFences[frameIndex]);
+    TryThrowVulkanError(result);
 }
 
-static void Present(GFXDevice *pGFXDevice)
+static void Present(GFXEngine *pGFXEngine)
 {
     VkResult result = VK_SUCCESS;
-    FILE *logStream = pGFXDevice->logStream;
-    uint32_t frameIndex = pGFXDevice->frameIndex;
+
+    uint32_t frameIndex = pGFXEngine->frameIndex;
     // Present
     VkPresentInfoKHR presentInfo = {
         .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
         .pNext = NULL,
         .waitSemaphoreCount = 1,
-        .pWaitSemaphores = (VkSemaphore[]){pGFXDevice->renderFinishedSemaphores[frameIndex]},
+        .pWaitSemaphores = (VkSemaphore[]){pGFXEngine->renderFinishedSemaphores[frameIndex]},
         .swapchainCount = 1,
-        .pSwapchains = (VkSwapchainKHR[]){pGFXDevice->vkSwapchain},
-        .pImageIndices = &pGFXDevice->acquiredImageIndex,
+        .pSwapchains = (VkSwapchainKHR[]){pGFXEngine->vkSwapchain},
+        .pImageIndices = &pGFXEngine->acquiredImageIndex,
         .pResults = NULL,
     };
-    result = vkQueuePresentKHR(pGFXDevice->vkPresentQueue, &presentInfo);
-    TRY_THROW_VULKAN_ERROR(result);
+    result = vkQueuePresentKHR(pGFXEngine->vkPresentQueue, &presentInfo);
+    TryThrowVulkanError(result);
 }
 
-void StartGFXDevice(GFXDevice *pGFXDevice)
+void StartGFXEngine(GFXEngine *pGFXEngine)
 {
-    pGFXDevice->vkCommandBuffers = malloc(sizeof(VkCommandBuffer) * pGFXDevice->maxCommandBufferListCount);
-    CreateGLFWWindow(pGFXDevice);
-    CreateVkInstance(pGFXDevice);
-    CreateVKSurface(pGFXDevice);
-    PickPhysicalDevice(pGFXDevice);
-    CreateLogicalDevice(pGFXDevice);
-    CreateSwapchain(pGFXDevice);
-    CreateDepthResources(pGFXDevice);
-    CreateSemaphores(pGFXDevice);
-    CreateCommandPools(pGFXDevice);
-    // CreateRenderPass(pGFXDevice);
-    // CreateFramebuffers(pGFXDevice);
+    pGFXEngine->vkCommandBuffers = TKNMalloc(sizeof(VkCommandBuffer) * pGFXEngine->maxCommandBufferListCount);
+    CreateGLFWWindow(pGFXEngine);
+    CreateVkInstance(pGFXEngine);
+    CreateVKSurface(pGFXEngine);
+    PickPhysicalDevice(pGFXEngine);
+    CreateLogicalDevice(pGFXEngine);
+    CreateSwapchain(pGFXEngine);
+    CreateDepthResources(pGFXEngine);
+    CreateSemaphores(pGFXEngine);
+    CreateCommandPools(pGFXEngine);
+    // CreateRenderPass(pGFXEngine);
+    // CreateFramebuffers(pGFXEngine);
 }
 
-void UpdateGFXDevice(GFXDevice *pGFXDevice)
+void UpdateGFXEngine(GFXEngine *pGFXEngine)
 {
-    pGFXDevice->frameIndex = pGFXDevice->frameCount % pGFXDevice->waitFrameCount;
+    pGFXEngine->frameIndex = pGFXEngine->frameCount % pGFXEngine->waitFrameCount;
 
-    WaitForGPU(pGFXDevice);
-    AcquireImage(pGFXDevice);
-    SubmitCommandBuffers(pGFXDevice);
-    Present(pGFXDevice);
+    WaitForGPU(pGFXEngine);
+    AcquireImage(pGFXEngine);
+    SubmitCommandBuffers(pGFXEngine);
+    Present(pGFXEngine);
 
-    pGFXDevice->frameCount++;
+    pGFXEngine->frameCount++;
 }
 
-void EndGFXDevice(GFXDevice *pGFXDevice)
+void EndGFXEngine(GFXEngine *pGFXEngine)
 {
-    // DestroyFramebuffers(pGFXDevice);
-    // DestroyRenderPass(pGFXDevice);
-    DestroyCommandPools(pGFXDevice);
-    DestroySemaphores(pGFXDevice);
-    DestroyDepthResources(pGFXDevice);
-    DestroySwapchain(pGFXDevice);
-    DestroyLogicalDevice(pGFXDevice);
+    // DestroyFramebuffers(pGFXEngine);
+    // DestroyRenderPass(pGFXEngine);
+    DestroyCommandPools(pGFXEngine);
+    DestroySemaphores(pGFXEngine);
+    DestroyDepthResources(pGFXEngine);
+    DestroySwapchain(pGFXEngine);
+    DestroyLogicalDevice(pGFXEngine);
     // Destroy vkPhysicsDevice
-    DestroyVKSurface(pGFXDevice);
-    DestroyVKInstance(pGFXDevice);
-    DestroyGLFWWindow(pGFXDevice);
-    free(pGFXDevice->vkCommandBuffers);
+    DestroyVKSurface(pGFXEngine);
+    DestroyVKInstance(pGFXEngine);
+    DestroyGLFWWindow(pGFXEngine);
+    TKNFree(pGFXEngine->vkCommandBuffers);
 }

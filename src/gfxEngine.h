@@ -7,14 +7,9 @@
 #include <vulkan/vulkan.h>
 #define GLFW_INCLUDE_VULKAN
 #include <glfw3.h>
+#include <tickernelCore.h>
 
-#define TRY_THROW_VULKAN_ERROR(vkResult)             \
-    if (vkResult != VK_SUCCESS)                      \
-    {                                                \
-        printf("Vulkan error code: %d\n", vkResult); \
-    }
-
-typedef struct GFXDeviceStruct
+typedef struct GFXEngineStruct
 {
     // Config
     bool enableValidationLayers;
@@ -25,9 +20,8 @@ typedef struct GFXDeviceStruct
     VkPresentModeKHR targetPresentMode;
     uint32_t targetWaitFrameCount;
     uint32_t maxCommandBufferListCount;
-    // Runtime
-    FILE *logStream;
 
+    // Runtime
     GLFWwindow *pGLFWWindow;
     VkInstance vkInstance;
     VkSurfaceKHR vkSurface;
@@ -63,8 +57,8 @@ typedef struct GFXDeviceStruct
     uint32_t frameIndex;
 
     bool hasRecreateSwapchain;
-} GFXDevice;
+} GFXEngine;
 
-void StartGFXDevice(GFXDevice *pGFXDevice);
-void UpdateGFXDevice(GFXDevice *pGFXDevice);
-void EndGFXDevice(GFXDevice *pGFXDevice);
+void StartGFXEngine(GFXEngine *pGFXEngine);
+void UpdateGFXEngine(GFXEngine *pGFXEngine);
+void EndGFXEngine(GFXEngine *pGFXEngine);

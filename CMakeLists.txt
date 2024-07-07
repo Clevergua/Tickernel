@@ -8,18 +8,21 @@ message("${CMAKE_BUILD_TYPE}")
 find_package(Vulkan REQUIRED)
 
 find_library(GLFW3_LIBRARY NAMES "libglfw.3.dylib" "glfw3.dll" "glfw3dll.lib" PATHS ${CMAKE_CURRENT_SOURCE_DIR}/lib/glfw3)
+find_library(LUA_LIBRARY NAMES "lualib53.dylib" "liblua.dll" "liblua.lib" PATHS ${CMAKE_CURRENT_SOURCE_DIR}/lib/lua)
 
 file(GLOB_RECURSE SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/*.c)
 
 set(HEADER_DIRS
  ${Vulkan_INCLUDE_DIRS}
  ${CMAKE_CURRENT_SOURCE_DIR}/include/cglm
+ ${CMAKE_SOURCE_DIR}/include/lua
  ${CMAKE_CURRENT_SOURCE_DIR}/include/glfw3
  ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
 set(LIBRARYS 
  ${Vulkan_LIBRARIES}
  ${GLFW3_LIBRARY}
+ ${LUA_LIBRARY}
  ${CGLM_LIBRARY})
 
 add_executable(${PROJECT_NAME} ${SOURCES})
