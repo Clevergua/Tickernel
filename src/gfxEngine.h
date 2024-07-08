@@ -18,7 +18,6 @@ typedef struct GFXEngineStruct
     int width;
     int targetSwapchainImageCount;
     VkPresentModeKHR targetPresentMode;
-    uint32_t targetWaitFrameCount;
     uint32_t maxCommandBufferListCount;
 
     // Runtime

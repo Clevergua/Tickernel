@@ -11,7 +11,6 @@ int main()
         .width = 1920,
         .height = 1080,
         .targetSwapchainImageCount = 3,
-        .targetWaitFrameCount = 2,
         .maxCommandBufferListCount = 512,
         // Runtime:
         .pGLFWWindow = NULL,
