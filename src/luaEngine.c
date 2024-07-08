@@ -67,7 +67,7 @@ void StartLua(LuaEngine *pLuaEngine, const char *assetPath)
 void UpdateLua(LuaEngine *pLuaEngine)
 {
     lua_State *pLuaState = pLuaEngine->pLuaState;
-
+    
     int startFunctionType = lua_getfield(pLuaState, -1, "Update");
     AssertLuaType(startFunctionType, LUA_TFUNCTION);
     int luaResult = lua_pcall(pLuaState, 0, 0, 0);

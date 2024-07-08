@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 3.21)
 project(Tickernel VERSION 1.0 LANGUAGES C)
-set(C_STANDARD 11)
-set(C_STANDARD_REQUIRED True)
+
 # Debug or Release
 message("${CMAKE_BUILD_TYPE}")
 
@@ -26,6 +25,7 @@ set(LIBRARYS
  ${CGLM_LIBRARY})
 
 add_executable(${PROJECT_NAME} ${SOURCES})
+set_property(TARGET ${PROJECT_NAME} PROPERTY C_STANDARD 11)
 message("   HEADER_DIRS:${HEADER_DIRS}")
 target_include_directories(${PROJECT_NAME} PUBLIC ${HEADER_DIRS})
 message("   LIBRARYS:${LIBRARYS}")

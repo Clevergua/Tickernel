@@ -615,19 +615,6 @@ static void CreateSwapchain(GFXEngine *pGFXEngine)
     {
         CreateImageView(pGFXEngine, pGFXEngine->swapchainImages[i], pGFXEngine->surfaceFormat.format, VK_IMAGE_ASPECT_COLOR_BIT, &pGFXEngine->swapchainImageViews[i]);
     }
-
-    if (pGFXEngine->targetWaitFrameCount > pGFXEngine->swapchainImageCount)
-    {
-        pGFXEngine->waitFrameCount = pGFXEngine->swapchainImageCount;
-    }
-    else if (pGFXEngine->targetWaitFrameCount < 1)
-    {
-        pGFXEngine->waitFrameCount = 1;
-    }
-    else
-    {
-        pGFXEngine->waitFrameCount = pGFXEngine->targetWaitFrameCount;
-    }
 }
 static void DestroySwapchain(GFXEngine *pGFXEngine)
 {
@@ -753,88 +740,88 @@ static void DestroyDepthResources(GFXEngine *pGFXEngine)
     vkFreeMemory(vkDevice, pGFXEngine->depthImageMemory, NULL);
 }
 
-static void CreateRenderPass(GFXEngine *pGFXEngine, VkRenderPass *pVkRenderPass)
-{
-    VkResult result = VK_SUCCESS;
-    VkAttachmentDescription colorAttachmentDescription = {
-        .flags = 0,
-        .format = pGFXEngine->surfaceFormat.format,
-        .samples = VK_SAMPLE_COUNT_1_BIT,
-        .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
-        .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
-        .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
-        .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
-        .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-        .finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-    };
+// static void CreateRenderPass(GFXEngine *pGFXEngine, VkRenderPass *pVkRenderPass)
+// {
+//     VkResult result = VK_SUCCESS;
+//     VkAttachmentDescription colorAttachmentDescription = {
+//         .flags = 0,
+//         .format = pGFXEngine->surfaceFormat.format,
+//         .samples = VK_SAMPLE_COUNT_1_BIT,
+//         .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+//         .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+//         .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+//         .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+//         .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+//         .finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+//     };
 
-    VkAttachmentDescription depthAttachmentDescription = {
-        .flags = 0,
-        .format = pGFXEngine->surfaceFormat.format,
-        .samples = VK_SAMPLE_COUNT_1_BIT,
-        .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
-        .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
-        .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
-        .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
-        .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-        .finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-    };
+//     VkAttachmentDescription depthAttachmentDescription = {
+//         .flags = 0,
+//         .format = pGFXEngine->surfaceFormat.format,
+//         .samples = VK_SAMPLE_COUNT_1_BIT,
+//         .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+//         .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+//         .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+//         .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+//         .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+//         .finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+//     };
 
-    VkAttachmentReference colorAttachmentReference = {
-        .attachment = 0,
-        .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-    };
-    VkAttachmentReference depthAttachmentReference = {
-        .attachment = 1,
-        .layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
-    };
+//     VkAttachmentReference colorAttachmentReference = {
+//         .attachment = 0,
+//         .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+//     };
+//     VkAttachmentReference depthAttachmentReference = {
+//         .attachment = 1,
+//         .layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+//     };
 
-    VkSubpassDescription subpassDescription = {
-        .flags = 0,
-        .pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
-        .inputAttachmentCount = 0,
-        .pInputAttachments = NULL,
-        .colorAttachmentCount = 1,
-        .pColorAttachments = &colorAttachmentReference,
-        .pResolveAttachments = NULL,
-        .pDepthStencilAttachment = &depthAttachmentReference,
-        .preserveAttachmentCount = 0,
-        .pPreserveAttachments = NULL,
-    };
+//     VkSubpassDescription subpassDescription = {
+//         .flags = 0,
+//         .pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
+//         .inputAttachmentCount = 0,
+//         .pInputAttachments = NULL,
+//         .colorAttachmentCount = 1,
+//         .pColorAttachments = &colorAttachmentReference,
+//         .pResolveAttachments = NULL,
+//         .pDepthStencilAttachment = &depthAttachmentReference,
+//         .preserveAttachmentCount = 0,
+//         .pPreserveAttachments = NULL,
+//     };
 
-    VkSubpassDependency subpassDependency = {
-        .srcSubpass = VK_SUBPASS_EXTERNAL,
-        .dstSubpass = 0,
-        .srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-        .dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-        .srcAccessMask = 0,
-        .dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
-        .dependencyFlags = 0,
-    };
+//     VkSubpassDependency subpassDependency = {
+//         .srcSubpass = VK_SUBPASS_EXTERNAL,
+//         .dstSubpass = 0,
+//         .srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+//         .dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+//         .srcAccessMask = 0,
+//         .dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+//         .dependencyFlags = 0,
+//     };
 
-    VkRenderPassCreateInfo renderPassCreateInfo = {
-        .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
-        .pNext = NULL,
-        .flags = 0,
-        .attachmentCount = 2,
-        .pAttachments = (VkAttachmentDescription[]){
-            colorAttachmentDescription,
-            depthAttachmentDescription,
-        },
-        .subpassCount = 1,
-        .pSubpasses = &subpassDescription,
-        .dependencyCount = 1,
-        .pDependencies = &subpassDependency,
-    };
+//     VkRenderPassCreateInfo renderPassCreateInfo = {
+//         .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
+//         .pNext = NULL,
+//         .flags = 0,
+//         .attachmentCount = 2,
+//         .pAttachments = (VkAttachmentDescription[]){
+//             colorAttachmentDescription,
+//             depthAttachmentDescription,
+//         },
+//         .subpassCount = 1,
+//         .pSubpasses = &subpassDescription,
+//         .dependencyCount = 1,
+//         .pDependencies = &subpassDependency,
+//     };
 
-    result = vkCreateRenderPass(pGFXEngine->vkDevice, &renderPassCreateInfo, NULL, pVkRenderPass);
-    TryThrowVulkanError(result);
-}
+//     result = vkCreateRenderPass(pGFXEngine->vkDevice, &renderPassCreateInfo, NULL, pVkRenderPass);
+//     TryThrowVulkanError(result);
+// }
 
-static void DestroyRenderPass(GFXEngine *pGFXEngine, VkRenderPass *pVkRenderPass)
-{
-    vkDestroyRenderPass(pGFXEngine->vkDevice, *pVkRenderPass, NULL);
-}
+// static void DestroyRenderPass(GFXEngine *pGFXEngine, VkRenderPass *pVkRenderPass)
+// {
+//     vkDestroyRenderPass(pGFXEngine->vkDevice, *pVkRenderPass, NULL);
+// }
 
 // static void CreateFramebuffers(GFXEngine *pGFXEngine)
 // {
@@ -885,10 +872,10 @@ static void CreateSemaphores(GFXEngine *pGFXEngine)
         .pNext = NULL,
         .flags = VK_FENCE_CREATE_SIGNALED_BIT,
     };
-    pGFXEngine->imageAvailableSemaphores = TKNMalloc(sizeof(VkSemaphore) * pGFXEngine->waitFrameCount);
-    pGFXEngine->renderFinishedSemaphores = TKNMalloc(sizeof(VkSemaphore) * pGFXEngine->waitFrameCount);
-    pGFXEngine->renderFinishedFences = TKNMalloc(sizeof(VkFence) * pGFXEngine->waitFrameCount);
-    for (uint32_t i = 0; i < pGFXEngine->waitFrameCount; i++)
+    pGFXEngine->imageAvailableSemaphores = TKNMalloc(sizeof(VkSemaphore) * pGFXEngine->swapchainImageCount);
+    pGFXEngine->renderFinishedSemaphores = TKNMalloc(sizeof(VkSemaphore) * pGFXEngine->swapchainImageCount);
+    pGFXEngine->renderFinishedFences = TKNMalloc(sizeof(VkFence) * pGFXEngine->swapchainImageCount);
+    for (uint32_t i = 0; i < pGFXEngine->swapchainImageCount; i++)
     {
         result = vkCreateSemaphore(vkDevice, &semaphoreCreateInfo, NULL, &pGFXEngine->imageAvailableSemaphores[i]);
         TryThrowVulkanError(result);
@@ -902,7 +889,7 @@ static void CreateSemaphores(GFXEngine *pGFXEngine)
 static void DestroySemaphores(GFXEngine *pGFXEngine)
 {
     VkDevice vkDevice = pGFXEngine->vkDevice;
-    for (uint32_t i = 0; i < pGFXEngine->waitFrameCount; i++)
+    for (uint32_t i = 0; i < pGFXEngine->swapchainImageCount; i++)
     {
         vkDestroySemaphore(vkDevice, pGFXEngine->imageAvailableSemaphores[i], NULL);
         vkDestroySemaphore(vkDevice, pGFXEngine->renderFinishedSemaphores[i], NULL);
@@ -927,14 +914,18 @@ static void RecreateSwapchain(GFXEngine *pGFXEngine)
 
     result = vkDeviceWaitIdle(pGFXEngine->vkDevice);
     TryThrowVulkanError(result);
-
+    
+    // Destroy all vkRenderPasses
+    // Destroy all vkFrameBuffers
+    // Reset all vkCommandBuffers
     DestroyDepthResources(pGFXEngine);
     DestroySwapchain(pGFXEngine);
 
     CreateSwapchain(pGFXEngine);
     CreateDepthResources(pGFXEngine);
-
-    pGFXEngine->hasRecreateSwapchain = true;
+    // Create all vkFrameBuffers
+    // Create all vkRenderPasses
+    // Record all vkCommandBuffers
 }
 
 static void CreateCommandPools(GFXEngine *pGFXEngine)
@@ -979,12 +970,10 @@ static void WaitForGPU(GFXEngine *pGFXEngine)
 
 static void AcquireImage(GFXEngine *pGFXEngine)
 {
-
     VkResult result = VK_SUCCESS;
     VkDevice vkDevice = pGFXEngine->vkDevice;
-    uint32_t frameIndex = pGFXEngine->frameIndex;
     // Acquire next image
-    result = vkAcquireNextImageKHR(vkDevice, pGFXEngine->vkSwapchain, UINT64_MAX, pGFXEngine->imageAvailableSemaphores[frameIndex], VK_NULL_HANDLE, &pGFXEngine->acquiredImageIndex);
+    result = vkAcquireNextImageKHR(vkDevice, pGFXEngine->vkSwapchain, UINT64_MAX, pGFXEngine->imageAvailableSemaphores[pGFXEngine->frameIndex], VK_NULL_HANDLE, &pGFXEngine->acquiredImageIndex);
     if (VK_SUCCESS == result || VK_SUBOPTIMAL_KHR == result)
     {
         return;
@@ -1060,7 +1049,7 @@ void StartGFXEngine(GFXEngine *pGFXEngine)
 
 void UpdateGFXEngine(GFXEngine *pGFXEngine)
 {
-    pGFXEngine->frameIndex = pGFXEngine->frameCount % pGFXEngine->waitFrameCount;
+    pGFXEngine->frameIndex = pGFXEngine->frameCount % pGFXEngine->swapchainImageCount;
 
     WaitForGPU(pGFXEngine);
     AcquireImage(pGFXEngine);

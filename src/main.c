@@ -4,6 +4,7 @@ int main()
 {
     getchar();
     GFXEngine gfxEngine = {
+        // Config:
         .enableValidationLayers = true,
         .name = "Tickernel Engine",
         .targetPresentMode = VK_PRESENT_MODE_FIFO_RELAXED_KHR,
@@ -12,7 +13,7 @@ int main()
         .targetSwapchainImageCount = 3,
         .targetWaitFrameCount = 2,
         .maxCommandBufferListCount = 512,
-
+        // Runtime:
         .pGLFWWindow = NULL,
         .vkInstance = NULL,
         .vkSurface = NULL,
@@ -43,10 +44,8 @@ int main()
         .imageAvailableSemaphores = NULL,
         .renderFinishedSemaphores = NULL,
         .renderFinishedFences = NULL,
-        .waitFrameCount = 0,
         .frameCount = 0,
         .frameIndex = -1,
-        .hasRecreateSwapchain = false,
     };
 
     LuaEngine luaEngine = {

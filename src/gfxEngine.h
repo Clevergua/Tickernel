@@ -52,11 +52,8 @@ typedef struct GFXEngineStruct
     VkSemaphore *imageAvailableSemaphores;
     VkSemaphore *renderFinishedSemaphores;
     VkFence *renderFinishedFences;
-    uint32_t waitFrameCount;
     uint32_t frameCount;
     uint32_t frameIndex;
-
-    bool hasRecreateSwapchain;
 } GFXEngine;
 
 void StartGFXEngine(GFXEngine *pGFXEngine);
