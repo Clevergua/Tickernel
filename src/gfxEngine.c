@@ -728,7 +728,6 @@ static void CreateDepthResources(GFXEngine *pGFXEngine)
 {
     FindDepthFormat(pGFXEngine, &pGFXEngine->depthFormat);
     CreateImage(pGFXEngine, pGFXEngine->swapchainExtent.width, pGFXEngine->swapchainExtent.height, pGFXEngine->depthFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &pGFXEngine->depthImage, &pGFXEngine->depthImageMemory);
-
     CreateImageView(pGFXEngine, pGFXEngine->depthImage, pGFXEngine->depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT, &pGFXEngine->depthImageView);
 }
 
@@ -914,18 +913,11 @@ static void RecreateSwapchain(GFXEngine *pGFXEngine)
 
     result = vkDeviceWaitIdle(pGFXEngine->vkDevice);
     TryThrowVulkanError(result);
-    
-    // Destroy all vkRenderPasses
-    // Destroy all vkFrameBuffers
-    // Reset all vkCommandBuffers
+
     DestroyDepthResources(pGFXEngine);
     DestroySwapchain(pGFXEngine);
-
     CreateSwapchain(pGFXEngine);
     CreateDepthResources(pGFXEngine);
-    // Create all vkFrameBuffers
-    // Create all vkRenderPasses
-    // Record all vkCommandBuffers
 }
 
 static void CreateCommandPools(GFXEngine *pGFXEngine)
@@ -968,7 +960,17 @@ static void WaitForGPU(GFXEngine *pGFXEngine)
     TryThrowVulkanError(result);
 }
 
-static void AcquireImage(GFXEngine *pGFXEngine)
+static void RecreateVkGraphicPipelines(GFXEngine *pGFXEngine)
+{
+    VkResult result = VK_SUCCESS;
+    for (uint32_t i = 0; i < pGFXEngine->vkCommandBufferCount; i++)
+    {
+        VkCommandBuffer vkCommandBuffer = pGFXEngine->vkCommandBuffers[i];
+        result = vkResetCommandBuffer(vkCommandBuffer, 0);
+    }
+}
+
+static void AcquireImage(GFXEngine *pGFXEngine, bool *pHasRecreateSwapchain)
 {
     VkResult result = VK_SUCCESS;
     VkDevice vkDevice = pGFXEngine->vkDevice;
@@ -981,6 +983,7 @@ static void AcquireImage(GFXEngine *pGFXEngine)
     else if (VK_ERROR_OUT_OF_DATE_KHR == result)
     {
         RecreateSwapchain(pGFXEngine);
+        *pHasRecreateSwapchain = true;
         return;
     }
     else
@@ -1007,6 +1010,7 @@ static void SubmitCommandBuffers(GFXEngine *pGFXEngine)
         .signalSemaphoreCount = 1,
         .pSignalSemaphores = (VkSemaphore[]){pGFXEngine->renderFinishedSemaphores[frameIndex]},
     };
+
     result = vkQueueSubmit(pGFXEngine->vkGraphicQueue, 1, &submitInfo, pGFXEngine->renderFinishedFences[frameIndex]);
     TryThrowVulkanError(result);
 }
@@ -1031,6 +1035,18 @@ static void Present(GFXEngine *pGFXEngine)
     TryThrowVulkanError(result);
 }
 
+static void UpdateVkCommandBuffers(GFXEngine *pGFXEngine, bool hasRecreateSwapchain)
+{
+    if (hasRecreateSwapchain)
+    {
+        
+    }
+    else
+    {
+
+    }
+}
+
 void StartGFXEngine(GFXEngine *pGFXEngine)
 {
     pGFXEngine->vkCommandBuffers = TKNMalloc(sizeof(VkCommandBuffer) * pGFXEngine->maxCommandBufferListCount);
@@ -1050,9 +1066,10 @@ void StartGFXEngine(GFXEngine *pGFXEngine)
 void UpdateGFXEngine(GFXEngine *pGFXEngine)
 {
     pGFXEngine->frameIndex = pGFXEngine->frameCount % pGFXEngine->swapchainImageCount;
-
+    bool hasRecreateSwapchain = false;
     WaitForGPU(pGFXEngine);
-    AcquireImage(pGFXEngine);
+    AcquireImage(pGFXEngine, &hasRecreateSwapchain);
+    UpdateVkCommandBuffers(pGFXEngine, hasRecreateSwapchain);
     SubmitCommandBuffers(pGFXEngine);
     Present(pGFXEngine);
 

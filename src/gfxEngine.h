@@ -53,6 +53,7 @@ typedef struct GFXEngineStruct
     VkFence *renderFinishedFences;
     uint32_t frameCount;
     uint32_t frameIndex;
+    bool hasRecreateSwapchain;
 } GFXEngine;
 
 void StartGFXEngine(GFXEngine *pGFXEngine);
