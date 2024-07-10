@@ -1,24 +1,12 @@
 
 
-FIXED:
-    畅游9层零妖对面项目:
-        倾斜列表制作
-    畅游天龙:
-        Undefined symbols for architecture arm64:
-        "_UnityPluginLoad", referenced from:
-            -[MyAppController shouldAttachRenderDelegate] in RegisterPlugin.o
-        "_UnityPluginUnload", referenced from:
-            -[MyAppController shouldAttachRenderDelegate] in RegisterPlugin.o
-        ld: symbol(s) not found for architecture arm64
-        clang: error: linker command failed with exit code 1 (use -v to see invocation)
-        不好意思打扰一下，我们xcode有个这个报错，shouldAttachRenderDelegate这个方法如果注释掉调就能编译成功，这个类unity生成的，帮忙给看看
-UNFIXED:
-    完美世界:
-        _UnityPluginLoad未执行
-    完美世界:
-        FMOD报错
+团结引擎打包鸿蒙报错
+灵妖 崩溃日志
+灵妖 华为日志打印
+天龙 崩溃日志
+天龙 输入问题
 
-// int [262144] 测试
+
 
 
 

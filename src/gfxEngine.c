@@ -1039,17 +1039,20 @@ static void UpdateVkCommandBuffers(GFXEngine *pGFXEngine, bool hasRecreateSwapch
 {
     if (hasRecreateSwapchain)
     {
-        
+        // Record all vkCommandBuffers
     }
     else
     {
-
+        // Record new vkCommandBuffers
     }
 }
 
 void StartGFXEngine(GFXEngine *pGFXEngine)
 {
+    pGFXEngine->frameCount = 0,
+    pGFXEngine->vkCommandBufferCount = 0,
     pGFXEngine->vkCommandBuffers = TKNMalloc(sizeof(VkCommandBuffer) * pGFXEngine->maxCommandBufferListCount);
+
     CreateGLFWWindow(pGFXEngine);
     CreateVkInstance(pGFXEngine);
     CreateVKSurface(pGFXEngine);
@@ -1089,5 +1092,6 @@ void EndGFXEngine(GFXEngine *pGFXEngine)
     DestroyVKSurface(pGFXEngine);
     DestroyVKInstance(pGFXEngine);
     DestroyGLFWWindow(pGFXEngine);
+
     TKNFree(pGFXEngine->vkCommandBuffers);
 }

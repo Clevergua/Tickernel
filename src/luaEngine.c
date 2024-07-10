@@ -46,7 +46,6 @@ void StartLua(LuaEngine *pLuaEngine, const char *assetPath)
     lua_getglobal(pLuaState, "package");
     lua_pushstring(pLuaState, packagePath);
     lua_setfield(pLuaState, -2, "path");
-
     lua_pop(pLuaState, 1);
 
     // Do file main.lua

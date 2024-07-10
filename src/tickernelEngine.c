@@ -7,9 +7,21 @@
 static void TickernelStart(TickernelEngine *pTickernelEngine)
 {
     printf("Tickernel Start!\n");
+    pTickernelEngine->pGFXEngine = TKNMalloc(sizeof(GFXEngine));
+    pTickernelEngine->pGFXEngine->enableValidationLayers = true;
+    pTickernelEngine->pGFXEngine->name = "Tickernel Engine";
+    pTickernelEngine->pGFXEngine->targetPresentMode = VK_PRESENT_MODE_FIFO_RELAXED_KHR;
+    pTickernelEngine->pGFXEngine->width = 1920;
+    pTickernelEngine->pGFXEngine->height = 1080;
+    pTickernelEngine->pGFXEngine->targetSwapchainImageCount = 3;
+    pTickernelEngine->pGFXEngine->maxCommandBufferListCount = 512;
+
+    pTickernelEngine->pLuaEngine = TKNMalloc(sizeof(LuaEngine));
+
     pTickernelEngine->assetsPath = TKNMalloc(FILENAME_MAX);
     TKNGetCurrentDirectory(pTickernelEngine->assetsPath, FILENAME_MAX);
     TKNCombinePaths(pTickernelEngine->assetsPath, FILENAME_MAX, "assets");
+
     StartGFXEngine(pTickernelEngine->pGFXEngine);
     StartLua(pTickernelEngine->pLuaEngine, pTickernelEngine->assetsPath);
 }
@@ -25,7 +37,10 @@ static void TickernelEnd(TickernelEngine *pTickernelEngine)
 {
     EndLua(pTickernelEngine->pLuaEngine);
     EndGFXEngine(pTickernelEngine->pGFXEngine);
+
     TKNFree(pTickernelEngine->assetsPath);
+    TKNFree(pTickernelEngine->pLuaEngine);
+    TKNFree(pTickernelEngine->pGFXEngine);
     printf("Tickernel End!\n");
 }
 
