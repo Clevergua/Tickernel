@@ -1,6 +1,6 @@
 #include <tickernelCore.h>
 #include <stdarg.h>
-
+#include <string.h>
 #if PLATFORM_POSIX
 #include <unistd.h>
 void TKNSleep(uint32_t milliseconds)
@@ -12,7 +12,7 @@ void TKNGetCurrentDirectory(char *directroy, size_t size)
 {
     getcwd(directroy, size);
 }
-#define PATH_SEPARATOR "/"
+#define TKN_PATH_SEPARATOR "/"
 #elif PLATFORM_WINDOWS
 #include <windows.h>
 void TKNSleep(uint32_t milliseconds)
@@ -24,7 +24,7 @@ void TKNGetCurrentDirectory(char *directroy, size_t size)
 {
     GetCurrentDirectory(size, directroy);
 }
-#define PATH_SEPARATOR "\\"
+#define TKN_PATH_SEPARATOR "\\"
 #else
 #error "Unknown platform"
 #endif
@@ -39,42 +39,66 @@ void TKNFree(void *block)
     free(block);
 }
 
-bool TKNEndsWith(const char *str, const char *suffix)
+bool TKNStartsWith(const char *str, const char *prefix)
 {
-    if (!str || !suffix)
+    int strLength = strlen(str);
+    int prefixLength = strlen(prefix);
+    if (strLength < prefixLength)
+    {
         return false;
-    size_t strLength = strlen(str);
-    size_t suffixLength = strlen(suffix);
-    if (suffixLength > strLength)
-        return false;
-    return strncmp(str + strLength - suffixLength, suffix, suffixLength) == 0;
+    }
+    else
+    {
+        int result = strncmp(str, prefix, prefixLength);
+        return 0 == result;
+    }
 }
 
-void TKNCombinePaths(char *dstPath, rsize_t size, const char *srcPath, ...)
+bool TKNEndsWith(const char *str, const char *suffix)
 {
-    va_list args;
-    va_start(args, srcPath);
-    const char *currentPath = srcPath;
-    while ((NULL != currentPath))
+    int strLength = strlen(str);
+    int suffixLength = strlen(suffix);
+    if (strLength < suffixLength)
     {
-        if (TKNEndsWith(dstPath, PATH_SEPARATOR))
-        {
-            // continue.
-        }
-        else
-        {
-            errno_t result = strcat_s(dstPath, size, PATH_SEPARATOR);
-        }
-        errno_t result = strcat_s(dstPath, size, currentPath);
-        if (0 == result)
-        {
-            // continue.
-        }
-        else
-        {
-            perror("strcat_s error");
-        }
-        currentPath = va_arg(args, const char *);
+        return false;
     }
-    va_end(args);
+    else
+    {
+        for (int i = 0; i < suffixLength; i++)
+        {
+            if (str[i + strLength - suffixLength] != suffix[i])
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+}
+
+void TKNCombinePaths(char *dstPath, size_t dstPathSize, const char *srcPath)
+{
+    size_t dstPathLength = strlen(dstPath);
+    size_t srcPathLength = strlen(srcPath);
+    if (TKNEndsWith(dstPath, TKN_PATH_SEPARATOR))
+    {
+        if (TKNStartsWith(srcPath, TKN_PATH_SEPARATOR))
+        {
+            size_t separatorLength = strlen(TKN_PATH_SEPARATOR);
+            dstPath[dstPathLength - separatorLength] = '\0';
+            strcat(dstPath, srcPath);
+        }
+        else
+        {
+            strcat(dstPath, srcPath);
+        }
+    }
+    else if (TKNStartsWith(srcPath, TKN_PATH_SEPARATOR))
+    {
+        strcat(dstPath, srcPath);
+    }
+    else
+    {
+        strcat(dstPath, TKN_PATH_SEPARATOR);
+        strcat(dstPath, srcPath);
+    }
 }

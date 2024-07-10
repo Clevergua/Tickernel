@@ -31,8 +31,8 @@ void StartLua(LuaEngine *pLuaEngine, const char *assetPath)
 {
     // Initialize lua assets path.
     pLuaEngine->luaAssetsPath = TKNMalloc(FILENAME_MAX);
-    strcpy_s(pLuaEngine->luaAssetsPath, FILENAME_MAX, assetPath);
-    TKNCombinePaths(pLuaEngine->luaAssetsPath, FILENAME_MAX, "lua", NULL);
+    strcpy(pLuaEngine->luaAssetsPath, assetPath);
+    TKNCombinePaths(pLuaEngine->luaAssetsPath, FILENAME_MAX, "lua");
 
     // New lua state
     pLuaEngine->pLuaState = luaL_newstate();
@@ -42,7 +42,7 @@ void StartLua(LuaEngine *pLuaEngine, const char *assetPath)
     // Set package path
     char packagePath[FILENAME_MAX];
     strcpy_s(packagePath, FILENAME_MAX, pLuaEngine->luaAssetsPath);
-    TKNCombinePaths(packagePath, FILENAME_MAX, "?.lua;", NULL);
+    TKNCombinePaths(packagePath, FILENAME_MAX, "?.lua;");
     lua_getglobal(pLuaState, "package");
     lua_pushstring(pLuaState, packagePath);
     lua_setfield(pLuaState, -2, "path");

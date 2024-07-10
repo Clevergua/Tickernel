@@ -9,5 +9,7 @@ void TKNSleep(uint32_t milliseconds);
 void TKNLog(char const *const _Format, ...);
 void *TKNMalloc(size_t size);
 void TKNFree(void *block);
-void TKNCombinePaths(char *dstPath, rsize_t size, const char *srcPath, ...);
 void TKNGetCurrentDirectory(char *directory, size_t size);
+void TKNCombinePaths(char *dstPath, size_t size, const char *srcPath);
+bool TKNStartsWith(const char *str, const char *prefix);
+bool TKNEndsWith(const char *str, const char *suffix);

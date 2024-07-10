@@ -2,7 +2,8 @@ cmake_minimum_required(VERSION 3.26)
 # set(CMAKE_SYSROOT ON)
 project(Tickernel VERSION 1.1 LANGUAGES C)
 set(CMAKE_C_STANDARD_REQUIRED ON)
-set(CMAKE_C_STANDARD 11)
+# Because of this use c99: https://stackoverflow.com/questions/40829032/how-to-install-c11-compiler-on-mac-os-with-optional-string-functions-included
+set(CMAKE_C_STANDARD 99)
 # Debug or Release
 message(${CMAKE_BUILD_TYPE})
 
