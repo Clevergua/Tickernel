@@ -10,7 +10,6 @@ static void TickernelStart(TickernelEngine *pTickernelEngine)
     pTickernelEngine->assetsPath = TKNMalloc(FILENAME_MAX);
     TKNGetCurrentDirectory(pTickernelEngine->assetsPath, FILENAME_MAX);
     TKNCombinePaths(pTickernelEngine->assetsPath, FILENAME_MAX, "assets");
-
     StartGFXEngine(pTickernelEngine->pGFXEngine);
     StartLua(pTickernelEngine->pLuaEngine, pTickernelEngine->assetsPath);
 }

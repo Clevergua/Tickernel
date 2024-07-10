@@ -61,7 +61,11 @@ int main()
         .pGFXEngine = &gfxEngine,
         .pLuaEngine = &luaEngine,
     };
-    RunTickernelEngine(&tickernelEngine);
+    // RunTickernelEngine(&tickernelEngine);
+    int a[262144];
+    int b[262144];
+    int c[262144];
+
     getchar();
 
     return EXIT_SUCCESS;

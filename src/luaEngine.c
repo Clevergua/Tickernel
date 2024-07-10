@@ -41,7 +41,7 @@ void StartLua(LuaEngine *pLuaEngine, const char *assetPath)
 
     // Set package path
     char packagePath[FILENAME_MAX];
-    strcpy_s(packagePath, FILENAME_MAX, pLuaEngine->luaAssetsPath);
+    strcpy(packagePath, pLuaEngine->luaAssetsPath);
     TKNCombinePaths(packagePath, FILENAME_MAX, "?.lua;");
     lua_getglobal(pLuaState, "package");
     lua_pushstring(pLuaState, packagePath);
@@ -51,8 +51,8 @@ void StartLua(LuaEngine *pLuaEngine, const char *assetPath)
 
     // Do file main.lua
     char luaMainFilePath[FILENAME_MAX];
-    strcpy_s(luaMainFilePath, FILENAME_MAX, pLuaEngine->luaAssetsPath);
-    TKNCombinePaths(luaMainFilePath, FILENAME_MAX, "main.lua", NULL);
+    strcpy(luaMainFilePath, pLuaEngine->luaAssetsPath);
+    TKNCombinePaths(luaMainFilePath, FILENAME_MAX, "main.lua");
     // Put engine state on the stack
     int luaResult = luaL_dofile(pLuaState, luaMainFilePath);
     TryThrowLuaError(luaResult);
