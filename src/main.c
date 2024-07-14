@@ -2,8 +2,6 @@
 #include <assert.h>
 int main()
 {
-
-
     TickernelEngine *pTickernelEngine = TKNMalloc(sizeof(TickernelEngine));
     *pTickernelEngine = (TickernelEngine){
         .targetFrameRate = 1,

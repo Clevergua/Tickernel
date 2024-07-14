@@ -9,6 +9,44 @@
 #include <glfw3.h>
 #include <tickernelCore.h>
 
+typedef enum
+{
+    ColorAttachmentType,
+    DepthAttachmentType,
+    StencilAttachmentType,
+    PositionAttachmentType,
+    NormalAttachmentType,
+    AlbedoAttachmentType,
+    CustomAttachmentType,
+} AttachmentType;
+
+typedef struct GFXCommandCreateInfoStruct
+{
+    uint32_t vkAttachmentCount;
+    const VkAttachmentDescription *vkAttachmentDescriptions;
+    uint32_t vkSubpassDescriptionCount;
+    const VkSubpassDescription *vkSubpassDescriptions;
+    uint32_t vkSubpassDependencyCount;
+    const VkSubpassDependency *vkSubpassDependencies;
+    AttachmentType *attachmentTypes;
+    uint32_t width;
+    uint32_t height;
+    uint32_t layers;
+    VkRect2D renderArea;
+    uint32_t vkClearValueCount;
+    VkClearValue *vkClearValues;
+} GFXCommandCreateInfo;
+
+typedef struct GFXCommandStruct
+{
+    GFXCommandCreateInfo gfxCommandCreateInfo;
+    VkRenderPass vkRenderPass;
+    VkFramebuffer *vkFramebuffers;
+    VkPipeline vkPipeline;
+    VkCommandBuffer vkCommandBuffer;
+    bool isValid;
+} GFXCommand;
+
 typedef struct GFXEngineStruct
 {
     // Config
@@ -54,6 +92,9 @@ typedef struct GFXEngineStruct
     uint32_t frameCount;
     uint32_t frameIndex;
     bool hasRecreateSwapchain;
+
+    GFXCommand *gfxCommands;
+    uint32_t gfxCommandCount;
 } GFXEngine;
 
 void StartGFXEngine(GFXEngine *pGFXEngine);

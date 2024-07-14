@@ -487,7 +487,6 @@ static void ChoosePresentMode(VkPresentModeKHR *supportPresentModes, uint32_t su
 
 static void CreateImageView(GFXEngine *pGFXEngine, VkImage image, VkFormat format, VkImageAspectFlags imageAspectFlags, VkImageView *pImageView)
 {
-
     VkDevice vkDevice = pGFXEngine->vkDevice;
     VkComponentMapping components = {
         .r = VK_COMPONENT_SWIZZLE_IDENTITY,
@@ -1035,15 +1034,176 @@ static void Present(GFXEngine *pGFXEngine)
     TryThrowVulkanError(result);
 }
 
+static void CreateGFXCommand(GFXEngine *pGFXEngine, GFXCommandCreateInfo gfxCommandCreateInfo, GFXCommand *pGFXCommand)
+{
+    VkResult result = VK_SUCCESS;
+    pGFXCommand = TKNMalloc(sizeof(GFXCommand));
+    pGFXCommand->gfxCommandCreateInfo = gfxCommandCreateInfo;
+    pGFXCommand->vkCommandBuffer = NULL;
+    VkRenderPassCreateInfo vkRenderPassCreateInfo = {
+        .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
+        .pNext = NULL,
+        .flags = 0,
+        .attachmentCount = gfxCommandCreateInfo.vkAttachmentCount,
+        .pAttachments = gfxCommandCreateInfo.vkAttachmentDescriptions,
+        .subpassCount = gfxCommandCreateInfo.vkSubpassDescriptionCount,
+        .pSubpasses = gfxCommandCreateInfo.vkSubpassDescriptions,
+        .dependencyCount = gfxCommandCreateInfo.vkSubpassDependencyCount,
+        .pDependencies = gfxCommandCreateInfo.vkSubpassDependencies,
+    };
+    result = vkCreateRenderPass(pGFXEngine->vkDevice, &vkRenderPassCreateInfo, NULL, &pGFXCommand->vkRenderPass);
+}
+
+static void DestroyGFXCommand(GFXEngine *pGFXEngine, GFXCommand *pGFXCommand)
+{
+    vkDestroyRenderPass(pGFXEngine->vkDevice, pGFXCommand->vkRenderPass, NULL);
+    TKNFree(pGFXCommand);
+}
+
+static void InitGFXCommand(GFXEngine *pGFXEngine, GFXCommand *pGFXCommand)
+{
+    VkResult result = VK_SUCCESS;
+    pGFXCommand->vkFramebuffers = TKNMalloc(sizeof(VkFramebuffer) * pGFXEngine->swapchainImageCount);
+    for (uint32_t i = 0; i < pGFXEngine->swapchainImageCount; i++)
+    {
+        VkImageView attachments[pGFXCommand->gfxCommandCreateInfo.vkAttachmentCount];
+        for (uint32_t j = 0; j < pGFXCommand->gfxCommandCreateInfo.vkAttachmentCount; j++)
+        {
+            AttachmentType attachmentType = pGFXCommand->gfxCommandCreateInfo.attachmentTypes[j];
+            if (ColorAttachmentType == attachmentType)
+            {
+                attachments[j] = pGFXEngine->swapchainImageViews[j];
+            }
+            else if (DepthAttachmentType == attachmentType)
+            {
+                attachments[j] = pGFXEngine->depthImageView;
+            }
+            else
+            {
+                printf("AttachmentType error: %d\n", attachmentType);
+                abort();
+            }
+        }
+
+        VkFramebufferCreateInfo framebufferCreateInfo = {
+            .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
+            .pNext = NULL,
+            .flags = 0,
+            .renderPass = pGFXCommand->vkRenderPass,
+            .attachmentCount = pGFXCommand->gfxCommandCreateInfo.vkAttachmentCount,
+            .pAttachments = attachments,
+            .width = pGFXEngine->width,
+            .height = pGFXEngine->height,
+            .layers = 1,
+        };
+        result = vkCreateFramebuffer(pGFXEngine->vkDevice, &framebufferCreateInfo, NULL, &pGFXCommand->vkFramebuffers[i]);
+        TryThrowVulkanError(result);
+        vkcreatepipeline
+    }
+}
+
+static void DeinitGFXCommand(GFXEngine *pGFXEngine, GFXCommand *pGFXCommand)
+{
+    for (uint32_t i = 0; i < pGFXEngine->swapchainImageCount; i++)
+    {
+        vkDestroyFramebuffer(pGFXEngine->vkDevice, pGFXCommand->vkFramebuffers[i], NULL);
+    }
+    TKNFree(pGFXCommand->vkFramebuffers);
+}
+
+static void RecordGFXCommand(GFXEngine *pGFXEngine, GFXCommand *pGFXCommand)
+{
+    VkResult result = VK_SUCCESS;
+    VkCommandBufferBeginInfo vkCommandBufferBeginInfo = {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+        .pNext = NULL,
+        .flags = 0,
+        .pInheritanceInfo = NULL,
+    };
+    VkCommandBuffer vkCommandBuffer = pGFXCommand->vkCommandBuffer;
+    result = vkBeginCommandBuffer(vkCommandBuffer, &vkCommandBufferBeginInfo);
+    TryThrowVulkanError(result);
+
+    VkRenderPassBeginInfo renderPassBeginInfo =
+        {
+            .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
+            .pNext = NULL,
+            .renderPass = pGFXCommand->vkRenderPass,
+            .framebuffer = pGFXCommand->vkFramebuffers[pGFXEngine->acquiredImageIndex],
+            .renderArea = pGFXCommand->gfxCommandCreateInfo.renderArea,
+            .clearValueCount = pGFXCommand->gfxCommandCreateInfo.vkClearValueCount,
+            .pClearValues = pGFXCommand->gfxCommandCreateInfo.vkClearValues,
+        };
+    vkCmdBeginRenderPass(vkCommandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+    vkCmdBindPipeline(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pGFXCommand->vkPipeline);
+    // VkViewport viewport =
+    //     {
+    //         .x = 0.0f,
+    //         .y = 0.0f,
+    //         .width = pGFXEngine->swapchainExtent.width,
+    //         .height = pGFXEngine->swapchainExtent.height,
+    //         .minDepth = 0.0f,
+    //         .maxDepth = 1.0f,
+    //     };
+    // vkCmdSetViewport(vkCommandBuffer, 0, 1, &viewport);
+
+    // VkOffset2D scissorOffset =
+    //     {
+    //         .x = 0,
+    //         .y = 0,
+    //     };
+    // VkRect2D scissor =
+    //     {
+    //         .offset = scissorOffset,
+    //         .extent = pGFXEngine->swapchainExtent,
+    //     };
+    // vkCmdSetScissor(vkCommandBuffer, 0, 1, &scissor);
+    // uint32_t firstBinding = 0;
+    // uint32_t bindingCount = 1;
+    // VkBuffer vertexBuffers[] = {vertexBuffer};
+    // VkDeviceSize offsets[] = {0};
+    // vkCmdBindVertexBuffers(vkCommandBuffer, firstBinding, bindingCount, vertexBuffers, offsets);
+    // vkCmdBindIndexBuffer(vkCommandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+    // vkCmdBindDescriptorSets(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets[currentFrameIndex], 0, NULL);
+    // // vkCmdDraw(commandBuffer, verticesCount, 1, 0, 0);
+    // vkCmdDrawIndexed(vkCommandBuffer, indicesCount, 1, 0, 0, 0);
+
+    vkCmdEndRenderPass(vkCommandBuffer);
+    result = vkEndCommandBuffer(vkCommandBuffer);
+    TryThrowVulkanError(result);
+}
+
 static void UpdateVkCommandBuffers(GFXEngine *pGFXEngine, bool hasRecreateSwapchain)
 {
     if (hasRecreateSwapchain)
     {
         // Record all vkCommandBuffers
+        for (uint32_t i = 0; i < pGFXEngine->gfxCommandCount; i++)
+        {
+            GFXCommand *pGFXCommand = &pGFXEngine->gfxCommands[i];
+            DeinitGFXCommand(pGFXEngine, pGFXCommand);
+            InitGFXCommand(pGFXEngine, pGFXCommand);
+            RecordGFXCommand(pGFXEngine, pGFXCommand);
+        }
     }
     else
     {
         // Record new vkCommandBuffers
+        for (uint32_t i = 0; i < pGFXEngine->gfxCommandCount; i++)
+        {
+            GFXCommand *pGFXCommand = &pGFXEngine->gfxCommands[i];
+            if (pGFXEngine->gfxCommands[i].isValid)
+            {
+                // Skip;
+            }
+            else
+            {
+                InitGFXCommand(pGFXEngine, pGFXCommand);
+                RecordGFXCommand(pGFXEngine, pGFXCommand);
+                pGFXEngine->gfxCommands[i].isValid = true;
+            }
+        }
     }
 }
 
