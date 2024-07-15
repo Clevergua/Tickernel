@@ -35,6 +35,19 @@ typedef struct GFXCommandCreateInfoStruct
     VkRect2D renderArea;
     uint32_t vkClearValueCount;
     VkClearValue *vkClearValues;
+
+    uint32_t vkShaderModuleCreateInfoCount;
+    size_t *codeSizeArray;
+    uint32_t **codeArray;
+    char **codeFunctionNameArray;
+    VkShaderStageFlagBits *stageArray;
+    uint32_t vkVertexInputBindingDescriptionCount;
+    VkVertexInputBindingDescription *vkVertexInputBindingDescriptions;
+    uint32_t vkVertexInputAttributeDescriptionCount;
+    VkVertexInputAttributeDescription *vkVertexInputAttributeDescriptions;
+    VkPrimitiveTopology vkPrimitiveTopology;
+    VkBool32 primitiveRestartEnable;
+    VkViewport viewport;
 } GFXCommandCreateInfo;
 
 typedef struct GFXCommandStruct

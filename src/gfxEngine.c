@@ -1051,7 +1051,180 @@ static void CreateGFXCommand(GFXEngine *pGFXEngine, GFXCommandCreateInfo gfxComm
         .dependencyCount = gfxCommandCreateInfo.vkSubpassDependencyCount,
         .pDependencies = gfxCommandCreateInfo.vkSubpassDependencies,
     };
-    result = vkCreateRenderPass(pGFXEngine->vkDevice, &vkRenderPassCreateInfo, NULL, &pGFXCommand->vkRenderPass);
+    VkDevice vkDevice = pGFXEngine->vkDevice;
+    result = vkCreateRenderPass(vkDevice, &vkRenderPassCreateInfo, NULL, &pGFXCommand->vkRenderPass);
+    TryThrowVulkanError(result);
+
+    uint32_t shaderStageCount = gfxCommandCreateInfo.vkShaderModuleCreateInfoCount;
+    VkPipelineShaderStageCreateInfo pipelineShaderStageCreateInfos[gfxCommandCreateInfo.vkShaderModuleCreateInfoCount];
+    for (uint32_t i = 0; i < gfxCommandCreateInfo.vkShaderModuleCreateInfoCount; i++)
+    {
+        size_t codeSize = gfxCommandCreateInfo.codeSizeArray[i];
+        uint32_t *pCode = gfxCommandCreateInfo.codeArray[i];
+        VkShaderModuleCreateInfo vkShaderModuleCreateInfo = {
+            .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
+            .pNext = NULL,
+            .flags = 0,
+            .codeSize = codeSize,
+            .pCode = pCode,
+        };
+        VkShaderModule vkShaderModule;
+        result = vkCreateShaderModule(vkDevice, &vkShaderModuleCreateInfo, NULL, &vkShaderModule);
+        TryThrowVulkanError(result);
+        VkShaderStageFlagBits stage = gfxCommandCreateInfo.stageArray[i];
+        char *codeFunctionName = gfxCommandCreateInfo.codeFunctionNameArray[i];
+        pipelineShaderStageCreateInfos[i].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+        pipelineShaderStageCreateInfos[i].pNext = NULL;
+        pipelineShaderStageCreateInfos[i].flags = 0;
+        pipelineShaderStageCreateInfos[i].stage = stage;
+        pipelineShaderStageCreateInfos[i].module = vkShaderModule;
+        pipelineShaderStageCreateInfos[i].pName = codeFunctionName;
+        pipelineShaderStageCreateInfos[i].pSpecializationInfo = NULL;
+    }
+
+    uint32_t vertexBindingDescriptionCount = gfxCommandCreateInfo.vkVertexInputBindingDescriptionCount;
+    VkVertexInputBindingDescription *vertexBindingDescriptions = gfxCommandCreateInfo.vkVertexInputBindingDescriptions;
+
+    uint32_t vertexAttributeDescriptionCount = gfxCommandCreateInfo.vkVertexInputAttributeDescriptionCount;
+    VkVertexInputAttributeDescription *vertexAttributeDescriptions = gfxCommandCreateInfo.vkVertexInputAttributeDescriptions;
+
+    VkPipelineVertexInputStateCreateInfo pipelineVertexInputStateCreateInfo = {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
+        .pNext = NULL,
+        .flags = 0,
+        .vertexBindingDescriptionCount = vertexBindingDescriptionCount,
+        .pVertexBindingDescriptions = vertexBindingDescriptions,
+        .vertexAttributeDescriptionCount = vertexAttributeDescriptionCount,
+        .pVertexAttributeDescriptions = vertexAttributeDescriptions,
+    };
+
+    VkPipelineInputAssemblyStateCreateInfo pipelineInputAssemblyStateCreateInfo = {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
+        .pNext = NULL,
+        .flags = 0,
+        .topology = gfxCommandCreateInfo.vkPrimitiveTopology,
+        .primitiveRestartEnable = gfxCommandCreateInfo.primitiveRestartEnable,
+    };
+
+    // VkViewport viewport = gfxCommandCreateInfo.viewport;
+    // VkOffset2D offset = gfxCommandCreateInfo.offset;
+    // VkRect2D scissor = {
+    //     .offset = offset,
+    //     .extent = swapchainExtent,
+    // };
+    VkPipelineViewportStateCreateInfo pipelineViewportStateInfo = {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
+        .pNext = NULL,
+        .flags = 0,
+        .viewportCount = 1,
+        .pViewports = &gfxCommandCreateInfo.viewport,
+        .scissorCount = 1,
+        .pScissors = &gfxCommandCreateInfo.scissor,
+    };
+
+    VkPipelineRasterizationStateCreateInfo pipelineRasterizationStateCreateInfo = {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
+        .pNext = NULL,
+        .flags = 0,
+        .rasterizerDiscardEnable = VK_FALSE,
+        // .polygonMode = VK_POLYGON_MODE_POINT,
+        .polygonMode = VK_POLYGON_MODE_FILL,
+        .cullMode = VK_CULL_MODE_NONE,
+        // .cullMode = VK_CULL_MODE_BACK_BIT,
+        .frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE,
+        .depthBiasEnable = VK_FALSE,
+        .depthBiasConstantFactor = 0,
+        .depthBiasClamp = VK_FALSE,
+        .depthBiasSlopeFactor = 0,
+        .lineWidth = 1.0f,
+    };
+
+    VkPipelineColorBlendAttachmentState pipelineColorBlendAttachmentState = {
+        .blendEnable = VK_TRUE,
+        .srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA,
+        .dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+        .colorBlendOp = VK_BLEND_OP_ADD,
+        .srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE,
+        .dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
+        .alphaBlendOp = VK_BLEND_OP_ADD,
+        .colorWriteMask = VK_COLOR_COMPONENT_A_BIT | VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT,
+    };
+
+    VkPipelineColorBlendStateCreateInfo colorBlendStateCreateInfo = {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
+        .pNext = NULL,
+        .flags = 0,
+        .logicOpEnable = VK_FALSE,
+        .logicOp = VK_LOGIC_OP_COPY,
+        .attachmentCount = 1,
+        .pAttachments = &pipelineColorBlendAttachmentState,
+        .blendConstants[0] = 0.0f,
+        .blendConstants[1] = 0.0f,
+        .blendConstants[2] = 0.0f,
+        .blendConstants[3] = 0.0f,
+    };
+
+    VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+        .pNext = NULL,
+        .flags = 0,
+        .setLayoutCount = 1,
+        .pSetLayouts = &descriptorSetLayout,
+        .pushConstantRangeCount = 0,
+        .pPushConstantRanges = NULL,
+    };
+
+    uint32_t dynamicStateCount = 2;
+    VkDynamicState dynamicStates[] = {
+        VK_DYNAMIC_STATE_VIEWPORT,
+        VK_DYNAMIC_STATE_SCISSOR,
+    };
+    VkPipelineDynamicStateCreateInfo dynamicState = {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO,
+        .pNext = NULL,
+        .flags = 0,
+        .dynamicStateCount = dynamicStateCount,
+        .pDynamicStates = dynamicStates,
+    };
+
+    vkCreatePipelineLayout(vkDevice, &pipelineLayoutCreateInfo, NULL, &pipelineLayout);
+
+    VkPipelineDepthStencilStateCreateInfo pipelineDepthStencilStateCreateInfo = {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
+        .pNext = NULL,
+        .flags = 0,
+        .depthTestEnable = VK_TRUE,
+        .depthWriteEnable = VK_TRUE,
+        .depthCompareOp = VK_COMPARE_OP_LESS,
+        .depthBoundsTestEnable = VK_FALSE,
+        .stencilTestEnable = VK_FALSE,
+        .front = {},
+        .back = {},
+        .minDepthBounds = 0,
+        .maxDepthBounds = 1,
+    };
+    VkGraphicsPipelineCreateInfo pipelineCreateInfo = {
+        .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
+        .pNext = NULL,
+        .flags = 0,
+        .stageCount = shaderStageCount,
+        .pStages = pipelineShaderStageCreateInfos,
+        .pVertexInputState = &pipelineVertexInputStateCreateInfo,
+        .pInputAssemblyState = &pipelineInputAssemblyStateCreateInfo,
+        .pTessellationState = NULL,
+        .pViewportState = &pipelineViewportStateInfo,
+        .pRasterizationState = &pipelineRasterizationStateCreateInfo,
+        .pMultisampleState = NULL,
+        .pDepthStencilState = &pipelineDepthStencilStateCreateInfo,
+        .pColorBlendState = &colorBlendStateCreateInfo,
+        .pDynamicState = &dynamicState,
+        .layout = pipelineLayout,
+        .renderPass = vkRenderPass,
+        .subpass = 0,
+        .basePipelineHandle = VK_NULL_HANDLE,
+        .basePipelineIndex = 0,
+    };
+    return vkCreateGraphicsPipelines(vkDevice, VK_NULL_HANDLE, 1, &pipelineCreateInfo, NULL, &vkPipeline);
 }
 
 static void DestroyGFXCommand(GFXEngine *pGFXEngine, GFXCommand *pGFXCommand)
@@ -1098,7 +1271,6 @@ static void InitGFXCommand(GFXEngine *pGFXEngine, GFXCommand *pGFXCommand)
         };
         result = vkCreateFramebuffer(pGFXEngine->vkDevice, &framebufferCreateInfo, NULL, &pGFXCommand->vkFramebuffers[i]);
         TryThrowVulkanError(result);
-        vkcreatepipeline
     }
 }
 
