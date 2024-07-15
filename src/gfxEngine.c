@@ -1059,8 +1059,8 @@ static void CreateGFXCommand(GFXEngine *pGFXEngine, GFXCommandCreateInfo gfxComm
     VkPipelineShaderStageCreateInfo pipelineShaderStageCreateInfos[gfxCommandCreateInfo.vkShaderModuleCreateInfoCount];
     for (uint32_t i = 0; i < gfxCommandCreateInfo.vkShaderModuleCreateInfoCount; i++)
     {
-        size_t codeSize = gfxCommandCreateInfo.codeSizeArray[i];
-        uint32_t *pCode = gfxCommandCreateInfo.codeArray[i];
+        size_t codeSize = gfxCommandCreateInfo.codeSizes[i];
+        uint32_t *pCode = gfxCommandCreateInfo.codes[i];
         VkShaderModuleCreateInfo vkShaderModuleCreateInfo = {
             .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
             .pNext = NULL,
@@ -1071,8 +1071,8 @@ static void CreateGFXCommand(GFXEngine *pGFXEngine, GFXCommandCreateInfo gfxComm
         VkShaderModule vkShaderModule;
         result = vkCreateShaderModule(vkDevice, &vkShaderModuleCreateInfo, NULL, &vkShaderModule);
         TryThrowVulkanError(result);
-        VkShaderStageFlagBits stage = gfxCommandCreateInfo.stageArray[i];
-        char *codeFunctionName = gfxCommandCreateInfo.codeFunctionNameArray[i];
+        VkShaderStageFlagBits stage = gfxCommandCreateInfo.stages[i];
+        char *codeFunctionName = gfxCommandCreateInfo.codeFunctionNames[i];
         pipelineShaderStageCreateInfos[i].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
         pipelineShaderStageCreateInfos[i].pNext = NULL;
         pipelineShaderStageCreateInfos[i].flags = 0;
@@ -1082,20 +1082,14 @@ static void CreateGFXCommand(GFXEngine *pGFXEngine, GFXCommandCreateInfo gfxComm
         pipelineShaderStageCreateInfos[i].pSpecializationInfo = NULL;
     }
 
-    uint32_t vertexBindingDescriptionCount = gfxCommandCreateInfo.vkVertexInputBindingDescriptionCount;
-    VkVertexInputBindingDescription *vertexBindingDescriptions = gfxCommandCreateInfo.vkVertexInputBindingDescriptions;
-
-    uint32_t vertexAttributeDescriptionCount = gfxCommandCreateInfo.vkVertexInputAttributeDescriptionCount;
-    VkVertexInputAttributeDescription *vertexAttributeDescriptions = gfxCommandCreateInfo.vkVertexInputAttributeDescriptions;
-
     VkPipelineVertexInputStateCreateInfo pipelineVertexInputStateCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
         .pNext = NULL,
         .flags = 0,
-        .vertexBindingDescriptionCount = vertexBindingDescriptionCount,
-        .pVertexBindingDescriptions = vertexBindingDescriptions,
-        .vertexAttributeDescriptionCount = vertexAttributeDescriptionCount,
-        .pVertexAttributeDescriptions = vertexAttributeDescriptions,
+        .vertexBindingDescriptionCount = gfxCommandCreateInfo.vkVertexInputBindingDescriptionCount,
+        .pVertexBindingDescriptions = gfxCommandCreateInfo.vkVertexInputBindingDescriptions,
+        .vertexAttributeDescriptionCount = gfxCommandCreateInfo.vkVertexInputAttributeDescriptionCount,
+        .pVertexAttributeDescriptions = gfxCommandCreateInfo.vkVertexInputAttributeDescriptions,
     };
 
     VkPipelineInputAssemblyStateCreateInfo pipelineInputAssemblyStateCreateInfo = {
@@ -1106,48 +1100,29 @@ static void CreateGFXCommand(GFXEngine *pGFXEngine, GFXCommandCreateInfo gfxComm
         .primitiveRestartEnable = gfxCommandCreateInfo.primitiveRestartEnable,
     };
 
-    // VkViewport viewport = gfxCommandCreateInfo.viewport;
-    // VkOffset2D offset = gfxCommandCreateInfo.offset;
-    // VkRect2D scissor = {
-    //     .offset = offset,
-    //     .extent = swapchainExtent,
-    // };
     VkPipelineViewportStateCreateInfo pipelineViewportStateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
         .pNext = NULL,
         .flags = 0,
-        .viewportCount = 1,
-        .pViewports = &gfxCommandCreateInfo.viewport,
-        .scissorCount = 1,
-        .pScissors = &gfxCommandCreateInfo.scissor,
+        .viewportCount = gfxCommandCreateInfo.viewportCount,
+        .pViewports = gfxCommandCreateInfo.viewports,
+        .scissorCount = gfxCommandCreateInfo.scissorCount,
+        .pScissors = gfxCommandCreateInfo.scissors,
     };
 
     VkPipelineRasterizationStateCreateInfo pipelineRasterizationStateCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
         .pNext = NULL,
         .flags = 0,
-        .rasterizerDiscardEnable = VK_FALSE,
-        // .polygonMode = VK_POLYGON_MODE_POINT,
-        .polygonMode = VK_POLYGON_MODE_FILL,
-        .cullMode = VK_CULL_MODE_NONE,
-        // .cullMode = VK_CULL_MODE_BACK_BIT,
-        .frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE,
-        .depthBiasEnable = VK_FALSE,
-        .depthBiasConstantFactor = 0,
-        .depthBiasClamp = VK_FALSE,
-        .depthBiasSlopeFactor = 0,
-        .lineWidth = 1.0f,
-    };
-
-    VkPipelineColorBlendAttachmentState pipelineColorBlendAttachmentState = {
-        .blendEnable = VK_TRUE,
-        .srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA,
-        .dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
-        .colorBlendOp = VK_BLEND_OP_ADD,
-        .srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE,
-        .dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
-        .alphaBlendOp = VK_BLEND_OP_ADD,
-        .colorWriteMask = VK_COLOR_COMPONENT_A_BIT | VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT,
+        .rasterizerDiscardEnable = gfxCommandCreateInfo.rasterizerDiscardEnable,
+        .polygonMode = gfxCommandCreateInfo.polygonMode,
+        .cullMode = gfxCommandCreateInfo.cullMode,
+        .frontFace = gfxCommandCreateInfo.frontFace,
+        .depthBiasEnable = gfxCommandCreateInfo.depthBiasEnable,
+        .depthBiasConstantFactor = gfxCommandCreateInfo.depthBiasConstantFactor,
+        .depthBiasClamp = gfxCommandCreateInfo.depthBiasClamp,
+        .depthBiasSlopeFactor = gfxCommandCreateInfo.depthBiasSlopeFactor,
+        .lineWidth = gfxCommandCreateInfo.lineWidth,
     };
 
     VkPipelineColorBlendStateCreateInfo colorBlendStateCreateInfo = {
@@ -1156,12 +1131,12 @@ static void CreateGFXCommand(GFXEngine *pGFXEngine, GFXCommandCreateInfo gfxComm
         .flags = 0,
         .logicOpEnable = VK_FALSE,
         .logicOp = VK_LOGIC_OP_COPY,
-        .attachmentCount = 1,
-        .pAttachments = &pipelineColorBlendAttachmentState,
-        .blendConstants[0] = 0.0f,
-        .blendConstants[1] = 0.0f,
-        .blendConstants[2] = 0.0f,
-        .blendConstants[3] = 0.0f,
+        .attachmentCount = gfxCommandCreateInfo.vkPipelineColorBlendAttachmentStateCount,
+        .pAttachments = gfxCommandCreateInfo.vkPipelineColorBlendAttachmentStates,
+        .blendConstants[0] = gfxCommandCreateInfo.blendConstants[0],
+        .blendConstants[1] = gfxCommandCreateInfo.blendConstants[1],
+        .blendConstants[2] = gfxCommandCreateInfo.blendConstants[2],
+        .blendConstants[3] = gfxCommandCreateInfo.blendConstants[3],
     };
 
     VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {

@@ -37,17 +37,35 @@ typedef struct GFXCommandCreateInfoStruct
     VkClearValue *vkClearValues;
 
     uint32_t vkShaderModuleCreateInfoCount;
-    size_t *codeSizeArray;
-    uint32_t **codeArray;
-    char **codeFunctionNameArray;
-    VkShaderStageFlagBits *stageArray;
+    size_t *codeSizes;
+    uint32_t **codes;
+    char **codeFunctionNames;
+    VkShaderStageFlagBits *stages;
     uint32_t vkVertexInputBindingDescriptionCount;
     VkVertexInputBindingDescription *vkVertexInputBindingDescriptions;
     uint32_t vkVertexInputAttributeDescriptionCount;
     VkVertexInputAttributeDescription *vkVertexInputAttributeDescriptions;
     VkPrimitiveTopology vkPrimitiveTopology;
     VkBool32 primitiveRestartEnable;
-    VkViewport viewport;
+    uint32_t viewportCount;
+    VkViewport *viewports;
+    uint32_t scissorCount;
+    VkRect2D *scissors;
+
+    VkBool32 vkBufferCreateInfodepthClampEnable;
+    VkBool32 rasterizerDiscardEnable;
+    VkPolygonMode polygonMode;
+    VkCullModeFlags cullMode;
+    VkFrontFace frontFace;
+    VkBool32 depthBiasEnable;
+    float depthBiasConstantFactor;
+    float depthBiasClamp;
+    float depthBiasSlopeFactor;
+    float lineWidth;
+
+    uint32_t vkPipelineColorBlendAttachmentStateCount;
+    VkPipelineColorBlendAttachmentState *vkPipelineColorBlendAttachmentStates;
+    float blendConstants[4];
 } GFXCommandCreateInfo;
 
 typedef struct GFXCommandStruct
