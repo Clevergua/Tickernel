@@ -48,7 +48,31 @@
 
 
 
-阅读VkRenderPass及CreateGraphicPipeline了解所有参数以及使用方式
-    先实现一个单RenderPass的渲染流程
-    实现一个每帧清理的管线并运行引擎且不报错
-    查看实现后的内存变化
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+确定是否Ontime 还是 reuse
+CommandBuffer获取
+Update处逻辑
+内存监测
+复用RenderPass
+VkCmdFunction接口实现
+实现两个Pipeline: 点云延迟渲染, UI Pipeline
+
+
+Allocator接入

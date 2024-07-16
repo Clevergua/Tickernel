@@ -843,16 +843,6 @@ static void WaitForGPU(GFXEngine *pGFXEngine)
     TryThrowVulkanError(result);
 }
 
-static void RecreateVkGraphicPipelines(GFXEngine *pGFXEngine)
-{
-    VkResult result = VK_SUCCESS;
-    for (uint32_t i = 0; i < pGFXEngine->vkCommandBufferCount; i++)
-    {
-        VkCommandBuffer vkCommandBuffer = pGFXEngine->vkCommandBuffers[i];
-        result = vkResetCommandBuffer(vkCommandBuffer, 0);
-    }
-}
-
 static void AcquireImage(GFXEngine *pGFXEngine, bool *pHasRecreateSwapchain)
 {
     VkResult result = VK_SUCCESS;
@@ -918,10 +908,12 @@ static void Present(GFXEngine *pGFXEngine)
     TryThrowVulkanError(result);
 }
 
-static void GetVkRenderPass(GFXEngine *pGFXEngine, TKNRenderPassConfig tknRenderPassConfig, VkRenderPass *pVkRenderPass)
+static void GetVkRenderPass(GFXEngine *pGFXEngine, TKNPipeline *pTKNPipeline)
 {
     // TOOD: Use cached renderpass;
     VkResult result = VK_SUCCESS;
+    TKNRenderPassConfig tknRenderPassConfig = pTKNPipeline->tknPipelineConfig.tknRenderPassConfig;
+    VkRenderPass *pVkRenderPass = &pTKNPipeline->vkRenderPass;
     VkDevice vkDevice = pGFXEngine->vkDevice;
 
     VkRenderPassCreateInfo vkRenderPassCreateInfo = {
@@ -939,20 +931,27 @@ static void GetVkRenderPass(GFXEngine *pGFXEngine, TKNRenderPassConfig tknRender
     TryThrowVulkanError(result);
 }
 
-static void CreateGFXCommand(GFXEngine *pGFXEngine, TKNPipelineConfig tknPipelineConfig, GFXCommand *pGFXCommand)
+static void ReleaseVkRenderPass(GFXEngine *pGFXEngine, TKNPipeline *pTKNPipeline)
+{
+    // TOOD: Use cached renderpass;
+    vkDestroyRenderPass(pGFXEngine->vkDevice, pTKNPipeline->vkRenderPass, NULL);
+}
+
+static void CreatTKNPipeline(GFXEngine *pGFXEngine, TKNPipelineConfig tknPipelineConfig, TKNPipeline *pTKNPipeline)
 {
     VkResult result = VK_SUCCESS;
     VkDevice vkDevice = pGFXEngine->vkDevice;
 
-    pGFXCommand = TKNMalloc(sizeof(GFXCommand));
-    pGFXCommand->tknPipelineConfig = tknPipelineConfig;
-    pGFXCommand->vkCommandBuffer = NULL;
+    pTKNPipeline = TKNMalloc(sizeof(TKNPipeline));
+    pTKNPipeline->tknPipelineConfig = tknPipelineConfig;
+    pTKNPipeline->vkCommandBuffer = NULL;
 
     TKNRenderPassConfig tknRenderPassConfig = tknPipelineConfig.tknRenderPassConfig;
-    GetVkRenderPass(pGFXEngine, tknRenderPassConfig, &pGFXCommand->vkRenderPass);
+    GetVkRenderPass(pGFXEngine, pTKNPipeline);
 
     uint32_t shaderStageCount = tknPipelineConfig.vkShaderModuleCreateInfoCount;
     VkPipelineShaderStageCreateInfo pipelineShaderStageCreateInfos[tknPipelineConfig.vkShaderModuleCreateInfoCount];
+    pTKNPipeline->vkShaderModules = TKNMalloc(sizeof(VkShaderModule) * tknPipelineConfig.vkShaderModuleCreateInfoCount);
     for (uint32_t i = 0; i < tknPipelineConfig.vkShaderModuleCreateInfoCount; i++)
     {
         size_t codeSize = tknPipelineConfig.codeSizes[i];
@@ -964,8 +963,7 @@ static void CreateGFXCommand(GFXEngine *pGFXEngine, TKNPipelineConfig tknPipelin
             .codeSize = codeSize,
             .pCode = pCode,
         };
-        VkShaderModule vkShaderModule;
-        result = vkCreateShaderModule(vkDevice, &vkShaderModuleCreateInfo, NULL, &vkShaderModule);
+        result = vkCreateShaderModule(vkDevice, &vkShaderModuleCreateInfo, NULL, &pTKNPipeline->vkShaderModules[i]);
         TryThrowVulkanError(result);
         VkShaderStageFlagBits stage = tknPipelineConfig.stages[i];
         char *codeFunctionName = tknPipelineConfig.codeFunctionNames[i];
@@ -973,7 +971,7 @@ static void CreateGFXCommand(GFXEngine *pGFXEngine, TKNPipelineConfig tknPipelin
         pipelineShaderStageCreateInfos[i].pNext = NULL;
         pipelineShaderStageCreateInfos[i].flags = 0;
         pipelineShaderStageCreateInfos[i].stage = stage;
-        pipelineShaderStageCreateInfos[i].module = vkShaderModule;
+        pipelineShaderStageCreateInfos[i].module = pTKNPipeline->vkShaderModules[i];
         pipelineShaderStageCreateInfos[i].pName = codeFunctionName;
         pipelineShaderStageCreateInfos[i].pSpecializationInfo = NULL;
     }
@@ -1050,7 +1048,7 @@ static void CreateGFXCommand(GFXEngine *pGFXEngine, TKNPipelineConfig tknPipelin
         .blendConstants[3] = tknPipelineConfig.blendConstants[3],
     };
 
-    VkDescriptorSetLayout setLayouts[tknPipelineConfig.setLayoutCount];
+    pTKNPipeline->setLayouts = TKNMalloc(sizeof(VkDescriptorSetLayout) * tknPipelineConfig.setLayoutCount);
     for (uint32_t i = 0; i < tknPipelineConfig.setLayoutCount; i++)
     {
         VkDescriptorSetLayoutCreateInfo vkDescriptorSetLayoutCreateInfo = {
@@ -1060,7 +1058,7 @@ static void CreateGFXCommand(GFXEngine *pGFXEngine, TKNPipelineConfig tknPipelin
             .bindingCount = tknPipelineConfig.bindingCounts[i],
             .pBindings = tknPipelineConfig.bindingsArray[i],
         };
-        result = vkCreateDescriptorSetLayout(pGFXEngine->vkDevice, &vkDescriptorSetLayoutCreateInfo, NULL, &setLayouts[i]);
+        result = vkCreateDescriptorSetLayout(pGFXEngine->vkDevice, &vkDescriptorSetLayoutCreateInfo, NULL, &pTKNPipeline->setLayouts[i]);
         TryThrowVulkanError(result);
     }
 
@@ -1069,7 +1067,7 @@ static void CreateGFXCommand(GFXEngine *pGFXEngine, TKNPipelineConfig tknPipelin
         .pNext = NULL,
         .flags = 0,
         .setLayoutCount = tknPipelineConfig.setLayoutCount,
-        .pSetLayouts = setLayouts,
+        .pSetLayouts = pTKNPipeline->setLayouts,
         .pushConstantRangeCount = tknPipelineConfig.pushConstantRangeCount,
         .pPushConstantRanges = tknPipelineConfig.pushConstantRanges,
     };
@@ -1082,7 +1080,7 @@ static void CreateGFXCommand(GFXEngine *pGFXEngine, TKNPipelineConfig tknPipelin
         .pDynamicStates = tknPipelineConfig.dynamicStates,
     };
 
-    result = vkCreatePipelineLayout(vkDevice, &pipelineLayoutCreateInfo, NULL, &pGFXCommand->vkPipelineLayout);
+    result = vkCreatePipelineLayout(vkDevice, &pipelineLayoutCreateInfo, NULL, &pTKNPipeline->vkPipelineLayout);
     TryThrowVulkanError(result);
 
     VkGraphicsPipelineCreateInfo pipelineCreateInfo = {
@@ -1100,28 +1098,45 @@ static void CreateGFXCommand(GFXEngine *pGFXEngine, TKNPipelineConfig tknPipelin
         .pDepthStencilState = &pipelineDepthStencilStateCreateInfo,
         .pColorBlendState = &colorBlendStateCreateInfo,
         .pDynamicState = &dynamicState,
-        .layout = pGFXCommand->vkPipelineLayout,
-        .renderPass = pGFXCommand->vkRenderPass,
+        .layout = pTKNPipeline->vkPipelineLayout,
+        .renderPass = pTKNPipeline->vkRenderPass,
         .subpass = tknPipelineConfig.subpassIndex,
         .basePipelineHandle = VK_NULL_HANDLE,
         .basePipelineIndex = 0,
     };
-    result = vkCreateGraphicsPipelines(vkDevice, VK_NULL_HANDLE, 1, &pipelineCreateInfo, NULL, &pGFXCommand->vkPipeline);
+
+    result = vkCreateGraphicsPipelines(vkDevice, VK_NULL_HANDLE, 1, &pipelineCreateInfo, NULL, &pTKNPipeline->vkPipeline);
     TryThrowVulkanError(result);
 }
 
-static void DestroyGFXCommand(GFXEngine *pGFXEngine, GFXCommand *pGFXCommand)
+static void DestroyTKNPipeline(GFXEngine *pGFXEngine, TKNPipeline *pTKNPipeline)
 {
-    vkDestroyRenderPass(pGFXEngine->vkDevice, pGFXCommand->vkRenderPass, NULL);
-    TKNFree(pGFXCommand);
+    VkDevice vkDevice = pGFXEngine->vkDevice;
+    TKNPipelineConfig tknPipelineConfig = pTKNPipeline->tknPipelineConfig;
+
+    vkDestroyPipeline(vkDevice, pTKNPipeline->vkPipeline, NULL);
+    vkDestroyPipelineLayout(vkDevice, pTKNPipeline->vkPipelineLayout, NULL);
+
+    for (uint32_t i = 0; i < tknPipelineConfig.setLayoutCount; i++)
+    {
+        vkDestroyDescriptorSetLayout(vkDevice, pTKNPipeline->setLayouts[i], NULL);
+    }
+    TKNFree(pTKNPipeline->setLayouts);
+    for (uint32_t i = 0; i < tknPipelineConfig.vkShaderModuleCreateInfoCount; i++)
+    {
+        vkDestroyShaderModule(vkDevice, pTKNPipeline->vkShaderModules[i], NULL);
+    }
+    TKNFree(pTKNPipeline->vkShaderModules);
+    ReleaseVkRenderPass(pGFXEngine, pTKNPipeline);
+    TKNFree(pTKNPipeline);
 }
 
-static void CreateVkFramebuffers(GFXEngine *pGFXEngine, GFXCommand *pGFXCommand)
+static void CreateVkFramebuffers(GFXEngine *pGFXEngine, TKNPipeline *pTKNPipeline)
 {
     VkResult result = VK_SUCCESS;
-    pGFXCommand->vkFramebuffers = TKNMalloc(sizeof(VkFramebuffer) * pGFXEngine->swapchainImageCount);
-    TKNFramebufferConfig tknFramebufferConfig = pGFXCommand->tknFrameBufferConfig;
-    TKNRenderPassConfig tknRenderPassConfig = pGFXCommand->tknPipelineConfig.tknRenderPassConfig;
+    pTKNPipeline->vkFramebuffers = TKNMalloc(sizeof(VkFramebuffer) * pGFXEngine->swapchainImageCount);
+    TKNPipelineConfig tknPipelineConfig = pTKNPipeline->tknPipelineConfig;
+    TKNRenderPassConfig tknRenderPassConfig = tknPipelineConfig.tknRenderPassConfig;
     for (uint32_t i = 0; i < pGFXEngine->swapchainImageCount; i++)
     {
         VkImageView attachments[tknRenderPassConfig.vkAttachmentCount];
@@ -1147,88 +1162,66 @@ static void CreateVkFramebuffers(GFXEngine *pGFXEngine, GFXCommand *pGFXCommand)
             .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
             .pNext = NULL,
             .flags = 0,
-            .renderPass = pGFXCommand->vkRenderPass,
+            .renderPass = pTKNPipeline->vkRenderPass,
             .attachmentCount = tknRenderPassConfig.vkAttachmentCount,
             .pAttachments = attachments,
-            .width = tknFramebufferConfig.width,
-            .height = tknFramebufferConfig.height,
-            .layers = tknFramebufferConfig.layers,
+            .width = tknPipelineConfig.width,
+            .height = tknPipelineConfig.height,
+            .layers = tknPipelineConfig.layers,
         };
-        result = vkCreateFramebuffer(pGFXEngine->vkDevice, &framebufferCreateInfo, NULL, &pGFXCommand->vkFramebuffers[i]);
+        result = vkCreateFramebuffer(pGFXEngine->vkDevice, &framebufferCreateInfo, NULL, &pTKNPipeline->vkFramebuffers[i]);
         TryThrowVulkanError(result);
     }
 }
 
-static void DestroyFramebuffers(GFXEngine *pGFXEngine, GFXCommand *pGFXCommand)
+static void DestroyFramebuffers(GFXEngine *pGFXEngine, TKNPipeline *pTKNPipeline)
 {
     for (uint32_t i = 0; i < pGFXEngine->swapchainImageCount; i++)
     {
-        vkDestroyFramebuffer(pGFXEngine->vkDevice, pGFXCommand->vkFramebuffers[i], NULL);
+        vkDestroyFramebuffer(pGFXEngine->vkDevice, pTKNPipeline->vkFramebuffers[i], NULL);
     }
-    TKNFree(pGFXCommand->vkFramebuffers);
+    TKNFree(pTKNPipeline->vkFramebuffers);
 }
 
-static void RecordGFXCommand(GFXEngine *pGFXEngine, GFXCommand *pGFXCommand)
+static void RecordTKNPipeline(GFXEngine *pGFXEngine, TKNPipeline *pTKNPipeline)
 {
-    // VkResult result = VK_SUCCESS;
-    // VkCommandBufferBeginInfo vkCommandBufferBeginInfo = {
-    //     .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
-    //     .pNext = NULL,
-    //     .flags = 0,
-    //     .pInheritanceInfo = NULL,
-    // };
-    // VkCommandBuffer vkCommandBuffer = pGFXCommand->vkCommandBuffer;
-    // result = vkBeginCommandBuffer(vkCommandBuffer, &vkCommandBufferBeginInfo);
-    // TryThrowVulkanError(result);
+    VkResult result = VK_SUCCESS;
+    VkCommandBuffer vkCommandBuffer = pTKNPipeline->vkCommandBuffer;
+    VkRenderPass vkRenderPass = pTKNPipeline->vkRenderPass;
+    VkFramebuffer *vkFramebuffers = pTKNPipeline->vkFramebuffers;
 
-    // VkRenderPassBeginInfo renderPassBeginInfo =
-    //     {
-    //         .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
-    //         .pNext = NULL,
-    //         .renderPass = pGFXCommand->vkRenderPass,
-    //         .framebuffer = pGFXCommand->vkFramebuffers[pGFXEngine->acquiredImageIndex],
-    //         .renderArea = pGFXCommand->gfxCommandCreateInfo.renderArea,
-    //         .clearValueCount = pGFXCommand->gfxCommandCreateInfo.vkClearValueCount,
-    //         .pClearValues = pGFXCommand->gfxCommandCreateInfo.vkClearValues,
-    //     };
-    // vkCmdBeginRenderPass(vkCommandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+    TKNPipelineConfig tknPipelineConfig = pTKNPipeline->tknPipelineConfig;
 
-    // vkCmdBindPipeline(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pGFXCommand->vkPipeline);
-    // // VkViewport viewport =
-    // //     {
-    // //         .x = 0.0f,
-    // //         .y = 0.0f,
-    // //         .width = pGFXEngine->swapchainExtent.width,
-    // //         .height = pGFXEngine->swapchainExtent.height,
-    // //         .minDepth = 0.0f,
-    // //         .maxDepth = 1.0f,
-    // //     };
-    // // vkCmdSetViewport(vkCommandBuffer, 0, 1, &viewport);
+    VkCommandBufferBeginInfo vkCommandBufferBeginInfo = {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+        .pNext = NULL,
+        .flags = 0,
+        .pInheritanceInfo = NULL,
+    };
+    result = vkBeginCommandBuffer(vkCommandBuffer, &vkCommandBufferBeginInfo);
+    TryThrowVulkanError(result);
 
-    // // VkOffset2D scissorOffset =
-    // //     {
-    // //         .x = 0,
-    // //         .y = 0,
-    // //     };
-    // // VkRect2D scissor =
-    // //     {
-    // //         .offset = scissorOffset,
-    // //         .extent = pGFXEngine->swapchainExtent,
-    // //     };
-    // // vkCmdSetScissor(vkCommandBuffer, 0, 1, &scissor);
-    // // uint32_t firstBinding = 0;
-    // // uint32_t bindingCount = 1;
-    // // VkBuffer vertexBuffers[] = {vertexBuffer};
-    // // VkDeviceSize offsets[] = {0};
-    // // vkCmdBindVertexBuffers(vkCommandBuffer, firstBinding, bindingCount, vertexBuffers, offsets);
-    // // vkCmdBindIndexBuffer(vkCommandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT32);
-    // // vkCmdBindDescriptorSets(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets[currentFrameIndex], 0, NULL);
-    // // // vkCmdDraw(commandBuffer, verticesCount, 1, 0, 0);
-    // // vkCmdDrawIndexed(vkCommandBuffer, indicesCount, 1, 0, 0, 0);
+    VkRenderPassBeginInfo vkRenderPassBeginInfo =
+        {
+            .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
+            .pNext = NULL,
+            .renderPass = vkRenderPass,
+            .framebuffer = vkFramebuffers[pGFXEngine->acquiredImageIndex],
+            .renderArea = pTKNPipeline->tknPipelineConfig.renderArea,
+            .clearValueCount = pTKNPipeline->tknPipelineConfig.clearValueCount,
+            .pClearValues = pTKNPipeline->tknPipelineConfig.clearValues,
+        };
+    vkCmdBeginRenderPass(vkCommandBuffer, &vkRenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+    vkCmdBindPipeline(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pTKNPipeline->vkPipeline);
+    vkCmdBindVertexBuffers(vkCommandBuffer, firstBinding, bindingCount, vertexBuffers, offsets);
+    vkCmdBindIndexBuffer(vkCommandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+    vkCmdBindDescriptorSets(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets[currentFrameIndex], 0, NULL);
+    // vkCmdDraw(commandBuffer, verticesCount, 1, 0, 0);
+    vkCmdDrawIndexed(vkCommandBuffer, indicesCount, 1, 0, 0, 0);
 
-    // vkCmdEndRenderPass(vkCommandBuffer);
-    // result = vkEndCommandBuffer(vkCommandBuffer);
-    // TryThrowVulkanError(result);
+    vkCmdEndRenderPass(vkCommandBuffer);
+    result = vkEndCommandBuffer(vkCommandBuffer);
+    TryThrowVulkanError(result);
 }
 
 static void UpdateVkCommandBuffers(GFXEngine *pGFXEngine, bool hasRecreateSwapchain)
@@ -1236,29 +1229,29 @@ static void UpdateVkCommandBuffers(GFXEngine *pGFXEngine, bool hasRecreateSwapch
     if (hasRecreateSwapchain)
     {
         // Record all vkCommandBuffers
-        for (uint32_t i = 0; i < pGFXEngine->gfxCommandCount; i++)
+        for (uint32_t i = 0; i < pGFXEngine->tknPipelineCount; i++)
         {
-            GFXCommand *pGFXCommand = &pGFXEngine->gfxCommands[i];
-            DestroyFramebuffers(pGFXEngine, pGFXCommand);
-            CreateVkFramebuffers(pGFXEngine, pGFXCommand);
-            RecordGFXCommand(pGFXEngine, pGFXCommand);
+            TKNPipeline *pTKNPipeline = &pGFXEngine->tknPipelines[i];
+            DestroyFramebuffers(pGFXEngine, pTKNPipeline);
+            CreateVkFramebuffers(pGFXEngine, pTKNPipeline);
+            RecordTKNPipeline(pGFXEngine, pTKNPipeline);
         }
     }
     else
     {
         // Record new vkCommandBuffers
-        for (uint32_t i = 0; i < pGFXEngine->gfxCommandCount; i++)
+        for (uint32_t i = 0; i < pGFXEngine->tknPipelineCount; i++)
         {
-            GFXCommand *pGFXCommand = &pGFXEngine->gfxCommands[i];
-            if (pGFXEngine->gfxCommands[i].isValid)
+            TKNPipeline *pTKNPipeline = &pGFXEngine->tknPipelines[i];
+            if (pGFXEngine->tknPipelines[i].isValid)
             {
                 // Skip;
             }
             else
             {
-                CreateVkFramebuffers(pGFXEngine, pGFXCommand);
-                RecordGFXCommand(pGFXEngine, pGFXCommand);
-                pGFXEngine->gfxCommands[i].isValid = true;
+                CreateVkFramebuffers(pGFXEngine, pTKNPipeline);
+                RecordTKNPipeline(pGFXEngine, pTKNPipeline);
+                pGFXEngine->tknPipelines[i].isValid = true;
             }
         }
     }
@@ -1279,8 +1272,6 @@ void StartGFXEngine(GFXEngine *pGFXEngine)
     CreateDepthResources(pGFXEngine);
     CreateSemaphores(pGFXEngine);
     CreateCommandPools(pGFXEngine);
-    // CreateRenderPass(pGFXEngine);
-    // CreateFramebuffers(pGFXEngine);
 }
 
 void UpdateGFXEngine(GFXEngine *pGFXEngine)
@@ -1298,8 +1289,6 @@ void UpdateGFXEngine(GFXEngine *pGFXEngine)
 
 void EndGFXEngine(GFXEngine *pGFXEngine)
 {
-    // DestroyFramebuffers(pGFXEngine);
-    // DestroyRenderPass(pGFXEngine);
     DestroyCommandPools(pGFXEngine);
     DestroySemaphores(pGFXEngine);
     DestroyDepthResources(pGFXEngine);

@@ -32,39 +32,31 @@ typedef struct TKNRenderPassConfigStruct
 
 } TKNRenderPassConfig;
 
-typedef struct TKNFramebufferConfigStruct
+typedef struct TKNPipelineConfigStruct
 {
-    uint32_t width;
-    uint32_t height;
-    uint32_t layers;
-} TKNFramebufferConfig;
-
-typedef struct TKNPipelineConfig
-{
+    // RenderPass
+    // Using struct to cache VkRenderPass
     TKNRenderPassConfig tknRenderPassConfig;
-
-    // VkRect2D renderArea;
-    // uint32_t vkClearValueCount;
-    // VkClearValue *vkClearValues;
-
+    uint32_t subpassIndex;
+    // Shader
     uint32_t vkShaderModuleCreateInfoCount;
     size_t *codeSizes;
     uint32_t **codes;
     char **codeFunctionNames;
     VkShaderStageFlagBits *stages;
-
+    // Input
     uint32_t vkVertexInputBindingDescriptionCount;
     VkVertexInputBindingDescription *vkVertexInputBindingDescriptions;
     uint32_t vkVertexInputAttributeDescriptionCount;
     VkVertexInputAttributeDescription *vkVertexInputAttributeDescriptions;
     VkPrimitiveTopology vkPrimitiveTopology;
     VkBool32 primitiveRestartEnable;
+    // Viewport
     uint32_t viewportCount;
     VkViewport *viewports;
     uint32_t scissorCount;
     VkRect2D *scissors;
-
-    VkBool32 vkBufferCreateInfodepthClampEnable;
+    // Rasterization
     VkBool32 rasterizerDiscardEnable;
     VkPolygonMode polygonMode;
     VkCullModeFlags cullMode;
@@ -74,7 +66,7 @@ typedef struct TKNPipelineConfig
     float depthBiasClamp;
     float depthBiasSlopeFactor;
     float lineWidth;
-
+    // Depth Stencil
     VkBool32 depthTestEnable;
     VkBool32 depthWriteEnable;
     VkCompareOp depthCompareOp;
@@ -84,36 +76,44 @@ typedef struct TKNPipelineConfig
     VkStencilOpState back;
     float minDepthBounds;
     float maxDepthBounds;
-
+    // Color Blend
     uint32_t vkPipelineColorBlendAttachmentStateCount;
     VkPipelineColorBlendAttachmentState *vkPipelineColorBlendAttachmentStates;
     float blendConstants[4];
-
+    // Set Layouts
     uint32_t setLayoutCount;
     uint32_t *bindingCounts;
     VkDescriptorSetLayoutBinding **bindingsArray;
     uint32_t pushConstantRangeCount;
     VkPushConstantRange *pushConstantRanges;
-
+    // Dynamic
     uint32_t dynamicStateCount;
     VkDynamicState *dynamicStates;
+    // Framebuffer
+    uint32_t width;
+    uint32_t height;
+    uint32_t layers;
 
-    uint32_t subpassIndex;
-
+    // Record Info
+    VkRect2D renderArea;
+    uint32_t clearValueCount;
+    const VkClearValue *clearValues;
 } TKNPipelineConfig;
 
-typedef struct GFXCommandStruct
+typedef struct TKNPipelineStruct
 {
+    // Config
     TKNPipelineConfig tknPipelineConfig;
-    TKNFramebufferConfig tknFrameBufferConfig;
-
+    // Runtime
     VkRenderPass vkRenderPass;
+    VkShaderModule *vkShaderModules;
+    VkDescriptorSetLayout *setLayouts;
     VkFramebuffer *vkFramebuffers;
     VkPipelineLayout vkPipelineLayout;
     VkPipeline vkPipeline;
     VkCommandBuffer vkCommandBuffer;
     bool isValid;
-} GFXCommand;
+} TKNPipeline;
 
 typedef struct GFXEngineStruct
 {
@@ -161,8 +161,8 @@ typedef struct GFXEngineStruct
     uint32_t frameIndex;
     bool hasRecreateSwapchain;
 
-    GFXCommand *gfxCommands;
-    uint32_t gfxCommandCount;
+    TKNPipeline *tknPipelines;
+    uint32_t tknPipelineCount;
 } GFXEngine;
 
 void StartGFXEngine(GFXEngine *pGFXEngine);
