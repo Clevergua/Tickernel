@@ -738,122 +738,6 @@ static void DestroyDepthResources(GFXEngine *pGFXEngine)
     vkFreeMemory(vkDevice, pGFXEngine->depthImageMemory, NULL);
 }
 
-// static void CreateRenderPass(GFXEngine *pGFXEngine, VkRenderPass *pVkRenderPass)
-// {
-//     VkResult result = VK_SUCCESS;
-//     VkAttachmentDescription colorAttachmentDescription = {
-//         .flags = 0,
-//         .format = pGFXEngine->surfaceFormat.format,
-//         .samples = VK_SAMPLE_COUNT_1_BIT,
-//         .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
-//         .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
-//         .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
-//         .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
-//         .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-//         .finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-//     };
-
-//     VkAttachmentDescription depthAttachmentDescription = {
-//         .flags = 0,
-//         .format = pGFXEngine->surfaceFormat.format,
-//         .samples = VK_SAMPLE_COUNT_1_BIT,
-//         .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
-//         .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
-//         .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
-//         .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
-//         .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-//         .finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-//     };
-
-//     VkAttachmentReference colorAttachmentReference = {
-//         .attachment = 0,
-//         .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-//     };
-//     VkAttachmentReference depthAttachmentReference = {
-//         .attachment = 1,
-//         .layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
-//     };
-
-//     VkSubpassDescription subpassDescription = {
-//         .flags = 0,
-//         .pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
-//         .inputAttachmentCount = 0,
-//         .pInputAttachments = NULL,
-//         .colorAttachmentCount = 1,
-//         .pColorAttachments = &colorAttachmentReference,
-//         .pResolveAttachments = NULL,
-//         .pDepthStencilAttachment = &depthAttachmentReference,
-//         .preserveAttachmentCount = 0,
-//         .pPreserveAttachments = NULL,
-//     };
-
-//     VkSubpassDependency subpassDependency = {
-//         .srcSubpass = VK_SUBPASS_EXTERNAL,
-//         .dstSubpass = 0,
-//         .srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-//         .dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-//         .srcAccessMask = 0,
-//         .dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
-//         .dependencyFlags = 0,
-//     };
-
-//     VkRenderPassCreateInfo renderPassCreateInfo = {
-//         .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
-//         .pNext = NULL,
-//         .flags = 0,
-//         .attachmentCount = 2,
-//         .pAttachments = (VkAttachmentDescription[]){
-//             colorAttachmentDescription,
-//             depthAttachmentDescription,
-//         },
-//         .subpassCount = 1,
-//         .pSubpasses = &subpassDescription,
-//         .dependencyCount = 1,
-//         .pDependencies = &subpassDependency,
-//     };
-
-//     result = vkCreateRenderPass(pGFXEngine->vkDevice, &renderPassCreateInfo, NULL, pVkRenderPass);
-//     TryThrowVulkanError(result);
-// }
-
-// static void DestroyRenderPass(GFXEngine *pGFXEngine, VkRenderPass *pVkRenderPass)
-// {
-//     vkDestroyRenderPass(pGFXEngine->vkDevice, *pVkRenderPass, NULL);
-// }
-
-// static void CreateFramebuffers(GFXEngine *pGFXEngine)
-// {
-//     VkResult result = VK_SUCCESS;
-//     pGFXEngine->vkFramebuffers = TickernelMalloc(sizeof(VkFramebuffer) * pGFXEngine->swapchainImageCount);
-//     for (int32_t i = 0; i < pGFXEngine->swapchainImageCount; i++)
-//     {
-//         uint32_t attachmentCount = 2;
-//         VkImageView attachments[] = {pGFXEngine->swapchainImageViews[i], pGFXEngine->depthImageView};
-//         VkFramebufferCreateInfo framebufferCreateInfo = {
-//             .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
-//             .pNext = NULL,
-//             .flags = 0,
-//             .renderPass = pGFXEngine->vkRenderPass,
-//             .attachmentCount = attachmentCount,
-//             .pAttachments = attachments,
-//             .width = pGFXEngine->width,
-//             .height = pGFXEngine->height,
-//             .layers = 1,
-//         };
-//         result = vkCreateFramebuffer(pGFXEngine->vkDevice, &framebufferCreateInfo, NULL, &pGFXEngine->vkFramebuffers[i]);
-//         TRY_THROW_VULKAN_ERROR(result);
-//     }
-// }
-
-// static void DestroyFramebuffers(GFXEngine *pGFXEngine)
-// {
-//     for (int32_t i = 0; i < pGFXEngine->swapchainImageCount; i++)
-//     {
-//         vkDestroyFramebuffer(pGFXEngine->vkDevice, pGFXEngine->vkFramebuffers[i], NULL);
-//     }
-//     TickernelFree(pGFXEngine->vkFramebuffers);
-// }
-
 static void CreateSemaphores(GFXEngine *pGFXEngine)
 {
     VkResult result = VK_SUCCESS;
@@ -1034,33 +918,45 @@ static void Present(GFXEngine *pGFXEngine)
     TryThrowVulkanError(result);
 }
 
-static void CreateGFXCommand(GFXEngine *pGFXEngine, GFXCommandCreateInfo gfxCommandCreateInfo, GFXCommand *pGFXCommand)
+static void GetVkRenderPass(GFXEngine *pGFXEngine, TKNRenderPassConfig tknRenderPassConfig, VkRenderPass *pVkRenderPass)
 {
+    // TOOD: Use cached renderpass;
     VkResult result = VK_SUCCESS;
-    pGFXCommand = TKNMalloc(sizeof(GFXCommand));
-    pGFXCommand->gfxCommandCreateInfo = gfxCommandCreateInfo;
-    pGFXCommand->vkCommandBuffer = NULL;
+    VkDevice vkDevice = pGFXEngine->vkDevice;
+
     VkRenderPassCreateInfo vkRenderPassCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
         .pNext = NULL,
         .flags = 0,
-        .attachmentCount = gfxCommandCreateInfo.vkAttachmentCount,
-        .pAttachments = gfxCommandCreateInfo.vkAttachmentDescriptions,
-        .subpassCount = gfxCommandCreateInfo.vkSubpassDescriptionCount,
-        .pSubpasses = gfxCommandCreateInfo.vkSubpassDescriptions,
-        .dependencyCount = gfxCommandCreateInfo.vkSubpassDependencyCount,
-        .pDependencies = gfxCommandCreateInfo.vkSubpassDependencies,
+        .attachmentCount = tknRenderPassConfig.vkAttachmentCount,
+        .pAttachments = tknRenderPassConfig.vkAttachmentDescriptions,
+        .subpassCount = tknRenderPassConfig.vkSubpassDescriptionCount,
+        .pSubpasses = tknRenderPassConfig.vkSubpassDescriptions,
+        .dependencyCount = tknRenderPassConfig.vkSubpassDependencyCount,
+        .pDependencies = tknRenderPassConfig.vkSubpassDependencies,
     };
-    VkDevice vkDevice = pGFXEngine->vkDevice;
-    result = vkCreateRenderPass(vkDevice, &vkRenderPassCreateInfo, NULL, &pGFXCommand->vkRenderPass);
+    result = vkCreateRenderPass(vkDevice, &vkRenderPassCreateInfo, NULL, pVkRenderPass);
     TryThrowVulkanError(result);
+}
 
-    uint32_t shaderStageCount = gfxCommandCreateInfo.vkShaderModuleCreateInfoCount;
-    VkPipelineShaderStageCreateInfo pipelineShaderStageCreateInfos[gfxCommandCreateInfo.vkShaderModuleCreateInfoCount];
-    for (uint32_t i = 0; i < gfxCommandCreateInfo.vkShaderModuleCreateInfoCount; i++)
+static void CreateGFXCommand(GFXEngine *pGFXEngine, TKNPipelineConfig tknPipelineConfig, GFXCommand *pGFXCommand)
+{
+    VkResult result = VK_SUCCESS;
+    VkDevice vkDevice = pGFXEngine->vkDevice;
+
+    pGFXCommand = TKNMalloc(sizeof(GFXCommand));
+    pGFXCommand->tknPipelineConfig = tknPipelineConfig;
+    pGFXCommand->vkCommandBuffer = NULL;
+
+    TKNRenderPassConfig tknRenderPassConfig = tknPipelineConfig.tknRenderPassConfig;
+    GetVkRenderPass(pGFXEngine, tknRenderPassConfig, &pGFXCommand->vkRenderPass);
+
+    uint32_t shaderStageCount = tknPipelineConfig.vkShaderModuleCreateInfoCount;
+    VkPipelineShaderStageCreateInfo pipelineShaderStageCreateInfos[tknPipelineConfig.vkShaderModuleCreateInfoCount];
+    for (uint32_t i = 0; i < tknPipelineConfig.vkShaderModuleCreateInfoCount; i++)
     {
-        size_t codeSize = gfxCommandCreateInfo.codeSizes[i];
-        uint32_t *pCode = gfxCommandCreateInfo.codes[i];
+        size_t codeSize = tknPipelineConfig.codeSizes[i];
+        uint32_t *pCode = tknPipelineConfig.codes[i];
         VkShaderModuleCreateInfo vkShaderModuleCreateInfo = {
             .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
             .pNext = NULL,
@@ -1071,8 +967,8 @@ static void CreateGFXCommand(GFXEngine *pGFXEngine, GFXCommandCreateInfo gfxComm
         VkShaderModule vkShaderModule;
         result = vkCreateShaderModule(vkDevice, &vkShaderModuleCreateInfo, NULL, &vkShaderModule);
         TryThrowVulkanError(result);
-        VkShaderStageFlagBits stage = gfxCommandCreateInfo.stages[i];
-        char *codeFunctionName = gfxCommandCreateInfo.codeFunctionNames[i];
+        VkShaderStageFlagBits stage = tknPipelineConfig.stages[i];
+        char *codeFunctionName = tknPipelineConfig.codeFunctionNames[i];
         pipelineShaderStageCreateInfos[i].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
         pipelineShaderStageCreateInfos[i].pNext = NULL;
         pipelineShaderStageCreateInfos[i].flags = 0;
@@ -1086,43 +982,58 @@ static void CreateGFXCommand(GFXEngine *pGFXEngine, GFXCommandCreateInfo gfxComm
         .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
         .pNext = NULL,
         .flags = 0,
-        .vertexBindingDescriptionCount = gfxCommandCreateInfo.vkVertexInputBindingDescriptionCount,
-        .pVertexBindingDescriptions = gfxCommandCreateInfo.vkVertexInputBindingDescriptions,
-        .vertexAttributeDescriptionCount = gfxCommandCreateInfo.vkVertexInputAttributeDescriptionCount,
-        .pVertexAttributeDescriptions = gfxCommandCreateInfo.vkVertexInputAttributeDescriptions,
+        .vertexBindingDescriptionCount = tknPipelineConfig.vkVertexInputBindingDescriptionCount,
+        .pVertexBindingDescriptions = tknPipelineConfig.vkVertexInputBindingDescriptions,
+        .vertexAttributeDescriptionCount = tknPipelineConfig.vkVertexInputAttributeDescriptionCount,
+        .pVertexAttributeDescriptions = tknPipelineConfig.vkVertexInputAttributeDescriptions,
     };
 
     VkPipelineInputAssemblyStateCreateInfo pipelineInputAssemblyStateCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
         .pNext = NULL,
         .flags = 0,
-        .topology = gfxCommandCreateInfo.vkPrimitiveTopology,
-        .primitiveRestartEnable = gfxCommandCreateInfo.primitiveRestartEnable,
+        .topology = tknPipelineConfig.vkPrimitiveTopology,
+        .primitiveRestartEnable = tknPipelineConfig.primitiveRestartEnable,
     };
 
     VkPipelineViewportStateCreateInfo pipelineViewportStateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
         .pNext = NULL,
         .flags = 0,
-        .viewportCount = gfxCommandCreateInfo.viewportCount,
-        .pViewports = gfxCommandCreateInfo.viewports,
-        .scissorCount = gfxCommandCreateInfo.scissorCount,
-        .pScissors = gfxCommandCreateInfo.scissors,
+        .viewportCount = tknPipelineConfig.viewportCount,
+        .pViewports = tknPipelineConfig.viewports,
+        .scissorCount = tknPipelineConfig.scissorCount,
+        .pScissors = tknPipelineConfig.scissors,
     };
 
     VkPipelineRasterizationStateCreateInfo pipelineRasterizationStateCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
         .pNext = NULL,
         .flags = 0,
-        .rasterizerDiscardEnable = gfxCommandCreateInfo.rasterizerDiscardEnable,
-        .polygonMode = gfxCommandCreateInfo.polygonMode,
-        .cullMode = gfxCommandCreateInfo.cullMode,
-        .frontFace = gfxCommandCreateInfo.frontFace,
-        .depthBiasEnable = gfxCommandCreateInfo.depthBiasEnable,
-        .depthBiasConstantFactor = gfxCommandCreateInfo.depthBiasConstantFactor,
-        .depthBiasClamp = gfxCommandCreateInfo.depthBiasClamp,
-        .depthBiasSlopeFactor = gfxCommandCreateInfo.depthBiasSlopeFactor,
-        .lineWidth = gfxCommandCreateInfo.lineWidth,
+        .rasterizerDiscardEnable = tknPipelineConfig.rasterizerDiscardEnable,
+        .polygonMode = tknPipelineConfig.polygonMode,
+        .cullMode = tknPipelineConfig.cullMode,
+        .frontFace = tknPipelineConfig.frontFace,
+        .depthBiasEnable = tknPipelineConfig.depthBiasEnable,
+        .depthBiasConstantFactor = tknPipelineConfig.depthBiasConstantFactor,
+        .depthBiasClamp = tknPipelineConfig.depthBiasClamp,
+        .depthBiasSlopeFactor = tknPipelineConfig.depthBiasSlopeFactor,
+        .lineWidth = tknPipelineConfig.lineWidth,
+    };
+
+    VkPipelineDepthStencilStateCreateInfo pipelineDepthStencilStateCreateInfo = {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
+        .pNext = NULL,
+        .flags = 0,
+        .depthTestEnable = tknPipelineConfig.depthTestEnable,
+        .depthWriteEnable = tknPipelineConfig.depthWriteEnable,
+        .depthCompareOp = tknPipelineConfig.depthCompareOp,
+        .depthBoundsTestEnable = tknPipelineConfig.depthBoundsTestEnable,
+        .stencilTestEnable = tknPipelineConfig.stencilTestEnable,
+        .front = tknPipelineConfig.front,
+        .back = tknPipelineConfig.back,
+        .minDepthBounds = tknPipelineConfig.minDepthBounds,
+        .maxDepthBounds = tknPipelineConfig.maxDepthBounds,
     };
 
     VkPipelineColorBlendStateCreateInfo colorBlendStateCreateInfo = {
@@ -1131,53 +1042,49 @@ static void CreateGFXCommand(GFXEngine *pGFXEngine, GFXCommandCreateInfo gfxComm
         .flags = 0,
         .logicOpEnable = VK_FALSE,
         .logicOp = VK_LOGIC_OP_COPY,
-        .attachmentCount = gfxCommandCreateInfo.vkPipelineColorBlendAttachmentStateCount,
-        .pAttachments = gfxCommandCreateInfo.vkPipelineColorBlendAttachmentStates,
-        .blendConstants[0] = gfxCommandCreateInfo.blendConstants[0],
-        .blendConstants[1] = gfxCommandCreateInfo.blendConstants[1],
-        .blendConstants[2] = gfxCommandCreateInfo.blendConstants[2],
-        .blendConstants[3] = gfxCommandCreateInfo.blendConstants[3],
+        .attachmentCount = tknPipelineConfig.vkPipelineColorBlendAttachmentStateCount,
+        .pAttachments = tknPipelineConfig.vkPipelineColorBlendAttachmentStates,
+        .blendConstants[0] = tknPipelineConfig.blendConstants[0],
+        .blendConstants[1] = tknPipelineConfig.blendConstants[1],
+        .blendConstants[2] = tknPipelineConfig.blendConstants[2],
+        .blendConstants[3] = tknPipelineConfig.blendConstants[3],
     };
+
+    VkDescriptorSetLayout setLayouts[tknPipelineConfig.setLayoutCount];
+    for (uint32_t i = 0; i < tknPipelineConfig.setLayoutCount; i++)
+    {
+        VkDescriptorSetLayoutCreateInfo vkDescriptorSetLayoutCreateInfo = {
+            .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+            .pNext = NULL,
+            .flags = 0,
+            .bindingCount = tknPipelineConfig.bindingCounts[i],
+            .pBindings = tknPipelineConfig.bindingsArray[i],
+        };
+        result = vkCreateDescriptorSetLayout(pGFXEngine->vkDevice, &vkDescriptorSetLayoutCreateInfo, NULL, &setLayouts[i]);
+        TryThrowVulkanError(result);
+    }
 
     VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
         .pNext = NULL,
         .flags = 0,
-        .setLayoutCount = 1,
-        .pSetLayouts = &descriptorSetLayout,
-        .pushConstantRangeCount = 0,
-        .pPushConstantRanges = NULL,
+        .setLayoutCount = tknPipelineConfig.setLayoutCount,
+        .pSetLayouts = setLayouts,
+        .pushConstantRangeCount = tknPipelineConfig.pushConstantRangeCount,
+        .pPushConstantRanges = tknPipelineConfig.pushConstantRanges,
     };
 
-    uint32_t dynamicStateCount = 2;
-    VkDynamicState dynamicStates[] = {
-        VK_DYNAMIC_STATE_VIEWPORT,
-        VK_DYNAMIC_STATE_SCISSOR,
-    };
     VkPipelineDynamicStateCreateInfo dynamicState = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO,
         .pNext = NULL,
         .flags = 0,
-        .dynamicStateCount = dynamicStateCount,
-        .pDynamicStates = dynamicStates,
+        .dynamicStateCount = tknPipelineConfig.dynamicStateCount,
+        .pDynamicStates = tknPipelineConfig.dynamicStates,
     };
 
-    vkCreatePipelineLayout(vkDevice, &pipelineLayoutCreateInfo, NULL, &pipelineLayout);
+    result = vkCreatePipelineLayout(vkDevice, &pipelineLayoutCreateInfo, NULL, &pGFXCommand->vkPipelineLayout);
+    TryThrowVulkanError(result);
 
-    VkPipelineDepthStencilStateCreateInfo pipelineDepthStencilStateCreateInfo = {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
-        .pNext = NULL,
-        .flags = 0,
-        .depthTestEnable = VK_TRUE,
-        .depthWriteEnable = VK_TRUE,
-        .depthCompareOp = VK_COMPARE_OP_LESS,
-        .depthBoundsTestEnable = VK_FALSE,
-        .stencilTestEnable = VK_FALSE,
-        .front = {},
-        .back = {},
-        .minDepthBounds = 0,
-        .maxDepthBounds = 1,
-    };
     VkGraphicsPipelineCreateInfo pipelineCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
         .pNext = NULL,
@@ -1193,13 +1100,14 @@ static void CreateGFXCommand(GFXEngine *pGFXEngine, GFXCommandCreateInfo gfxComm
         .pDepthStencilState = &pipelineDepthStencilStateCreateInfo,
         .pColorBlendState = &colorBlendStateCreateInfo,
         .pDynamicState = &dynamicState,
-        .layout = pipelineLayout,
-        .renderPass = vkRenderPass,
-        .subpass = 0,
+        .layout = pGFXCommand->vkPipelineLayout,
+        .renderPass = pGFXCommand->vkRenderPass,
+        .subpass = tknPipelineConfig.subpassIndex,
         .basePipelineHandle = VK_NULL_HANDLE,
         .basePipelineIndex = 0,
     };
-    return vkCreateGraphicsPipelines(vkDevice, VK_NULL_HANDLE, 1, &pipelineCreateInfo, NULL, &vkPipeline);
+    result = vkCreateGraphicsPipelines(vkDevice, VK_NULL_HANDLE, 1, &pipelineCreateInfo, NULL, &pGFXCommand->vkPipeline);
+    TryThrowVulkanError(result);
 }
 
 static void DestroyGFXCommand(GFXEngine *pGFXEngine, GFXCommand *pGFXCommand)
@@ -1208,21 +1116,23 @@ static void DestroyGFXCommand(GFXEngine *pGFXEngine, GFXCommand *pGFXCommand)
     TKNFree(pGFXCommand);
 }
 
-static void InitGFXCommand(GFXEngine *pGFXEngine, GFXCommand *pGFXCommand)
+static void CreateVkFramebuffers(GFXEngine *pGFXEngine, GFXCommand *pGFXCommand)
 {
     VkResult result = VK_SUCCESS;
     pGFXCommand->vkFramebuffers = TKNMalloc(sizeof(VkFramebuffer) * pGFXEngine->swapchainImageCount);
+    TKNFramebufferConfig tknFramebufferConfig = pGFXCommand->tknFrameBufferConfig;
+    TKNRenderPassConfig tknRenderPassConfig = pGFXCommand->tknPipelineConfig.tknRenderPassConfig;
     for (uint32_t i = 0; i < pGFXEngine->swapchainImageCount; i++)
     {
-        VkImageView attachments[pGFXCommand->gfxCommandCreateInfo.vkAttachmentCount];
-        for (uint32_t j = 0; j < pGFXCommand->gfxCommandCreateInfo.vkAttachmentCount; j++)
+        VkImageView attachments[tknRenderPassConfig.vkAttachmentCount];
+        for (uint32_t j = 0; j < tknRenderPassConfig.vkAttachmentCount; j++)
         {
-            AttachmentType attachmentType = pGFXCommand->gfxCommandCreateInfo.attachmentTypes[j];
-            if (ColorAttachmentType == attachmentType)
+            AttachmentType attachmentType = tknRenderPassConfig.attachmentTypes[j];
+            if (TKNColorAttachmentType == attachmentType)
             {
                 attachments[j] = pGFXEngine->swapchainImageViews[j];
             }
-            else if (DepthAttachmentType == attachmentType)
+            else if (TKNDepthAttachmentType == attachmentType)
             {
                 attachments[j] = pGFXEngine->depthImageView;
             }
@@ -1238,18 +1148,18 @@ static void InitGFXCommand(GFXEngine *pGFXEngine, GFXCommand *pGFXCommand)
             .pNext = NULL,
             .flags = 0,
             .renderPass = pGFXCommand->vkRenderPass,
-            .attachmentCount = pGFXCommand->gfxCommandCreateInfo.vkAttachmentCount,
+            .attachmentCount = tknRenderPassConfig.vkAttachmentCount,
             .pAttachments = attachments,
-            .width = pGFXEngine->width,
-            .height = pGFXEngine->height,
-            .layers = 1,
+            .width = tknFramebufferConfig.width,
+            .height = tknFramebufferConfig.height,
+            .layers = tknFramebufferConfig.layers,
         };
         result = vkCreateFramebuffer(pGFXEngine->vkDevice, &framebufferCreateInfo, NULL, &pGFXCommand->vkFramebuffers[i]);
         TryThrowVulkanError(result);
     }
 }
 
-static void DeinitGFXCommand(GFXEngine *pGFXEngine, GFXCommand *pGFXCommand)
+static void DestroyFramebuffers(GFXEngine *pGFXEngine, GFXCommand *pGFXCommand)
 {
     for (uint32_t i = 0; i < pGFXEngine->swapchainImageCount; i++)
     {
@@ -1260,65 +1170,65 @@ static void DeinitGFXCommand(GFXEngine *pGFXEngine, GFXCommand *pGFXCommand)
 
 static void RecordGFXCommand(GFXEngine *pGFXEngine, GFXCommand *pGFXCommand)
 {
-    VkResult result = VK_SUCCESS;
-    VkCommandBufferBeginInfo vkCommandBufferBeginInfo = {
-        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
-        .pNext = NULL,
-        .flags = 0,
-        .pInheritanceInfo = NULL,
-    };
-    VkCommandBuffer vkCommandBuffer = pGFXCommand->vkCommandBuffer;
-    result = vkBeginCommandBuffer(vkCommandBuffer, &vkCommandBufferBeginInfo);
-    TryThrowVulkanError(result);
+    // VkResult result = VK_SUCCESS;
+    // VkCommandBufferBeginInfo vkCommandBufferBeginInfo = {
+    //     .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+    //     .pNext = NULL,
+    //     .flags = 0,
+    //     .pInheritanceInfo = NULL,
+    // };
+    // VkCommandBuffer vkCommandBuffer = pGFXCommand->vkCommandBuffer;
+    // result = vkBeginCommandBuffer(vkCommandBuffer, &vkCommandBufferBeginInfo);
+    // TryThrowVulkanError(result);
 
-    VkRenderPassBeginInfo renderPassBeginInfo =
-        {
-            .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
-            .pNext = NULL,
-            .renderPass = pGFXCommand->vkRenderPass,
-            .framebuffer = pGFXCommand->vkFramebuffers[pGFXEngine->acquiredImageIndex],
-            .renderArea = pGFXCommand->gfxCommandCreateInfo.renderArea,
-            .clearValueCount = pGFXCommand->gfxCommandCreateInfo.vkClearValueCount,
-            .pClearValues = pGFXCommand->gfxCommandCreateInfo.vkClearValues,
-        };
-    vkCmdBeginRenderPass(vkCommandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
-
-    vkCmdBindPipeline(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pGFXCommand->vkPipeline);
-    // VkViewport viewport =
+    // VkRenderPassBeginInfo renderPassBeginInfo =
     //     {
-    //         .x = 0.0f,
-    //         .y = 0.0f,
-    //         .width = pGFXEngine->swapchainExtent.width,
-    //         .height = pGFXEngine->swapchainExtent.height,
-    //         .minDepth = 0.0f,
-    //         .maxDepth = 1.0f,
+    //         .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
+    //         .pNext = NULL,
+    //         .renderPass = pGFXCommand->vkRenderPass,
+    //         .framebuffer = pGFXCommand->vkFramebuffers[pGFXEngine->acquiredImageIndex],
+    //         .renderArea = pGFXCommand->gfxCommandCreateInfo.renderArea,
+    //         .clearValueCount = pGFXCommand->gfxCommandCreateInfo.vkClearValueCount,
+    //         .pClearValues = pGFXCommand->gfxCommandCreateInfo.vkClearValues,
     //     };
-    // vkCmdSetViewport(vkCommandBuffer, 0, 1, &viewport);
+    // vkCmdBeginRenderPass(vkCommandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-    // VkOffset2D scissorOffset =
-    //     {
-    //         .x = 0,
-    //         .y = 0,
-    //     };
-    // VkRect2D scissor =
-    //     {
-    //         .offset = scissorOffset,
-    //         .extent = pGFXEngine->swapchainExtent,
-    //     };
-    // vkCmdSetScissor(vkCommandBuffer, 0, 1, &scissor);
-    // uint32_t firstBinding = 0;
-    // uint32_t bindingCount = 1;
-    // VkBuffer vertexBuffers[] = {vertexBuffer};
-    // VkDeviceSize offsets[] = {0};
-    // vkCmdBindVertexBuffers(vkCommandBuffer, firstBinding, bindingCount, vertexBuffers, offsets);
-    // vkCmdBindIndexBuffer(vkCommandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT32);
-    // vkCmdBindDescriptorSets(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets[currentFrameIndex], 0, NULL);
-    // // vkCmdDraw(commandBuffer, verticesCount, 1, 0, 0);
-    // vkCmdDrawIndexed(vkCommandBuffer, indicesCount, 1, 0, 0, 0);
+    // vkCmdBindPipeline(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pGFXCommand->vkPipeline);
+    // // VkViewport viewport =
+    // //     {
+    // //         .x = 0.0f,
+    // //         .y = 0.0f,
+    // //         .width = pGFXEngine->swapchainExtent.width,
+    // //         .height = pGFXEngine->swapchainExtent.height,
+    // //         .minDepth = 0.0f,
+    // //         .maxDepth = 1.0f,
+    // //     };
+    // // vkCmdSetViewport(vkCommandBuffer, 0, 1, &viewport);
 
-    vkCmdEndRenderPass(vkCommandBuffer);
-    result = vkEndCommandBuffer(vkCommandBuffer);
-    TryThrowVulkanError(result);
+    // // VkOffset2D scissorOffset =
+    // //     {
+    // //         .x = 0,
+    // //         .y = 0,
+    // //     };
+    // // VkRect2D scissor =
+    // //     {
+    // //         .offset = scissorOffset,
+    // //         .extent = pGFXEngine->swapchainExtent,
+    // //     };
+    // // vkCmdSetScissor(vkCommandBuffer, 0, 1, &scissor);
+    // // uint32_t firstBinding = 0;
+    // // uint32_t bindingCount = 1;
+    // // VkBuffer vertexBuffers[] = {vertexBuffer};
+    // // VkDeviceSize offsets[] = {0};
+    // // vkCmdBindVertexBuffers(vkCommandBuffer, firstBinding, bindingCount, vertexBuffers, offsets);
+    // // vkCmdBindIndexBuffer(vkCommandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+    // // vkCmdBindDescriptorSets(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets[currentFrameIndex], 0, NULL);
+    // // // vkCmdDraw(commandBuffer, verticesCount, 1, 0, 0);
+    // // vkCmdDrawIndexed(vkCommandBuffer, indicesCount, 1, 0, 0, 0);
+
+    // vkCmdEndRenderPass(vkCommandBuffer);
+    // result = vkEndCommandBuffer(vkCommandBuffer);
+    // TryThrowVulkanError(result);
 }
 
 static void UpdateVkCommandBuffers(GFXEngine *pGFXEngine, bool hasRecreateSwapchain)
@@ -1329,8 +1239,8 @@ static void UpdateVkCommandBuffers(GFXEngine *pGFXEngine, bool hasRecreateSwapch
         for (uint32_t i = 0; i < pGFXEngine->gfxCommandCount; i++)
         {
             GFXCommand *pGFXCommand = &pGFXEngine->gfxCommands[i];
-            DeinitGFXCommand(pGFXEngine, pGFXCommand);
-            InitGFXCommand(pGFXEngine, pGFXCommand);
+            DestroyFramebuffers(pGFXEngine, pGFXCommand);
+            CreateVkFramebuffers(pGFXEngine, pGFXCommand);
             RecordGFXCommand(pGFXEngine, pGFXCommand);
         }
     }
@@ -1346,7 +1256,7 @@ static void UpdateVkCommandBuffers(GFXEngine *pGFXEngine, bool hasRecreateSwapch
             }
             else
             {
-                InitGFXCommand(pGFXEngine, pGFXCommand);
+                CreateVkFramebuffers(pGFXEngine, pGFXCommand);
                 RecordGFXCommand(pGFXEngine, pGFXCommand);
                 pGFXEngine->gfxCommands[i].isValid = true;
             }

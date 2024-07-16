@@ -11,16 +11,16 @@
 
 typedef enum
 {
-    ColorAttachmentType,
-    DepthAttachmentType,
-    StencilAttachmentType,
-    PositionAttachmentType,
-    NormalAttachmentType,
-    AlbedoAttachmentType,
-    CustomAttachmentType,
+    TKNColorAttachmentType,
+    TKNDepthAttachmentType,
+    TKNStencilAttachmentType,
+    TKNPositionAttachmentType,
+    TKNNormalAttachmentType,
+    TKNAlbedoAttachmentType,
+    TNKCustomAttachmentType,
 } AttachmentType;
 
-typedef struct GFXCommandCreateInfoStruct
+typedef struct TKNRenderPassConfigStruct
 {
     uint32_t vkAttachmentCount;
     const VkAttachmentDescription *vkAttachmentDescriptions;
@@ -29,18 +29,30 @@ typedef struct GFXCommandCreateInfoStruct
     uint32_t vkSubpassDependencyCount;
     const VkSubpassDependency *vkSubpassDependencies;
     AttachmentType *attachmentTypes;
+
+} TKNRenderPassConfig;
+
+typedef struct TKNFramebufferConfigStruct
+{
     uint32_t width;
     uint32_t height;
     uint32_t layers;
-    VkRect2D renderArea;
-    uint32_t vkClearValueCount;
-    VkClearValue *vkClearValues;
+} TKNFramebufferConfig;
+
+typedef struct TKNPipelineConfig
+{
+    TKNRenderPassConfig tknRenderPassConfig;
+
+    // VkRect2D renderArea;
+    // uint32_t vkClearValueCount;
+    // VkClearValue *vkClearValues;
 
     uint32_t vkShaderModuleCreateInfoCount;
     size_t *codeSizes;
     uint32_t **codes;
     char **codeFunctionNames;
     VkShaderStageFlagBits *stages;
+
     uint32_t vkVertexInputBindingDescriptionCount;
     VkVertexInputBindingDescription *vkVertexInputBindingDescriptions;
     uint32_t vkVertexInputAttributeDescriptionCount;
@@ -63,16 +75,41 @@ typedef struct GFXCommandCreateInfoStruct
     float depthBiasSlopeFactor;
     float lineWidth;
 
+    VkBool32 depthTestEnable;
+    VkBool32 depthWriteEnable;
+    VkCompareOp depthCompareOp;
+    VkBool32 depthBoundsTestEnable;
+    VkBool32 stencilTestEnable;
+    VkStencilOpState front;
+    VkStencilOpState back;
+    float minDepthBounds;
+    float maxDepthBounds;
+
     uint32_t vkPipelineColorBlendAttachmentStateCount;
     VkPipelineColorBlendAttachmentState *vkPipelineColorBlendAttachmentStates;
     float blendConstants[4];
-} GFXCommandCreateInfo;
+
+    uint32_t setLayoutCount;
+    uint32_t *bindingCounts;
+    VkDescriptorSetLayoutBinding **bindingsArray;
+    uint32_t pushConstantRangeCount;
+    VkPushConstantRange *pushConstantRanges;
+
+    uint32_t dynamicStateCount;
+    VkDynamicState *dynamicStates;
+
+    uint32_t subpassIndex;
+
+} TKNPipelineConfig;
 
 typedef struct GFXCommandStruct
 {
-    GFXCommandCreateInfo gfxCommandCreateInfo;
+    TKNPipelineConfig tknPipelineConfig;
+    TKNFramebufferConfig tknFrameBufferConfig;
+
     VkRenderPass vkRenderPass;
     VkFramebuffer *vkFramebuffers;
+    VkPipelineLayout vkPipelineLayout;
     VkPipeline vkPipeline;
     VkCommandBuffer vkCommandBuffer;
     bool isValid;
