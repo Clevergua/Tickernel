@@ -32,7 +32,7 @@ typedef struct TKNRenderPassConfigStruct
 
 } TKNRenderPassConfig;
 
-typedef struct TKNPipelineConfigStruct
+typedef struct TKNGraphicPipelineConfigStruct
 {
     // RenderPass
     // Using struct to cache VkRenderPass
@@ -98,12 +98,12 @@ typedef struct TKNPipelineConfigStruct
     VkRect2D renderArea;
     uint32_t clearValueCount;
     const VkClearValue *clearValues;
-} TKNPipelineConfig;
+} TKNGraphicPipelineConfig;
 
-typedef struct TKNPipelineStruct
+typedef struct TKNGraphicPipelineStruct
 {
     // Config
-    TKNPipelineConfig tknPipelineConfig;
+    TKNGraphicPipelineConfig tknGraphicPipelineConfig;
     // Runtime
     VkRenderPass vkRenderPass;
     VkShaderModule *vkShaderModules;
@@ -111,9 +111,9 @@ typedef struct TKNPipelineStruct
     VkFramebuffer *vkFramebuffers;
     VkPipelineLayout vkPipelineLayout;
     VkPipeline vkPipeline;
-    VkCommandBuffer vkCommandBuffer;
+    VkCommandBuffer *vkCommandBuffers;
     bool isValid;
-} TKNPipeline;
+} TKNGraphicPipeline;
 
 typedef struct GFXEngineStruct
 {
@@ -150,8 +150,8 @@ typedef struct GFXEngineStruct
     VkDeviceMemory depthImageMemory;
 
     VkCommandPool *vkCommandPools;
-    uint32_t vkCommandBufferCount;
-    VkCommandBuffer *vkCommandBuffers;
+    uint32_t submitVkCommandBufferCount;
+    VkCommandBuffer *submitVkCommandBuffers;
 
     uint32_t acquiredImageIndex;
     VkSemaphore *imageAvailableSemaphores;
@@ -161,8 +161,8 @@ typedef struct GFXEngineStruct
     uint32_t frameIndex;
     bool hasRecreateSwapchain;
 
-    TKNPipeline *tknPipelines;
-    uint32_t tknPipelineCount;
+    TKNGraphicPipeline *tknGraphicPipelines;
+    uint32_t tknGraphicPipelineCount;
 } GFXEngine;
 
 void StartGFXEngine(GFXEngine *pGFXEngine);

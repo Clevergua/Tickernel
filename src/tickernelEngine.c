@@ -23,19 +23,19 @@ static void TickernelStart(TickernelEngine *pTickernelEngine)
     TKNCombinePaths(pTickernelEngine->assetsPath, FILENAME_MAX, "assets");
 
     StartGFXEngine(pTickernelEngine->pGFXEngine);
-    StartLua(pTickernelEngine->pLuaEngine, pTickernelEngine->assetsPath);
+    // StartLua(pTickernelEngine->pLuaEngine, pTickernelEngine->assetsPath);
 }
 
 static void TickernelUpdate(TickernelEngine *pTickernelEngine)
 {
     printf("Tickernel Update!\n");
-    UpdateLua(pTickernelEngine->pLuaEngine);
+    // UpdateLua(pTickernelEngine->pLuaEngine);
     UpdateGFXEngine(pTickernelEngine->pGFXEngine);
 }
 
 static void TickernelEnd(TickernelEngine *pTickernelEngine)
 {
-    EndLua(pTickernelEngine->pLuaEngine);
+    // EndLua(pTickernelEngine->pLuaEngine);
     EndGFXEngine(pTickernelEngine->pGFXEngine);
 
     TKNFree(pTickernelEngine->assetsPath);
@@ -69,5 +69,6 @@ void RunTickernelEngine(TickernelEngine *pTickernelEngine)
         TKNSleep(sleepMilliseconds);
         pTickernelEngine->frameCount++;
     }
+    
     TickernelEnd(pTickernelEngine);
 }

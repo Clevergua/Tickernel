@@ -86,6 +86,7 @@
         "vulkan.h": "c",
         "gfxengine.h": "c",
         "glfw3.h": "c",
-        "__node_handle": "c"
+        "__node_handle": "c",
+        "__bit_reference": "c"
     }
 }

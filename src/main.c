@@ -1,6 +1,6 @@
 #include <tickernelEngine.h>
 #include <assert.h>
-int main()
+int main(int argc, const char *argv[])
 {
     TickernelEngine *pTickernelEngine = TKNMalloc(sizeof(TickernelEngine));
     *pTickernelEngine = (TickernelEngine){
@@ -13,8 +13,8 @@ int main()
     };
 
     RunTickernelEngine(pTickernelEngine);
-
     TKNFree(pTickernelEngine);
 
+    getchar();
     return EXIT_SUCCESS;
 }
