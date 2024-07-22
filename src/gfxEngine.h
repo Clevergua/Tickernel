@@ -28,35 +28,34 @@ typedef struct TKNRenderPassConfigStruct
     const VkSubpassDescription *vkSubpassDescriptions;
     uint32_t vkSubpassDependencyCount;
     const VkSubpassDependency *vkSubpassDependencies;
-    AttachmentType *attachmentTypes;
 
 } TKNRenderPassConfig;
 
 typedef struct TKNGraphicPipelineConfigStruct
 {
-    // RenderPass
+    // RenderPass:
     // Using struct to cache VkRenderPass
     TKNRenderPassConfig tknRenderPassConfig;
     uint32_t subpassIndex;
-    // Shader
+    // Shader:
     uint32_t vkShaderModuleCreateInfoCount;
     size_t *codeSizes;
     uint32_t **codes;
     char **codeFunctionNames;
     VkShaderStageFlagBits *stages;
-    // Input
+    // Input:
     uint32_t vkVertexInputBindingDescriptionCount;
     VkVertexInputBindingDescription *vkVertexInputBindingDescriptions;
     uint32_t vkVertexInputAttributeDescriptionCount;
     VkVertexInputAttributeDescription *vkVertexInputAttributeDescriptions;
     VkPrimitiveTopology vkPrimitiveTopology;
     VkBool32 primitiveRestartEnable;
-    // Viewport
+    // Viewport:
     uint32_t viewportCount;
     VkViewport *viewports;
     uint32_t scissorCount;
     VkRect2D *scissors;
-    // Rasterization
+    // Rasterization:
     VkBool32 rasterizerDiscardEnable;
     VkPolygonMode polygonMode;
     VkCullModeFlags cullMode;
@@ -66,7 +65,7 @@ typedef struct TKNGraphicPipelineConfigStruct
     float depthBiasClamp;
     float depthBiasSlopeFactor;
     float lineWidth;
-    // Depth Stencil
+    // Depth Stencil:
     VkBool32 depthTestEnable;
     VkBool32 depthWriteEnable;
     VkCompareOp depthCompareOp;
@@ -76,40 +75,38 @@ typedef struct TKNGraphicPipelineConfigStruct
     VkStencilOpState back;
     float minDepthBounds;
     float maxDepthBounds;
-    // Color Blend
+    // Color Blend:
     uint32_t vkPipelineColorBlendAttachmentStateCount;
     VkPipelineColorBlendAttachmentState *vkPipelineColorBlendAttachmentStates;
     float blendConstants[4];
-    // Set Layouts
+    // Set Layouts:
     uint32_t setLayoutCount;
     uint32_t *bindingCounts;
     VkDescriptorSetLayoutBinding **bindingsArray;
     uint32_t pushConstantRangeCount;
     VkPushConstantRange *pushConstantRanges;
-    // Dynamic
+    // Dynamic:
     uint32_t dynamicStateCount;
     VkDynamicState *dynamicStates;
-    // Framebuffer
+    // Framebuffer:
     uint32_t width;
     uint32_t height;
     uint32_t layers;
-
-    // Record Info
-    VkRect2D renderArea;
-    uint32_t clearValueCount;
-    const VkClearValue *clearValues;
+    uint32_t vkAttachmentCount;
+    AttachmentType *attachmentTypes;
 } TKNGraphicPipelineConfig;
 
 typedef struct TKNGraphicPipelineStruct
 {
-    // Config
+    // Config:
     TKNGraphicPipelineConfig tknGraphicPipelineConfig;
-    // Runtime
+    // Runtime:
     VkRenderPass vkRenderPass;
-    VkShaderModule *vkShaderModules;
     VkDescriptorSetLayout *setLayouts;
     VkFramebuffer *vkFramebuffers;
+    // For vkCmd functions
     VkPipelineLayout vkPipelineLayout;
+    // For vkCmd functions
     VkPipeline vkPipeline;
     VkCommandBuffer *vkCommandBuffers;
     bool isValid;
@@ -168,3 +165,5 @@ typedef struct GFXEngineStruct
 void StartGFXEngine(GFXEngine *pGFXEngine);
 void UpdateGFXEngine(GFXEngine *pGFXEngine);
 void EndGFXEngine(GFXEngine *pGFXEngine);
+
+void AddTKNGraphicPipeline(GFXEngine *pGFXEngine, TKNGraphicPipelineConfig tknGraphicPipelineConfig);

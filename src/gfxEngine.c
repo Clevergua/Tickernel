@@ -940,7 +940,6 @@ static void ReleaseVkRenderPass(GFXEngine *pGFXEngine, TKNGraphicPipeline *pTKNG
     vkDestroyRenderPass(pGFXEngine->vkDevice, pTKNGraphicPipeline->vkRenderPass, NULL);
 }
 
-
 static void CreateTKNGraphicPipeline(GFXEngine *pGFXEngine, TKNGraphicPipelineConfig tknGraphicPipelineConfig, TKNGraphicPipeline *pTKNPGraphicipeline)
 {
     VkResult result = VK_SUCCESS;
@@ -964,7 +963,7 @@ static void CreateTKNGraphicPipeline(GFXEngine *pGFXEngine, TKNGraphicPipelineCo
 
     uint32_t shaderStageCount = tknGraphicPipelineConfig.vkShaderModuleCreateInfoCount;
     VkPipelineShaderStageCreateInfo pipelineShaderStageCreateInfos[tknGraphicPipelineConfig.vkShaderModuleCreateInfoCount];
-    pTKNPGraphicipeline->vkShaderModules = TKNMalloc(sizeof(VkShaderModule) * tknGraphicPipelineConfig.vkShaderModuleCreateInfoCount);
+    VkShaderModule vkShaderModules[tknGraphicPipelineConfig.vkShaderModuleCreateInfoCount];
     for (uint32_t i = 0; i < tknGraphicPipelineConfig.vkShaderModuleCreateInfoCount; i++)
     {
         size_t codeSize = tknGraphicPipelineConfig.codeSizes[i];
@@ -976,7 +975,7 @@ static void CreateTKNGraphicPipeline(GFXEngine *pGFXEngine, TKNGraphicPipelineCo
             .codeSize = codeSize,
             .pCode = pCode,
         };
-        result = vkCreateShaderModule(vkDevice, &vkShaderModuleCreateInfo, NULL, &pTKNPGraphicipeline->vkShaderModules[i]);
+        result = vkCreateShaderModule(vkDevice, &vkShaderModuleCreateInfo, NULL, &vkShaderModules[i]);
         TryThrowVulkanError(result);
         VkShaderStageFlagBits stage = tknGraphicPipelineConfig.stages[i];
         char *codeFunctionName = tknGraphicPipelineConfig.codeFunctionNames[i];
@@ -984,7 +983,7 @@ static void CreateTKNGraphicPipeline(GFXEngine *pGFXEngine, TKNGraphicPipelineCo
         pipelineShaderStageCreateInfos[i].pNext = NULL;
         pipelineShaderStageCreateInfos[i].flags = 0;
         pipelineShaderStageCreateInfos[i].stage = stage;
-        pipelineShaderStageCreateInfos[i].module = pTKNPGraphicipeline->vkShaderModules[i];
+        pipelineShaderStageCreateInfos[i].module = vkShaderModules[i];
         pipelineShaderStageCreateInfos[i].pName = codeFunctionName;
         pipelineShaderStageCreateInfos[i].pSpecializationInfo = NULL;
     }
@@ -1120,6 +1119,10 @@ static void CreateTKNGraphicPipeline(GFXEngine *pGFXEngine, TKNGraphicPipelineCo
 
     result = vkCreateGraphicsPipelines(vkDevice, VK_NULL_HANDLE, 1, &pipelineCreateInfo, NULL, &pTKNPGraphicipeline->vkPipeline);
     TryThrowVulkanError(result);
+    for (uint32_t i = 0; i < tknGraphicPipelineConfig.vkShaderModuleCreateInfoCount; i++)
+    {
+        vkDestroyShaderModule(vkDevice, vkShaderModules[i], NULL);
+    }
 }
 
 static void DestroyTKNGraphicPipeline(GFXEngine *pGFXEngine, TKNGraphicPipeline *pTKNGraphicPipeline)
@@ -1135,11 +1138,7 @@ static void DestroyTKNGraphicPipeline(GFXEngine *pGFXEngine, TKNGraphicPipeline 
         vkDestroyDescriptorSetLayout(vkDevice, pTKNGraphicPipeline->setLayouts[i], NULL);
     }
     TKNFree(pTKNGraphicPipeline->setLayouts);
-    for (uint32_t i = 0; i < tknGraphicPipelineConfig.vkShaderModuleCreateInfoCount; i++)
-    {
-        vkDestroyShaderModule(vkDevice, pTKNGraphicPipeline->vkShaderModules[i], NULL);
-    }
-    TKNFree(pTKNGraphicPipeline->vkShaderModules);
+
     ReleaseVkRenderPass(pGFXEngine, pTKNGraphicPipeline);
 
     vkFreeCommandBuffers(vkDevice, pGFXEngine->vkCommandPools[pGFXEngine->graphicQueueFamilyIndex], pGFXEngine->swapchainImageCount, pTKNGraphicPipeline->vkCommandBuffers);
@@ -1153,13 +1152,12 @@ static void CreateVkFramebuffers(GFXEngine *pGFXEngine, TKNGraphicPipeline *pTKN
     VkResult result = VK_SUCCESS;
     pTKNGraphicPipeline->vkFramebuffers = TKNMalloc(sizeof(VkFramebuffer) * pGFXEngine->swapchainImageCount);
     TKNGraphicPipelineConfig tknGraphicPipelineConfig = pTKNGraphicPipeline->tknGraphicPipelineConfig;
-    TKNRenderPassConfig tknRenderPassConfig = tknGraphicPipelineConfig.tknRenderPassConfig;
     for (uint32_t i = 0; i < pGFXEngine->swapchainImageCount; i++)
     {
-        VkImageView attachments[tknRenderPassConfig.vkAttachmentCount];
-        for (uint32_t j = 0; j < tknRenderPassConfig.vkAttachmentCount; j++)
+        VkImageView attachments[tknGraphicPipelineConfig.vkAttachmentCount];
+        for (uint32_t j = 0; j < tknGraphicPipelineConfig.vkAttachmentCount; j++)
         {
-            AttachmentType attachmentType = tknRenderPassConfig.attachmentTypes[j];
+            AttachmentType attachmentType = tknGraphicPipelineConfig.attachmentTypes[j];
             if (TKNColorAttachmentType == attachmentType)
             {
                 attachments[j] = pGFXEngine->swapchainImageViews[j];
@@ -1180,7 +1178,7 @@ static void CreateVkFramebuffers(GFXEngine *pGFXEngine, TKNGraphicPipeline *pTKN
             .pNext = NULL,
             .flags = 0,
             .renderPass = pTKNGraphicPipeline->vkRenderPass,
-            .attachmentCount = tknRenderPassConfig.vkAttachmentCount,
+            .attachmentCount = tknGraphicPipelineConfig.vkAttachmentCount,
             .pAttachments = attachments,
             .width = tknGraphicPipelineConfig.width,
             .height = tknGraphicPipelineConfig.height,
@@ -1200,47 +1198,47 @@ static void DestroyFramebuffers(GFXEngine *pGFXEngine, TKNGraphicPipeline *pTKNG
     TKNFree(pTKNGraphicPipeline->vkFramebuffers);
 }
 
-static void RecordTKNGraphicPipeline(GFXEngine *pGFXEngine, TKNGraphicPipeline *pTKNGraphicPipeline)
-{
-    VkResult result = VK_SUCCESS;
-    VkFramebuffer *vkFramebuffers = pTKNGraphicPipeline->vkFramebuffers;
+// static void RecordTKNGraphicPipeline(GFXEngine *pGFXEngine, TKNGraphicPipeline *pTKNGraphicPipeline)
+// {
+//     VkResult result = VK_SUCCESS;
+//     VkFramebuffer *vkFramebuffers = pTKNGraphicPipeline->vkFramebuffers;
 
-    for (uint32_t i = 0; i < pGFXEngine->swapchainImageCount; i++)
-    {
-        VkCommandBuffer vkCommandBuffer = pTKNGraphicPipeline->vkCommandBuffers[i];
-        VkRenderPass vkRenderPass = pTKNGraphicPipeline->vkRenderPass;
-        TKNGraphicPipelineConfig tknGraphicPipelineConfig = pTKNGraphicPipeline->tknGraphicPipelineConfig;
+//     for (uint32_t i = 0; i < pGFXEngine->swapchainImageCount; i++)
+//     {
+//         VkCommandBuffer vkCommandBuffer = pTKNGraphicPipeline->vkCommandBuffers[i];
+//         VkRenderPass vkRenderPass = pTKNGraphicPipeline->vkRenderPass;
+//         TKNGraphicPipelineConfig tknGraphicPipelineConfig = pTKNGraphicPipeline->tknGraphicPipelineConfig;
 
-        // When VkCommandBufferResetFlagBits is 0,The command buffer may hold onto memory resources and reuse them when recording commands.
-        vkResetCommandBuffer(vkCommandBuffer, 0);
+//         // When VkCommandBufferResetFlagBits is 0,The command buffer may hold onto memory resources and reuse them when recording commands.
+//         vkResetCommandBuffer(vkCommandBuffer, 0);
 
-        VkCommandBufferBeginInfo vkCommandBufferBeginInfo = {
-            .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
-            .pNext = NULL,
-            .flags = 0,
-            .pInheritanceInfo = NULL,
-        };
-        result = vkBeginCommandBuffer(vkCommandBuffer, &vkCommandBufferBeginInfo);
-        TryThrowVulkanError(result);
+//         VkCommandBufferBeginInfo vkCommandBufferBeginInfo = {
+//             .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+//             .pNext = NULL,
+//             .flags = 0,
+//             .pInheritanceInfo = NULL,
+//         };
+//         result = vkBeginCommandBuffer(vkCommandBuffer, &vkCommandBufferBeginInfo);
+//         TryThrowVulkanError(result);
 
-        VkRenderPassBeginInfo vkRenderPassBeginInfo =
-            {
-                .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
-                .pNext = NULL,
-                .renderPass = vkRenderPass,
-                .framebuffer = vkFramebuffers[i],
-                .renderArea = pTKNGraphicPipeline->tknGraphicPipelineConfig.renderArea,
-                .clearValueCount = pTKNGraphicPipeline->tknGraphicPipelineConfig.clearValueCount,
-                .pClearValues = pTKNGraphicPipeline->tknGraphicPipelineConfig.clearValues,
-            };
-        vkCmdBeginRenderPass(vkCommandBuffer, &vkRenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
-        vkCmdBindPipeline(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pTKNGraphicPipeline->vkPipeline);
+//         VkRenderPassBeginInfo vkRenderPassBeginInfo =
+//             {
+//                 .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
+//                 .pNext = NULL,
+//                 .renderPass = vkRenderPass,
+//                 .framebuffer = vkFramebuffers[i],
+//                 .renderArea = pTKNGraphicPipeline->tknGraphicPipelineConfig.renderArea,
+//                 .clearValueCount = pTKNGraphicPipeline->tknGraphicPipelineConfig.clearValueCount,
+//                 .pClearValues = pTKNGraphicPipeline->tknGraphicPipelineConfig.clearValues,
+//             };
+//         vkCmdBeginRenderPass(vkCommandBuffer, &vkRenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+//         vkCmdBindPipeline(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pTKNGraphicPipeline->vkPipeline);
 
-        vkCmdEndRenderPass(vkCommandBuffer);
-        result = vkEndCommandBuffer(vkCommandBuffer);
-        TryThrowVulkanError(result);
-    }
-}
+//         vkCmdEndRenderPass(vkCommandBuffer);
+//         result = vkEndCommandBuffer(vkCommandBuffer);
+//         TryThrowVulkanError(result);
+//     }
+// }
 
 static void UpdateVkCommandBuffers(GFXEngine *pGFXEngine, bool hasRecreateSwapchain)
 {
@@ -1252,7 +1250,8 @@ static void UpdateVkCommandBuffers(GFXEngine *pGFXEngine, bool hasRecreateSwapch
             TKNGraphicPipeline *pTKNGraphicPipeline = &pGFXEngine->tknGraphicPipelines[i];
             DestroyFramebuffers(pGFXEngine, pTKNGraphicPipeline);
             CreateVkFramebuffers(pGFXEngine, pTKNGraphicPipeline);
-            RecordTKNGraphicPipeline(pGFXEngine, pTKNGraphicPipeline);
+
+            // RecordTKNGraphicPipeline(pGFXEngine, pTKNGraphicPipeline);
         }
     }
     else
@@ -1268,7 +1267,7 @@ static void UpdateVkCommandBuffers(GFXEngine *pGFXEngine, bool hasRecreateSwapch
             else
             {
                 CreateVkFramebuffers(pGFXEngine, pTKNGraphicPipeline);
-                RecordTKNGraphicPipeline(pGFXEngine, pTKNGraphicPipeline);
+                // RecordTKNGraphicPipeline(pGFXEngine, pTKNGraphicPipeline);
                 pGFXEngine->tknGraphicPipelines[i].isValid = true;
             }
         }

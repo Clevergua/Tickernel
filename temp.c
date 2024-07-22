@@ -1604,7 +1604,7 @@ VkResult CreateTextureImage()
     TransitionImageLayout(textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
     CopyBufferToImage(stagingBuffer, textureImage, (uint32_t)textureWidth, (uint32_t)textureHeight);
     TransitionImageLayout(textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-    ` vkDestroyBuffer(vkDevice, stagingBuffer, NULL);
+    vkDestroyBuffer(vkDevice, stagingBuffer, NULL);
     vkFreeMemory(vkDevice, stagingBufferMemory, NULL);
     return result;
 }
