@@ -911,33 +911,190 @@ static void Present(GFXEngine *pGFXEngine)
     TryThrowVulkanError(result);
 }
 
-static void GetVkRenderPass(GFXEngine *pGFXEngine, TKNGraphicPipeline *pTKNGraphicPipeline)
+static void HasSameVkRenderPassCreateInfo(VkRenderPassCreateInfo vkRenderPassCreateInfo1, VkRenderPassCreateInfo vkRenderPassCreateInfo2, bool *result)
 {
-    // TOOD: Use cached renderpass;
-    VkResult result = VK_SUCCESS;
-    TKNRenderPassConfig tknRenderPassConfig = pTKNGraphicPipeline->tknGraphicPipelineConfig.tknRenderPassConfig;
-    VkRenderPass *pVkRenderPass = &pTKNGraphicPipeline->vkRenderPass;
-    VkDevice vkDevice = pGFXEngine->vkDevice;
+    if (vkRenderPassCreateInfo1.flags == vkRenderPassCreateInfo2.flags && vkRenderPassCreateInfo1.attachmentCount == vkRenderPassCreateInfo2.attachmentCount && vkRenderPassCreateInfo1.subpassCount == vkRenderPassCreateInfo2.subpassCount)
+    {
+        for (uint32_t i = 0; i < vkRenderPassCreateInfo1.attachmentCount; i++)
+        {
+            VkAttachmentDescription vkAttachmentDescription1 = vkRenderPassCreateInfo1.pAttachments[i];
+            VkAttachmentDescription vkAttachmentDescription2 = vkRenderPassCreateInfo2.pAttachments[i];
+            if (vkAttachmentDescription1.flags == vkAttachmentDescription2.flags && vkAttachmentDescription1.format == vkAttachmentDescription2.format && vkAttachmentDescription1.samples == vkAttachmentDescription2.samples && vkAttachmentDescription1.loadOp == vkAttachmentDescription2.loadOp && vkAttachmentDescription1.storeOp == vkAttachmentDescription2.storeOp && vkAttachmentDescription1.stencilLoadOp == vkAttachmentDescription2.stencilLoadOp && vkAttachmentDescription1.stencilStoreOp == vkAttachmentDescription2.stencilStoreOp && vkAttachmentDescription1.initialLayout == vkAttachmentDescription2.initialLayout && vkAttachmentDescription1.finalLayout == vkAttachmentDescription2.finalLayout)
+            {
+                // continue;
+            }
+            else
+            {
+                *result = false;
+                return;
+            }
+        }
 
-    VkRenderPassCreateInfo vkRenderPassCreateInfo = {
-        .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
-        .pNext = NULL,
-        .flags = 0,
-        .attachmentCount = tknRenderPassConfig.vkAttachmentCount,
-        .pAttachments = tknRenderPassConfig.vkAttachmentDescriptions,
-        .subpassCount = tknRenderPassConfig.vkSubpassDescriptionCount,
-        .pSubpasses = tknRenderPassConfig.vkSubpassDescriptions,
-        .dependencyCount = tknRenderPassConfig.vkSubpassDependencyCount,
-        .pDependencies = tknRenderPassConfig.vkSubpassDependencies,
-    };
-    result = vkCreateRenderPass(vkDevice, &vkRenderPassCreateInfo, NULL, pVkRenderPass);
-    TryThrowVulkanError(result);
+        for (uint32_t i = 0; i < vkRenderPassCreateInfo1.subpassCount; i++)
+        {
+            VkSubpassDescription vkSubpassDescription1 = vkRenderPassCreateInfo1.pSubpasses[i];
+            VkSubpassDescription vkSubpassDescription2 = vkRenderPassCreateInfo2.pSubpasses[i];
+            if (vkSubpassDescription1.flags == vkSubpassDescription2.flags && vkSubpassDescription1.pipelineBindPoint == vkSubpassDescription2.pipelineBindPoint && vkSubpassDescription1.inputAttachmentCount == vkSubpassDescription2.inputAttachmentCount && vkSubpassDescription1.colorAttachmentCount == vkSubpassDescription2.colorAttachmentCount && vkSubpassDescription1.preserveAttachmentCount == vkSubpassDescription2.preserveAttachmentCount)
+            {
+                for (uint32_t j = 0; j < vkSubpassDescription1.inputAttachmentCount; j++)
+                {
+                    VkAttachmentReference pInputAttachment1 = vkSubpassDescription1.pInputAttachments[j];
+                    VkAttachmentReference pInputAttachment2 = vkSubpassDescription2.pInputAttachments[j];
+                    if (pInputAttachment1.attachment == pInputAttachment2.attachment && pInputAttachment1.layout == pInputAttachment2.layout)
+                    {
+                        // continue;
+                    }
+                    else
+                    {
+                        *result = false;
+                        return;
+                    }
+                }
+                for (uint32_t j = 0; j < vkSubpassDescription1.colorAttachmentCount; j++)
+                {
+                    VkAttachmentReference pColorAttachment1 = vkSubpassDescription1.pColorAttachments[j];
+                    VkAttachmentReference pColorAttachment2 = vkSubpassDescription2.pColorAttachments[j];
+                    if (pColorAttachment1.attachment == pColorAttachment2.attachment && pColorAttachment1.layout == pColorAttachment2.layout)
+                    {
+                        // continue;
+                    }
+                    else
+                    {
+                        *result = false;
+                        return;
+                    }
+                }
+
+                if ((NULL == vkSubpassDescription1.pResolveAttachments) && (NULL == vkSubpassDescription2.pResolveAttachments))
+                {
+                    // continue;
+                }
+                else
+                {
+                    for (uint32_t j = 0; j < vkSubpassDescription1.colorAttachmentCount; j++)
+                    {
+                        VkAttachmentReference pResolveAttachment1 = vkSubpassDescription1.pResolveAttachments[j];
+                        VkAttachmentReference pResolveAttachment2 = vkSubpassDescription2.pResolveAttachments[j];
+                        if (pResolveAttachment1.attachment == pResolveAttachment2.attachment && pResolveAttachment1.layout == pResolveAttachment2.layout)
+                        {
+                            // continue;
+                        }
+                        else
+                        {
+                            *result = false;
+                            return;
+                        }
+                    }
+                }
+
+                if ((NULL == vkSubpassDescription1.pDepthStencilAttachment) && (NULL == vkSubpassDescription2.pDepthStencilAttachment))
+                {
+                    // continue;
+                }
+                else
+                {
+                    if (vkSubpassDescription1.pDepthStencilAttachment->attachment == vkSubpassDescription2.pDepthStencilAttachment->attachment && vkSubpassDescription1.pDepthStencilAttachment->layout == vkSubpassDescription2.pDepthStencilAttachment->layout)
+                    {
+                        // continue;
+                    }
+                    else
+                    {
+                        *result = false;
+                        return;
+                    }
+                }
+
+                for (uint32_t j = 0; j < vkSubpassDescription1.preserveAttachmentCount; j++)
+                {
+                    uint32_t pPreserveAttachment1 = vkSubpassDescription1.pPreserveAttachments[j];
+                    uint32_t pPreserveAttachment2 = vkSubpassDescription2.pPreserveAttachments[j];
+                    if (pPreserveAttachment1 == pPreserveAttachment2)
+                    {
+                        // continue;
+                    }
+                    else
+                    {
+                        *result = false;
+                        return;
+                    }
+                }
+                // continue;
+            }
+            else
+            {
+                *result = false;
+                return;
+            }
+        }
+        *result = true;
+        return;
+    }
+    else
+    {
+        *result = false;
+        return;
+    }
 }
 
-static void ReleaseVkRenderPass(GFXEngine *pGFXEngine, TKNGraphicPipeline *pTKNGraphicPipeline)
+static void GetVkRenderPass(GFXEngine *pGFXEngine, VkRenderPassCreateInfo *pVkRenderPassCreateInfo, VkRenderPass *pVkRenderPass)
 {
-    // TOOD: Use cached renderpass;
-    vkDestroyRenderPass(pGFXEngine->vkDevice, pTKNGraphicPipeline->vkRenderPass, NULL);
+    for (uint32_t i = 0; i < pGFXEngine->vkRenderPassCount; i++)
+    {
+        VkRenderPassCreateInfo vkRenderPassCreateInfo = pGFXEngine->vkRenderPassCreateInfos[i];
+        bool isSameRednerPass;
+        HasSameVkRenderPassCreateInfo(*pVkRenderPassCreateInfo, vkRenderPassCreateInfo, &isSameRednerPass);
+        if (isSameRednerPass)
+        {
+            VkRenderPassCreateInfoPtrNode *pCurrentNode = &pGFXEngine->vkRenderPassCreateInfoPtrNodes[i];
+            do
+            {
+                if (pCurrentNode->pVkRenderPassCreateInfo == pVkRenderPassCreateInfo)
+                {
+                    break;
+                }
+                else
+                {
+                    // continue;
+                    pCurrentNode = pCurrentNode->pNext;
+                }
+            } while (pCurrentNode != NULL);
+            VkRenderPassCreateInfoPtrNode *pNewNode = TKNMalloc(sizeof(VkRenderPassCreateInfoPtrNode));
+            pCurrentNode->pNext = pNewNode;
+        }
+        else
+        {
+            if (pGFXEngine->vkRenderPassCount >= pGFXEngine->maxVkRenderPassCount)
+            {
+                pGFXEngine->vkRenderPassCreateInfos[i] = (VkRenderPassCreateInfo){
+                    .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
+                    .pNext = NULL,
+                    .flags = vkRenderPassCreateInfo.flags,
+                    .attachmentCount = vkRenderPassCreateInfo.attachmentCount,
+                    .pAttachments = vkRenderPassCreateInfo.pAttachments,
+                    .subpassCount = vkRenderPassCreateInfo.subpassCount,
+                    .pSubpasses = vkRenderPassCreateInfo.pSubpasses,
+                    .dependencyCount = vkRenderPassCreateInfo.dependencyCount,
+                    .pDependencies = vkRenderPassCreateInfo.pDependencies,
+                };
+
+                VkResult result = vkCreateRenderPass(pGFXEngine->vkDevice, &pGFXEngine->vkRenderPassCreateInfos[i], NULL, &pGFXEngine->vkRenderPasses[pGFXEngine->vkRenderPassCount]);
+                TryThrowVulkanError(result);
+                pGFXEngine->vkRenderPassCreateInfoPtrNodes[i].pVkRenderPassCreateInfo = pVkRenderPassCreateInfo;
+                pGFXEngine->vkRenderPassCreateInfoPtrNodes[i].pNext = NULL;
+                pGFXEngine->vkRenderPassCount++;
+            }
+            else
+            {
+                printf("The vkRenderPassCount is out of range!");
+                abort();
+            }
+        }
+    }
+}
+
+static void ReleaseVkRenderPass(GFXEngine *pGFXEngine, VkRenderPassCreateInfo *pVkRenderPassCreateInfo)
+{
+   
 }
 
 static void CreateTKNGraphicPipeline(GFXEngine *pGFXEngine, TKNGraphicPipelineConfig tknGraphicPipelineConfig, TKNGraphicPipeline *pTKNPGraphicipeline)
@@ -964,8 +1121,8 @@ static void CreateTKNGraphicPipeline(GFXEngine *pGFXEngine, TKNGraphicPipelineCo
     result = vkAllocateCommandBuffers(vkDevice, &commandBufferAllocateInfo, pTKNPGraphicipeline->vkCommandBuffers);
     TryThrowVulkanError(result);
 
-    TKNRenderPassConfig tknRenderPassConfig = tknGraphicPipelineConfig.tknRenderPassConfig;
-    GetVkRenderPass(pGFXEngine, pTKNPGraphicipeline);
+    // TKNRenderPassConfig tknRenderPassConfig = tknGraphicPipelineConfig.tknRenderPassConfig;
+    // GetVkRenderPass(pGFXEngine, pTKNPGraphicipeline);
 
     uint32_t shaderStageCount = tknGraphicPipelineConfig.vkShaderModuleCreateInfoCount;
     VkPipelineShaderStageCreateInfo pipelineShaderStageCreateInfos[tknGraphicPipelineConfig.vkShaderModuleCreateInfoCount];
@@ -1131,36 +1288,36 @@ static void CreateTKNGraphicPipeline(GFXEngine *pGFXEngine, TKNGraphicPipelineCo
     }
 }
 
-static void DestroyTKNGraphicPipeline(GFXEngine *pGFXEngine, TKNGraphicPipeline *pTKNGraphicPipeline)
-{
-    VkDevice vkDevice = pGFXEngine->vkDevice;
-    if (pTKNGraphicPipeline->vkFramebuffers != NULL)
-    {
-        DestroyFramebuffers(pGFXEngine, pTKNGraphicPipeline);
-    }
-    else
-    {
-        // continue;
-    }
+// static void DestroyTKNGraphicPipeline(GFXEngine *pGFXEngine, TKNGraphicPipeline *pTKNGraphicPipeline)
+// {
+//     VkDevice vkDevice = pGFXEngine->vkDevice;
+//     if (pTKNGraphicPipeline->vkFramebuffers != NULL)
+//     {
+//         DestroyFramebuffers(pGFXEngine, pTKNGraphicPipeline);
+//     }
+//     else
+//     {
+//         // continue;
+//     }
 
-    TKNGraphicPipelineConfig tknGraphicPipelineConfig = pTKNGraphicPipeline->tknGraphicPipelineConfig;
+//     TKNGraphicPipelineConfig tknGraphicPipelineConfig = pTKNGraphicPipeline->tknGraphicPipelineConfig;
 
-    vkDestroyPipeline(vkDevice, pTKNGraphicPipeline->vkPipeline, NULL);
-    vkDestroyPipelineLayout(vkDevice, pTKNGraphicPipeline->vkPipelineLayout, NULL);
+//     vkDestroyPipeline(vkDevice, pTKNGraphicPipeline->vkPipeline, NULL);
+//     vkDestroyPipelineLayout(vkDevice, pTKNGraphicPipeline->vkPipelineLayout, NULL);
 
-    for (uint32_t i = 0; i < tknGraphicPipelineConfig.setLayoutCount; i++)
-    {
-        vkDestroyDescriptorSetLayout(vkDevice, pTKNGraphicPipeline->setLayouts[i], NULL);
-    }
-    TKNFree(pTKNGraphicPipeline->setLayouts);
+//     for (uint32_t i = 0; i < tknGraphicPipelineConfig.setLayoutCount; i++)
+//     {
+//         vkDestroyDescriptorSetLayout(vkDevice, pTKNGraphicPipeline->setLayouts[i], NULL);
+//     }
+//     TKNFree(pTKNGraphicPipeline->setLayouts);
 
-    ReleaseVkRenderPass(pGFXEngine, pTKNGraphicPipeline);
+//     ReleaseVkRenderPass(pGFXEngine, pTKNGraphicPipeline);
 
-    vkFreeCommandBuffers(vkDevice, pGFXEngine->vkCommandPools[pGFXEngine->graphicQueueFamilyIndex], pGFXEngine->swapchainImageCount, pTKNGraphicPipeline->vkCommandBuffers);
-    TKNFree(pTKNGraphicPipeline->vkCommandBuffers);
+//     vkFreeCommandBuffers(vkDevice, pGFXEngine->vkCommandPools[pGFXEngine->graphicQueueFamilyIndex], pGFXEngine->swapchainImageCount, pTKNGraphicPipeline->vkCommandBuffers);
+//     TKNFree(pTKNGraphicPipeline->vkCommandBuffers);
 
-    TKNFree(pTKNGraphicPipeline);
-}
+//     TKNFree(pTKNGraphicPipeline);
+// }
 
 static void CreateVkFramebuffers(GFXEngine *pGFXEngine, TKNGraphicPipeline *pTKNGraphicPipeline)
 {
@@ -1213,42 +1370,42 @@ static void DestroyFramebuffers(GFXEngine *pGFXEngine, TKNGraphicPipeline *pTKNG
     TKNFree(pTKNGraphicPipeline->vkFramebuffers);
 }
 
-static void UpdateVkCommandBuffers(GFXEngine *pGFXEngine, bool hasRecreateSwapchain)
-{
-    if (hasRecreateSwapchain)
-    {
-        // Record all vkCommandBuffers
-        for (uint32_t i = 0; i < pGFXEngine->tknGraphicPipelineCount; i++)
-        {
-            TKNGraphicPipeline *pTKNGraphicPipeline = &pGFXEngine->tknGraphicPipelines[i];
-            if (pTKNGraphicPipeline->vkFramebuffers == NULL)
-            {
-                CreateVkFramebuffers(pGFXEngine, pTKNGraphicPipeline);
-            }
-            else
-            {
-                DestroyFramebuffers(pGFXEngine, pTKNGraphicPipeline);
-                CreateVkFramebuffers(pGFXEngine, pTKNGraphicPipeline);
-            }
-        }
-    }
-    else
-    {
-        // Record new vkCommandBuffers
-        for (uint32_t i = 0; i < pGFXEngine->tknGraphicPipelineCount; i++)
-        {
-            TKNGraphicPipeline *pTKNGraphicPipeline = &pGFXEngine->tknGraphicPipelines[i];
-            if (pTKNGraphicPipeline->vkFramebuffers == NULL)
-            {
-                CreateVkFramebuffers(pGFXEngine, pTKNGraphicPipeline);
-            }
-            else
-            {
-                // continue;
-            }
-        }
-    }
-}
+// static void UpdateVkCommandBuffers(GFXEngine *pGFXEngine, bool hasRecreateSwapchain)
+// {
+//     if (hasRecreateSwapchain)
+//     {
+//         // Record all vkCommandBuffers
+//         for (uint32_t i = 0; i < pGFXEngine->tknGraphicPipelineCount; i++)
+//         {
+//             TKNGraphicPipeline *pTKNGraphicPipeline = &pGFXEngine->tknGraphicPipelines[i];
+//             if (pTKNGraphicPipeline->vkFramebuffers == NULL)
+//             {
+//                 CreateVkFramebuffers(pGFXEngine, pTKNGraphicPipeline);
+//             }
+//             else
+//             {
+//                 DestroyFramebuffers(pGFXEngine, pTKNGraphicPipeline);
+//                 CreateVkFramebuffers(pGFXEngine, pTKNGraphicPipeline);
+//             }
+//         }
+//     }
+//     else
+//     {
+//         // Record new vkCommandBuffers
+//         for (uint32_t i = 0; i < pGFXEngine->tknGraphicPipelineCount; i++)
+//         {
+//             TKNGraphicPipeline *pTKNGraphicPipeline = &pGFXEngine->tknGraphicPipelines[i];
+//             if (pTKNGraphicPipeline->vkFramebuffers == NULL)
+//             {
+//                 CreateVkFramebuffers(pGFXEngine, pTKNGraphicPipeline);
+//             }
+//             else
+//             {
+//                 // continue;
+//             }
+//         }
+//     }
+// }
 
 void StartGFXEngine(GFXEngine *pGFXEngine)
 {
@@ -1256,8 +1413,11 @@ void StartGFXEngine(GFXEngine *pGFXEngine)
     pGFXEngine->submitVkCommandBufferCount = 0;
     pGFXEngine->submitVkCommandBuffers = TKNMalloc(sizeof(VkCommandBuffer) * pGFXEngine->maxCommandBufferListCount);
 
-    pGFXEngine->tknGraphicPipelineCount = 0;
-    pGFXEngine->tknGraphicPipelines = TKNMalloc(sizeof(TKNGraphicPipeline) * pGFXEngine->maxCommandBufferListCount);
+    pGFXEngine->maxVkRenderPassCount = 1024;
+    pGFXEngine->vkRenderPassCount = 0;
+    pGFXEngine->vkRenderPasses = TKNMalloc(sizeof(VkRenderPass) * pGFXEngine->maxVkRenderPassCount);
+    pGFXEngine->vkRenderPassCreateInfos = TKNMalloc(sizeof(VkRenderPassCreateInfo) * pGFXEngine->maxVkRenderPassCount);
+    pGFXEngine->vkRenderPassCreateInfoPtrNodes = TKNMalloc(sizeof(VkRenderPassCreateInfoPtrNode) * pGFXEngine->maxVkRenderPassCount);
 
     CreateGLFWWindow(pGFXEngine);
     CreateVkInstance(pGFXEngine);
@@ -1276,7 +1436,7 @@ void UpdateGFXEngine(GFXEngine *pGFXEngine)
     bool hasRecreateSwapchain = false;
     WaitForGPU(pGFXEngine);
     AcquireImage(pGFXEngine, &hasRecreateSwapchain);
-    UpdateVkCommandBuffers(pGFXEngine, hasRecreateSwapchain);
+    // UpdateVkCommandBuffers(pGFXEngine, hasRecreateSwapchain);
     SubmitCommandBuffers(pGFXEngine);
     Present(pGFXEngine);
 
@@ -1285,17 +1445,17 @@ void UpdateGFXEngine(GFXEngine *pGFXEngine)
 
 void EndGFXEngine(GFXEngine *pGFXEngine)
 {
-    for (uint32_t i = 0; i < pGFXEngine->tknGraphicPipelineCount; i++)
-    {
-        if (pGFXEngine->tknGraphicPipelines[i].vkFramebuffers == NULL)
-        {
-            // continue;
-        }
-        else
-        {
-            DestroyFramebuffers(pGFXEngine, &pGFXEngine->tknGraphicPipelines[i]);
-        }
-    }
+    // for (uint32_t i = 0; i < pGFXEngine->tknGraphicPipelineCount; i++)
+    // {
+    //     if (pGFXEngine->tknGraphicPipelines[i].vkFramebuffers == NULL)
+    //     {
+    //         // continue;
+    //     }
+    //     else
+    //     {
+    //         DestroyFramebuffers(pGFXEngine, &pGFXEngine->tknGraphicPipelines[i]);
+    //     }
+    // }
 
     DestroyCommandPools(pGFXEngine);
     DestroySemaphores(pGFXEngine);
@@ -1307,6 +1467,11 @@ void EndGFXEngine(GFXEngine *pGFXEngine)
     DestroyVKInstance(pGFXEngine);
     DestroyGLFWWindow(pGFXEngine);
 
-    TKNFree(pGFXEngine->tknGraphicPipelines);
+    // TKNFree(pGFXEngine->tknGraphicPipelines);
+
+    TKNFree(pGFXEngine->vkRenderPassCreateInfoPtrNodes);
+    TKNFree(pGFXEngine->vkRenderPassCreateInfos);
+    TKNFree(pGFXEngine->vkRenderPasses);
+
     TKNFree(pGFXEngine->submitVkCommandBuffers);
 }

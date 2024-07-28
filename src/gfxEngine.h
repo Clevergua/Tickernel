@@ -20,22 +20,27 @@ typedef enum
     TNKCustomAttachmentType,
 } AttachmentType;
 
-typedef struct TKNRenderPassConfigStruct
+typedef struct VkRenderPassCreateInfoNodePtrStruct
 {
-    uint32_t vkAttachmentCount;
-    const VkAttachmentDescription *vkAttachmentDescriptions;
-    uint32_t vkSubpassDescriptionCount;
-    const VkSubpassDescription *vkSubpassDescriptions;
-    uint32_t vkSubpassDependencyCount;
-    const VkSubpassDependency *vkSubpassDependencies;
-
-} TKNRenderPassConfig;
+    VkRenderPassCreateInfo *pVkRenderPassCreateInfo;
+    struct VkRenderPassCreateInfoNodePtrStruct *pNext;
+} VkRenderPassCreateInfoPtrNode;
+// typedef struct TKNRenderPassConfigStruct
+// {
+//     uint32_t vkAttachmentCount;
+//     const VkAttachmentDescription *vkAttachmentDescriptions;
+//     uint32_t vkSubpassDescriptionCount;
+//     const VkSubpassDescription *vkSubpassDescriptions;
+//     uint32_t vkSubpassDependencyCount;
+//     const VkSubpassDependency *vkSubpassDependencies;\
+// } TKNRenderPassConfig;
 
 typedef struct TKNGraphicPipelineConfigStruct
 {
     // RenderPass:
     // Using struct to cache VkRenderPass
-    TKNRenderPassConfig tknRenderPassConfig;
+    // TKNRenderPassConfig tknRenderPassConfig;
+    VkRenderPassCreateInfo vkRenderPassCreateInfo;
     uint32_t subpassIndex;
     // Shader:
     uint32_t vkShaderModuleCreateInfoCount;
@@ -158,8 +163,13 @@ typedef struct GFXEngineStruct
     uint32_t frameIndex;
     bool hasRecreateSwapchain;
 
-    TKNGraphicPipeline *tknGraphicPipelines;
-    uint32_t tknGraphicPipelineCount;
+    // TKNGraphicPipeline *tknGraphicPipelines;
+    // uint32_t tknGraphicPipelineCount;
+    uint32_t maxVkRenderPassCount;
+    uint32_t vkRenderPassCount;
+    VkRenderPass *vkRenderPasses;
+    VkRenderPassCreateInfo *vkRenderPassCreateInfos;
+    VkRenderPassCreateInfoPtrNode *vkRenderPassCreateInfoPtrNodes;
 } GFXEngine;
 
 void StartGFXEngine(GFXEngine *pGFXEngine);
