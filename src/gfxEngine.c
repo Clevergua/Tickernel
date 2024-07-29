@@ -1094,7 +1094,52 @@ static void GetVkRenderPass(GFXEngine *pGFXEngine, VkRenderPassCreateInfo *pVkRe
 
 static void ReleaseVkRenderPass(GFXEngine *pGFXEngine, VkRenderPassCreateInfo *pVkRenderPassCreateInfo)
 {
-   
+    for (uint32_t i = 0; i < pGFXEngine->vkRenderPassCount; i++)
+    {
+        VkRenderPassCreateInfoPtrNode *pNode = &pGFXEngine->vkRenderPassCreateInfoPtrNodes[i];
+        if (pNode->pVkRenderPassCreateInfo == pVkRenderPassCreateInfo)
+        {
+            if (pNode->pNext == NULL)
+            {
+                vkDestroyRenderPass(pGFXEngine->vkDevice, pGFXEngine->vkRenderPasses[i], NULL);
+                memmove(&pGFXEngine->vkRenderPasses[i], &pGFXEngine->vkRenderPasses[i + 1], (pGFXEngine->vkRenderPassCount - 1 - i) * sizeof(VkRenderPass));
+                memmove(&pGFXEngine->vkRenderPassCreateInfos[i], &pGFXEngine->vkRenderPassCreateInfos[i + 1], (pGFXEngine->vkRenderPassCount - 1 - i) * sizeof(VkRenderPassCreateInfo));
+                memmove(&pGFXEngine->vkRenderPassCreateInfoPtrNodes[i], &pGFXEngine->vkRenderPassCreateInfoPtrNodes[i + 1], (pGFXEngine->vkRenderPassCount - 1 - i) * sizeof(VkRenderPassCreateInfoPtrNode));
+                pGFXEngine->vkRenderPassCount--;
+                return;
+            }
+            else
+            {
+                pGFXEngine->vkRenderPassCreateInfoPtrNodes[i].pNext = pNode->pNext->pNext;
+                pGFXEngine->vkRenderPassCreateInfoPtrNodes[i].pVkRenderPassCreateInfo = pNode->pNext->pVkRenderPassCreateInfo;
+                TKNFree(pNode->pNext);
+                return;
+            }
+        }
+        else
+        {
+
+            VkRenderPassCreateInfoPtrNode *pPreviousNode = pNode;
+            VkRenderPassCreateInfoPtrNode *pCurrentNode = pNode->pNext;
+            while (pCurrentNode != NULL)
+            {
+                if (pCurrentNode->pVkRenderPassCreateInfo == pVkRenderPassCreateInfo)
+                {
+                    pPreviousNode->pNext = pCurrentNode->pNext;
+                    TKNFree(pCurrentNode);
+                    return;
+                }
+                else
+                {
+                    pPreviousNode = pCurrentNode;
+                    pCurrentNode = pCurrentNode->pNext;
+                    // continue;
+                }
+            }
+        }
+    }
+    printf("The node is not found!");
+    abort();
 }
 
 static void CreateTKNGraphicPipeline(GFXEngine *pGFXEngine, TKNGraphicPipelineConfig tknGraphicPipelineConfig, TKNGraphicPipeline *pTKNPGraphicipeline)
