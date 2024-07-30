@@ -1142,11 +1142,22 @@ static void ReleaseVkRenderPass(GFXEngine *pGFXEngine, VkRenderPassCreateInfo *p
     abort();
 }
 
+static void GetVkGraphicsPipelineCreateConfigHash(uintptr_t hashSize, VkGraphicsPipelineCreateConfig *pVkGraphicsPipelineCreateConfig, uintptr_t *pHashValue)
+{
+    *pHashValue = (uintptr_t)pVkGraphicsPipelineCreateConfig % hashSize;
+}
+
 static void CreateVkGraphicsPipeline(GFXEngine *pGFXEngine, VkGraphicsPipelineCreateConfig *pVkGraphicsPipelineCreateConfig)
 {
     VkResult result = VK_SUCCESS;
     VkDevice vkDevice = pGFXEngine->vkDevice;
-    VkGraphicsPipelineCreateConfig vkGraphicsPipelineCreateConfig = pTKNGraphicPipeline->vkGraphicsPipelineCreateConfig;
+
+    uintptr_t uintptrValue;
+    GetVkGraphicsPipelineCreateConfigHash(pGFXEngine->tknGraphicPipelineHashSize, pVkGraphicsPipelineCreateConfig, &uintptrValue);
+    uint32_t hashValue = (uint32_t)uintptrValue;
+    pGFXEngine->graphicPipelineNodes[hashValue]
+
+
     VkDescriptorSetLayout vkDescriptorSetLayouts[pVkGraphicsPipelineCreateConfig->vkDescriptorSetLayoutCreateInfoCount];
     for (uint32_t i = 0; i < pVkGraphicsPipelineCreateConfig->vkDescriptorSetLayoutCreateInfoCount; i++)
     {
@@ -1192,14 +1203,15 @@ static void CreateVkGraphicsPipeline(GFXEngine *pGFXEngine, VkGraphicsPipelineCr
 
     result = vkCreateGraphicsPipelines(vkDevice, VK_NULL_HANDLE, 1, &vkGraphicsPipelineCreateInfo, NULL, &pTKNGraphicPipeline->vkPipeline);
     TryThrowVulkanError(result);
-    for (uint32_t i = 0; i < pTKNGraphicPipeline->pVkGraphicsPipelineCreateConfig->vkDescriptorSetLayoutCreateInfoCount; i++)
+    for (uint32_t i = 0; i < pVkGraphicsPipelineCreateConfig->vkDescriptorSetLayoutCreateInfoCount; i++)
     {
         vkDestroyDescriptorSetLayout(pGFXEngine->vkDevice, vkDescriptorSetLayouts[i], NULL);
     }
 }
 
-static void DestroyVkGraphicsPipeline(GFXEngine *pGFXEngine, VkGraphicsPipelineCreateConfig *pVkGraphicsPipelineCreateConfig)
+static void DestroyVkGraphicsPipeline(GFXEngine *pGFXEngine, uint32_t index)
 {
+    TKNGraphicPipeline *pTKNGraphicPipeline = &pGFXEngine->tknGraphicPipelines[index];
     vkDestroyPipeline(pGFXEngine->vkDevice, pTKNGraphicPipeline->vkPipeline, NULL);
     ReleaseVkRenderPass(pGFXEngine, &pTKNGraphicPipeline->vkGraphicsPipelineCreateConfig.vkRenderPassCreateInfo);
     vkDestroyPipelineLayout(pGFXEngine->vkDevice, pTKNGraphicPipeline->vkPipelineLayout, NULL);
@@ -1426,11 +1438,10 @@ static void DestroyVkGraphicsPipeline(GFXEngine *pGFXEngine, VkGraphicsPipelineC
 //     TKNFree(pTKNGraphicPipeline);
 // }
 
-static void CreateVkFramebuffers(GFXEngine *pGFXEngine, TKNGraphicPipeline *pTKNGraphicPipeline)
+static void CreateVkFramebuffers(GFXEngine *pGFXEngine, TKNGraphicPipeline *pTKNGraphicPipeline, VkGraphicsPipelineCreateConfig vkGraphicsPipelineCreateConfig)
 {
     VkResult result = VK_SUCCESS;
     pTKNGraphicPipeline->vkFramebuffers = TKNMalloc(sizeof(VkFramebuffer) * pGFXEngine->swapchainImageCount);
-    VkGraphicsPipelineCreateConfig vkGraphicsPipelineCreateConfig = pTKNGraphicPipeline->vkGraphicsPipelineCreateConfig;
     VkFramebufferCreateInfo vkFramebufferCreateInfo = vkGraphicsPipelineCreateConfig.vkFramebufferCreateInfo;
     for (uint32_t i = 0; i < pGFXEngine->swapchainImageCount; i++)
     {
@@ -1527,6 +1538,8 @@ void StartGFXEngine(GFXEngine *pGFXEngine)
     pGFXEngine->vkRenderPassCreateInfos = TKNMalloc(sizeof(VkRenderPassCreateInfo) * pGFXEngine->maxVkRenderPassCount);
     pGFXEngine->vkRenderPassCreateInfoPtrNodes = TKNMalloc(sizeof(VkRenderPassCreateInfoPtrNode) * pGFXEngine->maxVkRenderPassCount);
 
+    pGFXEngine->graphicPipelineNodes = TKNMalloc(sizeof(GraphicPipelineNode) * pGFXEngine->tknGraphicPipelineHashSize);
+
     CreateGLFWWindow(pGFXEngine);
     CreateVkInstance(pGFXEngine);
     CreateVKSurface(pGFXEngine);
@@ -1576,7 +1589,7 @@ void EndGFXEngine(GFXEngine *pGFXEngine)
     DestroyGLFWWindow(pGFXEngine);
 
     // TKNFree(pGFXEngine->tknGraphicPipelines);
-
+    TKNFree(pGFXEngine->graphicPipelineNodes);
     TKNFree(pGFXEngine->vkRenderPassCreateInfoPtrNodes);
     TKNFree(pGFXEngine->vkRenderPassCreateInfos);
     TKNFree(pGFXEngine->vkRenderPasses);
