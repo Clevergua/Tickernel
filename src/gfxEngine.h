@@ -18,103 +18,38 @@ typedef enum
     TKNNormalAttachmentType,
     TKNAlbedoAttachmentType,
     TNKCustomAttachmentType,
-} AttachmentType;
+} TKNAttachmentType;
 
 typedef struct VkRenderPassCreateInfoNodePtrStruct
 {
     VkRenderPassCreateInfo *pVkRenderPassCreateInfo;
     struct VkRenderPassCreateInfoNodePtrStruct *pNext;
 } VkRenderPassCreateInfoPtrNode;
-// typedef struct TKNRenderPassConfigStruct
-// {
-//     uint32_t vkAttachmentCount;
-//     const VkAttachmentDescription *vkAttachmentDescriptions;
-//     uint32_t vkSubpassDescriptionCount;
-//     const VkSubpassDescription *vkSubpassDescriptions;
-//     uint32_t vkSubpassDependencyCount;
-//     const VkSubpassDependency *vkSubpassDependencies;\
-// } TKNRenderPassConfig;
 
-typedef struct TKNGraphicPipelineConfigStruct
+typedef struct VkGraphicsPipelineCreateConfigStruct
 {
-    // RenderPass:
-    // Using struct to cache VkRenderPass
-    // TKNRenderPassConfig tknRenderPassConfig;
+    VkGraphicsPipelineCreateInfo vkGraphicsPipelineCreateInfo;
+    uint32_t vkPipelineShaderStageCreateInfosCount;
+    VkPipelineShaderStageCreateInfo *vkPipelineShaderStageCreateInfos;
+    VkPipelineLayoutCreateInfo vkPipelineLayoutCreateInfo;
+    uint32_t vkDescriptorSetLayoutCreateInfoCount;
+    VkDescriptorSetLayoutCreateInfo *vkDescriptorSetLayoutCreateInfos;
     VkRenderPassCreateInfo vkRenderPassCreateInfo;
-    uint32_t subpassIndex;
-    // Shader:
-    uint32_t vkShaderModuleCreateInfoCount;
-    size_t *codeSizes;
-    uint32_t **codes;
-    char **codeFunctionNames;
-    VkShaderStageFlagBits *stages;
-    // Input:
-    uint32_t vkVertexInputBindingDescriptionCount;
-    VkVertexInputBindingDescription *vkVertexInputBindingDescriptions;
-    uint32_t vkVertexInputAttributeDescriptionCount;
-    VkVertexInputAttributeDescription *vkVertexInputAttributeDescriptions;
-    VkPrimitiveTopology vkPrimitiveTopology;
-    VkBool32 primitiveRestartEnable;
-    // Viewport:
-    uint32_t viewportCount;
-    VkViewport *viewports;
-    uint32_t scissorCount;
-    VkRect2D *scissors;
-    // Rasterization:
-    VkBool32 rasterizerDiscardEnable;
-    VkPolygonMode polygonMode;
-    VkCullModeFlags cullMode;
-    VkFrontFace frontFace;
-    VkBool32 depthBiasEnable;
-    float depthBiasConstantFactor;
-    float depthBiasClamp;
-    float depthBiasSlopeFactor;
-    float lineWidth;
-    // Depth Stencil:
-    VkBool32 depthTestEnable;
-    VkBool32 depthWriteEnable;
-    VkCompareOp depthCompareOp;
-    VkBool32 depthBoundsTestEnable;
-    VkBool32 stencilTestEnable;
-    VkStencilOpState front;
-    VkStencilOpState back;
-    float minDepthBounds;
-    float maxDepthBounds;
-    // Color Blend:
-    uint32_t vkPipelineColorBlendAttachmentStateCount;
-    VkPipelineColorBlendAttachmentState *vkPipelineColorBlendAttachmentStates;
-    float blendConstants[4];
-    // Set Layouts:
-    uint32_t setLayoutCount;
-    uint32_t *bindingCounts;
-    VkDescriptorSetLayoutBinding **bindingsArray;
-    uint32_t pushConstantRangeCount;
-    VkPushConstantRange *pushConstantRanges;
-    // Dynamic:
-    uint32_t dynamicStateCount;
-    VkDynamicState *dynamicStates;
-    // Framebuffer:
-    uint32_t width;
-    uint32_t height;
-    uint32_t layers;
-    uint32_t vkAttachmentCount;
-    AttachmentType *attachmentTypes;
-} TKNGraphicPipelineConfig;
+    VkFramebufferCreateInfo vkFramebufferCreateInfo;
+    TKNAttachmentType *tknAttachmentTypes;
+} VkGraphicsPipelineCreateConfig;
 
 typedef struct TKNGraphicPipelineStruct
 {
-    // Config:
-    TKNGraphicPipelineConfig tknGraphicPipelineConfig;
+    VkGraphicsPipelineCreateConfig vkGraphicsPipelineCreateConfig;
     // Runtime:
     VkRenderPass vkRenderPass;
-    VkDescriptorSetLayout *setLayouts;
     VkFramebuffer *vkFramebuffers;
     // For vkCmd functions
     VkPipelineLayout vkPipelineLayout;
     // For vkCmd functions
     VkPipeline vkPipeline;
     VkCommandBuffer *vkCommandBuffers;
-    bool isValid;
 } TKNGraphicPipeline;
 
 typedef struct GFXEngineStruct
@@ -163,17 +98,18 @@ typedef struct GFXEngineStruct
     uint32_t frameIndex;
     bool hasRecreateSwapchain;
 
-    // TKNGraphicPipeline *tknGraphicPipelines;
-    // uint32_t tknGraphicPipelineCount;
     uint32_t maxVkRenderPassCount;
     uint32_t vkRenderPassCount;
     VkRenderPass *vkRenderPasses;
     VkRenderPassCreateInfo *vkRenderPassCreateInfos;
     VkRenderPassCreateInfoPtrNode *vkRenderPassCreateInfoPtrNodes;
+
+    // TKNGraphicPipeline *tknGraphicPipelines;
+    // uint32_t tknGraphicPipelineCount;
 } GFXEngine;
 
 void StartGFXEngine(GFXEngine *pGFXEngine);
 void UpdateGFXEngine(GFXEngine *pGFXEngine);
 void EndGFXEngine(GFXEngine *pGFXEngine);
 
-void AddTKNGraphicPipeline(GFXEngine *pGFXEngine, TKNGraphicPipelineConfig tknGraphicPipelineConfig);
+void AddTKNGraphicPipeline(GFXEngine *pGFXEngine, VkGraphicsPipelineCreateConfig tknGraphicPipelineConfig);

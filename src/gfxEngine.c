@@ -1141,37 +1141,70 @@ static void ReleaseVkRenderPass(GFXEngine *pGFXEngine, VkRenderPassCreateInfo *p
     printf("The node is not found!");
     abort();
 }
-static void CreateVkGraphicsPipeline(GFXEngine *pGFXEngine, VkGraphicsPipelineCreateInfo vkGraphicsPipelineCreateInfo, VkPipeline *pVkPipeline)
+
+static void CreateVkGraphicsPipeline(GFXEngine *pGFXEngine, VkGraphicsPipelineCreateConfig *pVkGraphicsPipelineCreateConfig)
 {
     VkResult result = VK_SUCCESS;
     VkDevice vkDevice = pGFXEngine->vkDevice;
-    VkPipelineLayout layout;
-    VkRenderPass renderPass;
-    VkGraphicsPipelineCreateInfo pipelineCreateInfo = {
+    VkGraphicsPipelineCreateConfig vkGraphicsPipelineCreateConfig = pTKNGraphicPipeline->vkGraphicsPipelineCreateConfig;
+    VkDescriptorSetLayout vkDescriptorSetLayouts[pVkGraphicsPipelineCreateConfig->vkDescriptorSetLayoutCreateInfoCount];
+    for (uint32_t i = 0; i < pVkGraphicsPipelineCreateConfig->vkDescriptorSetLayoutCreateInfoCount; i++)
+    {
+        VkDescriptorSetLayoutCreateInfo vkDescriptorSetLayoutCreateInfo = pVkGraphicsPipelineCreateConfig->vkDescriptorSetLayoutCreateInfos[i];
+        result = vkCreateDescriptorSetLayout(pGFXEngine->vkDevice, &vkDescriptorSetLayoutCreateInfo, NULL, &vkDescriptorSetLayouts[i]);
+        TryThrowVulkanError(result);
+    }
+
+    VkPipelineLayoutCreateInfo vkPipelineLayoutCreateInfo = {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+        .pNext = NULL,
+        .flags = 0,
+        .setLayoutCount = pVkGraphicsPipelineCreateConfig->vkDescriptorSetLayoutCreateInfoCount,
+        .pSetLayouts = vkDescriptorSetLayouts,
+        .pushConstantRangeCount = pVkGraphicsPipelineCreateConfig->vkPipelineLayoutCreateInfo.pushConstantRangeCount,
+        .pPushConstantRanges = pVkGraphicsPipelineCreateConfig->vkPipelineLayoutCreateInfo.pPushConstantRanges,
+    };
+    result = vkCreatePipelineLayout(vkDevice, &vkPipelineLayoutCreateInfo, NULL, &pTKNGraphicPipeline->vkPipelineLayout);
+    TryThrowVulkanError(result);
+    GetVkRenderPass(pGFXEngine, &pVkGraphicsPipelineCreateConfig->vkRenderPassCreateInfo, &pTKNGraphicPipeline->vkRenderPass);
+
+    VkGraphicsPipelineCreateInfo vkGraphicsPipelineCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
         .pNext = NULL,
-        .flags = vkGraphicsPipelineCreateInfo.flags,
-        .stageCount = vkGraphicsPipelineCreateInfo.stageCount,
-        .pStages = vkGraphicsPipelineCreateInfo.pStages,
-        .pVertexInputState = vkGraphicsPipelineCreateInfo.pVertexInputState,
-        .pInputAssemblyState = vkGraphicsPipelineCreateInfo.pInputAssemblyState,
-        .pTessellationState = vkGraphicsPipelineCreateInfo.pTessellationState,
-        .pViewportState = vkGraphicsPipelineCreateInfo.pViewportState,
-        .pRasterizationState = vkGraphicsPipelineCreateInfo.pRasterizationState,
-        .pMultisampleState = vkGraphicsPipelineCreateInfo.pMultisampleState,
-        .pDepthStencilState = vkGraphicsPipelineCreateInfo.pDepthStencilState,
-        .pColorBlendState = vkGraphicsPipelineCreateInfo.pColorBlendState,
-        .pDynamicState = vkGraphicsPipelineCreateInfo.pDynamicState,
-        .layout = layout,
-        .renderPass = renderPass,
-        .subpass = vkGraphicsPipelineCreateInfo.subpass,
+        .flags = pVkGraphicsPipelineCreateConfig->vkGraphicsPipelineCreateInfo.flags,
+        .stageCount = pVkGraphicsPipelineCreateConfig->vkGraphicsPipelineCreateInfo.stageCount,
+        .pStages = pVkGraphicsPipelineCreateConfig->vkGraphicsPipelineCreateInfo.pStages,
+        .pVertexInputState = pVkGraphicsPipelineCreateConfig->vkGraphicsPipelineCreateInfo.pVertexInputState,
+        .pInputAssemblyState = pVkGraphicsPipelineCreateConfig->vkGraphicsPipelineCreateInfo.pInputAssemblyState,
+        .pTessellationState = pVkGraphicsPipelineCreateConfig->vkGraphicsPipelineCreateInfo.pTessellationState,
+        .pViewportState = pVkGraphicsPipelineCreateConfig->vkGraphicsPipelineCreateInfo.pViewportState,
+        .pRasterizationState = pVkGraphicsPipelineCreateConfig->vkGraphicsPipelineCreateInfo.pRasterizationState,
+        .pMultisampleState = pVkGraphicsPipelineCreateConfig->vkGraphicsPipelineCreateInfo.pMultisampleState,
+        .pDepthStencilState = pVkGraphicsPipelineCreateConfig->vkGraphicsPipelineCreateInfo.pDepthStencilState,
+        .pColorBlendState = pVkGraphicsPipelineCreateConfig->vkGraphicsPipelineCreateInfo.pColorBlendState,
+        .pDynamicState = pVkGraphicsPipelineCreateConfig->vkGraphicsPipelineCreateInfo.pDynamicState,
+        .layout = pTKNGraphicPipeline->vkPipelineLayout,
+        .renderPass = pTKNGraphicPipeline->vkRenderPass,
+        .subpass = pVkGraphicsPipelineCreateConfig->vkGraphicsPipelineCreateInfo.subpass,
         .basePipelineHandle = VK_NULL_HANDLE,
         .basePipelineIndex = 0,
     };
 
-    result = vkCreateGraphicsPipelines(vkDevice, VK_NULL_HANDLE, 1, &pipelineCreateInfo, NULL, pVkPipeline);
+    result = vkCreateGraphicsPipelines(vkDevice, VK_NULL_HANDLE, 1, &vkGraphicsPipelineCreateInfo, NULL, &pTKNGraphicPipeline->vkPipeline);
     TryThrowVulkanError(result);
+    for (uint32_t i = 0; i < pTKNGraphicPipeline->pVkGraphicsPipelineCreateConfig->vkDescriptorSetLayoutCreateInfoCount; i++)
+    {
+        vkDestroyDescriptorSetLayout(pGFXEngine->vkDevice, vkDescriptorSetLayouts[i], NULL);
+    }
 }
+
+static void DestroyVkGraphicsPipeline(GFXEngine *pGFXEngine, VkGraphicsPipelineCreateConfig *pVkGraphicsPipelineCreateConfig)
+{
+    vkDestroyPipeline(pGFXEngine->vkDevice, pTKNGraphicPipeline->vkPipeline, NULL);
+    ReleaseVkRenderPass(pGFXEngine, &pTKNGraphicPipeline->vkGraphicsPipelineCreateConfig.vkRenderPassCreateInfo);
+    vkDestroyPipelineLayout(pGFXEngine->vkDevice, pTKNGraphicPipeline->vkPipelineLayout, NULL);
+}
+
 // static void CreateTKNGraphicPipeline(GFXEngine *pGFXEngine, TKNGraphicPipelineConfig tknGraphicPipelineConfig, TKNGraphicPipeline *pTKNPGraphicipeline)
 // {
 //     VkResult result = VK_SUCCESS;
@@ -1321,6 +1354,8 @@ static void CreateVkGraphicsPipeline(GFXEngine *pGFXEngine, VkGraphicsPipelineCr
 //         .pushConstantRangeCount = tknGraphicPipelineConfig.pushConstantRangeCount,
 //         .pPushConstantRanges = tknGraphicPipelineConfig.pushConstantRanges,
 //     };
+//     result = vkCreatePipelineLayout(vkDevice, &pipelineLayoutCreateInfo, NULL, &pTKNPGraphicipeline->vkPipelineLayout);
+//     TryThrowVulkanError(result);
 
 //     VkPipelineDynamicStateCreateInfo dynamicState = {
 //         .sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO,
@@ -1329,9 +1364,6 @@ static void CreateVkGraphicsPipeline(GFXEngine *pGFXEngine, VkGraphicsPipelineCr
 //         .dynamicStateCount = tknGraphicPipelineConfig.dynamicStateCount,
 //         .pDynamicStates = tknGraphicPipelineConfig.dynamicStates,
 //     };
-
-//     result = vkCreatePipelineLayout(vkDevice, &pipelineLayoutCreateInfo, NULL, &pTKNPGraphicipeline->vkPipelineLayout);
-//     TryThrowVulkanError(result);
 
 //     VkGraphicsPipelineCreateInfo pipelineCreateInfo = {
 //         .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
@@ -1398,13 +1430,14 @@ static void CreateVkFramebuffers(GFXEngine *pGFXEngine, TKNGraphicPipeline *pTKN
 {
     VkResult result = VK_SUCCESS;
     pTKNGraphicPipeline->vkFramebuffers = TKNMalloc(sizeof(VkFramebuffer) * pGFXEngine->swapchainImageCount);
-    TKNGraphicPipelineConfig tknGraphicPipelineConfig = pTKNGraphicPipeline->tknGraphicPipelineConfig;
+    VkGraphicsPipelineCreateConfig vkGraphicsPipelineCreateConfig = pTKNGraphicPipeline->vkGraphicsPipelineCreateConfig;
+    VkFramebufferCreateInfo vkFramebufferCreateInfo = vkGraphicsPipelineCreateConfig.vkFramebufferCreateInfo;
     for (uint32_t i = 0; i < pGFXEngine->swapchainImageCount; i++)
     {
-        VkImageView attachments[tknGraphicPipelineConfig.vkAttachmentCount];
-        for (uint32_t j = 0; j < tknGraphicPipelineConfig.vkAttachmentCount; j++)
+        VkImageView attachments[vkGraphicsPipelineCreateConfig.vkRenderPassCreateInfo.attachmentCount];
+        for (uint32_t j = 0; j < vkGraphicsPipelineCreateConfig.vkRenderPassCreateInfo.attachmentCount; j++)
         {
-            AttachmentType attachmentType = tknGraphicPipelineConfig.attachmentTypes[j];
+            TKNAttachmentType attachmentType = vkGraphicsPipelineCreateConfig.tknAttachmentTypes[j];
             if (TKNColorAttachmentType == attachmentType)
             {
                 attachments[j] = pGFXEngine->swapchainImageViews[j];
@@ -1425,11 +1458,11 @@ static void CreateVkFramebuffers(GFXEngine *pGFXEngine, TKNGraphicPipeline *pTKN
             .pNext = NULL,
             .flags = 0,
             .renderPass = pTKNGraphicPipeline->vkRenderPass,
-            .attachmentCount = tknGraphicPipelineConfig.vkAttachmentCount,
+            .attachmentCount = vkFramebufferCreateInfo.attachmentCount,
             .pAttachments = attachments,
-            .width = tknGraphicPipelineConfig.width,
-            .height = tknGraphicPipelineConfig.height,
-            .layers = tknGraphicPipelineConfig.layers,
+            .width = vkFramebufferCreateInfo.width,
+            .height = vkFramebufferCreateInfo.height,
+            .layers = vkFramebufferCreateInfo.layers,
         };
         result = vkCreateFramebuffer(pGFXEngine->vkDevice, &framebufferCreateInfo, NULL, &pTKNGraphicPipeline->vkFramebuffers[i]);
         TryThrowVulkanError(result);

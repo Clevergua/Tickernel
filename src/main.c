@@ -1,5 +1,10 @@
 #include <tickernelEngine.h>
 #include <assert.h>
+void TestFunction(int *a)
+{
+    int *b = a;
+    printf("%p, %p", a, b);
+}
 int main(int argc, const char *argv[])
 {
     TickernelEngine *pTickernelEngine = TKNMalloc(sizeof(TickernelEngine));
