@@ -1152,11 +1152,13 @@ static void CreateVkGraphicsPipeline(GFXEngine *pGFXEngine, VkGraphicsPipelineCr
     VkResult result = VK_SUCCESS;
     VkDevice vkDevice = pGFXEngine->vkDevice;
 
-    uintptr_t uintptrValue;
-    GetVkGraphicsPipelineCreateConfigHash(pGFXEngine->tknGraphicPipelineHashSize, pVkGraphicsPipelineCreateConfig, &uintptrValue);
-    uint32_t hashValue = (uint32_t)uintptrValue;
-    pGFXEngine->graphicPipelineNodes[hashValue]
-
+    uintptr_t hashValue;
+    GetVkGraphicsPipelineCreateConfigHash(pGFXEngine->tknGraphicPipelineHashSize, pVkGraphicsPipelineCreateConfig, &hashValue);
+    GraphicPipelineNode *pCurrentNode = &pGFXEngine->graphicPipelineNodes[(uint32_t)hashValue];
+    while (NULL != pCurrentNode)
+    {
+        
+    }
 
     VkDescriptorSetLayout vkDescriptorSetLayouts[pVkGraphicsPipelineCreateConfig->vkDescriptorSetLayoutCreateInfoCount];
     for (uint32_t i = 0; i < pVkGraphicsPipelineCreateConfig->vkDescriptorSetLayoutCreateInfoCount; i++)
