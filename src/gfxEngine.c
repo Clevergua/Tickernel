@@ -1045,7 +1045,7 @@ static void GetVkRenderPass(GFXEngine *pGFXEngine, VkRenderPassCreateInfo *pVkRe
         HasSameVkRenderPassCreateInfo(*pVkRenderPassCreateInfo, vkRenderPassCreateInfo, &isSameRednerPass);
         if (isSameRednerPass)
         {
-            VkRenderPassCreateInfoPtrNode *pCurrentNode = &pGFXEngine->vkRenderPassCreateInfoPtrNodes[i];
+            PVkRenderPassCreateInfoNode *pCurrentNode = pGFXEngine->pVkRenderPassCreateInfoNodeList[i];
             do
             {
                 if (pCurrentNode->pVkRenderPassCreateInfo == pVkRenderPassCreateInfo)
@@ -1058,7 +1058,7 @@ static void GetVkRenderPass(GFXEngine *pGFXEngine, VkRenderPassCreateInfo *pVkRe
                     pCurrentNode = pCurrentNode->pNext;
                 }
             } while (pCurrentNode != NULL);
-            VkRenderPassCreateInfoPtrNode *pNewNode = TKNMalloc(sizeof(VkRenderPassCreateInfoPtrNode));
+            PVkRenderPassCreateInfoNode *pNewNode = TKNMalloc(sizeof(PVkRenderPassCreateInfoNode));
             pCurrentNode->pNext = pNewNode;
         }
         else
@@ -1076,11 +1076,11 @@ static void GetVkRenderPass(GFXEngine *pGFXEngine, VkRenderPassCreateInfo *pVkRe
                     .dependencyCount = vkRenderPassCreateInfo.dependencyCount,
                     .pDependencies = vkRenderPassCreateInfo.pDependencies,
                 };
-
+                pGFXEngine->pVkRenderPassCreateInfoNodeList[i] = TKNMalloc(sizeof(PVkRenderPassCreateInfoNode));
+                pGFXEngine->pVkRenderPassCreateInfoNodeList[i]->pVkRenderPassCreateInfo = pVkRenderPassCreateInfo;
+                pGFXEngine->pVkRenderPassCreateInfoNodeList[i]->pNext = NULL;
                 VkResult result = vkCreateRenderPass(pGFXEngine->vkDevice, &pGFXEngine->vkRenderPassCreateInfos[i], NULL, &pGFXEngine->vkRenderPasses[pGFXEngine->vkRenderPassCount]);
                 TryThrowVulkanError(result);
-                pGFXEngine->vkRenderPassCreateInfoPtrNodes[i].pVkRenderPassCreateInfo = pVkRenderPassCreateInfo;
-                pGFXEngine->vkRenderPassCreateInfoPtrNodes[i].pNext = NULL;
                 pGFXEngine->vkRenderPassCount++;
             }
             else
@@ -1096,31 +1096,30 @@ static void ReleaseVkRenderPass(GFXEngine *pGFXEngine, VkRenderPassCreateInfo *p
 {
     for (uint32_t i = 0; i < pGFXEngine->vkRenderPassCount; i++)
     {
-        VkRenderPassCreateInfoPtrNode *pNode = &pGFXEngine->vkRenderPassCreateInfoPtrNodes[i];
+        PVkRenderPassCreateInfoNode *pNode = pGFXEngine->pVkRenderPassCreateInfoNodeList[i];
         if (pNode->pVkRenderPassCreateInfo == pVkRenderPassCreateInfo)
         {
             if (pNode->pNext == NULL)
             {
                 vkDestroyRenderPass(pGFXEngine->vkDevice, pGFXEngine->vkRenderPasses[i], NULL);
+                TKNFree(pGFXEngine->pVkRenderPassCreateInfoNodeList[i]);
                 memmove(&pGFXEngine->vkRenderPasses[i], &pGFXEngine->vkRenderPasses[i + 1], (pGFXEngine->vkRenderPassCount - 1 - i) * sizeof(VkRenderPass));
                 memmove(&pGFXEngine->vkRenderPassCreateInfos[i], &pGFXEngine->vkRenderPassCreateInfos[i + 1], (pGFXEngine->vkRenderPassCount - 1 - i) * sizeof(VkRenderPassCreateInfo));
-                memmove(&pGFXEngine->vkRenderPassCreateInfoPtrNodes[i], &pGFXEngine->vkRenderPassCreateInfoPtrNodes[i + 1], (pGFXEngine->vkRenderPassCount - 1 - i) * sizeof(VkRenderPassCreateInfoPtrNode));
+                memmove(&pGFXEngine->pVkRenderPassCreateInfoNodeList[i], &pGFXEngine->pVkRenderPassCreateInfoNodeList[i + 1], (pGFXEngine->vkRenderPassCount - 1 - i) * sizeof(PVkRenderPassCreateInfoNode));
                 pGFXEngine->vkRenderPassCount--;
                 return;
             }
             else
             {
-                pGFXEngine->vkRenderPassCreateInfoPtrNodes[i].pNext = pNode->pNext->pNext;
-                pGFXEngine->vkRenderPassCreateInfoPtrNodes[i].pVkRenderPassCreateInfo = pNode->pNext->pVkRenderPassCreateInfo;
-                TKNFree(pNode->pNext);
+                pGFXEngine->pVkRenderPassCreateInfoNodeList[i] = pNode->pNext;
+                TKNFree(pGFXEngine->pVkRenderPassCreateInfoNodeList[i]);
                 return;
             }
         }
         else
         {
-
-            VkRenderPassCreateInfoPtrNode *pPreviousNode = pNode;
-            VkRenderPassCreateInfoPtrNode *pCurrentNode = pNode->pNext;
+            PVkRenderPassCreateInfoNode *pPreviousNode = pNode;
+            PVkRenderPassCreateInfoNode *pCurrentNode = pNode->pNext;
             while (pCurrentNode != NULL)
             {
                 if (pCurrentNode->pVkRenderPassCreateInfo == pVkRenderPassCreateInfo)
@@ -1141,7 +1140,6 @@ static void ReleaseVkRenderPass(GFXEngine *pGFXEngine, VkRenderPassCreateInfo *p
     printf("The node is not found!");
     abort();
 }
-
 static void GetVkGraphicsPipelineCreateConfigHash(uintptr_t hashSize, VkGraphicsPipelineCreateConfig *pVkGraphicsPipelineCreateConfig, uintptr_t *pHashValue)
 {
     *pHashValue = (uintptr_t)pVkGraphicsPipelineCreateConfig % hashSize;
@@ -1154,7 +1152,7 @@ static void CreateVkGraphicsPipeline(GFXEngine *pGFXEngine, VkGraphicsPipelineCr
 
     uintptr_t hashValue;
     GetVkGraphicsPipelineCreateConfigHash(pGFXEngine->tknGraphicPipelineHashSize, pVkGraphicsPipelineCreateConfig, &hashValue);
-    GraphicPipelineNode *pCurrentNode = &pGFXEngine->graphicPipelineNodes[(uint32_t)hashValue];
+    PGraphicPipelineNode *pCurrentNode = pGFXEngine->pGraphicPipelineNodes[(uint32_t)hashValue];
     while (NULL != pCurrentNode)
     {
         
@@ -1538,9 +1536,18 @@ void StartGFXEngine(GFXEngine *pGFXEngine)
     pGFXEngine->vkRenderPassCount = 0;
     pGFXEngine->vkRenderPasses = TKNMalloc(sizeof(VkRenderPass) * pGFXEngine->maxVkRenderPassCount);
     pGFXEngine->vkRenderPassCreateInfos = TKNMalloc(sizeof(VkRenderPassCreateInfo) * pGFXEngine->maxVkRenderPassCount);
-    pGFXEngine->vkRenderPassCreateInfoPtrNodes = TKNMalloc(sizeof(VkRenderPassCreateInfoPtrNode) * pGFXEngine->maxVkRenderPassCount);
+    pGFXEngine->pVkRenderPassCreateInfoNodeList = TKNMalloc(sizeof(PVkRenderPassCreateInfoNode) * pGFXEngine->maxVkRenderPassCount);
+    for (uint32_t i = 0; i < pGFXEngine->maxVkRenderPassCount; i++)
+    {
+        pGFXEngine->pVkRenderPassCreateInfoNodeList[i] = NULL;
+    }
 
-    pGFXEngine->graphicPipelineNodes = TKNMalloc(sizeof(GraphicPipelineNode) * pGFXEngine->tknGraphicPipelineHashSize);
+    pGFXEngine->tknGraphicPipelineHashSize = 512;
+    pGFXEngine->pGraphicPipelineNodes = TKNMalloc(sizeof(PGraphicPipelineNode) * pGFXEngine->tknGraphicPipelineHashSize);
+    for (uint32_t i = 0; i < pGFXEngine->tknGraphicPipelineHashSize; i++)
+    {
+        pGFXEngine->pGraphicPipelineNodes = NULL;
+    }
 
     CreateGLFWWindow(pGFXEngine);
     CreateVkInstance(pGFXEngine);
@@ -1591,8 +1598,8 @@ void EndGFXEngine(GFXEngine *pGFXEngine)
     DestroyGLFWWindow(pGFXEngine);
 
     // TKNFree(pGFXEngine->tknGraphicPipelines);
-    TKNFree(pGFXEngine->graphicPipelineNodes);
-    TKNFree(pGFXEngine->vkRenderPassCreateInfoPtrNodes);
+    TKNFree(pGFXEngine->pGraphicPipelineNodes);
+    TKNFree(pGFXEngine->pVkRenderPassCreateInfoNodeList);
     TKNFree(pGFXEngine->vkRenderPassCreateInfos);
     TKNFree(pGFXEngine->vkRenderPasses);
 
