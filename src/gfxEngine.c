@@ -1155,9 +1155,12 @@ static void CreateVkGraphicsPipeline(GFXEngine *pGFXEngine, VkGraphicsPipelineCr
     PGraphicPipelineNode *pCurrentNode = pGFXEngine->pGraphicPipelineNodes[(uint32_t)hashValue];
     while (NULL != pCurrentNode)
     {
-        
+        pCurrentNode = pCurrentNode->pNext;
     }
-
+    PGraphicPipelineNode *pPGraphicPipelineNode = TKNMalloc(sizeof(PGraphicPipelineNode));
+    pPGraphicPipelineNode->pVkGraphicsPipelineCreateConfig = pVkGraphicsPipelineCreateConfig;
+    pCurrentNode->pNext = pPGraphicPipelineNode;
+    
     VkDescriptorSetLayout vkDescriptorSetLayouts[pVkGraphicsPipelineCreateConfig->vkDescriptorSetLayoutCreateInfoCount];
     for (uint32_t i = 0; i < pVkGraphicsPipelineCreateConfig->vkDescriptorSetLayoutCreateInfoCount; i++)
     {
@@ -1175,9 +1178,9 @@ static void CreateVkGraphicsPipeline(GFXEngine *pGFXEngine, VkGraphicsPipelineCr
         .pushConstantRangeCount = pVkGraphicsPipelineCreateConfig->vkPipelineLayoutCreateInfo.pushConstantRangeCount,
         .pPushConstantRanges = pVkGraphicsPipelineCreateConfig->vkPipelineLayoutCreateInfo.pPushConstantRanges,
     };
-    result = vkCreatePipelineLayout(vkDevice, &vkPipelineLayoutCreateInfo, NULL, &pTKNGraphicPipeline->vkPipelineLayout);
+    result = vkCreatePipelineLayout(vkDevice, &vkPipelineLayoutCreateInfo, NULL, &pPGraphicPipelineNode->pTKNGraphicPipeline->vkPipelineLayout);
     TryThrowVulkanError(result);
-    GetVkRenderPass(pGFXEngine, &pVkGraphicsPipelineCreateConfig->vkRenderPassCreateInfo, &pTKNGraphicPipeline->vkRenderPass);
+    GetVkRenderPass(pGFXEngine, &pVkGraphicsPipelineCreateConfig->vkRenderPassCreateInfo, &pPGraphicPipelineNode->pTKNGraphicPipeline->vkRenderPass);
 
     VkGraphicsPipelineCreateInfo vkGraphicsPipelineCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
@@ -1194,14 +1197,14 @@ static void CreateVkGraphicsPipeline(GFXEngine *pGFXEngine, VkGraphicsPipelineCr
         .pDepthStencilState = pVkGraphicsPipelineCreateConfig->vkGraphicsPipelineCreateInfo.pDepthStencilState,
         .pColorBlendState = pVkGraphicsPipelineCreateConfig->vkGraphicsPipelineCreateInfo.pColorBlendState,
         .pDynamicState = pVkGraphicsPipelineCreateConfig->vkGraphicsPipelineCreateInfo.pDynamicState,
-        .layout = pTKNGraphicPipeline->vkPipelineLayout,
-        .renderPass = pTKNGraphicPipeline->vkRenderPass,
+        .layout = pPGraphicPipelineNode->pTKNGraphicPipeline->vkPipelineLayout,
+        .renderPass = pPGraphicPipelineNode->pTKNGraphicPipeline->vkRenderPass,
         .subpass = pVkGraphicsPipelineCreateConfig->vkGraphicsPipelineCreateInfo.subpass,
         .basePipelineHandle = VK_NULL_HANDLE,
         .basePipelineIndex = 0,
     };
 
-    result = vkCreateGraphicsPipelines(vkDevice, VK_NULL_HANDLE, 1, &vkGraphicsPipelineCreateInfo, NULL, &pTKNGraphicPipeline->vkPipeline);
+    result = vkCreateGraphicsPipelines(vkDevice, VK_NULL_HANDLE, 1, &vkGraphicsPipelineCreateInfo, NULL, &pPGraphicPipelineNode->pTKNGraphicPipeline->vkPipeline);
     TryThrowVulkanError(result);
     for (uint32_t i = 0; i < pVkGraphicsPipelineCreateConfig->vkDescriptorSetLayoutCreateInfoCount; i++)
     {
