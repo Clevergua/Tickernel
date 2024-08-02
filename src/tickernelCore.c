@@ -3,43 +3,43 @@
 #include <string.h>
 #if PLATFORM_POSIX
 #include <unistd.h>
-void TKNSleep(uint32_t milliseconds)
+void TickernelSleep(uint32_t milliseconds)
 {
     usleep(milliseconds * 1000);
 }
 
-void TKNGetCurrentDirectory(char *directroy, size_t size)
+void TickernelGetCurrentDirectory(char *directroy, size_t size)
 {
     getcwd(directroy, size);
 }
-#define TKN_PATH_SEPARATOR "/"
+#define Tickernel_PATH_SEPARATOR "/"
 #elif PLATFORM_WINDOWS
 #include <windows.h>
-void TKNSleep(uint32_t milliseconds)
+void TickernelSleep(uint32_t milliseconds)
 {
     Sleep(milliseconds);
 }
 
-void TKNGetCurrentDirectory(char *directroy, size_t size)
+void TickernelGetCurrentDirectory(char *directroy, size_t size)
 {
     GetCurrentDirectory(size, directroy);
 }
-#define TKN_PATH_SEPARATOR "\\"
+#define Tickernel_PATH_SEPARATOR "\\"
 #else
 #error "Unknown platform"
 #endif
 
-void *TKNMalloc(size_t size)
+void *TickernelMalloc(size_t size)
 {
     return malloc(size);
 }
 
-void TKNFree(void *block)
+void TickernelFree(void *block)
 {
     free(block);
 }
 
-bool TKNStartsWith(const char *str, const char *prefix)
+bool TickernelStartsWith(const char *str, const char *prefix)
 {
     int strLength = strlen(str);
     int prefixLength = strlen(prefix);
@@ -54,7 +54,7 @@ bool TKNStartsWith(const char *str, const char *prefix)
     }
 }
 
-bool TKNEndsWith(const char *str, const char *suffix)
+bool TickernelEndsWith(const char *str, const char *suffix)
 {
     int strLength = strlen(str);
     int suffixLength = strlen(suffix);
@@ -75,15 +75,15 @@ bool TKNEndsWith(const char *str, const char *suffix)
     }
 }
 
-void TKNCombinePaths(char *dstPath, size_t dstPathSize, const char *srcPath)
+void TickernelCombinePaths(char *dstPath, size_t dstPathSize, const char *srcPath)
 {
     size_t dstPathLength = strlen(dstPath);
     size_t srcPathLength = strlen(srcPath);
-    if (TKNEndsWith(dstPath, TKN_PATH_SEPARATOR))
+    if (TickernelEndsWith(dstPath, Tickernel_PATH_SEPARATOR))
     {
-        if (TKNStartsWith(srcPath, TKN_PATH_SEPARATOR))
+        if (TickernelStartsWith(srcPath, Tickernel_PATH_SEPARATOR))
         {
-            size_t separatorLength = strlen(TKN_PATH_SEPARATOR);
+            size_t separatorLength = strlen(Tickernel_PATH_SEPARATOR);
             dstPath[dstPathLength - separatorLength] = '\0';
             strcat(dstPath, srcPath);
         }
@@ -92,13 +92,13 @@ void TKNCombinePaths(char *dstPath, size_t dstPathSize, const char *srcPath)
             strcat(dstPath, srcPath);
         }
     }
-    else if (TKNStartsWith(srcPath, TKN_PATH_SEPARATOR))
+    else if (TickernelStartsWith(srcPath, Tickernel_PATH_SEPARATOR))
     {
         strcat(dstPath, srcPath);
     }
     else
     {
-        strcat(dstPath, TKN_PATH_SEPARATOR);
+        strcat(dstPath, Tickernel_PATH_SEPARATOR);
         strcat(dstPath, srcPath);
     }
 }

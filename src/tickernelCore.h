@@ -5,11 +5,11 @@
 #include <stdint.h>
 #include <tickernelPlatform.h>
 
-void TKNSleep(uint32_t milliseconds);
-void TKNLog(char const *const _Format, ...);
-void *TKNMalloc(size_t size);
-void TKNFree(void *block);
-void TKNGetCurrentDirectory(char *directory, size_t size);
-void TKNCombinePaths(char *dstPath, size_t size, const char *srcPath);
-bool TKNStartsWith(const char *str, const char *prefix);
-bool TKNEndsWith(const char *str, const char *suffix);
+void TickernelSleep(uint32_t milliseconds);
+void TickernelLog(char const *const _Format, ...);
+void *TickernelMalloc(size_t size);
+void TickernelFree(void *block);
+void TickernelGetCurrentDirectory(char *directory, size_t size);
+void TickernelCombinePaths(char *dstPath, size_t size, const char *srcPath);
+bool TickernelStartsWith(const char *str, const char *prefix);
+bool TickernelEndsWith(const char *str, const char *suffix);

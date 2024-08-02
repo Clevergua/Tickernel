@@ -1,7 +1,7 @@
 #pragma once
 
 #include <tickernelCore.h>
-#include <gfxEngine.h>
+#include <graphicEngine.h>
 #include <luaEngine.h>
 typedef struct TickernelEngineStruct
 {
@@ -10,7 +10,7 @@ typedef struct TickernelEngineStruct
     bool canTick;
     char *assetsPath;
 
-    GFXEngine *pGFXEngine;
+    GraphicEngine *pGraphicEngine;
     LuaEngine *pLuaEngine;
 } TickernelEngine;
 
