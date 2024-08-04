@@ -29,7 +29,8 @@ static void TickernelStart(TickernelEngine *pTickernelEngine)
 static void TickernelUpdate(TickernelEngine *pTickernelEngine)
 {
     printf("Tickernel Update!\n");
-    // UpdateLua(pTickernelEngine->pLuaEngine);
+    UpdateLua(pTickernelEngine->pLuaEngine);
+    
     UpdateGraphicEngine(pTickernelEngine->pGraphicEngine);
 }
 
@@ -69,6 +70,6 @@ void RunTickernelEngine(TickernelEngine *pTickernelEngine)
         TickernelSleep(sleepMilliseconds);
         pTickernelEngine->frameCount++;
     }
-    
+
     TickernelEnd(pTickernelEngine);
 }

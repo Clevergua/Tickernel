@@ -24,12 +24,15 @@ typedef enum
 typedef struct TickernelRenderPipelineStruct
 {
     VkGraphicsPipelineCreateInfo vkGraphicsPipelineCreateInfo;
-    uint32_t vkPipelineShaderStageCreateInfosCount;
+    uint32_t stageCount;
     VkPipelineShaderStageCreateInfo *vkPipelineShaderStageCreateInfos;
+    VkShaderModuleCreateInfo *vkShaderModuleCreateInfos; 
     VkPipelineLayoutCreateInfo vkPipelineLayoutCreateInfo;
     uint32_t vkDescriptorSetLayoutCreateInfoCount;
     VkDescriptorSetLayoutCreateInfo *vkDescriptorSetLayoutCreateInfos;
     VkPipeline vkPipeline;
+    struct TickernelRenderPassStruct *pTickernelRenderPass;
+    
 } TickernelRenderPipeline;
 
 typedef struct TickernelRenderPassStruct
@@ -37,45 +40,8 @@ typedef struct TickernelRenderPassStruct
     VkRenderPassCreateInfo vkRenderPassCreateInfo;
     VkRenderPass vkRenderPass;
     VkFramebufferCreateInfo vkFramebufferCreateInfo;
-    TickernelAttachmentType *tickernelAttachmentTypes;
-    VkFramebuffer *vkFramebuffers;
-    TickernelRenderPipeline *tickernelRenderPipelines;
+    struct TickernelRenderPipelineStruct **pTickernelRenderPipelines;
 } TickernelRenderPass;
-
-// typedef struct PVkRenderPassCreateInfoNodePtrStruct
-// {
-//     VkRenderPassCreateInfo *pVkRenderPassCreateInfo;
-//     struct PVkRenderPassCreateInfoNodePtrStruct *pNext;
-// } PVkRenderPassCreateInfoNode;
-
-// typedef struct VkGraphicsPipelineCreateConfigStruct
-// {
-//     VkGraphicsPipelineCreateInfo vkGraphicsPipelineCreateInfo;
-//     uint32_t vkPipelineShaderStageCreateInfosCount;
-//     VkPipelineShaderStageCreateInfo *vkPipelineShaderStageCreateInfos;
-//     VkPipelineLayoutCreateInfo vkPipelineLayoutCreateInfo;
-//     uint32_t vkDescriptorSetLayoutCreateInfoCount;
-//     VkDescriptorSetLayoutCreateInfo *vkDescriptorSetLayoutCreateInfos;
-//     VkRenderPassCreateInfo vkRenderPassCreateInfo;
-//     VkFramebufferCreateInfo vkFramebufferCreateInfo;
-//     TickernelAttachmentType *tickernelAttachmentTypes;
-// } VkGraphicsPipelineCreateConfig;
-
-// typedef struct TickernelGraphicPipelineStruct
-// {
-//     VkRenderPass vkRenderPass;
-//     VkFramebuffer *vkFramebuffers;
-//     VkPipelineLayout vkPipelineLayout;
-//     VkPipeline vkPipeline;
-//     VkCommandBuffer *vkCommandBuffers;
-// } TickernelGraphicPipeline;
-
-// typedef struct PGraphicPipelineNodeStruct
-// {
-//     struct PGraphicPipelineNodeStruct *pNext;
-//     VkGraphicsPipelineCreateConfig *pVkGraphicsPipelineCreateConfig;
-//     TickernelGraphicPipeline *pTickernelGraphicPipeline;
-// } PGraphicPipelineNode;
 
 typedef struct GraphicEngineStruct
 {
@@ -87,8 +53,6 @@ typedef struct GraphicEngineStruct
     int targetSwapchainImageCount;
     VkPresentModeKHR targetPresentMode;
     uint32_t maxCommandBufferListCount;
-    uint32_t maxVkRenderPassCount;
-    uint32_t tickernelGraphicPipelineHashSize;
 
     // Runtime
     GLFWwindow *pGLFWWindow;
@@ -121,16 +85,8 @@ typedef struct GraphicEngineStruct
     uint32_t frameCount;
     uint32_t frameIndex;
     bool hasRecreateSwapchain;
-    // uint32_t vkRenderPassCount;
-    // VkRenderPass *vkRenderPasses;
-    // VkRenderPassCreateInfo *vkRenderPassCreateInfos;
-    // PVkRenderPassCreateInfoNode **pVkRenderPassCreateInfoNodeList;
-
-    // PGraphicPipelineNode* *pGraphicPipelineNodes;
 } GraphicEngine;
 
 void StartGraphicEngine(GraphicEngine *pGraphicEngine);
 void UpdateGraphicEngine(GraphicEngine *pGraphicEngine);
 void EndGraphicEngine(GraphicEngine *pGraphicEngine);
-
-// void AddTickernelGraphicPipeline(GraphicEngine *pGraphicEngine, VkGraphicsPipelineCreateConfig tickernelGraphicPipelineConfig);
