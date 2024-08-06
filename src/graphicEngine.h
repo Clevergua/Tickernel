@@ -18,7 +18,6 @@ typedef enum
     TickernelPositionAttachmentType,
     TickernelNormalAttachmentType,
     TickernelAlbedoAttachmentType,
-    TNKCustomAttachmentType,
 } TickernelAttachmentType;
 
 typedef struct TickernelRenderPipelineStruct
@@ -52,7 +51,6 @@ typedef struct GraphicEngineStruct
     int width;
     int targetSwapchainImageCount;
     VkPresentModeKHR targetPresentMode;
-    uint32_t maxCommandBufferListCount;
 
     // Runtime
     GLFWwindow *pGLFWWindow;
@@ -75,9 +73,8 @@ typedef struct GraphicEngineStruct
     VkFormat depthFormat;
     VkImageView depthImageView;
     VkDeviceMemory depthImageMemory;
-    VkCommandPool *vkCommandPools;
-    uint32_t submitVkCommandBufferCount;
-    VkCommandBuffer *submitVkCommandBuffers;
+    VkCommandPool graphicVkCommandPool;
+    VkCommandBuffer *graphicVkCommandBuffers;
     uint32_t acquiredImageIndex;
     VkSemaphore *imageAvailableSemaphores;
     VkSemaphore *renderFinishedSemaphores;

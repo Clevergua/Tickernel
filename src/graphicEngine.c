@@ -805,33 +805,19 @@ static void RecreateSwapchain(GraphicEngine *pGraphicEngine)
 
 static void CreateCommandPools(GraphicEngine *pGraphicEngine)
 {
-    pGraphicEngine->vkCommandPools = TickernelMalloc(sizeof(VkCommandPool) * pGraphicEngine->queueFamilyPropertyCount);
-    for (uint32_t i = 0; i < pGraphicEngine->queueFamilyPropertyCount; i++)
-    {
-        pGraphicEngine->vkCommandPools[i] = NULL;
-    }
-
     VkCommandPoolCreateInfo vkCommandPoolCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
         .pNext = NULL,
         .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
         .queueFamilyIndex = pGraphicEngine->graphicQueueFamilyIndex,
     };
-    VkResult result = vkCreateCommandPool(pGraphicEngine->vkDevice, &vkCommandPoolCreateInfo, NULL, &pGraphicEngine->vkCommandPools[pGraphicEngine->graphicQueueFamilyIndex]);
+    VkResult result = vkCreateCommandPool(pGraphicEngine->vkDevice, &vkCommandPoolCreateInfo, NULL, &pGraphicEngine->graphicVkCommandPool);
     TryThrowVulkanError(result);
 }
 
 static void DestroyCommandPools(GraphicEngine *pGraphicEngine)
 {
-    for (size_t i = 0; i < pGraphicEngine->queueFamilyPropertyCount; i++)
-    {
-        VkCommandPool vkCommandPool = pGraphicEngine->vkCommandPools[i];
-        if (NULL != vkCommandPool)
-        {
-            vkDestroyCommandPool(pGraphicEngine->vkDevice, pGraphicEngine->vkCommandPools[i], NULL);
-        }
-    }
-    TickernelFree(pGraphicEngine->vkCommandPools);
+    vkDestroyCommandPool(pGraphicEngine->vkDevice, pGraphicEngine->graphicVkCommandPool, NULL);
 }
 
 static void WaitForGPU(GraphicEngine *pGraphicEngine)
@@ -881,8 +867,8 @@ static void SubmitCommandBuffers(GraphicEngine *pGraphicEngine)
         .waitSemaphoreCount = 1,
         .pWaitSemaphores = (VkSemaphore[]){pGraphicEngine->imageAvailableSemaphores[frameIndex]},
         .pWaitDstStageMask = (VkPipelineStageFlags[]){VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT},
-        .commandBufferCount = pGraphicEngine->submitVkCommandBufferCount,
-        .pCommandBuffers = pGraphicEngine->submitVkCommandBuffers,
+        .commandBufferCount = 1,
+        .pCommandBuffers = &pGraphicEngine->graphicVkCommandBuffers[frameIndex],
         .signalSemaphoreCount = 1,
         .pSignalSemaphores = (VkSemaphore[]){pGraphicEngine->renderFinishedSemaphores[frameIndex]},
     };
@@ -1147,12 +1133,30 @@ static void DestroyVkGraphicsPipeline(GraphicEngine *pGraphicEngine, TickernelRe
 //     }
 //     TickernelFree(pTickernelGraphicPipeline->vkFramebuffers);
 // }
+void CreateVkCommandBuffers(GraphicEngine *pGraphicEngine)
+{
+    VkResult result = VK_SUCCESS;
+    pGraphicEngine->graphicVkCommandBuffers = TickernelMalloc(sizeof(VkCommandBuffer) * pGraphicEngine->swapchainImageCount);
+    VkCommandBufferAllocateInfo vkCommandBufferAllocateInfo = {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+        .pNext = NULL,
+        .commandPool = pGraphicEngine->graphicVkCommandPool,
+        .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+        .commandBufferCount = pGraphicEngine->swapchainImageCount,
+    };
+    result = vkAllocateCommandBuffers(pGraphicEngine->vkDevice, &vkCommandBufferAllocateInfo, pGraphicEngine->graphicVkCommandBuffers);
+    TryThrowVulkanError(result);
+}
+
+void DestroyVkCommandBuffers(GraphicEngine *pGraphicEngine)
+{
+    vkFreeCommandBuffers(pGraphicEngine->vkDevice, pGraphicEngine->graphicVkCommandPool, pGraphicEngine->swapchainImageCount, pGraphicEngine->graphicVkCommandBuffers);
+    TickernelFree(pGraphicEngine->graphicVkCommandBuffers);
+}
 
 void StartGraphicEngine(GraphicEngine *pGraphicEngine)
 {
     pGraphicEngine->frameCount = 0;
-    pGraphicEngine->submitVkCommandBufferCount = 0;
-    pGraphicEngine->submitVkCommandBuffers = TickernelMalloc(sizeof(VkCommandBuffer) * pGraphicEngine->maxCommandBufferListCount);
 
     // pGraphicEngine->maxVkRenderPassCount = 1024;
     // pGraphicEngine->vkRenderPassCount = 0;
@@ -1180,6 +1184,7 @@ void StartGraphicEngine(GraphicEngine *pGraphicEngine)
     CreateDepthResources(pGraphicEngine);
     CreateSemaphores(pGraphicEngine);
     CreateCommandPools(pGraphicEngine);
+    CreateVkCommandBuffers(pGraphicEngine);
 }
 
 void UpdateGraphicEngine(GraphicEngine *pGraphicEngine)
@@ -1207,7 +1212,7 @@ void EndGraphicEngine(GraphicEngine *pGraphicEngine)
     //         DestroyFramebuffers(pGraphicEngine, &pGraphicEngine->tickernelGraphicPipelines[i]);
     //     }
     // }
-
+    DestroyVkCommandBuffers(pGraphicEngine);
     DestroyCommandPools(pGraphicEngine);
     DestroySemaphores(pGraphicEngine);
     DestroyDepthResources(pGraphicEngine);
@@ -1223,6 +1228,4 @@ void EndGraphicEngine(GraphicEngine *pGraphicEngine)
     // TickernelFree(pGraphicEngine->pVkRenderPassCreateInfoNodeList);
     // TickernelFree(pGraphicEngine->vkRenderPassCreateInfos);
     // TickernelFree(pGraphicEngine->vkRenderPasses);
-
-    TickernelFree(pGraphicEngine->submitVkCommandBuffers);
 }

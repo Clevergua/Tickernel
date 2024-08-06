@@ -14,7 +14,6 @@ static void TickernelStart(TickernelEngine *pTickernelEngine)
     pTickernelEngine->pGraphicEngine->width = 1920;
     pTickernelEngine->pGraphicEngine->height = 1080;
     pTickernelEngine->pGraphicEngine->targetSwapchainImageCount = 3;
-    pTickernelEngine->pGraphicEngine->maxCommandBufferListCount = 512;
 
     pTickernelEngine->pLuaEngine = TickernelMalloc(sizeof(LuaEngine));
 
