@@ -13,7 +13,7 @@ static void TickernelStart(TickernelEngine *pTickernelEngine)
     pTickernelEngine->pGraphicEngine->targetPresentMode = VK_PRESENT_MODE_FIFO_RELAXED_KHR;
     pTickernelEngine->pGraphicEngine->width = 1920;
     pTickernelEngine->pGraphicEngine->height = 1080;
-    pTickernelEngine->pGraphicEngine->targetSwapchainImageCount = 3;
+    pTickernelEngine->pGraphicEngine->targetSwapchainImageCount = 2;
 
     pTickernelEngine->pLuaEngine = TickernelMalloc(sizeof(LuaEngine));
 

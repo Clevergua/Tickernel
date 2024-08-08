@@ -87,6 +87,7 @@
         "gfxengine.h": "c",
         "glfw3.h": "c",
         "__node_handle": "c",
-        "__bit_reference": "c"
+        "__bit_reference": "c",
+        "tickernelengine.h": "c"
     }
 }

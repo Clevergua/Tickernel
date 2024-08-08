@@ -25,13 +25,13 @@ typedef struct TickernelRenderPipelineStruct
     VkGraphicsPipelineCreateInfo vkGraphicsPipelineCreateInfo;
     uint32_t stageCount;
     VkPipelineShaderStageCreateInfo *vkPipelineShaderStageCreateInfos;
-    VkShaderModuleCreateInfo *vkShaderModuleCreateInfos; 
+    VkShaderModuleCreateInfo *vkShaderModuleCreateInfos;
     VkPipelineLayoutCreateInfo vkPipelineLayoutCreateInfo;
     uint32_t vkDescriptorSetLayoutCreateInfoCount;
     VkDescriptorSetLayoutCreateInfo *vkDescriptorSetLayoutCreateInfos;
     VkPipeline vkPipeline;
     struct TickernelRenderPassStruct *pTickernelRenderPass;
-    
+
 } TickernelRenderPipeline;
 
 typedef struct TickernelRenderPassStruct
@@ -39,6 +39,9 @@ typedef struct TickernelRenderPassStruct
     VkRenderPassCreateInfo vkRenderPassCreateInfo;
     VkRenderPass vkRenderPass;
     VkFramebufferCreateInfo vkFramebufferCreateInfo;
+    uint32_t tickernelAttachmentTypeCount;
+    TickernelAttachmentType *tickernelAttachmentTypes;
+    VkFramebuffer *vkFramebuffers;
     struct TickernelRenderPipelineStruct **pTickernelRenderPipelines;
 } TickernelRenderPass;
 

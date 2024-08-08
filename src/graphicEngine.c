@@ -1084,55 +1084,48 @@ static void DestroyVkGraphicsPipeline(GraphicEngine *pGraphicEngine, TickernelRe
     }
 }
 
-// static void CreateVkFramebuffers(GraphicEngine *pGraphicEngine, TickernelRenderPass *pTickernelRenderPass)
-// {
-//     VkResult result = VK_SUCCESS;
-//     pTickernelRenderPass->vkFramebuffers = TickernelMalloc(sizeof(VkFramebuffer) * pGraphicEngine->swapchainImageCount);
-//     for (uint32_t i = 0; i < pGraphicEngine->swapchainImageCount; i++)
-//     {
-//         VkImageView attachments[vkGraphicsPipelineCreateConfig.vkRenderPassCreateInfo.attachmentCount];
-//         for (uint32_t j = 0; j < vkGraphicsPipelineCreateConfig.vkRenderPassCreateInfo.attachmentCount; j++)
-//         {
-//             TickernelAttachmentType attachmentType = vkGraphicsPipelineCreateConfig.tickernelAttachmentTypes[j];
-//             if (TickernelColorAttachmentType == attachmentType)
-//             {
-//                 attachments[j] = pGraphicEngine->swapchainImageViews[j];
-//             }
-//             else if (TickernelDepthAttachmentType == attachmentType)
-//             {
-//                 attachments[j] = pGraphicEngine->depthImageView;
-//             }
-//             else
-//             {
-//                 printf("AttachmentType error: %d\n", attachmentType);
-//                 abort();
-//             }
-//         }
+static void CreateVkFramebuffers(GraphicEngine *pGraphicEngine, TickernelRenderPass *pTickernelRenderPass)
+{
+    VkResult result = VK_SUCCESS;
+    pTickernelRenderPass->vkFramebuffers = TickernelMalloc(sizeof(VkFramebuffer) * pGraphicEngine->swapchainImageCount);
+    for (uint32_t i = 0; i < pGraphicEngine->swapchainImageCount; i++)
+    {
+        VkImageView attachments[pTickernelRenderPass->tickernelAttachmentTypeCount];
+        for (uint32_t j = 0; j < pTickernelRenderPass->tickernelAttachmentTypeCount; j++)
+        {
+            TickernelAttachmentType attachmentType = pTickernelRenderPass->tickernelAttachmentTypes[j];
+            if (TickernelColorAttachmentType == attachmentType)
+            {
+                attachments[j] = pGraphicEngine->swapchainImageViews[j];
+            }
+            else if (TickernelDepthAttachmentType == attachmentType)
+            {
+                attachments[j] = pGraphicEngine->depthImageView;
+            }
+            else
+            {
+                printf("AttachmentType error: %d\n", attachmentType);
+                abort();
+            }
+        }
+        pTickernelRenderPass->vkFramebufferCreateInfo.renderPass = pTickernelRenderPass->vkRenderPass;
+        pTickernelRenderPass->vkFramebufferCreateInfo.attachmentCount = pTickernelRenderPass->tickernelAttachmentTypeCount;
+        pTickernelRenderPass->vkFramebufferCreateInfo.pAttachments = attachments;
 
-//         VkFramebufferCreateInfo framebufferCreateInfo = {
-//             .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
-//             .pNext = NULL,
-//             .flags = 0,
-//             .renderPass = pTickernelGraphicPipeline->vkRenderPass,
-//             .attachmentCount = vkFramebufferCreateInfo.attachmentCount,
-//             .pAttachments = attachments,
-//             .width = vkFramebufferCreateInfo.width,
-//             .height = vkFramebufferCreateInfo.height,
-//             .layers = vkFramebufferCreateInfo.layers,
-//         };
-//         result = vkCreateFramebuffer(pGraphicEngine->vkDevice, &framebufferCreateInfo, NULL, &pTickernelGraphicPipeline->vkFramebuffers[i]);
-//         TryThrowVulkanError(result);
-//     }
-// }
+        result = vkCreateFramebuffer(pGraphicEngine->vkDevice, &pTickernelRenderPass->vkFramebufferCreateInfo, NULL, &pTickernelRenderPass->vkFramebuffers[i]);
+        TryThrowVulkanError(result);
+    }
+}
 
-// static void DestroyFramebuffers(GraphicEngine *pGraphicEngine, TickernelGraphicPipeline *pTickernelGraphicPipeline)
-// {
-//     for (uint32_t i = 0; i < pGraphicEngine->swapchainImageCount; i++)
-//     {
-//         vkDestroyFramebuffer(pGraphicEngine->vkDevice, pTickernelGraphicPipeline->vkFramebuffers[i], NULL);
-//     }
-//     TickernelFree(pTickernelGraphicPipeline->vkFramebuffers);
-// }
+static void DestroyFramebuffers(GraphicEngine *pGraphicEngine, TickernelRenderPass *pTickernelRenderPass)
+{
+    for (uint32_t i = 0; i < pGraphicEngine->swapchainImageCount; i++)
+    {
+        vkDestroyFramebuffer(pGraphicEngine->vkDevice, pTickernelRenderPass->vkFramebuffers[i], NULL);
+    }
+    TickernelFree(pTickernelRenderPass->vkFramebuffers);
+}
+
 void CreateVkCommandBuffers(GraphicEngine *pGraphicEngine)
 {
     VkResult result = VK_SUCCESS;
@@ -1152,6 +1145,56 @@ void DestroyVkCommandBuffers(GraphicEngine *pGraphicEngine)
 {
     vkFreeCommandBuffers(pGraphicEngine->vkDevice, pGraphicEngine->graphicVkCommandPool, pGraphicEngine->swapchainImageCount, pGraphicEngine->graphicVkCommandBuffers);
     TickernelFree(pGraphicEngine->graphicVkCommandBuffers);
+}
+
+void RecordCommandBuffer(GraphicEngine *pGraphicEngine, TickernelRenderPass *pTickernelRenderPass)
+{
+    VkResult result = VK_SUCCESS;
+    uint32_t frameIndex = pGraphicEngine->frameIndex;
+    VkCommandBufferBeginInfo commandBufferBeginInfo =
+        {
+            .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+            .pNext = NULL,
+            .flags = 0,
+            .pInheritanceInfo = NULL,
+        };
+    VkCommandBuffer vkCommandBuffer = pGraphicEngine->graphicVkCommandBuffers[frameIndex];
+    result = vkBeginCommandBuffer(vkCommandBuffer, &commandBufferBeginInfo);
+    TryThrowVulkanError(result);
+    VkOffset2D offset =
+        {
+            .x = 0,
+            .y = 0,
+        };
+    VkRect2D renderArea =
+        {
+            .offset = offset,
+            .extent = pGraphicEngine->swapchainExtent,
+        };
+    uint32_t clearValueCount = 2;
+    VkClearValue *clearValues = (VkClearValue[]){
+        {
+            .color = {0.0f, 0.0f, 0.0f, 1.0f},
+        },
+        {
+            .depthStencil = {1.0f, 0},
+        },
+    };
+    VkRenderPassBeginInfo vkRenderPassBeginInfo =
+        {
+            .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
+            .pNext = NULL,
+            .renderPass = pTickernelRenderPass->vkRenderPass,
+            .framebuffer = pTickernelRenderPass->vkFramebuffers[frameIndex],
+            .renderArea = renderArea,
+            .clearValueCount = clearValueCount,
+            .pClearValues = clearValues,
+        };
+    vkCmdBeginRenderPass(vkCommandBuffer, &vkRenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+    vkCmdEndRenderPass(vkCommandBuffer);
+    result = vkEndCommandBuffer(vkCommandBuffer);
+    TryThrowVulkanError(result);
 }
 
 void StartGraphicEngine(GraphicEngine *pGraphicEngine)
@@ -1193,6 +1236,7 @@ void UpdateGraphicEngine(GraphicEngine *pGraphicEngine)
     bool hasRecreateSwapchain = false;
     WaitForGPU(pGraphicEngine);
     AcquireImage(pGraphicEngine, &hasRecreateSwapchain);
+    // RecordCommandBuffer(pGraphicEngine);
     // UpdateVkCommandBuffers(pGraphicEngine, hasRecreateSwapchain);
     SubmitCommandBuffers(pGraphicEngine);
     Present(pGraphicEngine);
