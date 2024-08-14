@@ -42,6 +42,7 @@ typedef struct TickernelRenderPassStruct
     uint32_t tickernelAttachmentTypeCount;
     TickernelAttachmentType *tickernelAttachmentTypes;
     VkFramebuffer *vkFramebuffers;
+    uint32_t tickernelRenderPipelineCount;
     struct TickernelRenderPipelineStruct **pTickernelRenderPipelines;
 } TickernelRenderPass;
 

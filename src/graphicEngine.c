@@ -1147,55 +1147,55 @@ void DestroyVkCommandBuffers(GraphicEngine *pGraphicEngine)
     TickernelFree(pGraphicEngine->graphicVkCommandBuffers);
 }
 
-void RecordCommandBuffer(GraphicEngine *pGraphicEngine, TickernelRenderPass *pTickernelRenderPass)
-{
-    VkResult result = VK_SUCCESS;
-    uint32_t frameIndex = pGraphicEngine->frameIndex;
-    VkCommandBufferBeginInfo commandBufferBeginInfo =
-        {
-            .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
-            .pNext = NULL,
-            .flags = 0,
-            .pInheritanceInfo = NULL,
-        };
-    VkCommandBuffer vkCommandBuffer = pGraphicEngine->graphicVkCommandBuffers[frameIndex];
-    result = vkBeginCommandBuffer(vkCommandBuffer, &commandBufferBeginInfo);
-    TryThrowVulkanError(result);
-    VkOffset2D offset =
-        {
-            .x = 0,
-            .y = 0,
-        };
-    VkRect2D renderArea =
-        {
-            .offset = offset,
-            .extent = pGraphicEngine->swapchainExtent,
-        };
-    uint32_t clearValueCount = 2;
-    VkClearValue *clearValues = (VkClearValue[]){
-        {
-            .color = {0.0f, 0.0f, 0.0f, 1.0f},
-        },
-        {
-            .depthStencil = {1.0f, 0},
-        },
-    };
-    VkRenderPassBeginInfo vkRenderPassBeginInfo =
-        {
-            .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
-            .pNext = NULL,
-            .renderPass = pTickernelRenderPass->vkRenderPass,
-            .framebuffer = pTickernelRenderPass->vkFramebuffers[frameIndex],
-            .renderArea = renderArea,
-            .clearValueCount = clearValueCount,
-            .pClearValues = clearValues,
-        };
-    vkCmdBeginRenderPass(vkCommandBuffer, &vkRenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+// void RecordCommandBuffer(GraphicEngine *pGraphicEngine, TickernelRenderPass *pTickernelRenderPass)
+// {
+//     VkResult result = VK_SUCCESS;
+//     uint32_t frameIndex = pGraphicEngine->frameIndex;
+//     VkCommandBufferBeginInfo commandBufferBeginInfo =
+//         {
+//             .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+//             .pNext = NULL,
+//             .flags = 0,
+//             .pInheritanceInfo = NULL,
+//         };
+//     VkCommandBuffer vkCommandBuffer = pGraphicEngine->graphicVkCommandBuffers[frameIndex];
+//     result = vkBeginCommandBuffer(vkCommandBuffer, &commandBufferBeginInfo);
+//     TryThrowVulkanError(result);
+//     VkOffset2D offset =
+//         {
+//             .x = 0,
+//             .y = 0,
+//         };
+//     VkRect2D renderArea =
+//         {
+//             .offset = offset,
+//             .extent = pGraphicEngine->swapchainExtent,
+//         };
+//     uint32_t clearValueCount = 2;
+//     VkClearValue *clearValues = (VkClearValue[]){
+//         {
+//             .color = {0.0f, 0.0f, 0.0f, 1.0f},
+//         },
+//         {
+//             .depthStencil = {1.0f, 0},
+//         },
+//     };
+//     VkRenderPassBeginInfo vkRenderPassBeginInfo =
+//         {
+//             .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
+//             .pNext = NULL,
+//             .renderPass = pTickernelRenderPass->vkRenderPass,
+//             .framebuffer = pTickernelRenderPass->vkFramebuffers[frameIndex],
+//             .renderArea = renderArea,
+//             .clearValueCount = clearValueCount,
+//             .pClearValues = clearValues,
+//         };
+//     vkCmdBeginRenderPass(vkCommandBuffer, &vkRenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-    vkCmdEndRenderPass(vkCommandBuffer);
-    result = vkEndCommandBuffer(vkCommandBuffer);
-    TryThrowVulkanError(result);
-}
+//     vkCmdEndRenderPass(vkCommandBuffer);
+//     result = vkEndCommandBuffer(vkCommandBuffer);
+//     TryThrowVulkanError(result);
+// }
 
 void StartGraphicEngine(GraphicEngine *pGraphicEngine)
 {
@@ -1228,6 +1228,50 @@ void StartGraphicEngine(GraphicEngine *pGraphicEngine)
     CreateSemaphores(pGraphicEngine);
     CreateCommandPools(pGraphicEngine);
     CreateVkCommandBuffers(pGraphicEngine);
+
+    VkAttachmentDescription colorAttachmentDescription = {
+        .flags = 0,
+        .format = pGraphicEngine->surfaceFormat.format,
+        .samples = VK_SAMPLE_COUNT_1_BIT,
+        .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+        .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+        .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+        .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+        .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+        .finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+    };
+    VkAttachmentDescription depthAttachmentDescription = {
+        .flags = 0,
+        .format = pGraphicEngine->depthFormat,
+        .samples = VK_SAMPLE_COUNT_1_BIT,
+        .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+        .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+        .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+        .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+        .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+        .finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+    };
+    uint32_t attachmentCount = 2;
+    VkAttachmentDescription vkAttachmentDescriptions[] = {
+        colorAttachmentDescription,
+        depthAttachmentDescription,
+    };
+    
+    VkRenderPassCreateInfo vkRenderPassCreateInfo = {
+        .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
+        .pNext = NULL,
+        .flags = 0,
+        .attachmentCount = attachmentCount,
+        .pAttachments = vkAttachmentDescriptions,
+        .subpassCount = 3,
+        .pSubpasses = &subpassDescription,
+        .dependencyCount = 1,
+        .pDependencies = &subpassDependency,
+    };
+    TickernelRenderPass tickernelRenderPass = {
+        vkRenderPassCreateInfo = vkRenderPassCreateInfo,
+    };
+    CreateVkRenderPass(pGraphicEngine, &tickernelRenderPass);
 }
 
 void UpdateGraphicEngine(GraphicEngine *pGraphicEngine)
