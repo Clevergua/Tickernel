@@ -77,6 +77,11 @@ typedef struct GraphicEngineStruct
     VkFormat depthFormat;
     VkImageView depthImageView;
     VkDeviceMemory depthImageMemory;
+    VkImage albedoImage;
+    VkFormat albedoFormat;
+    VkImageView albedoImageView;
+    VkDeviceMemory albedoImageMemory;
+
     VkCommandPool graphicVkCommandPool;
     VkCommandBuffer *graphicVkCommandBuffers;
     uint32_t acquiredImageIndex;

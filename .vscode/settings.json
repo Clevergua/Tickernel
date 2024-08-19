@@ -88,6 +88,7 @@
         "glfw3.h": "c",
         "__node_handle": "c",
         "__bit_reference": "c",
-        "tickernelengine.h": "c"
+        "tickernelengine.h": "c",
+        "deferredrenderpipeline.h": "c"
     }
 }

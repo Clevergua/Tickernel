@@ -723,16 +723,27 @@ static void CreateImage(GraphicEngine *pGraphicEngine, int32_t width, uint32_t h
     TryThrowVulkanError(result);
 }
 
-static void CreateDepthResources(GraphicEngine *pGraphicEngine)
+static void CreateDeferredResources(GraphicEngine *pGraphicEngine)
 {
+    // Depth
     FindDepthFormat(pGraphicEngine, &pGraphicEngine->depthFormat);
-    CreateImage(pGraphicEngine, pGraphicEngine->swapchainExtent.width, pGraphicEngine->swapchainExtent.height, pGraphicEngine->depthFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &pGraphicEngine->depthImage, &pGraphicEngine->depthImageMemory);
-    CreateImageView(pGraphicEngine, pGraphicEngine->depthImage, pGraphicEngine->depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT, &pGraphicEngine->depthImageView);
+    CreateImage(pGraphicEngine, pGraphicEngine->swapchainExtent.width, pGraphicEngine->swapchainExtent.height, pGraphicEngine->depthFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &pGraphicEngine->depthImage, &pGraphicEngine->depthImageMemory);
+    CreateImageView(pGraphicEngine, pGraphicEngine->depthImage, pGraphicEngine->depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT, &pGraphicEngine->depthImageView);
+
+    // Albedo
+    pGraphicEngine->albedoFormat = VK_FORMAT_R8G8B8A8_UNORM;
+    CreateImage(pGraphicEngine, pGraphicEngine->swapchainExtent.width, pGraphicEngine->swapchainExtent.height, pGraphicEngine->albedoFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &pGraphicEngine->albedoImage, &pGraphicEngine->albedoImageMemory);
+    CreateImageView(pGraphicEngine, pGraphicEngine->albedoImage, pGraphicEngine->albedoFormat, VK_IMAGE_ASPECT_COLOR_BIT, &pGraphicEngine->albedoImageView);
 }
 
-static void DestroyDepthResources(GraphicEngine *pGraphicEngine)
+static void DestroyDeferredResources(GraphicEngine *pGraphicEngine)
 {
     VkDevice vkDevice = pGraphicEngine->vkDevice;
+
+    vkDestroyImageView(vkDevice, pGraphicEngine->albedoImageView, NULL);
+    vkDestroyImage(vkDevice, pGraphicEngine->albedoImage, NULL);
+    vkFreeMemory(vkDevice, pGraphicEngine->albedoImageMemory, NULL);
+
     vkDestroyImageView(vkDevice, pGraphicEngine->depthImageView, NULL);
     vkDestroyImage(vkDevice, pGraphicEngine->depthImage, NULL);
     vkFreeMemory(vkDevice, pGraphicEngine->depthImageMemory, NULL);
@@ -797,10 +808,10 @@ static void RecreateSwapchain(GraphicEngine *pGraphicEngine)
     result = vkDeviceWaitIdle(pGraphicEngine->vkDevice);
     TryThrowVulkanError(result);
 
-    DestroyDepthResources(pGraphicEngine);
+    DestroyDeferredResources(pGraphicEngine);
     DestroySwapchain(pGraphicEngine);
     CreateSwapchain(pGraphicEngine);
-    CreateDepthResources(pGraphicEngine);
+    CreateDeferredResources(pGraphicEngine);
 }
 
 static void CreateCommandPools(GraphicEngine *pGraphicEngine)
@@ -1224,54 +1235,10 @@ void StartGraphicEngine(GraphicEngine *pGraphicEngine)
     PickPhysicalDevice(pGraphicEngine);
     CreateLogicalDevice(pGraphicEngine);
     CreateSwapchain(pGraphicEngine);
-    CreateDepthResources(pGraphicEngine);
+    CreateDeferredResources(pGraphicEngine);
     CreateSemaphores(pGraphicEngine);
     CreateCommandPools(pGraphicEngine);
     CreateVkCommandBuffers(pGraphicEngine);
-
-    VkAttachmentDescription colorAttachmentDescription = {
-        .flags = 0,
-        .format = pGraphicEngine->surfaceFormat.format,
-        .samples = VK_SAMPLE_COUNT_1_BIT,
-        .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
-        .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
-        .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
-        .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
-        .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-        .finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-    };
-    VkAttachmentDescription depthAttachmentDescription = {
-        .flags = 0,
-        .format = pGraphicEngine->depthFormat,
-        .samples = VK_SAMPLE_COUNT_1_BIT,
-        .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
-        .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
-        .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
-        .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
-        .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-        .finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
-    };
-    uint32_t attachmentCount = 2;
-    VkAttachmentDescription vkAttachmentDescriptions[] = {
-        colorAttachmentDescription,
-        depthAttachmentDescription,
-    };
-    
-    VkRenderPassCreateInfo vkRenderPassCreateInfo = {
-        .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
-        .pNext = NULL,
-        .flags = 0,
-        .attachmentCount = attachmentCount,
-        .pAttachments = vkAttachmentDescriptions,
-        .subpassCount = 3,
-        .pSubpasses = &subpassDescription,
-        .dependencyCount = 1,
-        .pDependencies = &subpassDependency,
-    };
-    TickernelRenderPass tickernelRenderPass = {
-        vkRenderPassCreateInfo = vkRenderPassCreateInfo,
-    };
-    CreateVkRenderPass(pGraphicEngine, &tickernelRenderPass);
 }
 
 void UpdateGraphicEngine(GraphicEngine *pGraphicEngine)
@@ -1303,7 +1270,7 @@ void EndGraphicEngine(GraphicEngine *pGraphicEngine)
     DestroyVkCommandBuffers(pGraphicEngine);
     DestroyCommandPools(pGraphicEngine);
     DestroySemaphores(pGraphicEngine);
-    DestroyDepthResources(pGraphicEngine);
+    DestroyDeferredResources(pGraphicEngine);
     DestroySwapchain(pGraphicEngine);
     DestroyLogicalDevice(pGraphicEngine);
     // Destroy vkPhysicsDevice
