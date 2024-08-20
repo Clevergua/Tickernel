@@ -89,6 +89,20 @@
         "__node_handle": "c",
         "__bit_reference": "c",
         "tickernelengine.h": "c",
-        "deferredrenderpipeline.h": "c"
+        "deferredrenderpipeline.h": "c",
+        "graphicengine.h": "c",
+        "stdbool.h": "c",
+        "stdio.h": "c",
+        "__assert": "c",
+        "__debug": "c",
+        "__locale": "c",
+        "__mutex_base": "c",
+        "__threading_support": "c",
+        "complex": "c",
+        "__memory": "c",
+        "memory_resource": "c",
+        "variant": "c",
+        "execution": "c",
+        "print": "c"
     }
 }

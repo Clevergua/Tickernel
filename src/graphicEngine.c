@@ -2,7 +2,7 @@
 
 #define GETARRAYCOUNT(array) (NULL == array) ? 0 : (sizeof(array) / sizeof(array[0]))
 
-static void TryThrowVulkanError(VkResult vkResult)
+void TryThrowVulkanError(VkResult vkResult)
 {
     if (vkResult != VK_SUCCESS)
     {
@@ -661,7 +661,6 @@ static void FindDepthFormat(GraphicEngine *pGraphicEngine, VkFormat *pDepthForma
 
 static void FindMemoryType(GraphicEngine *pGraphicEngine, uint32_t typeFilter, VkMemoryPropertyFlags memoryPropertyFlags, uint32_t *memoryTypeIndex)
 {
-
     VkPhysicalDeviceMemoryProperties physicalDeviceMemoryProperties;
     vkGetPhysicalDeviceMemoryProperties(pGraphicEngine->vkPhysicalDevice, &physicalDeviceMemoryProperties);
     for (uint32_t i = 0; i < physicalDeviceMemoryProperties.memoryTypeCount; i++)
@@ -723,32 +722,6 @@ static void CreateImage(GraphicEngine *pGraphicEngine, int32_t width, uint32_t h
     TryThrowVulkanError(result);
 }
 
-static void CreateDeferredResources(GraphicEngine *pGraphicEngine)
-{
-    // Depth
-    FindDepthFormat(pGraphicEngine, &pGraphicEngine->depthFormat);
-    CreateImage(pGraphicEngine, pGraphicEngine->swapchainExtent.width, pGraphicEngine->swapchainExtent.height, pGraphicEngine->depthFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &pGraphicEngine->depthImage, &pGraphicEngine->depthImageMemory);
-    CreateImageView(pGraphicEngine, pGraphicEngine->depthImage, pGraphicEngine->depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT, &pGraphicEngine->depthImageView);
-
-    // Albedo
-    pGraphicEngine->albedoFormat = VK_FORMAT_R8G8B8A8_UNORM;
-    CreateImage(pGraphicEngine, pGraphicEngine->swapchainExtent.width, pGraphicEngine->swapchainExtent.height, pGraphicEngine->albedoFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &pGraphicEngine->albedoImage, &pGraphicEngine->albedoImageMemory);
-    CreateImageView(pGraphicEngine, pGraphicEngine->albedoImage, pGraphicEngine->albedoFormat, VK_IMAGE_ASPECT_COLOR_BIT, &pGraphicEngine->albedoImageView);
-}
-
-static void DestroyDeferredResources(GraphicEngine *pGraphicEngine)
-{
-    VkDevice vkDevice = pGraphicEngine->vkDevice;
-
-    vkDestroyImageView(vkDevice, pGraphicEngine->albedoImageView, NULL);
-    vkDestroyImage(vkDevice, pGraphicEngine->albedoImage, NULL);
-    vkFreeMemory(vkDevice, pGraphicEngine->albedoImageMemory, NULL);
-
-    vkDestroyImageView(vkDevice, pGraphicEngine->depthImageView, NULL);
-    vkDestroyImage(vkDevice, pGraphicEngine->depthImage, NULL);
-    vkFreeMemory(vkDevice, pGraphicEngine->depthImageMemory, NULL);
-}
-
 static void CreateSemaphores(GraphicEngine *pGraphicEngine)
 {
     VkResult result = VK_SUCCESS;
@@ -793,7 +766,36 @@ static void DestroySemaphores(GraphicEngine *pGraphicEngine)
     TickernelFree(pGraphicEngine->renderFinishedFences);
 }
 
-static void RecreateSwapchain(GraphicEngine *pGraphicEngine)
+static void CreateDepthResources(GraphicEngine *pGraphicEngine)
+{
+    FindDepthFormat(pGraphicEngine, &pGraphicEngine->depthFormat);
+    CreateImage(pGraphicEngine, pGraphicEngine->swapchainExtent.width, pGraphicEngine->swapchainExtent.height, pGraphicEngine->depthFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &pGraphicEngine->depthImage, &pGraphicEngine->depthImageMemory);
+    CreateImageView(pGraphicEngine, pGraphicEngine->depthImage, pGraphicEngine->depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT, &pGraphicEngine->depthImageView);
+}
+
+static void DestroyDepthResources(GraphicEngine *pGraphicEngine)
+{
+    VkDevice vkDevice = pGraphicEngine->vkDevice;
+    vkDestroyImageView(vkDevice, pGraphicEngine->albedoImageView, NULL);
+    vkDestroyImage(vkDevice, pGraphicEngine->albedoImage, NULL);
+    vkFreeMemory(vkDevice, pGraphicEngine->albedoImageMemory, NULL);
+}
+static void CreateAlbedoResources(GraphicEngine *pGraphicEngine)
+{
+    pGraphicEngine->albedoFormat = VK_FORMAT_R8G8B8A8_UNORM;
+    CreateImage(pGraphicEngine, pGraphicEngine->swapchainExtent.width, pGraphicEngine->swapchainExtent.height, pGraphicEngine->albedoFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &pGraphicEngine->albedoImage, &pGraphicEngine->albedoImageMemory);
+    CreateImageView(pGraphicEngine, pGraphicEngine->albedoImage, pGraphicEngine->albedoFormat, VK_IMAGE_ASPECT_COLOR_BIT, &pGraphicEngine->albedoImageView);
+}
+
+static void DestroyAlbedoResources(GraphicEngine *pGraphicEngine)
+{
+    VkDevice vkDevice = pGraphicEngine->vkDevice;
+    vkDestroyImageView(vkDevice, pGraphicEngine->depthImageView, NULL);
+    vkDestroyImage(vkDevice, pGraphicEngine->depthImage, NULL);
+    vkFreeMemory(vkDevice, pGraphicEngine->depthImageMemory, NULL);
+}
+
+static void RecreateResources(GraphicEngine *pGraphicEngine)
 {
     VkResult result = VK_SUCCESS;
 
@@ -808,10 +810,27 @@ static void RecreateSwapchain(GraphicEngine *pGraphicEngine)
     result = vkDeviceWaitIdle(pGraphicEngine->vkDevice);
     TryThrowVulkanError(result);
 
-    DestroyDeferredResources(pGraphicEngine);
     DestroySwapchain(pGraphicEngine);
     CreateSwapchain(pGraphicEngine);
-    CreateDeferredResources(pGraphicEngine);
+
+    if (pGraphicEngine->depthReferenceCount > 0)
+    {
+        DestroyDepthResources(pGraphicEngine);
+        CreateDepthResources(pGraphicEngine);
+    }
+    else
+    {
+        // continue;
+    }
+    if (pGraphicEngine->albedoReferenceCount > 0)
+    {
+        DestroyAlbedoResources(pGraphicEngine);
+        CreateAlbedoResources(pGraphicEngine);
+    }
+    else
+    {
+        // continue;
+    }
 }
 
 static void CreateCommandPools(GraphicEngine *pGraphicEngine)
@@ -855,7 +874,7 @@ static void AcquireImage(GraphicEngine *pGraphicEngine, bool *pHasRecreateSwapch
     }
     else if (VK_ERROR_OUT_OF_DATE_KHR == result)
     {
-        RecreateSwapchain(pGraphicEngine);
+        RecreateResources(pGraphicEngine);
         *pHasRecreateSwapchain = true;
         return;
     }
@@ -891,7 +910,6 @@ static void SubmitCommandBuffers(GraphicEngine *pGraphicEngine)
 static void Present(GraphicEngine *pGraphicEngine)
 {
     VkResult result = VK_SUCCESS;
-
     uint32_t frameIndex = pGraphicEngine->frameIndex;
     // Present
     VkPresentInfoKHR presentInfo = {
@@ -908,236 +926,7 @@ static void Present(GraphicEngine *pGraphicEngine)
     TryThrowVulkanError(result);
 }
 
-static void HasSameVkRenderPassCreateInfo(VkRenderPassCreateInfo vkRenderPassCreateInfo1, VkRenderPassCreateInfo vkRenderPassCreateInfo2, bool *result)
-{
-    if (vkRenderPassCreateInfo1.flags == vkRenderPassCreateInfo2.flags && vkRenderPassCreateInfo1.attachmentCount == vkRenderPassCreateInfo2.attachmentCount && vkRenderPassCreateInfo1.subpassCount == vkRenderPassCreateInfo2.subpassCount)
-    {
-        for (uint32_t i = 0; i < vkRenderPassCreateInfo1.attachmentCount; i++)
-        {
-            VkAttachmentDescription vkAttachmentDescription1 = vkRenderPassCreateInfo1.pAttachments[i];
-            VkAttachmentDescription vkAttachmentDescription2 = vkRenderPassCreateInfo2.pAttachments[i];
-            if (vkAttachmentDescription1.flags == vkAttachmentDescription2.flags && vkAttachmentDescription1.format == vkAttachmentDescription2.format && vkAttachmentDescription1.samples == vkAttachmentDescription2.samples && vkAttachmentDescription1.loadOp == vkAttachmentDescription2.loadOp && vkAttachmentDescription1.storeOp == vkAttachmentDescription2.storeOp && vkAttachmentDescription1.stencilLoadOp == vkAttachmentDescription2.stencilLoadOp && vkAttachmentDescription1.stencilStoreOp == vkAttachmentDescription2.stencilStoreOp && vkAttachmentDescription1.initialLayout == vkAttachmentDescription2.initialLayout && vkAttachmentDescription1.finalLayout == vkAttachmentDescription2.finalLayout)
-            {
-                // continue;
-            }
-            else
-            {
-                *result = false;
-                return;
-            }
-        }
-
-        for (uint32_t i = 0; i < vkRenderPassCreateInfo1.subpassCount; i++)
-        {
-            VkSubpassDescription vkSubpassDescription1 = vkRenderPassCreateInfo1.pSubpasses[i];
-            VkSubpassDescription vkSubpassDescription2 = vkRenderPassCreateInfo2.pSubpasses[i];
-            if (vkSubpassDescription1.flags == vkSubpassDescription2.flags && vkSubpassDescription1.pipelineBindPoint == vkSubpassDescription2.pipelineBindPoint && vkSubpassDescription1.inputAttachmentCount == vkSubpassDescription2.inputAttachmentCount && vkSubpassDescription1.colorAttachmentCount == vkSubpassDescription2.colorAttachmentCount && vkSubpassDescription1.preserveAttachmentCount == vkSubpassDescription2.preserveAttachmentCount)
-            {
-                for (uint32_t j = 0; j < vkSubpassDescription1.inputAttachmentCount; j++)
-                {
-                    VkAttachmentReference pInputAttachment1 = vkSubpassDescription1.pInputAttachments[j];
-                    VkAttachmentReference pInputAttachment2 = vkSubpassDescription2.pInputAttachments[j];
-                    if (pInputAttachment1.attachment == pInputAttachment2.attachment && pInputAttachment1.layout == pInputAttachment2.layout)
-                    {
-                        // continue;
-                    }
-                    else
-                    {
-                        *result = false;
-                        return;
-                    }
-                }
-                for (uint32_t j = 0; j < vkSubpassDescription1.colorAttachmentCount; j++)
-                {
-                    VkAttachmentReference pColorAttachment1 = vkSubpassDescription1.pColorAttachments[j];
-                    VkAttachmentReference pColorAttachment2 = vkSubpassDescription2.pColorAttachments[j];
-                    if (pColorAttachment1.attachment == pColorAttachment2.attachment && pColorAttachment1.layout == pColorAttachment2.layout)
-                    {
-                        // continue;
-                    }
-                    else
-                    {
-                        *result = false;
-                        return;
-                    }
-                }
-
-                if ((NULL == vkSubpassDescription1.pResolveAttachments) && (NULL == vkSubpassDescription2.pResolveAttachments))
-                {
-                    // continue;
-                }
-                else
-                {
-                    for (uint32_t j = 0; j < vkSubpassDescription1.colorAttachmentCount; j++)
-                    {
-                        VkAttachmentReference pResolveAttachment1 = vkSubpassDescription1.pResolveAttachments[j];
-                        VkAttachmentReference pResolveAttachment2 = vkSubpassDescription2.pResolveAttachments[j];
-                        if (pResolveAttachment1.attachment == pResolveAttachment2.attachment && pResolveAttachment1.layout == pResolveAttachment2.layout)
-                        {
-                            // continue;
-                        }
-                        else
-                        {
-                            *result = false;
-                            return;
-                        }
-                    }
-                }
-
-                if ((NULL == vkSubpassDescription1.pDepthStencilAttachment) && (NULL == vkSubpassDescription2.pDepthStencilAttachment))
-                {
-                    // continue;
-                }
-                else
-                {
-                    if (vkSubpassDescription1.pDepthStencilAttachment->attachment == vkSubpassDescription2.pDepthStencilAttachment->attachment && vkSubpassDescription1.pDepthStencilAttachment->layout == vkSubpassDescription2.pDepthStencilAttachment->layout)
-                    {
-                        // continue;
-                    }
-                    else
-                    {
-                        *result = false;
-                        return;
-                    }
-                }
-
-                for (uint32_t j = 0; j < vkSubpassDescription1.preserveAttachmentCount; j++)
-                {
-                    uint32_t pPreserveAttachment1 = vkSubpassDescription1.pPreserveAttachments[j];
-                    uint32_t pPreserveAttachment2 = vkSubpassDescription2.pPreserveAttachments[j];
-                    if (pPreserveAttachment1 == pPreserveAttachment2)
-                    {
-                        // continue;
-                    }
-                    else
-                    {
-                        *result = false;
-                        return;
-                    }
-                }
-                // continue;
-            }
-            else
-            {
-                *result = false;
-                return;
-            }
-        }
-        *result = true;
-        return;
-    }
-    else
-    {
-        *result = false;
-        return;
-    }
-}
-
-static void CreateVkRenderPass(GraphicEngine *pGraphicEngine, TickernelRenderPass *pTickernelRenderPass)
-{
-    if (NULL == pTickernelRenderPass->vkRenderPass)
-    {
-        VkResult result = vkCreateRenderPass(pGraphicEngine->vkDevice, &pTickernelRenderPass->vkRenderPassCreateInfo, NULL, &pTickernelRenderPass->vkRenderPass);
-        TryThrowVulkanError(result);
-    }
-    else
-    {
-        // Do nothing;
-    }
-}
-
-static void DestroyVkRenderPass(GraphicEngine *pGraphicEngine, TickernelRenderPass *pTickernelRenderPass)
-{
-    if (NULL == pTickernelRenderPass->vkRenderPass)
-    {
-        // Do nothing;
-    }
-    else
-    {
-        vkDestroyRenderPass(pGraphicEngine->vkDevice, pTickernelRenderPass->vkRenderPass, NULL);
-    }
-}
-
-static void CreateVkGraphicsPipeline(GraphicEngine *pGraphicEngine, TickernelRenderPipeline *pTickernelRenderPipeline)
-{
-    VkResult result = VK_SUCCESS;
-    VkDevice vkDevice = pGraphicEngine->vkDevice;
-    VkGraphicsPipelineCreateInfo *pVkGraphicsPipelineCreateInfo = &pTickernelRenderPipeline->vkGraphicsPipelineCreateInfo;
-
-    uint32_t stageCount = pTickernelRenderPipeline->stageCount;
-    for (uint32_t i = 0; i < stageCount; i++)
-    {
-        result = vkCreateShaderModule(vkDevice, &pTickernelRenderPipeline->vkShaderModuleCreateInfos[i], NULL, &pTickernelRenderPipeline->vkPipelineShaderStageCreateInfos[i].module);
-        TryThrowVulkanError(result);
-    }
-    pVkGraphicsPipelineCreateInfo->stageCount = stageCount;
-    pVkGraphicsPipelineCreateInfo->pStages = pTickernelRenderPipeline->vkPipelineShaderStageCreateInfos;
-    result = vkCreatePipelineLayout(vkDevice, &pTickernelRenderPipeline->vkPipelineLayoutCreateInfo, NULL, &pVkGraphicsPipelineCreateInfo->layout);
-    TryThrowVulkanError(result);
-    pVkGraphicsPipelineCreateInfo->renderPass = pTickernelRenderPipeline->pTickernelRenderPass->vkRenderPass;
-
-    result = vkCreateGraphicsPipelines(vkDevice, VK_NULL_HANDLE, 1, pVkGraphicsPipelineCreateInfo, NULL, &pTickernelRenderPipeline->vkPipeline);
-    TryThrowVulkanError(result);
-}
-
-static void DestroyVkGraphicsPipeline(GraphicEngine *pGraphicEngine, TickernelRenderPipeline *pTickernelRenderPipeline)
-{
-    VkDevice vkDevice = pGraphicEngine->vkDevice;
-    VkGraphicsPipelineCreateInfo *pVkGraphicsPipelineCreateInfo = &pTickernelRenderPipeline->vkGraphicsPipelineCreateInfo;
-
-    vkDestroyPipeline(vkDevice, pTickernelRenderPipeline->vkPipeline, NULL);
-
-    vkDestroyPipelineLayout(vkDevice, pVkGraphicsPipelineCreateInfo->layout, NULL);
-    uint32_t stageCount = pTickernelRenderPipeline->stageCount;
-    for (uint32_t i = 0; i < stageCount; i++)
-    {
-        vkDestroyShaderModule(vkDevice, pTickernelRenderPipeline->vkPipelineShaderStageCreateInfos[i].module, NULL);
-    }
-}
-
-static void CreateVkFramebuffers(GraphicEngine *pGraphicEngine, TickernelRenderPass *pTickernelRenderPass)
-{
-    VkResult result = VK_SUCCESS;
-    pTickernelRenderPass->vkFramebuffers = TickernelMalloc(sizeof(VkFramebuffer) * pGraphicEngine->swapchainImageCount);
-    for (uint32_t i = 0; i < pGraphicEngine->swapchainImageCount; i++)
-    {
-        VkImageView attachments[pTickernelRenderPass->tickernelAttachmentTypeCount];
-        for (uint32_t j = 0; j < pTickernelRenderPass->tickernelAttachmentTypeCount; j++)
-        {
-            TickernelAttachmentType attachmentType = pTickernelRenderPass->tickernelAttachmentTypes[j];
-            if (TickernelColorAttachmentType == attachmentType)
-            {
-                attachments[j] = pGraphicEngine->swapchainImageViews[j];
-            }
-            else if (TickernelDepthAttachmentType == attachmentType)
-            {
-                attachments[j] = pGraphicEngine->depthImageView;
-            }
-            else
-            {
-                printf("AttachmentType error: %d\n", attachmentType);
-                abort();
-            }
-        }
-        pTickernelRenderPass->vkFramebufferCreateInfo.renderPass = pTickernelRenderPass->vkRenderPass;
-        pTickernelRenderPass->vkFramebufferCreateInfo.attachmentCount = pTickernelRenderPass->tickernelAttachmentTypeCount;
-        pTickernelRenderPass->vkFramebufferCreateInfo.pAttachments = attachments;
-
-        result = vkCreateFramebuffer(pGraphicEngine->vkDevice, &pTickernelRenderPass->vkFramebufferCreateInfo, NULL, &pTickernelRenderPass->vkFramebuffers[i]);
-        TryThrowVulkanError(result);
-    }
-}
-
-static void DestroyFramebuffers(GraphicEngine *pGraphicEngine, TickernelRenderPass *pTickernelRenderPass)
-{
-    for (uint32_t i = 0; i < pGraphicEngine->swapchainImageCount; i++)
-    {
-        vkDestroyFramebuffer(pGraphicEngine->vkDevice, pTickernelRenderPass->vkFramebuffers[i], NULL);
-    }
-    TickernelFree(pTickernelRenderPass->vkFramebuffers);
-}
-
-void CreateVkCommandBuffers(GraphicEngine *pGraphicEngine)
+static void CreateVkCommandBuffers(GraphicEngine *pGraphicEngine)
 {
     VkResult result = VK_SUCCESS;
     pGraphicEngine->graphicVkCommandBuffers = TickernelMalloc(sizeof(VkCommandBuffer) * pGraphicEngine->swapchainImageCount);
@@ -1152,90 +941,69 @@ void CreateVkCommandBuffers(GraphicEngine *pGraphicEngine)
     TryThrowVulkanError(result);
 }
 
-void DestroyVkCommandBuffers(GraphicEngine *pGraphicEngine)
+static void DestroyVkCommandBuffers(GraphicEngine *pGraphicEngine)
 {
     vkFreeCommandBuffers(pGraphicEngine->vkDevice, pGraphicEngine->graphicVkCommandPool, pGraphicEngine->swapchainImageCount, pGraphicEngine->graphicVkCommandBuffers);
     TickernelFree(pGraphicEngine->graphicVkCommandBuffers);
 }
 
-// void RecordCommandBuffer(GraphicEngine *pGraphicEngine, TickernelRenderPass *pTickernelRenderPass)
-// {
-//     VkResult result = VK_SUCCESS;
-//     uint32_t frameIndex = pGraphicEngine->frameIndex;
-//     VkCommandBufferBeginInfo commandBufferBeginInfo =
-//         {
-//             .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
-//             .pNext = NULL,
-//             .flags = 0,
-//             .pInheritanceInfo = NULL,
-//         };
-//     VkCommandBuffer vkCommandBuffer = pGraphicEngine->graphicVkCommandBuffers[frameIndex];
-//     result = vkBeginCommandBuffer(vkCommandBuffer, &commandBufferBeginInfo);
-//     TryThrowVulkanError(result);
-//     VkOffset2D offset =
-//         {
-//             .x = 0,
-//             .y = 0,
-//         };
-//     VkRect2D renderArea =
-//         {
-//             .offset = offset,
-//             .extent = pGraphicEngine->swapchainExtent,
-//         };
-//     uint32_t clearValueCount = 2;
-//     VkClearValue *clearValues = (VkClearValue[]){
-//         {
-//             .color = {0.0f, 0.0f, 0.0f, 1.0f},
-//         },
-//         {
-//             .depthStencil = {1.0f, 0},
-//         },
-//     };
-//     VkRenderPassBeginInfo vkRenderPassBeginInfo =
-//         {
-//             .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
-//             .pNext = NULL,
-//             .renderPass = pTickernelRenderPass->vkRenderPass,
-//             .framebuffer = pTickernelRenderPass->vkFramebuffers[frameIndex],
-//             .renderArea = renderArea,
-//             .clearValueCount = clearValueCount,
-//             .pClearValues = clearValues,
-//         };
-//     vkCmdBeginRenderPass(vkCommandBuffer, &vkRenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
-
-//     vkCmdEndRenderPass(vkCommandBuffer);
-//     result = vkEndCommandBuffer(vkCommandBuffer);
-//     TryThrowVulkanError(result);
-// }
-
+void ReferenceDepth(GraphicEngine *pGraphicEngine)
+{
+    if (pGraphicEngine->depthReferenceCount > 0)
+    {
+        // continue;
+    }
+    else
+    {
+        CreateDepthResources(pGraphicEngine);
+    }
+    pGraphicEngine->depthReferenceCount++;
+}
+void DereferenceDepth(GraphicEngine *pGraphicEngine)
+{
+    pGraphicEngine->depthReferenceCount--;
+    if (pGraphicEngine->depthReferenceCount > 0)
+    {
+        // continue;
+    }
+    else
+    {
+        DestroyDepthResources(pGraphicEngine);
+    }
+}
+void ReferenceAlbedo(GraphicEngine *pGraphicEngine)
+{
+    if (pGraphicEngine->albedoReferenceCount > 0)
+    {
+        // continue;
+    }
+    else
+    {
+        CreateAlbedoResources(pGraphicEngine);
+    }
+    pGraphicEngine->albedoReferenceCount++;
+}
+void DereferenceAlbedo(GraphicEngine *pGraphicEngine)
+{
+    pGraphicEngine->albedoReferenceCount--;
+    if (pGraphicEngine->albedoReferenceCount > 0)
+    {
+        // continue;
+    }
+    else
+    {
+        DestroyAlbedoResources(pGraphicEngine);
+    }
+}
 void StartGraphicEngine(GraphicEngine *pGraphicEngine)
 {
     pGraphicEngine->frameCount = 0;
-
-    // pGraphicEngine->maxVkRenderPassCount = 1024;
-    // pGraphicEngine->vkRenderPassCount = 0;
-    // pGraphicEngine->vkRenderPasses = TickernelMalloc(sizeof(VkRenderPass) * pGraphicEngine->maxVkRenderPassCount);
-    // pGraphicEngine->vkRenderPassCreateInfos = TickernelMalloc(sizeof(VkRenderPassCreateInfo) * pGraphicEngine->maxVkRenderPassCount);
-    // pGraphicEngine->pVkRenderPassCreateInfoNodeList = TickernelMalloc(sizeof(PVkRenderPassCreateInfoNode) * pGraphicEngine->maxVkRenderPassCount);
-    // for (uint32_t i = 0; i < pGraphicEngine->maxVkRenderPassCount; i++)
-    // {
-    //     pGraphicEngine->pVkRenderPassCreateInfoNodeList[i] = NULL;
-    // }
-
-    // pGraphicEngine->tickernelGraphicPipelineHashSize = 512;
-    // pGraphicEngine->pGraphicPipelineNodes = TickernelMalloc(sizeof(PGraphicPipelineNode) * pGraphicEngine->tickernelGraphicPipelineHashSize);
-    // for (uint32_t i = 0; i < pGraphicEngine->tickernelGraphicPipelineHashSize; i++)
-    // {
-    //     pGraphicEngine->pGraphicPipelineNodes = NULL;
-    // }
-
     CreateGLFWWindow(pGraphicEngine);
     CreateVkInstance(pGraphicEngine);
     CreateVKSurface(pGraphicEngine);
     PickPhysicalDevice(pGraphicEngine);
     CreateLogicalDevice(pGraphicEngine);
     CreateSwapchain(pGraphicEngine);
-    CreateDeferredResources(pGraphicEngine);
     CreateSemaphores(pGraphicEngine);
     CreateCommandPools(pGraphicEngine);
     CreateVkCommandBuffers(pGraphicEngine);
@@ -1256,31 +1024,14 @@ void UpdateGraphicEngine(GraphicEngine *pGraphicEngine)
 
 void EndGraphicEngine(GraphicEngine *pGraphicEngine)
 {
-    // for (uint32_t i = 0; i < pGraphicEngine->tickernelGraphicPipelineCount; i++)
-    // {
-    //     if (pGraphicEngine->tickernelGraphicPipelines[i].vkFramebuffers == NULL)
-    //     {
-    //         // continue;
-    //     }
-    //     else
-    //     {
-    //         DestroyFramebuffers(pGraphicEngine, &pGraphicEngine->tickernelGraphicPipelines[i]);
-    //     }
-    // }
     DestroyVkCommandBuffers(pGraphicEngine);
     DestroyCommandPools(pGraphicEngine);
     DestroySemaphores(pGraphicEngine);
-    DestroyDeferredResources(pGraphicEngine);
+    DestroyDepthResources(pGraphicEngine);
     DestroySwapchain(pGraphicEngine);
     DestroyLogicalDevice(pGraphicEngine);
     // Destroy vkPhysicsDevice
     DestroyVKSurface(pGraphicEngine);
     DestroyVKInstance(pGraphicEngine);
     DestroyGLFWWindow(pGraphicEngine);
-
-    // TickernelFree(pGraphicEngine->tickernelGraphicPipelines);
-    // TickernelFree(pGraphicEngine->pGraphicPipelineNodes);
-    // TickernelFree(pGraphicEngine->pVkRenderPassCreateInfoNodeList);
-    // TickernelFree(pGraphicEngine->vkRenderPassCreateInfos);
-    // TickernelFree(pGraphicEngine->vkRenderPasses);
 }

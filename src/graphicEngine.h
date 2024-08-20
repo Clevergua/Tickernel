@@ -8,43 +8,7 @@
 #define GLFW_INCLUDE_VULKAN
 #include <glfw3.h>
 #include <tickernelCore.h>
-
-// Designed with the principle of minimal learning cost and simplicity, we utilize Vulkan’s native VkCreateInfo as pipeline construction parameters and for managing runtime objects. The fields of VkCreateInfo are divided into configurable sections and runtime object sections. The former is configured through external input, while the latter is generated and managed during runtime calls to ensure its lifecycle.
-typedef enum
-{
-    TickernelColorAttachmentType,
-    TickernelDepthAttachmentType,
-    TickernelStencilAttachmentType,
-    TickernelPositionAttachmentType,
-    TickernelNormalAttachmentType,
-    TickernelAlbedoAttachmentType,
-} TickernelAttachmentType;
-
-typedef struct TickernelRenderPipelineStruct
-{
-    VkGraphicsPipelineCreateInfo vkGraphicsPipelineCreateInfo;
-    uint32_t stageCount;
-    VkPipelineShaderStageCreateInfo *vkPipelineShaderStageCreateInfos;
-    VkShaderModuleCreateInfo *vkShaderModuleCreateInfos;
-    VkPipelineLayoutCreateInfo vkPipelineLayoutCreateInfo;
-    uint32_t vkDescriptorSetLayoutCreateInfoCount;
-    VkDescriptorSetLayoutCreateInfo *vkDescriptorSetLayoutCreateInfos;
-    VkPipeline vkPipeline;
-    struct TickernelRenderPassStruct *pTickernelRenderPass;
-
-} TickernelRenderPipeline;
-
-typedef struct TickernelRenderPassStruct
-{
-    VkRenderPassCreateInfo vkRenderPassCreateInfo;
-    VkRenderPass vkRenderPass;
-    VkFramebufferCreateInfo vkFramebufferCreateInfo;
-    uint32_t tickernelAttachmentTypeCount;
-    TickernelAttachmentType *tickernelAttachmentTypes;
-    VkFramebuffer *vkFramebuffers;
-    uint32_t tickernelRenderPipelineCount;
-    struct TickernelRenderPipelineStruct **pTickernelRenderPipelines;
-} TickernelRenderPass;
+#include <deferredRenderPipeline.h>
 
 typedef struct GraphicEngineStruct
 {
@@ -73,10 +37,12 @@ typedef struct GraphicEngineStruct
     uint32_t swapchainImageCount;
     VkImage *swapchainImages;
     VkImageView *swapchainImageViews;
+    int depthReferenceCount;
     VkImage depthImage;
     VkFormat depthFormat;
     VkImageView depthImageView;
     VkDeviceMemory depthImageMemory;
+    bool albedoReferenceCount;
     VkImage albedoImage;
     VkFormat albedoFormat;
     VkImageView albedoImageView;
@@ -92,6 +58,13 @@ typedef struct GraphicEngineStruct
     uint32_t frameIndex;
     bool hasRecreateSwapchain;
 } GraphicEngine;
+
+void TryThrowVulkanError(VkResult vkResult);
+
+void ReferenceDepth(GraphicEngine *pGraphicEngine);
+void DereferenceDepth(GraphicEngine *pGraphicEngine);
+void ReferenceAlbedo(GraphicEngine *pGraphicEngine);
+void DereferenceAlbedo(GraphicEngine *pGraphicEngine);
 
 void StartGraphicEngine(GraphicEngine *pGraphicEngine);
 void UpdateGraphicEngine(GraphicEngine *pGraphicEngine);

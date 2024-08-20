@@ -2,6 +2,8 @@
 
 void CreateDeferredRenderPipeline(GraphicEngine *pGraphicEngine)
 {
+    ReferenceDepth(pGraphicEngine);
+    ReferenceAlbedo(pGraphicEngine);
     VkAttachmentDescription colorAttachmentDescription = {
         .flags = 0,
         .format = pGraphicEngine->surfaceFormat.format,
@@ -117,8 +119,16 @@ void CreateDeferredRenderPipeline(GraphicEngine *pGraphicEngine)
         .dependencyCount = dependencyCount,
         .pDependencies = subpassDependencies,
     };
-    TickernelRenderPass tickernelRenderPass = {
-        vkRenderPassCreateInfo = vkRenderPassCreateInfo,
-    };
+    VkResult result = VK_SUCCESS;
+    VkRenderPass renderPass;
+    result = vkCreateRenderPass(pGraphicEngine->vkDevice, &vkRenderPassCreateInfo, NULL, &renderPass);
+    TryThrowVulkanError(result);
+}
 
+void UpdateDeferredRenderPipeline(GraphicEngine *pGraphicEngine)
+{}
+void DestroyDeferredRenderPipeline(GraphicEngine *pGraphicEngine)
+{
+    DereferenceDepth(pGraphicEngine);
+    DereferenceAlbedo(pGraphicEngine);
 }
