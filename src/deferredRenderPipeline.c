@@ -130,7 +130,7 @@ void UpdateDeferredRenderPipeline(GraphicEngine *pGraphicEngine)
 }
 void DestroyDeferredRenderPipeline(GraphicEngine *pGraphicEngine)
 {
-    vkDestroyRenderPass(pGraphicEngine, NULL, NULL);
+    vkDestroyRenderPass(    , NULL, NULL);
     DereferenceDepth(pGraphicEngine);
     DereferenceAlbedo(pGraphicEngine);
 }

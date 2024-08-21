@@ -8,7 +8,6 @@
 #define GLFW_INCLUDE_VULKAN
 #include <glfw3.h>
 #include <tickernelCore.h>
-#include <deferredRenderPipeline.h>
 
 typedef struct GraphicEngineStruct
 {
