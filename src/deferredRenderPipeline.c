@@ -125,6 +125,28 @@ void CreateDeferredRenderPipeline(GraphicEngine *pGraphicEngine, GraphicImage de
     VkPipelineCache pipelineCache = NULL;
     VkGraphicsPipelineCreateInfo vkGraphicsPipelineCreateInfos[pGraphicEngine->deferredRenderPipeline.vkPipelineCount];
     vkCreateGraphicsPipelines(pGraphicEngine->vkDevice, pipelineCache, pGraphicEngine->deferredRenderPipeline.vkPipelineCount, vkGraphicsPipelineCreateInfos, NULL, pGraphicEngine->deferredRenderPipeline.vkPipelines);
+
+    pGraphicEngine->deferredRenderPipeline.vkFramebuffers = TickernelMalloc(sizeof(VkFramebuffer) * pGraphicEngine->swapchainImageCount);
+
+    for (int32_t i = 0; i < pGraphicEngine->swapchainImageCount; i++)
+    {
+        uint32_t attachmentCount = 2;
+        VkImageView attachments[] = {pGraphicEngine->swapchainImageViews[i], pGraphicEngine->depthGraphicImage.vkImageView};
+        VkFramebufferCreateInfo framebufferCreateInfo = {
+            .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
+            .pNext = NULL,
+            .flags = 0,
+            .renderPass = pGraphicEngine->deferredRenderPipeline.vkRenderPass,
+            .attachmentCount = attachmentCount,
+            .pAttachments = attachments,
+            .width = pGraphicEngine->swapchainExtent.width,
+            .height = pGraphicEngine->swapchainExtent.height,
+            .layers = 1,
+        };
+        vkCreateFramebuffer(pGraphicEngine->vkDevice, &framebufferCreateInfo, NULL, &pGraphicEngine->deferredRenderPipeline.vkFramebuffers[i]);
+        TRYRETURNVKERROR(result);
+    }
+    return result;
 }
 
 void RecordDeferredRenderPipeline(GraphicEngine *pGraphicEngine)
@@ -181,6 +203,11 @@ void RecordDeferredRenderPipeline(GraphicEngine *pGraphicEngine)
 
 void DestroyDeferredRenderPipeline(GraphicEngine *pGraphicEngine)
 {
+    for (int32_t i = 0; i < pGraphicEngine->swapchainImageCount; i++)
+    {
+        vkDestroyFramebuffer(pGraphicEngine->vkDevice, pGraphicEngine->deferredRenderPipeline.vkFramebuffers[i], NULL);
+    }
+    TickernelFree(pGraphicEngine->deferredRenderPipeline.vkFramebuffers);
     for (uint32_t i = 0; i < pGraphicEngine->deferredRenderPipeline.vkPipelineCount; i++)
     {
         vkDestroyPipeline(pGraphicEngine->vkDevice, pGraphicEngine->deferredRenderPipeline.vkPipelines[i], NULL);
