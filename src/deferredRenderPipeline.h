@@ -1,9 +1,6 @@
 #pragma once
 #include <graphicEngineCore.h>
 
-typedef struct DeferredRenderPipelineStruct
-{
-    VkRenderPass vkRenderPass;
-} DeferredRenderPipeline;
-void CreateDeferredRenderPipeline(GraphicEngine *pGraphicEngine, GraphicImage depthGraphicImage, GraphicImage albedoGraphicImage, DeferredRenderPipeline *pDeferredRenderPipeline);
-void DestroyDeferredRenderPipeline(GraphicEngine *pGraphicEngine, DeferredRenderPipeline *pDeferredRenderPipeline);
+void CreateDeferredRenderPipeline(GraphicEngine *pGraphicEngine, GraphicImage depthGraphicImage, GraphicImage albedoGraphicImage);
+void DestroyDeferredRenderPipeline(GraphicEngine *pGraphicEngine);
+void RecordDeferredRenderPipeline(GraphicEngine *pGraphicEngine);

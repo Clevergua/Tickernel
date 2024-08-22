@@ -22,14 +22,13 @@ static void TickernelStart(TickernelEngine *pTickernelEngine)
     TickernelCombinePaths(pTickernelEngine->assetsPath, FILENAME_MAX, "assets");
 
     StartGraphicEngine(pTickernelEngine->pGraphicEngine);
-    // StartLua(pTickernelEngine->pLuaEngine, pTickernelEngine->assetsPath);
+    StartLua(pTickernelEngine->pLuaEngine, pTickernelEngine->assetsPath);
 }
 
 static void TickernelUpdate(TickernelEngine *pTickernelEngine)
 {
     printf("Tickernel Update!\n");
     UpdateLua(pTickernelEngine->pLuaEngine);
-    
     UpdateGraphicEngine(pTickernelEngine->pGraphicEngine);
 }
 

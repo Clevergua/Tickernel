@@ -640,34 +640,24 @@ static void DestroySemaphores(GraphicEngine *pGraphicEngine)
     TickernelFree(pGraphicEngine->renderFinishedFences);
 }
 
-// static void CreateDepthResources(GraphicEngine *pGraphicEngine)
-// {
-//     FindDepthFormat(pGraphicEngine, &pGraphicEngine->depthFormat);
-//     CreateImage(pGraphicEngine, pGraphicEngine->swapchainExtent.width, pGraphicEngine->swapchainExtent.height, pGraphicEngine->depthFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &pGraphicEngine->depthImage, &pGraphicEngine->depthImageMemory);
-//     CreateImageView(pGraphicEngine, pGraphicEngine->depthImage, pGraphicEngine->depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT, &pGraphicEngine->depthImageView);
-// }
+static void CreateGraphicImages(GraphicEngine *pGraphicEngine)
+{
+    VkExtent3D vkExtent3D = {
+        .width = pGraphicEngine->swapchainExtent.width,
+        .height = pGraphicEngine->swapchainExtent.height,
+        .depth = 0,
+    };
+    VkFormat depthVkFormat;
+    FindDepthFormat(pGraphicEngine, &depthVkFormat);
+    CreateGraphicImage(pGraphicEngine, vkExtent3D, depthVkFormat, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT, &pGraphicEngine->depthGraphicImage);
+    CreateGraphicImage(pGraphicEngine, vkExtent3D, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_IMAGE_ASPECT_COLOR_BIT, &pGraphicEngine->albedoGraphicImage);
+}
 
-// static void DestroyDepthResources(GraphicEngine *pGraphicEngine)
-// {
-//     VkDevice vkDevice = pGraphicEngine->vkDevice;
-//     vkDestroyImageView(vkDevice, pGraphicEngine->albedoImageView, NULL);
-//     vkDestroyImage(vkDevice, pGraphicEngine->albedoImage, NULL);
-//     vkFreeMemory(vkDevice, pGraphicEngine->albedoImageMemory, NULL);
-// }
-// static void CreateAlbedoResources(GraphicEngine *pGraphicEngine)
-// {
-//     pGraphicEngine->albedoFormat = VK_FORMAT_R8G8B8A8_UNORM;
-//     CreateImage(pGraphicEngine, pGraphicEngine->swapchainExtent.width, pGraphicEngine->swapchainExtent.height, pGraphicEngine->albedoFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &pGraphicEngine->albedoImage, &pGraphicEngine->albedoImageMemory);
-//     CreateImageView(pGraphicEngine, pGraphicEngine->albedoImage, pGraphicEngine->albedoFormat, VK_IMAGE_ASPECT_COLOR_BIT, &pGraphicEngine->albedoImageView);
-// }
-
-// static void DestroyAlbedoResources(GraphicEngine *pGraphicEngine)
-// {
-//     VkDevice vkDevice = pGraphicEngine->vkDevice;
-//     vkDestroyImageView(vkDevice, pGraphicEngine->depthImageView, NULL);
-//     vkDestroyImage(vkDevice, pGraphicEngine->depthImage, NULL);
-//     vkFreeMemory(vkDevice, pGraphicEngine->depthImageMemory, NULL);
-// }
+static void DestroyGraphicImages(GraphicEngine *pGraphicEngine)
+{
+    DestroyGraphicImage(pGraphicEngine, pGraphicEngine->depthGraphicImage);
+    DestroyGraphicImage(pGraphicEngine, pGraphicEngine->albedoGraphicImage);
+}
 
 static void RecreateResources(GraphicEngine *pGraphicEngine)
 {
@@ -687,24 +677,8 @@ static void RecreateResources(GraphicEngine *pGraphicEngine)
     DestroySwapchain(pGraphicEngine);
     CreateSwapchain(pGraphicEngine);
 
-    // if (pGraphicEngine->depthReferenceCount > 0)
-    // {
-    //     DestroyDepthResources(pGraphicEngine);
-    //     CreateDepthResources(pGraphicEngine);
-    // }
-    // else
-    // {
-    //     // continue;
-    // }
-    // if (pGraphicEngine->albedoReferenceCount > 0)
-    // {
-    //     DestroyAlbedoResources(pGraphicEngine);
-    //     CreateAlbedoResources(pGraphicEngine);
-    // }
-    // else
-    // {
-    //     // continue;
-    // }
+    DestroyGraphicImages(pGraphicEngine);
+    CreateGraphicImages(pGraphicEngine);
 }
 
 static void CreateCommandPools(GraphicEngine *pGraphicEngine)
@@ -758,7 +732,7 @@ static void AcquireImage(GraphicEngine *pGraphicEngine, bool *pHasRecreateSwapch
     }
 }
 
-static void SubmitCommandBuffers(GraphicEngine *pGraphicEngine)
+static void SubmitCommandBuffer(GraphicEngine *pGraphicEngine)
 {
     VkResult result = VK_SUCCESS;
 
@@ -821,54 +795,11 @@ static void DestroyVkCommandBuffers(GraphicEngine *pGraphicEngine)
     TickernelFree(pGraphicEngine->graphicVkCommandBuffers);
 }
 
-// void ReferenceDepth(GraphicEngine *pGraphicEngine)
-// {
-//     if (pGraphicEngine->depthReferenceCount > 0)
-//     {
-//         // continue;
-//     }
-//     else
-//     {
-//         CreateDepthResources(pGraphicEngine);
-//     }
-//     pGraphicEngine->depthReferenceCount++;
-// }
-// void DereferenceDepth(GraphicEngine *pGraphicEngine)
-// {
-//     pGraphicEngine->depthReferenceCount--;
-//     if (pGraphicEngine->depthReferenceCount > 0)
-//     {
-//         // continue;
-//     }
-//     else
-//     {
-//         DestroyDepthResources(pGraphicEngine);
-//     }
-// }
-// void ReferenceAlbedo(GraphicEngine *pGraphicEngine)
-// {
-//     if (pGraphicEngine->albedoReferenceCount > 0)
-//     {
-//         // continue;
-//     }
-//     else
-//     {
-//         CreateAlbedoResources(pGraphicEngine);
-//     }
-//     pGraphicEngine->albedoReferenceCount++;
-// }
-// void DereferenceAlbedo(GraphicEngine *pGraphicEngine)
-// {
-//     pGraphicEngine->albedoReferenceCount--;
-//     if (pGraphicEngine->albedoReferenceCount > 0)
-//     {
-//         // continue;
-//     }
-//     else
-//     {
-//         DestroyAlbedoResources(pGraphicEngine);
-//     }
-// }
+static void RecordCommandBuffer(GraphicEngine *pGraphicEngine)
+{
+    RecordDeferredRenderPipeline(pGraphicEngine);
+}
+
 void StartGraphicEngine(GraphicEngine *pGraphicEngine)
 {
     pGraphicEngine->frameCount = 0;
@@ -882,16 +813,8 @@ void StartGraphicEngine(GraphicEngine *pGraphicEngine)
     CreateCommandPools(pGraphicEngine);
     CreateVkCommandBuffers(pGraphicEngine);
 
-    VkExtent3D vkExtent3D = {
-        .width = pGraphicEngine->swapchainExtent.width,
-        .height = pGraphicEngine->swapchainExtent.height,
-        .depth = 0,
-    };
-    VkFormat depthVkFormat;
-    FindDepthFormat(pGraphicEngine, &depthVkFormat);
-    CreateGraphicImage(pGraphicEngine, vkExtent3D, depthVkFormat, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT, &pGraphicEngine->depthGraphicImage);
-
-    CreateGraphicImage(pGraphicEngine, vkExtent3D, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_IMAGE_ASPECT_COLOR_BIT, &pGraphicEngine->albedoGraphicImage);
+    CreateGraphicImages(pGraphicEngine);
+    CreateDeferredRenderPipeline(pGraphicEngine, pGraphicEngine->depthGraphicImage, pGraphicEngine->albedoGraphicImage);
 }
 
 void UpdateGraphicEngine(GraphicEngine *pGraphicEngine)
@@ -900,15 +823,17 @@ void UpdateGraphicEngine(GraphicEngine *pGraphicEngine)
     bool hasRecreateSwapchain = false;
     WaitForGPU(pGraphicEngine);
     AcquireImage(pGraphicEngine, &hasRecreateSwapchain);
-    // RecordCommandBuffer(pGraphicEngine);
-    // UpdateVkCommandBuffers(pGraphicEngine, hasRecreateSwapchain);
-    SubmitCommandBuffers(pGraphicEngine);
+    RecordCommandBuffer(pGraphicEngine);
+    SubmitCommandBuffer(pGraphicEngine);
     Present(pGraphicEngine);
     pGraphicEngine->frameCount++;
 }
 
 void EndGraphicEngine(GraphicEngine *pGraphicEngine)
 {
+    DestroyDeferredRenderPipeline(pGraphicEngine);
+    DestroyGraphicImages(pGraphicEngine);
+
     DestroyVkCommandBuffers(pGraphicEngine);
     DestroyCommandPools(pGraphicEngine);
     DestroySemaphores(pGraphicEngine);

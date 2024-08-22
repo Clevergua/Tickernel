@@ -127,3 +127,11 @@ void CreateGraphicImage(GraphicEngine *pGraphicEngine, VkExtent3D vkExtent3D, Vk
     CreateImage(pGraphicEngine, vkExtent3D, vkFormat, VK_IMAGE_TILING_OPTIMAL, vkImageUsageFlags, vkMemoryPropertyFlags, &pGraphicImage->vkImage, &pGraphicImage->vkDeviceMemory);
     CreateImageView(pGraphicEngine, pGraphicImage->vkImage, pGraphicImage->vkFormat, vkImageAspectFlags, &pGraphicImage->vkImageView);
 }
+
+void DestroyGraphicImage(GraphicEngine *pGraphicEngine, GraphicImage graphicImage)
+{
+    VkDevice vkDevice = pGraphicEngine->vkDevice;
+    vkDestroyImageView(vkDevice, graphicImage.vkImageView, NULL);
+    vkDestroyImage(vkDevice, graphicImage.vkImage, NULL);
+    vkFreeMemory(vkDevice, graphicImage.vkDeviceMemory, NULL);
+}

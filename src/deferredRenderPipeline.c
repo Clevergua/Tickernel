@@ -1,6 +1,6 @@
 #include <deferredRenderPipeline.h>
 
-void CreateDeferredRenderPipeline(GraphicEngine *pGraphicEngine, GraphicImage depthGraphicImage, GraphicImage albedoGraphicImage, DeferredRenderPipeline *pDeferredRenderPipeline)
+void CreateDeferredRenderPipeline(GraphicEngine *pGraphicEngine, GraphicImage depthGraphicImage, GraphicImage albedoGraphicImage)
 {
     VkAttachmentDescription colorAttachmentDescription = {
         .flags = 0,
@@ -118,16 +118,73 @@ void CreateDeferredRenderPipeline(GraphicEngine *pGraphicEngine, GraphicImage de
         .pDependencies = subpassDependencies,
     };
     VkResult result = VK_SUCCESS;
-    VkRenderPass renderPass;
-    result = vkCreateRenderPass(pGraphicEngine->vkDevice, &vkRenderPassCreateInfo, NULL, &renderPass);
+    result = vkCreateRenderPass(pGraphicEngine->vkDevice, &vkRenderPassCreateInfo, NULL, &pGraphicEngine->deferredRenderPipeline.vkRenderPass);
+    TryThrowVulkanError(result);
+
+    pGraphicEngine->deferredRenderPipeline.vkPipelineCount = 2;
+    VkPipelineCache pipelineCache = NULL;
+    VkGraphicsPipelineCreateInfo vkGraphicsPipelineCreateInfos[pGraphicEngine->deferredRenderPipeline.vkPipelineCount];
+    vkCreateGraphicsPipelines(pGraphicEngine->vkDevice, pipelineCache, pGraphicEngine->deferredRenderPipeline.vkPipelineCount, vkGraphicsPipelineCreateInfos, NULL, pGraphicEngine->deferredRenderPipeline.vkPipelines);
+}
+
+void RecordDeferredRenderPipeline(GraphicEngine *pGraphicEngine)
+{
+    VkResult result = VK_SUCCESS;
+    RenderPipeline deferredRenderPipeline = pGraphicEngine->deferredRenderPipeline;
+
+    VkCommandBuffer vkCommandBuffer = pGraphicEngine->graphicVkCommandBuffers[pGraphicEngine->frameIndex];
+    VkCommandBufferBeginInfo vkCommandBufferBeginInfo =
+        {
+            .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+            .pNext = NULL,
+            .flags = 0,
+            .pInheritanceInfo = NULL,
+        };
+    result = vkBeginCommandBuffer(vkCommandBuffer, &vkCommandBufferBeginInfo);
+    TryThrowVulkanError(result);
+    VkOffset2D offset =
+        {
+            .x = 0,
+            .y = 0,
+        };
+    VkRect2D renderArea =
+        {
+            .offset = offset,
+            .extent = pGraphicEngine->swapchainExtent,
+        };
+    uint32_t clearValueCount = 2;
+    VkClearValue *clearValues = (VkClearValue[]){
+        {
+            .color = {0.0f, 0.0f, 0.0f, 1.0f},
+        },
+        {
+            .depthStencil = {1.0f, 0},
+        },
+    };
+    VkRenderPassBeginInfo renderPassBeginInfo =
+        {
+            .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
+            .pNext = NULL,
+            .renderPass = deferredRenderPipeline.vkRenderPass,
+            .framebuffer = deferredRenderPipeline.vkFramebuffers[pGraphicEngine->frameIndex],
+            .renderArea = renderArea,
+            .clearValueCount = clearValueCount,
+            .pClearValues = clearValues,
+        };
+    vkCmdBeginRenderPass(vkCommandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+    // vkCmdBindPipeline(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, vkPipeline);
+
+    vkCmdEndRenderPass(vkCommandBuffer);
+    result = vkEndCommandBuffer(vkCommandBuffer);
     TryThrowVulkanError(result);
 }
 
-void UpdateDeferredRenderPipeline(GraphicEngine *pGraphicEngine, DeferredRenderPipeline *pDeferredRenderPipeline)
+void DestroyDeferredRenderPipeline(GraphicEngine *pGraphicEngine)
 {
-}
+    for (uint32_t i = 0; i < pGraphicEngine->deferredRenderPipeline.vkPipelineCount; i++)
+    {
+        vkDestroyPipeline(pGraphicEngine->vkDevice, pGraphicEngine->deferredRenderPipeline.vkPipelines[i], NULL);
+    }
 
-void DestroyDeferredRenderPipeline(GraphicEngine *pGraphicEngine, DeferredRenderPipeline *pDeferredRenderPipeline)
-{
-    vkDestroyRenderPass(pGraphicEngine->vkDevice, pDeferredRenderPipeline->vkRenderPass, NULL);
+    vkDestroyRenderPass(pGraphicEngine->vkDevice, pGraphicEngine->deferredRenderPipeline.vkRenderPass, NULL);
 }

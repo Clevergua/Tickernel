@@ -11,6 +11,7 @@ typedef struct TickernelEngineStruct
     char *assetsPath;
 
     GraphicEngine *pGraphicEngine;
+    RenderPipeline *pDeferredRenderPipeline;
     LuaEngine *pLuaEngine;
 } TickernelEngine;
 

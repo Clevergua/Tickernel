@@ -9,6 +9,14 @@
 #include <glfw3.h>
 #include <tickernelCore.h>
 
+typedef struct RenderPipelineStruct
+{
+    VkRenderPass vkRenderPass;
+    VkFramebuffer *vkFramebuffers;
+    uint32_t vkPipelineCount;
+    VkPipeline *vkPipelines;
+} RenderPipeline;
+
 typedef struct GraphicImageStruct
 {
     VkImage vkImage;
@@ -44,18 +52,6 @@ typedef struct GraphicEngineStruct
     uint32_t swapchainImageCount;
     VkImage *swapchainImages;
     VkImageView *swapchainImageViews;
-    // int depthReferenceCount;
-    // VkImage depthImage;
-    // VkFormat depthFormat;
-    // VkImageView depthImageView;
-    // VkDeviceMemory depthImageMemory;
-    // bool albedoReferenceCount;
-    // VkImage albedoImage;
-    // VkFormat albedoFormat;
-    // VkImageView albedoImageView;
-    // VkDeviceMemory albedoImageMemory;
-    GraphicImage depthGraphicImage;
-    GraphicImage albedoGraphicImage;
 
     VkCommandPool graphicVkCommandPool;
     VkCommandBuffer *graphicVkCommandBuffers;
@@ -66,13 +62,16 @@ typedef struct GraphicEngineStruct
     uint32_t frameCount;
     uint32_t frameIndex;
 
+    GraphicImage depthGraphicImage;
+    GraphicImage albedoGraphicImage;
+    RenderPipeline deferredRenderPipeline;
+    RenderPipeline uiRenderPipeline;
+
 } GraphicEngine;
-
-
 
 void TryThrowVulkanError(VkResult vkResult);
 void FindDepthFormat(GraphicEngine *pGraphicEngine, VkFormat *pDepthFormat);
 
 void CreateImageView(GraphicEngine *pGraphicEngine, VkImage image, VkFormat format, VkImageAspectFlags imageAspectFlags, VkImageView *pImageView);
 void CreateGraphicImage(GraphicEngine *pGraphicEngine, VkExtent3D vkExtent3D, VkFormat vkFormat, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags, GraphicImage *pGraphicImage);
-void DestroyGraphicImage(GraphicEngine *pGraphicEngine, GraphicImage *pGraphicImage);
+void DestroyGraphicImage(GraphicEngine *pGraphicEngine, GraphicImage graphicImage);

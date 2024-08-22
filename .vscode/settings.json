@@ -104,6 +104,7 @@
         "variant": "c",
         "execution": "c",
         "print": "c",
-        "graphicenginecore.h": "c"
+        "graphicenginecore.h": "c",
+        "string.h": "c"
     }
 }
