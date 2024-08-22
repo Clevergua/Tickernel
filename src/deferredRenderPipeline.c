@@ -1,9 +1,7 @@
 #include <deferredRenderPipeline.h>
 
-void CreateDeferredRenderPipeline(GraphicEngine *pGraphicEngine)
+void CreateDeferredRenderPipeline(GraphicEngine *pGraphicEngine, GraphicImage depthGraphicImage, GraphicImage albedoGraphicImage, DeferredRenderPipeline *pDeferredRenderPipeline)
 {
-    ReferenceDepth(pGraphicEngine);
-    ReferenceAlbedo(pGraphicEngine);
     VkAttachmentDescription colorAttachmentDescription = {
         .flags = 0,
         .format = pGraphicEngine->surfaceFormat.format,
@@ -17,7 +15,7 @@ void CreateDeferredRenderPipeline(GraphicEngine *pGraphicEngine)
     };
     VkAttachmentDescription depthAttachmentDescription = {
         .flags = 0,
-        .format = pGraphicEngine->depthFormat,
+        .format = depthGraphicImage.vkFormat,
         .samples = VK_SAMPLE_COUNT_1_BIT,
         .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
         .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
@@ -28,7 +26,7 @@ void CreateDeferredRenderPipeline(GraphicEngine *pGraphicEngine)
     };
     VkAttachmentDescription albedoAttachmentDescription = {
         .flags = 0,
-        .format = pGraphicEngine->albedoFormat,
+        .format = albedoGraphicImage.vkFormat,
         .samples = VK_SAMPLE_COUNT_1_BIT,
         .loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
         .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
@@ -125,12 +123,11 @@ void CreateDeferredRenderPipeline(GraphicEngine *pGraphicEngine)
     TryThrowVulkanError(result);
 }
 
-void UpdateDeferredRenderPipeline(GraphicEngine *pGraphicEngine)
+void UpdateDeferredRenderPipeline(GraphicEngine *pGraphicEngine, DeferredRenderPipeline *pDeferredRenderPipeline)
 {
 }
-void DestroyDeferredRenderPipeline(GraphicEngine *pGraphicEngine)
+
+void DestroyDeferredRenderPipeline(GraphicEngine *pGraphicEngine, DeferredRenderPipeline *pDeferredRenderPipeline)
 {
-    vkDestroyRenderPass(    , NULL, NULL);
-    DereferenceDepth(pGraphicEngine);
-    DereferenceAlbedo(pGraphicEngine);
+    vkDestroyRenderPass(pGraphicEngine->vkDevice, pDeferredRenderPipeline->vkRenderPass, NULL);
 }

@@ -1,0 +1,78 @@
+#pragma once
+
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <vulkan/vulkan.h>
+#define GLFW_INCLUDE_VULKAN
+#include <glfw3.h>
+#include <tickernelCore.h>
+
+typedef struct GraphicImageStruct
+{
+    VkImage vkImage;
+    VkFormat vkFormat;
+    VkImageView vkImageView;
+    VkDeviceMemory vkDeviceMemory;
+} GraphicImage;
+
+typedef struct GraphicEngineStruct
+{
+    // Config
+    bool enableValidationLayers;
+    char *name;
+    int height;
+    int width;
+    int targetSwapchainImageCount;
+    VkPresentModeKHR targetPresentMode;
+
+    // Runtime
+    GLFWwindow *pGLFWWindow;
+    VkInstance vkInstance;
+    VkSurfaceKHR vkSurface;
+    VkPhysicalDevice vkPhysicalDevice;
+    uint32_t queueFamilyPropertyCount;
+    uint32_t graphicQueueFamilyIndex;
+    uint32_t presentQueueFamilyIndex;
+    VkDevice vkDevice;
+    VkQueue vkGraphicQueue;
+    VkQueue vkPresentQueue;
+    VkSwapchainKHR vkSwapchain;
+    VkSurfaceFormatKHR surfaceFormat;
+    VkExtent2D swapchainExtent;
+    uint32_t swapchainImageCount;
+    VkImage *swapchainImages;
+    VkImageView *swapchainImageViews;
+    // int depthReferenceCount;
+    // VkImage depthImage;
+    // VkFormat depthFormat;
+    // VkImageView depthImageView;
+    // VkDeviceMemory depthImageMemory;
+    // bool albedoReferenceCount;
+    // VkImage albedoImage;
+    // VkFormat albedoFormat;
+    // VkImageView albedoImageView;
+    // VkDeviceMemory albedoImageMemory;
+    GraphicImage depthGraphicImage;
+    GraphicImage albedoGraphicImage;
+
+    VkCommandPool graphicVkCommandPool;
+    VkCommandBuffer *graphicVkCommandBuffers;
+    uint32_t acquiredImageIndex;
+    VkSemaphore *imageAvailableSemaphores;
+    VkSemaphore *renderFinishedSemaphores;
+    VkFence *renderFinishedFences;
+    uint32_t frameCount;
+    uint32_t frameIndex;
+
+} GraphicEngine;
+
+
+
+void TryThrowVulkanError(VkResult vkResult);
+void FindDepthFormat(GraphicEngine *pGraphicEngine, VkFormat *pDepthFormat);
+
+void CreateImageView(GraphicEngine *pGraphicEngine, VkImage image, VkFormat format, VkImageAspectFlags imageAspectFlags, VkImageView *pImageView);
+void CreateGraphicImage(GraphicEngine *pGraphicEngine, VkExtent3D vkExtent3D, VkFormat vkFormat, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags, GraphicImage *pGraphicImage);
+void DestroyGraphicImage(GraphicEngine *pGraphicEngine, GraphicImage *pGraphicImage);

@@ -103,6 +103,7 @@
         "memory_resource": "c",
         "variant": "c",
         "execution": "c",
-        "print": "c"
+        "print": "c",
+        "graphicenginecore.h": "c"
     }
 }
