@@ -1,7 +1,6 @@
 #include <graphicEngine.h>
 
-#define GETARRAYCOUNT(array) (NULL == array) ? 0 : (sizeof(array) / sizeof(array[0]))
-
+#define GET_ARRAY_COUNT(array) (NULL == array) ? 0 : (sizeof(array) / sizeof(array[0]))
 void TryThrowVulkanError(VkResult vkResult)
 {
     if (vkResult != VK_SUCCESS)
@@ -48,8 +47,8 @@ static void CreateVkInstance(GraphicEngine *pGraphicEngine)
             "VK_LAYER_KHRONOS_validation",
         };
 
-        enabledLayerNamesCountInStack = GETARRAYCOUNT(enabledLayerNamesInStack);
-        engineExtensionNamesCountInStack = GETARRAYCOUNT(engineExtensionNamesInStack);
+        enabledLayerNamesCountInStack = GET_ARRAY_COUNT(enabledLayerNamesInStack);
+        engineExtensionNamesCountInStack = GET_ARRAY_COUNT(engineExtensionNamesInStack);
         enabledLayerNames = enabledLayerNamesInStack;
         engineExtensionNames = engineExtensionNamesInStack;
         pfnUserCallback = LogMessenger;
@@ -71,7 +70,7 @@ static void CreateVkInstance(GraphicEngine *pGraphicEngine)
         enabledLayerNamesCountInStack = 0;
         enabledLayerNames = NULL;
 
-        engineExtensionNamesCountInStack = GETARRAYCOUNT(engineExtensionNamesInStack);
+        engineExtensionNamesCountInStack = GET_ARRAY_COUNT(engineExtensionNamesInStack);
         engineExtensionNames = engineExtensionNamesInStack;
 
         pfnUserCallback = NULL;
@@ -155,7 +154,7 @@ static void HasAllRequiredExtensions(GraphicEngine *pGraphicEngine, VkPhysicalDe
     char *requiredExtensionNames[] = {
         VK_KHR_SWAPCHAIN_EXTENSION_NAME,
     };
-    uint32_t requiredExtensionCount = GETARRAYCOUNT(requiredExtensionNames);
+    uint32_t requiredExtensionCount = GET_ARRAY_COUNT(requiredExtensionNames);
 
     uint32_t extensionCount = 0;
     result = vkEnumerateDeviceExtensionProperties(vkPhysicalDevice, NULL, &extensionCount, NULL);
@@ -401,7 +400,7 @@ static void CreateLogicalDevice(GraphicEngine *pGraphicEngine)
         char *enabledLayerNamesInStack[] = {
             "VK_LAYER_KHRONOS_validation",
         };
-        enabledLayerCount = GETARRAYCOUNT(enabledLayerNamesInStack);
+        enabledLayerCount = GET_ARRAY_COUNT(enabledLayerNamesInStack);
         enabledLayerNames = enabledLayerNamesInStack;
     }
     else
@@ -413,7 +412,7 @@ static void CreateLogicalDevice(GraphicEngine *pGraphicEngine)
         VK_KHR_SWAPCHAIN_EXTENSION_NAME,
         // "VK_KHR_portability_subset"
     };
-    uint32_t extensionCount = GETARRAYCOUNT(extensionNames);
+    uint32_t extensionCount = GET_ARRAY_COUNT(extensionNames);
     VkDeviceCreateInfo vkDeviceCreateInfo =
         {
             .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
@@ -679,6 +678,18 @@ static void RecreateResources(GraphicEngine *pGraphicEngine)
 
     DestroyGraphicImages(pGraphicEngine);
     CreateGraphicImages(pGraphicEngine);
+    for (uint32_t i = 0; i < pGraphicEngine->deferredRenderPipeline.vkFramebufferCount; i++)
+    {
+        if (pGraphicEngine->deferredRenderPipeline.vkFramebuffers[i] == INVALID_VKFRAMEBUFFER)
+        {
+            // continue;
+        }
+        else
+        {
+            vkDestroyFramebuffer(pGraphicEngine->vkDevice, pGraphicEngine->deferredRenderPipeline.vkFramebuffers[i], NULL);
+            pGraphicEngine->deferredRenderPipeline.vkFramebuffers[i] = INVALID_VKFRAMEBUFFER;
+        }
+    }
 }
 
 static void CreateCommandPools(GraphicEngine *pGraphicEngine)
@@ -814,7 +825,7 @@ void StartGraphicEngine(GraphicEngine *pGraphicEngine)
     CreateVkCommandBuffers(pGraphicEngine);
 
     CreateGraphicImages(pGraphicEngine);
-    CreateDeferredRenderPipeline(pGraphicEngine, pGraphicEngine->depthGraphicImage, pGraphicEngine->albedoGraphicImage);
+    CreateDeferredRenderPipeline(pGraphicEngine);
 }
 
 void UpdateGraphicEngine(GraphicEngine *pGraphicEngine)

@@ -8,13 +8,17 @@
 #define GLFW_INCLUDE_VULKAN
 #include <glfw3.h>
 #include <tickernelCore.h>
+#include <cglm.h>
+#define INVALID_VKFRAMEBUFFER 0
 
 typedef struct RenderPipelineStruct
 {
     VkRenderPass vkRenderPass;
+    uint32_t vkFramebufferCount;
     VkFramebuffer *vkFramebuffers;
     uint32_t vkPipelineCount;
     VkPipeline *vkPipelines;
+    VkPipelineLayout *vkPipelineLayouts;
 } RenderPipeline;
 
 typedef struct GraphicImageStruct
@@ -75,3 +79,5 @@ void FindDepthFormat(GraphicEngine *pGraphicEngine, VkFormat *pDepthFormat);
 void CreateImageView(GraphicEngine *pGraphicEngine, VkImage image, VkFormat format, VkImageAspectFlags imageAspectFlags, VkImageView *pImageView);
 void CreateGraphicImage(GraphicEngine *pGraphicEngine, VkExtent3D vkExtent3D, VkFormat vkFormat, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags, GraphicImage *pGraphicImage);
 void DestroyGraphicImage(GraphicEngine *pGraphicEngine, GraphicImage graphicImage);
+void CreateVkShaderModule(GraphicEngine *pGraphicEngine, const char *filePath, VkShaderModule *pVkShaderModule);
+void DestroyVkShaderModule(GraphicEngine *pGraphicEngine, VkShaderModule vkShaderModule);

@@ -135,3 +135,35 @@ void DestroyGraphicImage(GraphicEngine *pGraphicEngine, GraphicImage graphicImag
     vkDestroyImage(vkDevice, graphicImage.vkImage, NULL);
     vkFreeMemory(vkDevice, graphicImage.vkDeviceMemory, NULL);
 }
+
+void CreateVkShaderModule(GraphicEngine *pGraphicEngine, const char *filePath, VkShaderModule *pVkShaderModule)
+{
+    printf("Path: %s\n", filePath);
+    FILE *pFile = fopen(filePath, "rb");
+    fseek(pFile, 0, SEEK_END);
+    size_t fileLength = ftell(pFile);
+    rewind(pFile);
+
+    uint32_t *pCode = calloc(fileLength, 1);
+    size_t codeSize = fread(pCode, 1, fileLength, pFile);
+
+    fclose(pFile);
+    if (codeSize == fileLength)
+    {
+        printf("Succeeded to read file!\n");
+        VkShaderModuleCreateInfo shaderModuleCreateInfo = {
+            .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
+            .pNext = NULL,
+            .flags = 0,
+            .codeSize = codeSize,
+            .pCode = pCode,
+        };
+        VkShaderModule shaderModule;
+        vkCreateShaderModule(pGraphicEngine->vkDevice, &shaderModuleCreateInfo, NULL, pVkShaderModule);
+        free(pCode);
+    }
+    else
+    {
+        printf("Failed to read file codeSize:%zu fileLength:%zu\n", codeSize, fileLength);
+    }
+}

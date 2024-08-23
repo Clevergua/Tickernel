@@ -1,6 +1,10 @@
 #pragma once
 #include <graphicEngineCore.h>
-
-void CreateDeferredRenderPipeline(GraphicEngine *pGraphicEngine, GraphicImage depthGraphicImage, GraphicImage albedoGraphicImage);
+typedef struct DeferredRenderPipelineVertexStruct
+{
+    vec3 position;
+    vec3 color;
+} DeferredRenderPipelineVertex;
+void CreateDeferredRenderPipeline(GraphicEngine *pGraphicEngine);
 void DestroyDeferredRenderPipeline(GraphicEngine *pGraphicEngine);
 void RecordDeferredRenderPipeline(GraphicEngine *pGraphicEngine);
