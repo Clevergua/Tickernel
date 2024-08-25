@@ -594,6 +594,22 @@ void CreateDeferredRenderPipeline(GraphicEngine *pGraphicEngine)
 
 void RecordDeferredRenderPipeline(GraphicEngine *pGraphicEngine)
 {
+    if (pGraphicEngine->hasRecreatedSwapchain)
+    {
+        for (uint32_t i = 0; i < pGraphicEngine->deferredRenderPipeline.vkFramebufferCount; i++)
+        {
+            if (pGraphicEngine->deferredRenderPipeline.vkFramebuffers[i] == INVALID_VKFRAMEBUFFER)
+            {
+                // continue;
+            }
+            else
+            {
+                vkDestroyFramebuffer(pGraphicEngine->vkDevice, pGraphicEngine->deferredRenderPipeline.vkFramebuffers[i], NULL);
+                pGraphicEngine->deferredRenderPipeline.vkFramebuffers[i] = INVALID_VKFRAMEBUFFER;
+            }
+        }
+    }
+
     VkResult result = VK_SUCCESS;
     RenderPipeline deferredRenderPipeline = pGraphicEngine->deferredRenderPipeline;
 

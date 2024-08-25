@@ -65,7 +65,7 @@ typedef struct GraphicEngineStruct
     VkFence *renderFinishedFences;
     uint32_t frameCount;
     uint32_t frameIndex;
-
+    bool hasRecreatedSwapchain;
     GraphicImage depthGraphicImage;
     GraphicImage albedoGraphicImage;
     RenderPipeline deferredRenderPipeline;

@@ -678,18 +678,6 @@ static void RecreateResources(GraphicEngine *pGraphicEngine)
 
     DestroyGraphicImages(pGraphicEngine);
     CreateGraphicImages(pGraphicEngine);
-    for (uint32_t i = 0; i < pGraphicEngine->deferredRenderPipeline.vkFramebufferCount; i++)
-    {
-        if (pGraphicEngine->deferredRenderPipeline.vkFramebuffers[i] == INVALID_VKFRAMEBUFFER)
-        {
-            // continue;
-        }
-        else
-        {
-            vkDestroyFramebuffer(pGraphicEngine->vkDevice, pGraphicEngine->deferredRenderPipeline.vkFramebuffers[i], NULL);
-            pGraphicEngine->deferredRenderPipeline.vkFramebuffers[i] = INVALID_VKFRAMEBUFFER;
-        }
-    }
 }
 
 static void CreateCommandPools(GraphicEngine *pGraphicEngine)
@@ -721,7 +709,7 @@ static void WaitForGPU(GraphicEngine *pGraphicEngine)
     TryThrowVulkanError(result);
 }
 
-static void AcquireImage(GraphicEngine *pGraphicEngine, bool *pHasRecreateSwapchain)
+static void AcquireImage(GraphicEngine *pGraphicEngine)
 {
     VkResult result = VK_SUCCESS;
     VkDevice vkDevice = pGraphicEngine->vkDevice;
@@ -729,12 +717,13 @@ static void AcquireImage(GraphicEngine *pGraphicEngine, bool *pHasRecreateSwapch
     result = vkAcquireNextImageKHR(vkDevice, pGraphicEngine->vkSwapchain, UINT64_MAX, pGraphicEngine->imageAvailableSemaphores[pGraphicEngine->frameIndex], VK_NULL_HANDLE, &pGraphicEngine->acquiredImageIndex);
     if (VK_SUCCESS == result || VK_SUBOPTIMAL_KHR == result)
     {
+        pGraphicEngine->hasRecreatedSwapchain = false;
         return;
     }
     else if (VK_ERROR_OUT_OF_DATE_KHR == result)
     {
         RecreateResources(pGraphicEngine);
-        *pHasRecreateSwapchain = true;
+        pGraphicEngine->hasRecreatedSwapchain = true;
         return;
     }
     else
@@ -833,7 +822,7 @@ void UpdateGraphicEngine(GraphicEngine *pGraphicEngine)
     pGraphicEngine->frameIndex = pGraphicEngine->frameCount % pGraphicEngine->swapchainImageCount;
     bool hasRecreateSwapchain = false;
     WaitForGPU(pGraphicEngine);
-    AcquireImage(pGraphicEngine, &hasRecreateSwapchain);
+    AcquireImage(pGraphicEngine);
     RecordCommandBuffer(pGraphicEngine);
     SubmitCommandBuffer(pGraphicEngine);
     Present(pGraphicEngine);
