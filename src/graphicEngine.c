@@ -800,6 +800,8 @@ static void RecordCommandBuffer(GraphicEngine *pGraphicEngine)
     RecordDeferredRenderPipeline(pGraphicEngine);
 }
 
+
+
 void StartGraphicEngine(GraphicEngine *pGraphicEngine)
 {
     pGraphicEngine->frameCount = 0;
