@@ -788,6 +788,90 @@ static void CreateVkCommandBuffers(GraphicEngine *pGraphicEngine)
     result = vkAllocateCommandBuffers(pGraphicEngine->vkDevice, &vkCommandBufferAllocateInfo, pGraphicEngine->graphicVkCommandBuffers);
     TryThrowVulkanError(result);
 }
+static void CreateBuffer(GraphicEngine *pGraphicEngine, VkDeviceSize bufferSize, VkBufferUsageFlags bufferUsageFlags, VkMemoryPropertyFlags msemoryPropertyFlags, VkBuffer *pBuffer, VkDeviceMemory *pDeviceMemory)
+{
+    VkResult result = VK_SUCCESS;
+    VkBufferCreateInfo bufferCreateInfo = {
+        .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+        .pNext = NULL,
+        .flags = 0,
+        .size = bufferSize,
+        .usage = bufferUsageFlags,
+        .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+        .queueFamilyIndexCount = 0,
+        .pQueueFamilyIndices = 0,
+    };
+    result = vkCreateBuffer(pGraphicEngine->vkDevice, &bufferCreateInfo, NULL, pBuffer);
+    TryThrowVulkanError(result);
+    VkMemoryRequirements memoryRequirements;
+    vkGetBufferMemoryRequirements(pGraphicEngine->vkDevice, *pBuffer, &memoryRequirements);
+    uint32_t memoryTypeIndex;
+    FindMemoryType(pGraphicEngine, memoryRequirements.memoryTypeBits, msemoryPropertyFlags, &memoryTypeIndex);
+    VkMemoryAllocateInfo memoryAllocateInfo = {
+        .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
+        .pNext = NULL,
+        .allocationSize = memoryRequirements.size,
+        .memoryTypeIndex = memoryTypeIndex,
+    };
+    result = vkAllocateMemory(pGraphicEngine->vkDevice, &memoryAllocateInfo, NULL, pDeviceMemory);
+    TryThrowVulkanError(result);
+    result = vkBindBufferMemory(pGraphicEngine->vkDevice, *pBuffer, *pDeviceMemory, 0);
+    TryThrowVulkanError(result);
+}
+
+static void DestroyBuffer(VkDevice vkDevice, VkBuffer vkBuffer, VkDeviceMemory deviceMemory)
+{
+    vkFreeMemory(vkDevice, deviceMemory, NULL);
+    vkDestroyBuffer(vkDevice, vkBuffer, NULL);
+}
+
+static void CreateUniformBuffers(GraphicEngine *pGraphicEngine)
+{
+    pGraphicEngine->uniformBuffers = TickernelMalloc(sizeof(VkBuffer) * pGraphicEngine->swapchainImageCount);
+
+    pGraphicEngine->uniformBufferMemories = TickernelMalloc(sizeof(VkDeviceMemory) * pGraphicEngine->swapchainImageCount);
+    VkDeviceSize bufferSize = sizeof(UniformBufferObject);
+    for (uint32_t i = 0; i < pGraphicEngine->swapchainImageCount; i++)
+    {
+        CreateBuffer(pGraphicEngine, bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &pGraphicEngine->uniformBuffers[i], &pGraphicEngine->uniformBufferMemories[i]);
+    }
+}
+
+static void DestroyUniformBuffers(GraphicEngine *pGraphicEngine)
+{
+    for (uint32_t i = 0; i < pGraphicEngine->swapchainImageCount; i++)
+    {
+        DestroyBuffer(pGraphicEngine->vkDevice, pGraphicEngine->uniformBuffers[i], pGraphicEngine->uniformBufferMemories[i]);
+    }
+    TickernelFree(pGraphicEngine->uniformBufferMemories);
+    TickernelFree(pGraphicEngine->uniformBuffers);
+}
+
+static void CreateVkDescriptorPool(GraphicEngine *pGraphicEngine)
+{
+    uint32_t poolSizeCount = 1;
+    VkDescriptorPoolSize poolSize[] = {
+        {
+            .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+            .descriptorCount = pGraphicEngine->swapchainImageCount,
+        }
+    };
+    VkDescriptorPoolCreateInfo descriptorPoolCreateInfo = {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+        .pNext = NULL,
+        .flags = 0,
+        .maxSets = pGraphicEngine->swapchainImageCount,
+        .poolSizeCount = poolSizeCount,
+        .pPoolSizes = poolSize,
+    };
+    VkResult result = vkCreateDescriptorPool(pGraphicEngine->vkDevice, &descriptorPoolCreateInfo, NULL, &pGraphicEngine->vkDescriptorPool);
+    TryThrowVulkanError(result);
+}
+
+static void DestroyVkDescriptorPool(GraphicEngine *pGraphicEngine)
+{
+    vkDestroyDescriptorPool(pGraphicEngine->vkDevice, pGraphicEngine->vkDescriptorPool, NULL);
+}
 
 static void DestroyVkCommandBuffers(GraphicEngine *pGraphicEngine)
 {
@@ -799,8 +883,6 @@ static void RecordCommandBuffer(GraphicEngine *pGraphicEngine)
 {
     RecordDeferredRenderPipeline(pGraphicEngine);
 }
-
-
 
 void StartGraphicEngine(GraphicEngine *pGraphicEngine)
 {
@@ -814,7 +896,8 @@ void StartGraphicEngine(GraphicEngine *pGraphicEngine)
     CreateSemaphores(pGraphicEngine);
     CreateCommandPools(pGraphicEngine);
     CreateVkCommandBuffers(pGraphicEngine);
-
+    CreateUniformBuffers(pGraphicEngine);
+    CreateVkDescriptorPool(pGraphicEngine);
     CreateGraphicImages(pGraphicEngine);
     CreateDeferredRenderPipeline(pGraphicEngine);
 }
@@ -835,7 +918,8 @@ void EndGraphicEngine(GraphicEngine *pGraphicEngine)
 {
     DestroyDeferredRenderPipeline(pGraphicEngine);
     DestroyGraphicImages(pGraphicEngine);
-
+    DestroyVkDescriptorPool(pGraphicEngine);
+    DestroyUniformBuffers(pGraphicEngine);
     DestroyVkCommandBuffers(pGraphicEngine);
     DestroyCommandPools(pGraphicEngine);
     DestroySemaphores(pGraphicEngine);

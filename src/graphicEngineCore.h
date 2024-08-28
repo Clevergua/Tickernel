@@ -10,6 +10,12 @@
 #include <tickernelCore.h>
 #include <cglm.h>
 #define INVALID_VKFRAMEBUFFER 0
+typedef struct UniformBufferObjectStruct
+{
+    mat4 model;
+    mat4 view;
+    mat4 proj;
+} UniformBufferObject;
 
 typedef struct RenderPipelineStruct
 {
@@ -66,6 +72,11 @@ typedef struct GraphicEngineStruct
     uint32_t frameCount;
     uint32_t frameIndex;
     bool hasRecreatedSwapchain;
+
+    VkBuffer *uniformBuffers;
+    VkDeviceMemory *uniformBufferMemories;
+    VkDescriptorPool vkDescriptorPool;
+
     GraphicImage depthGraphicImage;
     GraphicImage albedoGraphicImage;
     RenderPipeline deferredRenderPipeline;
@@ -74,6 +85,7 @@ typedef struct GraphicEngineStruct
 } GraphicEngine;
 
 void TryThrowVulkanError(VkResult vkResult);
+void FindMemoryType(GraphicEngine *pGraphicEngine, uint32_t typeFilter, VkMemoryPropertyFlags memoryPropertyFlags, uint32_t *memoryTypeIndex);
 void FindDepthFormat(GraphicEngine *pGraphicEngine, VkFormat *pDepthFormat);
 
 void CreateImageView(GraphicEngine *pGraphicEngine, VkImage image, VkFormat format, VkImageAspectFlags imageAspectFlags, VkImageView *pImageView);

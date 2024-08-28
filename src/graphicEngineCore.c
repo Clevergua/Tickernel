@@ -1,20 +1,5 @@
 #include <graphicEngineCore.h>
 
-static void FindMemoryType(GraphicEngine *pGraphicEngine, uint32_t typeFilter, VkMemoryPropertyFlags memoryPropertyFlags, uint32_t *memoryTypeIndex)
-{
-    VkPhysicalDeviceMemoryProperties physicalDeviceMemoryProperties;
-    vkGetPhysicalDeviceMemoryProperties(pGraphicEngine->vkPhysicalDevice, &physicalDeviceMemoryProperties);
-    for (uint32_t i = 0; i < physicalDeviceMemoryProperties.memoryTypeCount; i++)
-    {
-        if ((typeFilter & (1 << i)) && (physicalDeviceMemoryProperties.memoryTypes[i].propertyFlags & memoryPropertyFlags) == memoryPropertyFlags)
-        {
-            *memoryTypeIndex = i;
-            return;
-        }
-    }
-    printf("Failed to find suitable memory type!");
-}
-
 static void CreateImage(GraphicEngine *pGraphicEngine, VkExtent3D vkExtent3D, VkFormat vkFormat, VkImageTiling vkImageTiling, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImage *pVkImage, VkDeviceMemory *pVkDeviceMemory)
 {
     VkResult result = VK_SUCCESS;
@@ -82,6 +67,21 @@ static void FindSupportedFormat(GraphicEngine *pGraphicEngine, VkFormat *candida
         }
     }
     printf("Target format not found!");
+}
+
+void FindMemoryType(GraphicEngine *pGraphicEngine, uint32_t typeFilter, VkMemoryPropertyFlags memoryPropertyFlags, uint32_t *memoryTypeIndex)
+{
+    VkPhysicalDeviceMemoryProperties physicalDeviceMemoryProperties;
+    vkGetPhysicalDeviceMemoryProperties(pGraphicEngine->vkPhysicalDevice, &physicalDeviceMemoryProperties);
+    for (uint32_t i = 0; i < physicalDeviceMemoryProperties.memoryTypeCount; i++)
+    {
+        if ((typeFilter & (1 << i)) && (physicalDeviceMemoryProperties.memoryTypes[i].propertyFlags & memoryPropertyFlags) == memoryPropertyFlags)
+        {
+            *memoryTypeIndex = i;
+            return;
+        }
+    }
+    printf("Failed to find suitable memory type!");
 }
 
 void FindDepthFormat(GraphicEngine *pGraphicEngine, VkFormat *pDepthFormat)

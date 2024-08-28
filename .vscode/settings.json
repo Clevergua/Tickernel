@@ -105,6 +105,8 @@
         "execution": "c",
         "print": "c",
         "graphicenginecore.h": "c",
-        "string.h": "c"
+        "string.h": "c",
+        "stdlib.h": "c",
+        "__verbose_abort": "cpp"
     }
 }
