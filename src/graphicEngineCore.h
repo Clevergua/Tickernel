@@ -17,6 +17,13 @@ typedef struct UniformBufferObjectStruct
     mat4 proj;
 } UniformBufferObject;
 
+typedef struct UniformBufferObjectStruct
+{
+    mat4 model;
+    mat4 view;
+    mat4 proj;
+} UniformBufferObject;
+
 typedef struct RenderPipelineStruct
 {
     VkRenderPass vkRenderPass;

@@ -532,6 +532,7 @@ static void CreateLightingPipeline(GraphicEngine *pGraphicEngine)
         .dynamicStateCount = dynamicStateCount,
         .pDynamicStates = dynamicStates,
     };
+    pGraphicEngine->deferredRenderPipeline.vkPipelineLayouts[1] = NULL;
     VkGraphicsPipelineCreateInfo lightingPipelineCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
         .pNext = NULL,
@@ -547,7 +548,7 @@ static void CreateLightingPipeline(GraphicEngine *pGraphicEngine)
         .pDepthStencilState = &pipelineDepthStencilStateCreateInfo,
         .pColorBlendState = &colorBlendStateCreateInfo,
         .pDynamicState = &dynamicState,
-        .layout = pGraphicEngine->deferredRenderPipeline.vkPipelineLayouts[0],
+        .layout = pGraphicEngine->deferredRenderPipeline.vkPipelineLayouts[1],
         .renderPass = pGraphicEngine->deferredRenderPipeline.vkRenderPass,
         .subpass = 0,
         .basePipelineHandle = VK_NULL_HANDLE,
@@ -565,6 +566,7 @@ static void CreateVkPipelines(GraphicEngine *pGraphicEngine)
 {
     pGraphicEngine->deferredRenderPipeline.vkPipelineCount = 2;
     pGraphicEngine->deferredRenderPipeline.vkPipelineLayouts = TickernelMalloc(sizeof(VkPipelineLayout) * pGraphicEngine->deferredRenderPipeline.vkPipelineCount);
+
     pGraphicEngine->deferredRenderPipeline.vkPipelines = TickernelMalloc(sizeof(VkPipeline) * pGraphicEngine->deferredRenderPipeline.vkPipelineCount);
 }
 static void DestroyVkPipelines(GraphicEngine *pGraphicEngine)
