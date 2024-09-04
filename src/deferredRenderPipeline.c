@@ -1,4 +1,5 @@
 #include <deferredRenderPipeline.h>
+
 static void PrepareCurrentFrambuffer(GraphicEngine *pGraphicEngine)
 {
     uint32_t attachmentCount = 3;
@@ -141,6 +142,7 @@ static void CreateVkRenderPass(GraphicEngine *pGraphicEngine)
     result = vkCreateRenderPass(pGraphicEngine->vkDevice, &vkRenderPassCreateInfo, NULL, &pGraphicEngine->deferredRenderPipeline.vkRenderPass);
     TryThrowVulkanError(result);
 }
+
 static void DestroyVkRenderPass(GraphicEngine *pGraphicEngine)
 {
     vkDestroyRenderPass(pGraphicEngine->vkDevice, pGraphicEngine->deferredRenderPipeline.vkRenderPass, NULL);
@@ -341,6 +343,7 @@ static void CreateGeometryPipeline(GraphicEngine *pGraphicEngine)
         .pImmutableSamplers = NULL,
     };
 
+    TryThrowVulkanError(result);
     VkDescriptorSetLayout descriptorSetLayout;
     VkDescriptorSetLayoutBinding *bindings = (VkDescriptorSetLayoutBinding[]){uboLayoutBinding};
     VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {
@@ -351,7 +354,6 @@ static void CreateGeometryPipeline(GraphicEngine *pGraphicEngine)
         .pBindings = bindings,
     };
     result = vkCreateDescriptorSetLayout(pGraphicEngine->vkDevice, &descriptorSetLayoutCreateInfo, NULL, &descriptorSetLayout);
-
     VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
         .pNext = NULL,
@@ -592,6 +594,21 @@ void CreateDeferredRenderPipeline(GraphicEngine *pGraphicEngine)
 {
     CreateVkRenderPass(pGraphicEngine);
     CreateVkFramebuffers(pGraphicEngine);
+    uint32_t poolSizeCount = 1;
+    VkDescriptorPoolSize poolSize[] = {
+        {
+            .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+            .descriptorCount = pGraphicEngine->swapchainImageCount * 2,
+        }};
+    VkDescriptorPoolCreateInfo descriptorPoolCreateInfo = {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+        .pNext = NULL,
+        .flags = 0,
+        .maxSets = pGraphicEngine->swapchainImageCount,
+        .poolSizeCount = poolSizeCount,
+        .pPoolSizes = poolSize,
+    };
+    VkResult result = vkCreateDescriptorPool(pGraphicEngine->vkDevice, &descriptorPoolCreateInfo, NULL, &pGraphicEngine->deferredRenderPipeline.vkDescriptorPool);
 }
 
 void RecordDeferredRenderPipeline(GraphicEngine *pGraphicEngine)
@@ -666,6 +683,7 @@ void RecordDeferredRenderPipeline(GraphicEngine *pGraphicEngine)
 
 void DestroyDeferredRenderPipeline(GraphicEngine *pGraphicEngine)
 {
+    vkDestroyDescriptorPool(pGraphicEngine->vkDevice, pGraphicEngine->deferredRenderPipeline.vkDescriptorPool, NULL);
     DestroyVkRenderPass(pGraphicEngine);
     DestroyVkFramebuffers(pGraphicEngine);
 }

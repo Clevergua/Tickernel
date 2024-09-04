@@ -825,52 +825,40 @@ static void DestroyBuffer(VkDevice vkDevice, VkBuffer vkBuffer, VkDeviceMemory d
     vkDestroyBuffer(vkDevice, vkBuffer, NULL);
 }
 
-static void CreateUniformBuffers(GraphicEngine *pGraphicEngine)
+static void CreateGlobalUniformBuffers(GraphicEngine *pGraphicEngine)
 {
-    pGraphicEngine->uniformBuffers = TickernelMalloc(sizeof(VkBuffer) * pGraphicEngine->swapchainImageCount);
-
-    pGraphicEngine->uniformBufferMemories = TickernelMalloc(sizeof(VkDeviceMemory) * pGraphicEngine->swapchainImageCount);
-    VkDeviceSize bufferSize = sizeof(UniformBufferObject);
+    pGraphicEngine->globalUniformBuffers = TickernelMalloc(sizeof(VkBuffer) * pGraphicEngine->swapchainImageCount);
+    pGraphicEngine->globalUniformBufferMemories = TickernelMalloc(sizeof(VkDeviceMemory) * pGraphicEngine->swapchainImageCount);
+    pGraphicEngine->globalUniformBuffersMapped = TickernelMalloc(sizeof(void *) * pGraphicEngine->swapchainImageCount);
+    size_t bufferSize = sizeof(GlobalUniformBufferObject);
+    VkResult result = VK_SUCCESS;
     for (uint32_t i = 0; i < pGraphicEngine->swapchainImageCount; i++)
     {
-        CreateBuffer(pGraphicEngine, bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &pGraphicEngine->uniformBuffers[i], &pGraphicEngine->uniformBufferMemories[i]);
+        CreateBuffer(pGraphicEngine, bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &pGraphicEngine->globalUniformBuffers[i], &pGraphicEngine->globalUniformBufferMemories[i]);
+        result = vkMapMemory(pGraphicEngine->vkDevice, pGraphicEngine->globalUniformBufferMemories[i], 0, bufferSize, 0, &pGraphicEngine->globalUniformBuffersMapped[i]);
+        TryThrowVulkanError(result);
     }
 }
 
-static void DestroyUniformBuffers(GraphicEngine *pGraphicEngine)
+static void DestroyGlobalUniformBuffers(GraphicEngine *pGraphicEngine)
 {
     for (uint32_t i = 0; i < pGraphicEngine->swapchainImageCount; i++)
     {
-        DestroyBuffer(pGraphicEngine->vkDevice, pGraphicEngine->uniformBuffers[i], pGraphicEngine->uniformBufferMemories[i]);
+        vkUnmapMemory(pGraphicEngine->vkDevice, pGraphicEngine->globalUniformBuffersMapped[i]);
+        DestroyBuffer(pGraphicEngine->vkDevice, pGraphicEngine->globalUniformBuffers[i], pGraphicEngine->globalUniformBufferMemories[i]);
     }
-    TickernelFree(pGraphicEngine->uniformBufferMemories);
-    TickernelFree(pGraphicEngine->uniformBuffers);
+    TickernelFree(pGraphicEngine->globalUniformBuffersMapped);
+    TickernelFree(pGraphicEngine->globalUniformBufferMemories);
+    TickernelFree(pGraphicEngine->globalUniformBuffers);
 }
-
-static void CreateVkDescriptorPool(GraphicEngine *pGraphicEngine)
+static void UpdateGlobalUniformBuffer(GraphicEngine *pGraphicEngine)
 {
-    uint32_t poolSizeCount = 1;
-    VkDescriptorPoolSize poolSize[] = {
-        {
-            .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-            .descriptorCount = pGraphicEngine->swapchainImageCount,
-        }
-    };
-    VkDescriptorPoolCreateInfo descriptorPoolCreateInfo = {
-        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
-        .pNext = NULL,
-        .flags = 0,
-        .maxSets = pGraphicEngine->swapchainImageCount,
-        .poolSizeCount = poolSizeCount,
-        .pPoolSizes = poolSize,
-    };
-    VkResult result = vkCreateDescriptorPool(pGraphicEngine->vkDevice, &descriptorPoolCreateInfo, NULL, &pGraphicEngine->vkDescriptorPool);
-    TryThrowVulkanError(result);
-}
-
-static void DestroyVkDescriptorPool(GraphicEngine *pGraphicEngine)
-{
-    vkDestroyDescriptorPool(pGraphicEngine->vkDevice, pGraphicEngine->vkDescriptorPool, NULL);
+    GlobalUniformBufferObject ubo;
+    // glm_rotate(ubo.model, pGraphicEngine->frameCount * glm_rad(0.01f), (vec3){0.0f, 0.0f, 1.0f});
+    glm_lookat((vec3){2.0f, 2.0f, 2.0f}, (vec3){0.0f, 0.0f, 0.0f}, (vec3){0.0f, 0.0f, 1.0f}, ubo.view);
+    glm_perspective(glm_rad(45.0f), pGraphicEngine->swapchainExtent.width / (float)pGraphicEngine->swapchainExtent.height, 0.1f, 10.0f, ubo.proj);
+    ubo.proj[1][1] *= -1;
+    memcpy(pGraphicEngine->globalUniformBuffersMapped[pGraphicEngine->frameIndex], &ubo, sizeof(ubo));
 }
 
 static void DestroyVkCommandBuffers(GraphicEngine *pGraphicEngine)
@@ -896,8 +884,7 @@ void StartGraphicEngine(GraphicEngine *pGraphicEngine)
     CreateSemaphores(pGraphicEngine);
     CreateCommandPools(pGraphicEngine);
     CreateVkCommandBuffers(pGraphicEngine);
-    CreateUniformBuffers(pGraphicEngine);
-    CreateVkDescriptorPool(pGraphicEngine);
+    CreateGlobalUniformBuffers(pGraphicEngine);
     CreateGraphicImages(pGraphicEngine);
     CreateDeferredRenderPipeline(pGraphicEngine);
 }
@@ -908,6 +895,7 @@ void UpdateGraphicEngine(GraphicEngine *pGraphicEngine)
     bool hasRecreateSwapchain = false;
     WaitForGPU(pGraphicEngine);
     AcquireImage(pGraphicEngine);
+    UpdateGlobalUniformBuffer(pGraphicEngine);
     RecordCommandBuffer(pGraphicEngine);
     SubmitCommandBuffer(pGraphicEngine);
     Present(pGraphicEngine);
@@ -918,8 +906,7 @@ void EndGraphicEngine(GraphicEngine *pGraphicEngine)
 {
     DestroyDeferredRenderPipeline(pGraphicEngine);
     DestroyGraphicImages(pGraphicEngine);
-    DestroyVkDescriptorPool(pGraphicEngine);
-    DestroyUniformBuffers(pGraphicEngine);
+    DestroyGlobalUniformBuffers(pGraphicEngine);
     DestroyVkCommandBuffers(pGraphicEngine);
     DestroyCommandPools(pGraphicEngine);
     DestroySemaphores(pGraphicEngine);

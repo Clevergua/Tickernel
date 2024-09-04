@@ -10,19 +10,13 @@
 #include <tickernelCore.h>
 #include <cglm.h>
 #define INVALID_VKFRAMEBUFFER 0
-typedef struct UniformBufferObjectStruct
-{
-    mat4 model;
-    mat4 view;
-    mat4 proj;
-} UniformBufferObject;
 
-typedef struct UniformBufferObjectStruct
+typedef struct GlobalUniformBufferObjectStruct
 {
-    mat4 model;
+    // mat4 model;
     mat4 view;
     mat4 proj;
-} UniformBufferObject;
+} GlobalUniformBufferObject;
 
 typedef struct RenderPipelineStruct
 {
@@ -32,6 +26,7 @@ typedef struct RenderPipelineStruct
     uint32_t vkPipelineCount;
     VkPipeline *vkPipelines;
     VkPipelineLayout *vkPipelineLayouts;
+    VkDescriptorPool vkDescriptorPool;
 } RenderPipeline;
 
 typedef struct GraphicImageStruct
@@ -80,9 +75,9 @@ typedef struct GraphicEngineStruct
     uint32_t frameIndex;
     bool hasRecreatedSwapchain;
 
-    VkBuffer *uniformBuffers;
-    VkDeviceMemory *uniformBufferMemories;
-    VkDescriptorPool vkDescriptorPool;
+    VkBuffer *globalUniformBuffers;
+    VkDeviceMemory *globalUniformBufferMemories;
+    void **globalUniformBuffersMapped;
 
     GraphicImage depthGraphicImage;
     GraphicImage albedoGraphicImage;
