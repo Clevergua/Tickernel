@@ -351,13 +351,13 @@ static void CreateGeometryPipeline(GraphicEngine *pGraphicEngine)
         .bindingCount = 2,
         .pBindings = bindings,
     };
-    result = vkCreateDescriptorSetLayout(pGraphicEngine->vkDevice, &descriptorSetLayoutCreateInfo, NULL, &descriptorSetLayout);
+    result = vkCreateDescriptorSetLayout(pGraphicEngine->vkDevice, &descriptorSetLayoutCreateInfo, NULL, &pGraphicEngine->deferredRenderPipeline.vkDescriptorSetLayouts[0]);
     VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
         .pNext = NULL,
         .flags = 0,
         .setLayoutCount = 1,
-        .pSetLayouts = &descriptorSetLayout,
+        .pSetLayouts = &pGraphicEngine->deferredRenderPipeline.vkDescriptorSetLayouts[0],
         .pushConstantRangeCount = 0,
         .pPushConstantRanges = NULL,
     };
@@ -389,12 +389,12 @@ static void CreateGeometryPipeline(GraphicEngine *pGraphicEngine)
     VkPipelineCache pipelineCache = NULL;
     result = vkCreateGraphicsPipelines(pGraphicEngine->vkDevice, pipelineCache, 1, &geometryPipelineCreateInfo, NULL, &pGraphicEngine->deferredRenderPipeline.vkPipelines[0]);
     TryThrowVulkanError(result);
-    vkDestroyDescriptorSetLayout(pGraphicEngine->vkDevice, descriptorSetLayout, NULL);
     DestroyVkShaderModule(pGraphicEngine, geometryVertShaderModule);
     DestroyVkShaderModule(pGraphicEngine, geometryFragShaderModule);
 }
 static void DestroyGeometryPipeline(GraphicEngine *pGraphicEngine)
 {
+    vkDestroyDescriptorSetLayout(pGraphicEngine->vkDevice, pGraphicEngine->deferredRenderPipeline.vkDescriptorSetLayouts[0], NULL);
     vkDestroyPipelineLayout(pGraphicEngine->vkDevice, pGraphicEngine->deferredRenderPipeline.vkPipelineLayouts[0], NULL);
     vkDestroyPipeline(pGraphicEngine->vkDevice, pGraphicEngine->deferredRenderPipeline.vkPipelines[0], NULL);
 }
