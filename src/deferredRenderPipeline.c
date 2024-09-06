@@ -351,18 +351,18 @@ static void CreateGeometryPipeline(GraphicEngine *pGraphicEngine)
         .bindingCount = 2,
         .pBindings = bindings,
     };
-    result = vkCreateDescriptorSetLayout(pGraphicEngine->vkDevice, &descriptorSetLayoutCreateInfo, NULL, &pGraphicEngine->deferredRenderPipeline.vkDescriptorSetLayouts[0]);
+    result = vkCreateDescriptorSetLayout(pGraphicEngine->vkDevice, &descriptorSetLayoutCreateInfo, NULL, &pGraphicEngine->deferredRenderPipeline.vkPipeline2DescriptorSetLayout[0]);
     VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
         .pNext = NULL,
         .flags = 0,
         .setLayoutCount = 1,
-        .pSetLayouts = &pGraphicEngine->deferredRenderPipeline.vkDescriptorSetLayouts[0],
+        .pSetLayouts = &pGraphicEngine->deferredRenderPipeline.vkPipeline2DescriptorSetLayout[0],
         .pushConstantRangeCount = 0,
         .pPushConstantRanges = NULL,
     };
 
-    result = vkCreatePipelineLayout(pGraphicEngine->vkDevice, &pipelineLayoutCreateInfo, NULL, &pGraphicEngine->deferredRenderPipeline.vkPipelineLayouts[0]);
+    result = vkCreatePipelineLayout(pGraphicEngine->vkDevice, &pipelineLayoutCreateInfo, NULL, &pGraphicEngine->deferredRenderPipeline.vkPipeline2Layout[0]);
     TryThrowVulkanError(result);
     VkGraphicsPipelineCreateInfo geometryPipelineCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
@@ -379,7 +379,7 @@ static void CreateGeometryPipeline(GraphicEngine *pGraphicEngine)
         .pDepthStencilState = &pipelineDepthStencilStateCreateInfo,
         .pColorBlendState = &colorBlendStateCreateInfo,
         .pDynamicState = &dynamicState,
-        .layout = pGraphicEngine->deferredRenderPipeline.vkPipelineLayouts[0],
+        .layout = pGraphicEngine->deferredRenderPipeline.vkPipeline2Layout[0],
         .renderPass = pGraphicEngine->deferredRenderPipeline.vkRenderPass,
         .subpass = 0,
         .basePipelineHandle = VK_NULL_HANDLE,
@@ -394,8 +394,8 @@ static void CreateGeometryPipeline(GraphicEngine *pGraphicEngine)
 }
 static void DestroyGeometryPipeline(GraphicEngine *pGraphicEngine)
 {
-    vkDestroyDescriptorSetLayout(pGraphicEngine->vkDevice, pGraphicEngine->deferredRenderPipeline.vkDescriptorSetLayouts[0], NULL);
-    vkDestroyPipelineLayout(pGraphicEngine->vkDevice, pGraphicEngine->deferredRenderPipeline.vkPipelineLayouts[0], NULL);
+    vkDestroyDescriptorSetLayout(pGraphicEngine->vkDevice, pGraphicEngine->deferredRenderPipeline.vkPipeline2DescriptorSetLayout[0], NULL);
+    vkDestroyPipelineLayout(pGraphicEngine->vkDevice, pGraphicEngine->deferredRenderPipeline.vkPipeline2Layout[0], NULL);
     vkDestroyPipeline(pGraphicEngine->vkDevice, pGraphicEngine->deferredRenderPipeline.vkPipelines[0], NULL);
 }
 static void CreateLightingPipeline(GraphicEngine *pGraphicEngine)
@@ -536,7 +536,7 @@ static void CreateLightingPipeline(GraphicEngine *pGraphicEngine)
         .dynamicStateCount = dynamicStateCount,
         .pDynamicStates = dynamicStates,
     };
-    pGraphicEngine->deferredRenderPipeline.vkPipelineLayouts[1] = NULL;
+    pGraphicEngine->deferredRenderPipeline.vkPipeline2Layout[1] = NULL;
     VkGraphicsPipelineCreateInfo lightingPipelineCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
         .pNext = NULL,
@@ -552,7 +552,7 @@ static void CreateLightingPipeline(GraphicEngine *pGraphicEngine)
         .pDepthStencilState = &pipelineDepthStencilStateCreateInfo,
         .pColorBlendState = &colorBlendStateCreateInfo,
         .pDynamicState = &dynamicState,
-        .layout = pGraphicEngine->deferredRenderPipeline.vkPipelineLayouts[1],
+        .layout = pGraphicEngine->deferredRenderPipeline.vkPipeline2Layout[1],
         .renderPass = pGraphicEngine->deferredRenderPipeline.vkRenderPass,
         .subpass = 0,
         .basePipelineHandle = VK_NULL_HANDLE,
@@ -565,49 +565,92 @@ static void CreateLightingPipeline(GraphicEngine *pGraphicEngine)
     DestroyVkShaderModule(pGraphicEngine, lightingVertShaderModule);
     DestroyVkShaderModule(pGraphicEngine, lightingFragShaderModule);
 }
+static void DestroyLightingPipeline(GraphicEngine *pGraphicEngine)
+{
+    vkDestroyDescriptorSetLayout(pGraphicEngine->vkDevice, pGraphicEngine->deferredRenderPipeline.vkPipeline2DescriptorSetLayout[1], NULL);
+    vkDestroyPipelineLayout(pGraphicEngine->vkDevice, pGraphicEngine->deferredRenderPipeline.vkPipeline2Layout[1], NULL);
+    vkDestroyPipeline(pGraphicEngine->vkDevice, pGraphicEngine->deferredRenderPipeline.vkPipelines[1], NULL);
+}
 
 static void CreateVkPipelines(GraphicEngine *pGraphicEngine)
 {
     pGraphicEngine->deferredRenderPipeline.vkPipelineCount = 2;
-    pGraphicEngine->deferredRenderPipeline.vkPipelineLayouts = TickernelMalloc(sizeof(VkPipelineLayout) * pGraphicEngine->deferredRenderPipeline.vkPipelineCount);
     pGraphicEngine->deferredRenderPipeline.vkPipelines = TickernelMalloc(sizeof(VkPipeline) * pGraphicEngine->deferredRenderPipeline.vkPipelineCount);
+    pGraphicEngine->deferredRenderPipeline.vkPipeline2Layout = TickernelMalloc(sizeof(VkPipelineLayout) * pGraphicEngine->deferredRenderPipeline.vkPipelineCount);
+    pGraphicEngine->deferredRenderPipeline.vkPipeline2DescriptorSetLayout = TickernelMalloc(sizeof(VkDescriptorSetLayout *) * pGraphicEngine->deferredRenderPipeline.vkPipelineCount);
+
+    pGraphicEngine->deferredRenderPipeline.vkPipeline2DescriptorSets = TickernelMalloc(sizeof(VkDescriptorSet *) * pGraphicEngine->deferredRenderPipeline.vkPipelineCount);
+    for (uint32_t i = 0; i < pGraphicEngine->deferredRenderPipeline.vkPipelineCount; i++)
+    {
+        pGraphicEngine->deferredRenderPipeline.vkPipeline2DescriptorSets[i] = TickernelMalloc(sizeof(VkDescriptorSet) * pGraphicEngine->swapchainImageCount);
+    }
+
     CreateGeometryPipeline(pGraphicEngine);
+    CreateLightingPipeline(pGraphicEngine);
 }
 
 static void DestroyVkPipelines(GraphicEngine *pGraphicEngine)
 {
     DestroyGeometryPipeline(pGraphicEngine);
+    DestroyLightingPipeline(pGraphicEngine);
+    for (uint32_t i = 0; i < pGraphicEngine->deferredRenderPipeline.vkPipelineCount; i++)
+    {
+        TickernelFree(pGraphicEngine->deferredRenderPipeline.vkPipeline2DescriptorSets[i]);
+    }
+    TickernelFree(pGraphicEngine->deferredRenderPipeline.vkPipeline2DescriptorSets);
+    TickernelFree(pGraphicEngine->deferredRenderPipeline.vkPipeline2DescriptorSetLayout);
     TickernelFree(pGraphicEngine->deferredRenderPipeline.vkPipelines);
-    TickernelFree(pGraphicEngine->deferredRenderPipeline.vkPipelineLayouts);
+    TickernelFree(pGraphicEngine->deferredRenderPipeline.vkPipeline2Layout);
 }
-
-void DestroyVkShaderModule(GraphicEngine *pGraphicEngine, VkShaderModule vkShaderModule)
+static void CreateVkDescriptorSets(GraphicEngine *pGraphicEngine)
 {
-    vkDestroyShaderModule(pGraphicEngine->vkDevice, vkShaderModule, NULL);
-}
+    uint32_t uniformCount = 2;
+    uint32_t poolSizeCount = 1;
+    VkDescriptorPoolSize poolSize[] = {
+        {
+            .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+            .descriptorCount = uniformCount * pGraphicEngine->swapchainImageCount,
+        }};
+    VkDescriptorPoolCreateInfo descriptorPoolCreateInfo = {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+        .pNext = NULL,
+        .flags = 0,
+        .maxSets = uniformCount * pGraphicEngine->swapchainImageCount,
+        .poolSizeCount = poolSizeCount,
+        .pPoolSizes = poolSize,
+    };
+    VkResult result = vkCreateDescriptorPool(pGraphicEngine->vkDevice, &descriptorPoolCreateInfo, NULL, &pGraphicEngine->deferredRenderPipeline.vkDescriptorPool);
 
+    TryThrowVulkanError(result);
+    VkDescriptorSetAllocateInfo vkDescriptorSetAllocateInfo = {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+        .pNext = NULL,
+        .descriptorPool = pGraphicEngine->deferredRenderPipeline.vkDescriptorPool,
+        .descriptorSetCount = pGraphicEngine->swapchainImageCount,
+        .pSetLayouts = &pGraphicEngine->deferredRenderPipeline.vkPipeline2DescriptorSetLayout[0],
+    };
+    result = vkAllocateDescriptorSets(pGraphicEngine->vkDevice, &vkDescriptorSetAllocateInfo, pGraphicEngine->deferredRenderPipeline.vkPipeline2DescriptorSets[0]);
+    TryThrowVulkanError(result);
+}
+static void DestroyVkDescriptorSets(GraphicEngine *pGraphicEngine)
+{
+    vkFreeDescriptorSets(pGraphicEngine->vkDevice, pGraphicEngine->deferredRenderPipeline.vkDescriptorPool, pGraphicEngine->swapchainImageCount, );
+    vkDestroyDescriptorPool(pGraphicEngine->vkDevice, pGraphicEngine->deferredRenderPipeline.vkDescriptorPool, NULL);
+}
 void CreateDeferredRenderPipeline(GraphicEngine *pGraphicEngine)
 {
     CreateVkRenderPass(pGraphicEngine);
     CreateVkFramebuffers(pGraphicEngine);
-    CreateGeometryPipeline(pGraphicEngine);
-
-    // uint32_t poolSizeCount = 1;
-    // VkDescriptorPoolSize poolSize[] = {
-    //     {
-    //         .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-    //         .descriptorCount = pGraphicEngine->swapchainImageCount * 2,
-    //     }};
-    // VkDescriptorPoolCreateInfo descriptorPoolCreateInfo = {
-    //     .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
-    //     .pNext = NULL,
-    //     .flags = 0,
-    //     .maxSets = pGraphicEngine->swapchainImageCount,
-    //     .poolSizeCount = poolSizeCount,
-    //     .pPoolSizes = poolSize,
-    // };
-    // VkResult result = vkCreateDescriptorPool(pGraphicEngine->vkDevice, &descriptorPoolCreateInfo, NULL, &pGraphicEngine->deferredRenderPipeline.vkDescriptorPool);
-    // TryThrowVulkanError(result);
+    CreateVkPipelines(pGraphicEngine);
+    CreateVkDescriptorSets(pGraphicEngine);
+}
+void DestroyDeferredRenderPipeline(GraphicEngine *pGraphicEngine)
+{
+    DestroyVkDescriptorSets(pGraphicEngine);
+    DestroyVkPipelines(pGraphicEngine);
+    // vkDestroyDescriptorPool(pGraphicEngine->vkDevice, pGraphicEngine->deferredRenderPipeline.vkDescriptorPool, NULL);
+    DestroyVkRenderPass(pGraphicEngine);
+    DestroyVkFramebuffers(pGraphicEngine);
 }
 
 void RecordDeferredRenderPipeline(GraphicEngine *pGraphicEngine)
@@ -702,16 +745,13 @@ void RecordDeferredRenderPipeline(GraphicEngine *pGraphicEngine)
     // VkDeviceSize offsets[] = {0};
     // vkCmdBindVertexBuffers(commandBuffer, firstBinding, bindingCount, vertexBuffers, offsets);
     // vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT32);
-    // vkCmdBindDescriptorSets(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets[currentFrameIndex], 0, NULL);
+    vkCmdBindDescriptorSets(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pGraphicEngine->deferredRenderPipeline.vkPipeline2Layout[0], 0, 1, &pGraphicEngine->deferredRenderPipeline.vkPipeline2DescriptorSets[0], 0, NULL);
+    // vkCmdDraw(vkCommandBuffer, verticesCount, 1, 0, 0);
+
+    vkCmdBindDescriptorSets(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pGraphicEngine->deferredRenderPipeline.vkPipeline2Layout[1], 0, 1, &pGraphicEngine->deferredRenderPipeline.vkPipeline2DescriptorSets[1], 0, NULL);
+    // vkCmdDraw(vkCommandBuffer, verticesCount, 1, 0, 0);
+
     vkCmdEndRenderPass(vkCommandBuffer);
     result = vkEndCommandBuffer(vkCommandBuffer);
     TryThrowVulkanError(result);
-}
-
-void DestroyDeferredRenderPipeline(GraphicEngine *pGraphicEngine)
-{
-    DestroyGeometryPipeline(pGraphicEngine);
-    // vkDestroyDescriptorPool(pGraphicEngine->vkDevice, pGraphicEngine->deferredRenderPipeline.vkDescriptorPool, NULL);
-    DestroyVkRenderPass(pGraphicEngine);
-    DestroyVkFramebuffers(pGraphicEngine);
 }

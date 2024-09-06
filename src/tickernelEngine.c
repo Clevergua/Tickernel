@@ -10,7 +10,7 @@ static void TickernelStart(TickernelEngine *pTickernelEngine)
     pTickernelEngine->pGraphicEngine = TickernelMalloc(sizeof(GraphicEngine));
     pTickernelEngine->pGraphicEngine->enableValidationLayers = true;
     pTickernelEngine->pGraphicEngine->name = "Tickernel Engine";
-    pTickernelEngine->pGraphicEngine->targetPresentMode = VK_PRESENT_MODE_FIFO_RELAXED_KHR;
+    pTickernelEngine->pGraphicEngine->targetPresentMode = VK_PRESENT_MODE_FIFO_KHR;
     pTickernelEngine->pGraphicEngine->width = 1920;
     pTickernelEngine->pGraphicEngine->height = 1080;
     pTickernelEngine->pGraphicEngine->targetSwapchainImageCount = 2;

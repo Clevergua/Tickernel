@@ -167,3 +167,7 @@ void CreateVkShaderModule(GraphicEngine *pGraphicEngine, const char *filePath, V
         printf("Failed to read file codeSize:%zu fileLength:%zu\n", codeSize, fileLength);
     }
 }
+void DestroyVkShaderModule(GraphicEngine *pGraphicEngine, VkShaderModule vkShaderModule)
+{
+    vkDestroyShaderModule(pGraphicEngine->vkDevice, vkShaderModule, NULL);
+}

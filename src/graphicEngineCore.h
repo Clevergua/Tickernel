@@ -24,12 +24,12 @@ typedef struct RenderPipelineStruct
     uint32_t vkFramebufferCount;
     VkFramebuffer *vkFramebuffers;
     uint32_t vkPipelineCount;
-
     VkPipeline *vkPipelines;
-    VkPipelineLayout *vkPipelineLayouts;
-    VkDescriptorSetLayout *vkDescriptorSetLayouts;
-    
+    VkPipelineLayout *vkPipeline2Layout;
+    VkDescriptorSetLayout *vkPipeline2DescriptorSetLayout;
+
     VkDescriptorPool vkDescriptorPool;
+    VkDescriptorSet **vkPipeline2DescriptorSets;
 } RenderPipeline;
 
 typedef struct GraphicImageStruct
