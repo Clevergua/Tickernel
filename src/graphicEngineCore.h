@@ -13,7 +13,6 @@
 
 typedef struct GlobalUniformBufferObjectStruct
 {
-    // mat4 model;
     mat4 view;
     mat4 proj;
 } GlobalUniformBufferObject;
@@ -30,6 +29,10 @@ typedef struct RenderPipelineStruct
 
     VkDescriptorPool vkDescriptorPool;
     VkDescriptorSet **vkPipeline2DescriptorSets;
+
+    VkBuffer *objectUniformBuffers;
+    VkDeviceMemory *objectUniformBufferMemories;
+    void **objectUniformBuffersMapped;
 } RenderPipeline;
 
 typedef struct GraphicImageStruct
@@ -98,3 +101,6 @@ void CreateGraphicImage(GraphicEngine *pGraphicEngine, VkExtent3D vkExtent3D, Vk
 void DestroyGraphicImage(GraphicEngine *pGraphicEngine, GraphicImage graphicImage);
 void CreateVkShaderModule(GraphicEngine *pGraphicEngine, const char *filePath, VkShaderModule *pVkShaderModule);
 void DestroyVkShaderModule(GraphicEngine *pGraphicEngine, VkShaderModule vkShaderModule);
+
+void CreateBuffer(GraphicEngine *pGraphicEngine, VkDeviceSize bufferSize, VkBufferUsageFlags bufferUsageFlags, VkMemoryPropertyFlags msemoryPropertyFlags, VkBuffer *pBuffer, VkDeviceMemory *pDeviceMemory);
+void DestroyBuffer(VkDevice vkDevice, VkBuffer vkBuffer, VkDeviceMemory deviceMemory);

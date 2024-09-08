@@ -788,42 +788,7 @@ static void CreateVkCommandBuffers(GraphicEngine *pGraphicEngine)
     result = vkAllocateCommandBuffers(pGraphicEngine->vkDevice, &vkCommandBufferAllocateInfo, pGraphicEngine->graphicVkCommandBuffers);
     TryThrowVulkanError(result);
 }
-static void CreateBuffer(GraphicEngine *pGraphicEngine, VkDeviceSize bufferSize, VkBufferUsageFlags bufferUsageFlags, VkMemoryPropertyFlags msemoryPropertyFlags, VkBuffer *pBuffer, VkDeviceMemory *pDeviceMemory)
-{
-    VkResult result = VK_SUCCESS;
-    VkBufferCreateInfo bufferCreateInfo = {
-        .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
-        .pNext = NULL,
-        .flags = 0,
-        .size = bufferSize,
-        .usage = bufferUsageFlags,
-        .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
-        .queueFamilyIndexCount = 0,
-        .pQueueFamilyIndices = 0,
-    };
-    result = vkCreateBuffer(pGraphicEngine->vkDevice, &bufferCreateInfo, NULL, pBuffer);
-    TryThrowVulkanError(result);
-    VkMemoryRequirements memoryRequirements;
-    vkGetBufferMemoryRequirements(pGraphicEngine->vkDevice, *pBuffer, &memoryRequirements);
-    uint32_t memoryTypeIndex;
-    FindMemoryType(pGraphicEngine, memoryRequirements.memoryTypeBits, msemoryPropertyFlags, &memoryTypeIndex);
-    VkMemoryAllocateInfo memoryAllocateInfo = {
-        .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
-        .pNext = NULL,
-        .allocationSize = memoryRequirements.size,
-        .memoryTypeIndex = memoryTypeIndex,
-    };
-    result = vkAllocateMemory(pGraphicEngine->vkDevice, &memoryAllocateInfo, NULL, pDeviceMemory);
-    TryThrowVulkanError(result);
-    result = vkBindBufferMemory(pGraphicEngine->vkDevice, *pBuffer, *pDeviceMemory, 0);
-    TryThrowVulkanError(result);
-}
 
-static void DestroyBuffer(VkDevice vkDevice, VkBuffer vkBuffer, VkDeviceMemory deviceMemory)
-{
-    vkFreeMemory(vkDevice, deviceMemory, NULL);
-    vkDestroyBuffer(vkDevice, vkBuffer, NULL);
-}
 
 static void CreateGlobalUniformBuffers(GraphicEngine *pGraphicEngine)
 {
@@ -851,6 +816,7 @@ static void DestroyGlobalUniformBuffers(GraphicEngine *pGraphicEngine)
     TickernelFree(pGraphicEngine->globalUniformBufferMemories);
     TickernelFree(pGraphicEngine->globalUniformBuffers);
 }
+
 static void UpdateGlobalUniformBuffer(GraphicEngine *pGraphicEngine)
 {
     GlobalUniformBufferObject ubo;
