@@ -30,8 +30,11 @@ typedef struct RenderPipelineStruct
     VkDescriptorPool vkDescriptorPool;
     VkDescriptorSet **vkPipeline2DescriptorSets;
 
+    uint32_t objectCount;
+    VkBuffer *vertexBuffers;
+    uint32_t *vertexCounts;
     VkBuffer *objectUniformBuffers;
-    VkDeviceMemory *objectUniformBufferMemories;
+    VkDeviceMemory *objectUniformBufferMemorys;
     void **objectUniformBuffersMapped;
 } RenderPipeline;
 
@@ -74,9 +77,9 @@ typedef struct GraphicEngineStruct
     VkCommandPool graphicVkCommandPool;
     VkCommandBuffer *graphicVkCommandBuffers;
     uint32_t acquiredImageIndex;
-    VkSemaphore *imageAvailableSemaphores;
-    VkSemaphore *renderFinishedSemaphores;
-    VkFence *renderFinishedFences;
+    VkSemaphore imageAvailableSemaphore;
+    VkSemaphore renderFinishedSemaphore;
+    VkFence renderFinishedFence;
     uint32_t frameCount;
     uint32_t frameIndex;
     bool hasRecreatedSwapchain;

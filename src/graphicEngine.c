@@ -595,7 +595,7 @@ static void DestroySwapchain(GraphicEngine *pGraphicEngine)
     vkDestroySwapchainKHR(pGraphicEngine->vkDevice, pGraphicEngine->vkSwapchain, NULL);
 }
 
-static void CreateSemaphores(GraphicEngine *pGraphicEngine)
+static void CreateSignals(GraphicEngine *pGraphicEngine)
 {
     VkResult result = VK_SUCCESS;
 
@@ -611,32 +611,21 @@ static void CreateSemaphores(GraphicEngine *pGraphicEngine)
         .pNext = NULL,
         .flags = VK_FENCE_CREATE_SIGNALED_BIT,
     };
-    pGraphicEngine->imageAvailableSemaphores = TickernelMalloc(sizeof(VkSemaphore) * pGraphicEngine->swapchainImageCount);
-    pGraphicEngine->renderFinishedSemaphores = TickernelMalloc(sizeof(VkSemaphore) * pGraphicEngine->swapchainImageCount);
-    pGraphicEngine->renderFinishedFences = TickernelMalloc(sizeof(VkFence) * pGraphicEngine->swapchainImageCount);
-    for (uint32_t i = 0; i < pGraphicEngine->swapchainImageCount; i++)
-    {
-        result = vkCreateSemaphore(vkDevice, &semaphoreCreateInfo, NULL, &pGraphicEngine->imageAvailableSemaphores[i]);
-        TryThrowVulkanError(result);
-        result = vkCreateSemaphore(vkDevice, &semaphoreCreateInfo, NULL, &pGraphicEngine->renderFinishedSemaphores[i]);
-        TryThrowVulkanError(result);
-        result = vkCreateFence(vkDevice, &fenceCreateInfo, NULL, &pGraphicEngine->renderFinishedFences[i]);
-        TryThrowVulkanError(result);
-    }
+
+    result = vkCreateSemaphore(vkDevice, &semaphoreCreateInfo, NULL, &pGraphicEngine->imageAvailableSemaphore);
+    TryThrowVulkanError(result);
+    result = vkCreateSemaphore(vkDevice, &semaphoreCreateInfo, NULL, &pGraphicEngine->renderFinishedSemaphore);
+    TryThrowVulkanError(result);
+    result = vkCreateFence(vkDevice, &fenceCreateInfo, NULL, &pGraphicEngine->renderFinishedFence);
+    TryThrowVulkanError(result);
 }
 
-static void DestroySemaphores(GraphicEngine *pGraphicEngine)
+static void DestroySignals(GraphicEngine *pGraphicEngine)
 {
     VkDevice vkDevice = pGraphicEngine->vkDevice;
-    for (uint32_t i = 0; i < pGraphicEngine->swapchainImageCount; i++)
-    {
-        vkDestroySemaphore(vkDevice, pGraphicEngine->imageAvailableSemaphores[i], NULL);
-        vkDestroySemaphore(vkDevice, pGraphicEngine->renderFinishedSemaphores[i], NULL);
-        vkDestroyFence(vkDevice, pGraphicEngine->renderFinishedFences[i], NULL);
-    }
-    TickernelFree(pGraphicEngine->imageAvailableSemaphores);
-    TickernelFree(pGraphicEngine->renderFinishedSemaphores);
-    TickernelFree(pGraphicEngine->renderFinishedFences);
+        vkDestroySemaphore(vkDevice, pGraphicEngine->imageAvailableSemaphore, NULL);
+        vkDestroySemaphore(vkDevice, pGraphicEngine->renderFinishedSemaphore, NULL);
+        vkDestroyFence(vkDevice, pGraphicEngine->renderFinishedFence, NULL);
 }
 
 static void CreateGraphicImages(GraphicEngine *pGraphicEngine)
@@ -702,10 +691,9 @@ static void WaitForGPU(GraphicEngine *pGraphicEngine)
     VkResult result = VK_SUCCESS;
 
     // Wait for gpu
-    uint32_t frameIndex = pGraphicEngine->frameIndex;
-    result = vkWaitForFences(pGraphicEngine->vkDevice, 1, &pGraphicEngine->renderFinishedFences[frameIndex], VK_TRUE, UINT64_MAX);
+    result = vkWaitForFences(pGraphicEngine->vkDevice, 1, &pGraphicEngine->renderFinishedFence, VK_TRUE, UINT64_MAX);
     TryThrowVulkanError(result);
-    result = vkResetFences(pGraphicEngine->vkDevice, 1, &pGraphicEngine->renderFinishedFences[frameIndex]);
+    result = vkResetFences(pGraphicEngine->vkDevice, 1, &pGraphicEngine->renderFinishedFence);
     TryThrowVulkanError(result);
 }
 
@@ -714,7 +702,7 @@ static void AcquireImage(GraphicEngine *pGraphicEngine)
     VkResult result = VK_SUCCESS;
     VkDevice vkDevice = pGraphicEngine->vkDevice;
     // Acquire next image
-    result = vkAcquireNextImageKHR(vkDevice, pGraphicEngine->vkSwapchain, UINT64_MAX, pGraphicEngine->imageAvailableSemaphores[pGraphicEngine->frameIndex], VK_NULL_HANDLE, &pGraphicEngine->acquiredImageIndex);
+    result = vkAcquireNextImageKHR(vkDevice, pGraphicEngine->vkSwapchain, UINT64_MAX, pGraphicEngine->imageAvailableSemaphore, VK_NULL_HANDLE, &pGraphicEngine->acquiredImageIndex);
     if (VK_SUCCESS == result || VK_SUBOPTIMAL_KHR == result)
     {
         pGraphicEngine->hasRecreatedSwapchain = false;
@@ -743,15 +731,15 @@ static void SubmitCommandBuffer(GraphicEngine *pGraphicEngine)
         .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
         .pNext = NULL,
         .waitSemaphoreCount = 1,
-        .pWaitSemaphores = (VkSemaphore[]){pGraphicEngine->imageAvailableSemaphores[frameIndex]},
+        .pWaitSemaphores = (VkSemaphore[]){pGraphicEngine->imageAvailableSemaphore},
         .pWaitDstStageMask = (VkPipelineStageFlags[]){VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT},
         .commandBufferCount = 1,
         .pCommandBuffers = &pGraphicEngine->graphicVkCommandBuffers[frameIndex],
         .signalSemaphoreCount = 1,
-        .pSignalSemaphores = (VkSemaphore[]){pGraphicEngine->renderFinishedSemaphores[frameIndex]},
+        .pSignalSemaphores = (VkSemaphore[]){pGraphicEngine->renderFinishedSemaphore},
     };
 
-    result = vkQueueSubmit(pGraphicEngine->vkGraphicQueue, 1, &submitInfo, pGraphicEngine->renderFinishedFences[frameIndex]);
+    result = vkQueueSubmit(pGraphicEngine->vkGraphicQueue, 1, &submitInfo, pGraphicEngine->renderFinishedFence);
     TryThrowVulkanError(result);
 }
 
@@ -764,7 +752,7 @@ static void Present(GraphicEngine *pGraphicEngine)
         .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
         .pNext = NULL,
         .waitSemaphoreCount = 1,
-        .pWaitSemaphores = (VkSemaphore[]){pGraphicEngine->renderFinishedSemaphores[frameIndex]},
+        .pWaitSemaphores = (VkSemaphore[]){pGraphicEngine->renderFinishedSemaphore},
         .swapchainCount = 1,
         .pSwapchains = (VkSwapchainKHR[]){pGraphicEngine->vkSwapchain},
         .pImageIndices = &pGraphicEngine->acquiredImageIndex,
@@ -788,7 +776,6 @@ static void CreateVkCommandBuffers(GraphicEngine *pGraphicEngine)
     result = vkAllocateCommandBuffers(pGraphicEngine->vkDevice, &vkCommandBufferAllocateInfo, pGraphicEngine->graphicVkCommandBuffers);
     TryThrowVulkanError(result);
 }
-
 
 static void CreateGlobalUniformBuffers(GraphicEngine *pGraphicEngine)
 {
@@ -847,7 +834,7 @@ void StartGraphicEngine(GraphicEngine *pGraphicEngine)
     PickPhysicalDevice(pGraphicEngine);
     CreateLogicalDevice(pGraphicEngine);
     CreateSwapchain(pGraphicEngine);
-    CreateSemaphores(pGraphicEngine);
+    CreateSignals(pGraphicEngine);
     CreateCommandPools(pGraphicEngine);
     CreateVkCommandBuffers(pGraphicEngine);
     CreateGlobalUniformBuffers(pGraphicEngine);
@@ -875,7 +862,7 @@ void EndGraphicEngine(GraphicEngine *pGraphicEngine)
     DestroyGlobalUniformBuffers(pGraphicEngine);
     DestroyVkCommandBuffers(pGraphicEngine);
     DestroyCommandPools(pGraphicEngine);
-    DestroySemaphores(pGraphicEngine);
+    DestroySignals(pGraphicEngine);
     // DestroyDepthResources(pGraphicEngine);
     DestroySwapchain(pGraphicEngine);
     DestroyLogicalDevice(pGraphicEngine);
