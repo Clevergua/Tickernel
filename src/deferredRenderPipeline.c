@@ -631,7 +631,7 @@ static void CreateVkDescriptorSets(GraphicEngine *pGraphicEngine)
     VkDescriptorPoolSize poolSize[] = {
         {
             .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-            .descriptorCount = 2,
+            .descriptorCount = pGraphicEngine->deferredRenderPipeline.maxObjectCount * 2,
         }};
     VkDescriptorPoolCreateInfo descriptorPoolCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
@@ -700,134 +700,133 @@ void AddObject(GraphicEngine *pGraphicEngine)
         },
     };
     vkUpdateDescriptorSets(pGraphicEngine->vkDevice, 1, descriptorWrites, 0, NULL);
+}
+void RemoveObject(GraphicEngine *pGraphicEngine)
+{
+}
 
-    void RemoveObject(GraphicEngine * pGraphicEngine)
-    {
-        
-    }
+void CreateDeferredRenderPipeline(GraphicEngine *pGraphicEngine)
+{
+    pGraphicEngine->deferredRenderPipeline.maxObjectCount = 4096;
+    CreateVkRenderPass(pGraphicEngine);
+    CreateVkFramebuffers(pGraphicEngine);
+    CreateVkPipelines(pGraphicEngine);
+    CreateObjectUniformBuffers(pGraphicEngine);
+    CreateVkDescriptorSets(pGraphicEngine);
+}
+void DestroyDeferredRenderPipeline(GraphicEngine *pGraphicEngine)
+{
+    DestroyVkDescriptorSets(pGraphicEngine);
+    DestroyObjectUniformBuffers(pGraphicEngine);
+    DestroyVkPipelines(pGraphicEngine);
+    // vkDestroyDescriptorPool(pGraphicEngine->vkDevice, pGraphicEngine->deferredRenderPipeline.vkDescriptorPool, NULL);
+    DestroyVkRenderPass(pGraphicEngine);
+    DestroyVkFramebuffers(pGraphicEngine);
+}
 
-    void CreateDeferredRenderPipeline(GraphicEngine * pGraphicEngine)
+void RecordDeferredRenderPipeline(GraphicEngine *pGraphicEngine)
+{
+    UpdateObjectUniformBuffer(pGraphicEngine);
+    if (pGraphicEngine->hasRecreatedSwapchain)
     {
-        pGraphicEngine->deferredRenderPipeline.maxObjectCount = 4096;
-        CreateVkRenderPass(pGraphicEngine);
-        CreateVkFramebuffers(pGraphicEngine);
-        CreateVkPipelines(pGraphicEngine);
-        CreateObjectUniformBuffers(pGraphicEngine);
-        CreateVkDescriptorSets(pGraphicEngine);
-    }
-    void DestroyDeferredRenderPipeline(GraphicEngine * pGraphicEngine)
-    {
-        DestroyVkDescriptorSets(pGraphicEngine);
-        DestroyObjectUniformBuffers(pGraphicEngine);
-        DestroyVkPipelines(pGraphicEngine);
-        // vkDestroyDescriptorPool(pGraphicEngine->vkDevice, pGraphicEngine->deferredRenderPipeline.vkDescriptorPool, NULL);
-        DestroyVkRenderPass(pGraphicEngine);
-        DestroyVkFramebuffers(pGraphicEngine);
-    }
-
-    void RecordDeferredRenderPipeline(GraphicEngine * pGraphicEngine)
-    {
-        UpdateObjectUniformBuffer(pGraphicEngine);
-        if (pGraphicEngine->hasRecreatedSwapchain)
+        for (uint32_t i = 0; i < pGraphicEngine->deferredRenderPipeline.vkFramebufferCount; i++)
         {
-            for (uint32_t i = 0; i < pGraphicEngine->deferredRenderPipeline.vkFramebufferCount; i++)
+            if (pGraphicEngine->deferredRenderPipeline.vkFramebuffers[i] == INVALID_VKFRAMEBUFFER)
             {
-                if (pGraphicEngine->deferredRenderPipeline.vkFramebuffers[i] == INVALID_VKFRAMEBUFFER)
-                {
-                    // continue;
-                }
-                else
-                {
-                    vkDestroyFramebuffer(pGraphicEngine->vkDevice, pGraphicEngine->deferredRenderPipeline.vkFramebuffers[i], NULL);
-                    pGraphicEngine->deferredRenderPipeline.vkFramebuffers[i] = INVALID_VKFRAMEBUFFER;
-                }
+                // continue;
+            }
+            else
+            {
+                vkDestroyFramebuffer(pGraphicEngine->vkDevice, pGraphicEngine->deferredRenderPipeline.vkFramebuffers[i], NULL);
+                pGraphicEngine->deferredRenderPipeline.vkFramebuffers[i] = INVALID_VKFRAMEBUFFER;
             }
         }
-
-        VkResult result = VK_SUCCESS;
-        RenderPipeline deferredRenderPipeline = pGraphicEngine->deferredRenderPipeline;
-
-        VkCommandBuffer vkCommandBuffer = pGraphicEngine->graphicVkCommandBuffers[pGraphicEngine->frameIndex];
-        VkCommandBufferBeginInfo vkCommandBufferBeginInfo =
-            {
-                .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
-                .pNext = NULL,
-                .flags = 0,
-                .pInheritanceInfo = NULL,
-            };
-        result = vkBeginCommandBuffer(vkCommandBuffer, &vkCommandBufferBeginInfo);
-        TryThrowVulkanError(result);
-        VkOffset2D offset =
-            {
-                .x = 0,
-                .y = 0,
-            };
-        VkRect2D renderArea =
-            {
-                .offset = offset,
-                .extent = pGraphicEngine->swapchainExtent,
-            };
-        uint32_t clearValueCount = 2;
-        VkClearValue *clearValues = (VkClearValue[]){
-            {
-                .color = {0.0f, 0.0f, 0.0f, 1.0f},
-            },
-            {
-                .depthStencil = {1.0f, 0},
-            },
-        };
-
-        PrepareCurrentFrambuffer(pGraphicEngine);
-        VkRenderPassBeginInfo renderPassBeginInfo =
-            {
-                .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
-                .pNext = NULL,
-                .renderPass = deferredRenderPipeline.vkRenderPass,
-                .framebuffer = pGraphicEngine->deferredRenderPipeline.vkFramebuffers[pGraphicEngine->frameIndex],
-                .renderArea = renderArea,
-                .clearValueCount = clearValueCount,
-                .pClearValues = clearValues,
-            };
-        vkCmdBeginRenderPass(vkCommandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
-        vkCmdBindPipeline(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pGraphicEngine->deferredRenderPipeline.vkPipelines[0]);
-        VkViewport viewport =
-            {
-                .x = 0.0f,
-                .y = 0.0f,
-                .width = pGraphicEngine->swapchainExtent.width,
-                .height = pGraphicEngine->swapchainExtent.height,
-                .minDepth = 0.0f,
-                .maxDepth = 1.0f,
-            };
-        vkCmdSetViewport(vkCommandBuffer, 0, 1, &viewport);
-
-        VkOffset2D scissorOffset =
-            {
-                .x = 0,
-                .y = 0,
-            };
-        VkRect2D scissor =
-            {
-                .offset = scissorOffset,
-                .extent = pGraphicEngine->swapchainExtent,
-            };
-        vkCmdSetScissor(vkCommandBuffer, 0, 1, &scissor);
-
-        uint32_t geometryPipelineIndex = 0;
-        for (uint32_t i = 0; i < pGraphicEngine->deferredRenderPipeline.objectCount; i++)
-        {
-            vkCmdBindDescriptorSets(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pGraphicEngine->deferredRenderPipeline.vkPipeline2Layout[geometryPipelineIndex], 0, 1, &pGraphicEngine->deferredRenderPipeline.vkPipeline2DescriptorSets[geometryPipelineIndex][pGraphicEngine->frameIndex], 0, NULL);
-            VkBuffer vertexBuffers[] = {pGraphicEngine->deferredRenderPipeline.vertexBuffers[i]};
-            VkDeviceSize offsets[] = {0};
-            vkCmdBindVertexBuffers(vkCommandBuffer, 0, 1, vertexBuffers, offsets);
-            uint32_t vertexCount = pGraphicEngine->deferredRenderPipeline.vertexCounts[i];
-            vkCmdDraw(vkCommandBuffer, vertexCount, 1, 0, 0);
-        }
-
-        // vkCmdBindDescriptorSets(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pGraphicEngine->deferredRenderPipeline.vkPipeline2Layout[1], 0, 1, pGraphicEngine->deferredRenderPipeline.vkPipeline2DescriptorSets[1][pGraphicEngine->frameIndex], 0, NULL);
-        // vkCmdDraw(vkCommandBuffer, verticesCount, 1, 0, 0);
-
-        vkCmdEndRenderPass(vkCommandBuffer);
-        result = vkEndCommandBuffer(vkCommandBuffer);
-        TryThrowVulkanError(result);
     }
+
+    VkResult result = VK_SUCCESS;
+    RenderPipeline deferredRenderPipeline = pGraphicEngine->deferredRenderPipeline;
+
+    VkCommandBuffer vkCommandBuffer = pGraphicEngine->graphicVkCommandBuffers[pGraphicEngine->frameIndex];
+    VkCommandBufferBeginInfo vkCommandBufferBeginInfo =
+        {
+            .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+            .pNext = NULL,
+            .flags = 0,
+            .pInheritanceInfo = NULL,
+        };
+    result = vkBeginCommandBuffer(vkCommandBuffer, &vkCommandBufferBeginInfo);
+    TryThrowVulkanError(result);
+    VkOffset2D offset =
+        {
+            .x = 0,
+            .y = 0,
+        };
+    VkRect2D renderArea =
+        {
+            .offset = offset,
+            .extent = pGraphicEngine->swapchainExtent,
+        };
+    uint32_t clearValueCount = 2;
+    VkClearValue *clearValues = (VkClearValue[]){
+        {
+            .color = {0.0f, 0.0f, 0.0f, 1.0f},
+        },
+        {
+            .depthStencil = {1.0f, 0},
+        },
+    };
+
+    PrepareCurrentFrambuffer(pGraphicEngine);
+    VkRenderPassBeginInfo renderPassBeginInfo =
+        {
+            .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
+            .pNext = NULL,
+            .renderPass = deferredRenderPipeline.vkRenderPass,
+            .framebuffer = pGraphicEngine->deferredRenderPipeline.vkFramebuffers[pGraphicEngine->frameIndex],
+            .renderArea = renderArea,
+            .clearValueCount = clearValueCount,
+            .pClearValues = clearValues,
+        };
+    vkCmdBeginRenderPass(vkCommandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+    vkCmdBindPipeline(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pGraphicEngine->deferredRenderPipeline.vkPipelines[0]);
+    VkViewport viewport =
+        {
+            .x = 0.0f,
+            .y = 0.0f,
+            .width = pGraphicEngine->swapchainExtent.width,
+            .height = pGraphicEngine->swapchainExtent.height,
+            .minDepth = 0.0f,
+            .maxDepth = 1.0f,
+        };
+    vkCmdSetViewport(vkCommandBuffer, 0, 1, &viewport);
+
+    VkOffset2D scissorOffset =
+        {
+            .x = 0,
+            .y = 0,
+        };
+    VkRect2D scissor =
+        {
+            .offset = scissorOffset,
+            .extent = pGraphicEngine->swapchainExtent,
+        };
+    vkCmdSetScissor(vkCommandBuffer, 0, 1, &scissor);
+
+    uint32_t geometryPipelineIndex = 0;
+    for (uint32_t i = 0; i < pGraphicEngine->deferredRenderPipeline.objectCount; i++)
+    {
+        vkCmdBindDescriptorSets(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pGraphicEngine->deferredRenderPipeline.vkPipeline2Layout[geometryPipelineIndex], 0, 1, &pGraphicEngine->deferredRenderPipeline.vkPipeline2DescriptorSets[geometryPipelineIndex][pGraphicEngine->frameIndex], 0, NULL);
+        VkBuffer vertexBuffers[] = {pGraphicEngine->deferredRenderPipeline.vertexBuffers[i]};
+        VkDeviceSize offsets[] = {0};
+        vkCmdBindVertexBuffers(vkCommandBuffer, 0, 1, vertexBuffers, offsets);
+        uint32_t vertexCount = pGraphicEngine->deferredRenderPipeline.vertexCounts[i];
+        vkCmdDraw(vkCommandBuffer, vertexCount, 1, 0, 0);
+    }
+
+    // vkCmdBindDescriptorSets(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pGraphicEngine->deferredRenderPipeline.vkPipeline2Layout[1], 0, 1, pGraphicEngine->deferredRenderPipeline.vkPipeline2DescriptorSets[1][pGraphicEngine->frameIndex], 0, NULL);
+    // vkCmdDraw(vkCommandBuffer, verticesCount, 1, 0, 0);
+
+    vkCmdEndRenderPass(vkCommandBuffer);
+    result = vkEndCommandBuffer(vkCommandBuffer);
+    TryThrowVulkanError(result);
+}
