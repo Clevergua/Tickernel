@@ -30,6 +30,7 @@ typedef struct RenderPipelineStruct
     VkDescriptorPool vkDescriptorPool;
     VkDescriptorSet **vkPipeline2DescriptorSets;
 
+    uint32_t maxObjectCount;
     uint32_t objectCount;
     VkBuffer *vertexBuffers;
     uint32_t *vertexCounts;
@@ -84,9 +85,9 @@ typedef struct GraphicEngineStruct
     uint32_t frameIndex;
     bool hasRecreatedSwapchain;
 
-    VkBuffer *globalUniformBuffers;
-    VkDeviceMemory *globalUniformBufferMemories;
-    void **globalUniformBuffersMapped;
+    VkBuffer globalUniformBuffer;
+    VkDeviceMemory globalUniformBufferMemory;
+    void *globalUniformBufferMapped;
 
     GraphicImage depthGraphicImage;
     GraphicImage albedoGraphicImage;
