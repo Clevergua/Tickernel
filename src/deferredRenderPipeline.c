@@ -1,29 +1,5 @@
 #include <deferredRenderPipeline.h>
 
-// static void CreateObjectUniformBuffers(GraphicEngine *pGraphicEngine)
-// {
-//     pGraphicEngine->deferredRenderPipeline.objectUniformBuffers = TickernelMalloc(sizeof(VkBuffer) * pGraphicEngine->deferredRenderPipeline.maxObjectCount);
-//     pGraphicEngine->deferredRenderPipeline.objectUniformBufferMemories = TickernelMalloc(sizeof(VkDeviceMemory) * pGraphicEngine->deferredRenderPipeline.maxObjectCount);
-//     pGraphicEngine->deferredRenderPipeline.objectUniformBuffersMapped = TickernelMalloc(sizeof(void *) * pGraphicEngine->deferredRenderPipeline.maxObjectCount);
-// }
-
-// static void DestroyObjectUniformBuffers(GraphicEngine *pGraphicEngine)
-// {
-//     TickernelFree(pGraphicEngine->deferredRenderPipeline.objectUniformBuffersMapped);
-//     TickernelFree(pGraphicEngine->deferredRenderPipeline.objectUniformBufferMemories);
-//     TickernelFree(pGraphicEngine->deferredRenderPipeline.objectUniformBuffers);
-// }
-
-// static void UpdateObjectUniformBuffer(GraphicEngine *pGraphicEngine)
-// {
-//     for (uint32_t i = 0; i < pGraphicEngine->deferredRenderPipeline.objectCount; i++)
-//     {
-//         ObjectUniformBufferObject ubo;
-//         glm_rotate(ubo.model, pGraphicEngine->frameCount * glm_rad(0.01f), (vec3){0.0f, 0.0f, 1.0f});
-//         memcpy(pGraphicEngine->deferredRenderPipeline.objectUniformBuffersMapped[i], &ubo, sizeof(ubo));
-//     }
-// }
-
 static void PrepareCurrentFrambuffer(GraphicEngine *pGraphicEngine)
 {
     uint32_t attachmentCount = 3;
@@ -596,6 +572,30 @@ static void DestroyLightingPipeline(GraphicEngine *pGraphicEngine)
     vkDestroyPipeline(pGraphicEngine->vkDevice, pGraphicEngine->deferredRenderPipeline.vkPipelines[1], NULL);
 }
 
+static void CreateDescriptorPool(GraphicEngine *pGraphicEngine)
+{
+    VkDescriptorPoolSize poolSize[] = {
+        {
+            .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+            .descriptorCount = pGraphicEngine->deferredRenderPipeline.maxObjectCount * 2,
+        }};
+    VkDescriptorPoolCreateInfo descriptorPoolCreateInfo = {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+        .pNext = NULL,
+        .flags = 0,
+        .maxSets = pGraphicEngine->deferredRenderPipeline.maxObjectCount,
+        .poolSizeCount = 1,
+        .pPoolSizes = poolSize,
+    };
+    VkResult result = vkCreateDescriptorPool(pGraphicEngine->vkDevice, &descriptorPoolCreateInfo, NULL, &pGraphicEngine->deferredRenderPipeline.vkDescriptorPool);
+    TryThrowVulkanError(result);
+}
+
+static void DestroyDescriptorPool(GraphicEngine *pGraphicEngine)
+{
+    vkDestroyDescriptorPool(pGraphicEngine->vkDevice, pGraphicEngine->deferredRenderPipeline.vkDescriptorPool, NULL);
+}
+
 static void CreateVkPipelines(GraphicEngine *pGraphicEngine)
 {
     pGraphicEngine->deferredRenderPipeline.vkPipelineCount = 2;
@@ -605,7 +605,7 @@ static void CreateVkPipelines(GraphicEngine *pGraphicEngine)
 
     pGraphicEngine->deferredRenderPipeline.maxObjectCount = 4096;
     pGraphicEngine->deferredRenderPipeline.renderPipelineObjects = TickernelMalloc(sizeof(RenderPipelineObject) * pGraphicEngine->deferredRenderPipeline.maxObjectCount);
-
+    CreateDescriptorPool(pGraphicEngine);
     CreateGeometryPipeline(pGraphicEngine);
     CreateLightingPipeline(pGraphicEngine);
 }
@@ -614,62 +614,45 @@ static void DestroyVkPipelines(GraphicEngine *pGraphicEngine)
 {
     DestroyGeometryPipeline(pGraphicEngine);
     DestroyLightingPipeline(pGraphicEngine);
-
+    DestroyDescriptorPool(pGraphicEngine);
     TickernelFree(pGraphicEngine->deferredRenderPipeline.renderPipelineObjects);
 
     TickernelFree(pGraphicEngine->deferredRenderPipeline.vkPipeline2DescriptorSetLayout);
     TickernelFree(pGraphicEngine->deferredRenderPipeline.vkPipelines);
     TickernelFree(pGraphicEngine->deferredRenderPipeline.vkPipeline2Layout);
 }
-// static void CreateVkDescriptorSets(GraphicEngine *pGraphicEngine)
-// {
-//     VkDescriptorPoolSize poolSize[] = {
-//         {
-//             .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-//             .descriptorCount = pGraphicEngine->deferredRenderPipeline.maxObjectCount * 2,
-//         }};
-//     VkDescriptorPoolCreateInfo descriptorPoolCreateInfo = {
-//         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
-//         .pNext = NULL,
-//         .flags = 0,
-//         .maxSets = pGraphicEngine->deferredRenderPipeline.maxObjectCount,
-//         .poolSizeCount = 1,
-//         .pPoolSizes = poolSize,
-//     };
-//     VkResult result = vkCreateDescriptorPool(pGraphicEngine->vkDevice, &descriptorPoolCreateInfo, NULL, &pGraphicEngine->deferredRenderPipeline.vkDescriptorPool);
-//     TryThrowVulkanError(result);
-// }
-// static void DestroyVkDescriptorSets(GraphicEngine *pGraphicEngine)
-// {
-//     vkDestroyDescriptorPool(pGraphicEngine->vkDevice, pGraphicEngine->deferredRenderPipeline.vkDescriptorPool, NULL);
-// }
 
 void AddObject2DeferredRenderPipeline(GraphicEngine *pGraphicEngine, DeferredRenderPipelineObject deferredRenderPipelineObject, uint32_t *pIndex)
 {
     VkResult result = VK_SUCCESS;
+    RenderPipeline pDeferredRenderPipeline = pGraphicEngine->deferredRenderPipeline;
     if (pGraphicEngine->deferredRenderPipeline.objectCount < pGraphicEngine->deferredRenderPipeline.maxObjectCount)
     {
         RenderPipelineObject renderPipelineObject;
         renderPipelineObject.vertexCount = deferredRenderPipelineObject.vertexCount;
+
         // Create vertexBuffer
         VkDeviceSize bufferSize = sizeof(DeferredRenderPipelineVertex) * deferredRenderPipelineObject.vertexCount;
         VkBuffer stagingBuffer;
         VkDeviceMemory stagingBufferMemory;
         CreateBuffer(pGraphicEngine, bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingBuffer, &stagingBufferMemory);
-
         void *pData;
         result = vkMapMemory(pGraphicEngine->vkDevice, stagingBufferMemory, 0, bufferSize, 0, &pData);
         TryThrowVulkanError(result);
         memcpy(pData, deferredRenderPipelineObject.vertices, bufferSize);
-
         vkUnmapMemory(pGraphicEngine->vkDevice, stagingBufferMemory);
         CreateBuffer(pGraphicEngine, bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &renderPipelineObject.vertexBuffer, &renderPipelineObject.vertexBufferMemory);
         TryThrowVulkanError(result);
-
         CopyVkBuffer(pGraphicEngine, stagingBuffer, renderPipelineObject.vertexBuffer, bufferSize);
-
         DestroyBuffer(pGraphicEngine->vkDevice, stagingBuffer, stagingBufferMemory);
 
+        // Create objectUniformBuffer
+        bufferSize = sizeof(DeferredRenderPipelineObjectUniformBuffer);
+        CreateBuffer(pGraphicEngine, bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &renderPipelineObject.objectUniformBuffer, &renderPipelineObject.objectUniformBufferMemory);
+        vkMapMemory(pGraphicEngine->vkDevice, renderPipelineObject.objectUniformBufferMemory, 0, bufferSize, 0, &renderPipelineObject.objectUniformBufferMapped);
+
+        // Create vkDescriptorSet
+        
         pGraphicEngine->deferredRenderPipeline.renderPipelineObjects[pGraphicEngine->deferredRenderPipeline.objectCount] = renderPipelineObject;
         pGraphicEngine->deferredRenderPipeline.objectCount++;
     }
@@ -682,9 +665,9 @@ void AddObject2DeferredRenderPipeline(GraphicEngine *pGraphicEngine, DeferredRen
 void RemoveObjectFromDeferredRenderPipeline(GraphicEngine *pGraphicEngine, uint32_t index)
 {
     RenderPipelineObject *pRenderPipelineObject = &pGraphicEngine->deferredRenderPipeline.renderPipelineObjects[index];
-    DestroyBuffer(pGraphicEngine
-                      ->vkDevice,
-                  pRenderPipelineObject->vertexBuffer, pRenderPipelineObject->vertexBufferMemory);
+    DestroyBuffer(pGraphicEngine->vkDevice, pRenderPipelineObject->objectUniformBuffer, pRenderPipelineObject->objectUniformBufferMemory);
+
+    DestroyBuffer(pGraphicEngine->vkDevice, pRenderPipelineObject->vertexBuffer, pRenderPipelineObject->vertexBufferMemory);
 }
 
 void CreateDeferredRenderPipeline(GraphicEngine *pGraphicEngine)
@@ -692,15 +675,11 @@ void CreateDeferredRenderPipeline(GraphicEngine *pGraphicEngine)
     CreateVkRenderPass(pGraphicEngine);
     CreateVkFramebuffers(pGraphicEngine);
     CreateVkPipelines(pGraphicEngine);
-    // CreateObjectUniformBuffers(pGraphicEngine);
-    // CreateVkDescriptorSets(pGraphicEngine);
 }
+
 void DestroyDeferredRenderPipeline(GraphicEngine *pGraphicEngine)
 {
-    // DestroyVkDescriptorSets(pGraphicEngine);
-    // DestroyObjectUniformBuffers(pGraphicEngine);
     DestroyVkPipelines(pGraphicEngine);
-    // vkDestroyDescriptorPool(pGraphicEngine->vkDevice, pGraphicEngine->deferredRenderPipeline.vkDescriptorPool, NULL);
     DestroyVkRenderPass(pGraphicEngine);
     DestroyVkFramebuffers(pGraphicEngine);
 }

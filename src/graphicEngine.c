@@ -782,7 +782,7 @@ static void CreateGlobalUniformBuffers(GraphicEngine *pGraphicEngine)
     pGraphicEngine->globalUniformBuffer = TickernelMalloc(sizeof(VkBuffer) * pGraphicEngine->swapchainImageCount);
     pGraphicEngine->globalUniformBufferMemory = TickernelMalloc(sizeof(VkDeviceMemory) * pGraphicEngine->swapchainImageCount);
     pGraphicEngine->globalUniformBufferMapped = TickernelMalloc(sizeof(void *) * pGraphicEngine->swapchainImageCount);
-    size_t bufferSize = sizeof(GlobalUniformBufferObject);
+    size_t bufferSize = sizeof(GlobalUniformBuffer);
     VkResult result = VK_SUCCESS;
     CreateBuffer(pGraphicEngine, bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &pGraphicEngine->globalUniformBuffer, &pGraphicEngine->globalUniformBufferMemory);
     result = vkMapMemory(pGraphicEngine->vkDevice, pGraphicEngine->globalUniformBufferMemory, 0, bufferSize, 0, &pGraphicEngine->globalUniformBufferMapped);
@@ -800,7 +800,7 @@ static void DestroyGlobalUniformBuffers(GraphicEngine *pGraphicEngine)
 
 static void UpdateGlobalUniformBuffer(GraphicEngine *pGraphicEngine)
 {
-    GlobalUniformBufferObject ubo;
+    GlobalUniformBuffer ubo;
     // glm_rotate(ubo.model, pGraphicEngine->frameCount * glm_rad(0.01f), (vec3){0.0f, 0.0f, 1.0f});
     glm_lookat((vec3){2.0f, 2.0f, 2.0f}, (vec3){0.0f, 0.0f, 0.0f}, (vec3){0.0f, 0.0f, 1.0f}, ubo.view);
     glm_perspective(glm_rad(45.0f), pGraphicEngine->swapchainExtent.width / (float)pGraphicEngine->swapchainExtent.height, 0.1f, 10.0f, ubo.proj);

@@ -11,11 +11,11 @@
 #include <cglm.h>
 #define INVALID_VKFRAMEBUFFER 0
 
-typedef struct GlobalUniformBufferObjectStruct
+typedef struct GlobalUniformBufferStruct
 {
     mat4 view;
     mat4 proj;
-} GlobalUniformBufferObject;
+} GlobalUniformBuffer;
 
 typedef struct RenderPipelineObjectStruct
 {
