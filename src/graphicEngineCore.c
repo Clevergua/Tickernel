@@ -203,7 +203,53 @@ void CreateVkShaderModule(GraphicEngine *pGraphicEngine, const char *filePath, V
         printf("Failed to read file codeSize:%zu fileLength:%zu\n", codeSize, fileLength);
     }
 }
+
 void DestroyVkShaderModule(GraphicEngine *pGraphicEngine, VkShaderModule vkShaderModule)
 {
     vkDestroyShaderModule(pGraphicEngine->vkDevice, vkShaderModule, NULL);
+}
+
+void CopyVkBuffer(GraphicEngine *pGraphicEngine, VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
+{
+    VkCommandBuffer vkCommandBuffer;
+    VkCommandBufferAllocateInfo vkCommandBufferAllocateInfo = {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+        .pNext = NULL,
+        .commandPool = pGraphicEngine->graphicVkCommandPool,
+        .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+        .commandBufferCount = 1,
+    };
+    VkResult result = vkAllocateCommandBuffers(pGraphicEngine->vkDevice, &vkCommandBufferAllocateInfo, pGraphicEngine->graphicVkCommandBuffers);
+    TryThrowVulkanError(result);
+
+    VkCommandBufferBeginInfo vkCommandBufferBeginInfo =
+        {
+            .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+            .pNext = NULL,
+            .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
+            .pInheritanceInfo = NULL,
+        };
+    result = vkBeginCommandBuffer(vkCommandBuffer, &vkCommandBufferBeginInfo);
+    TryThrowVulkanError(result);
+    vkBeginCommandBuffer(vkCommandBuffer, &vkCommandBufferBeginInfo);
+
+    VkBufferCopy copyRegion;
+    copyRegion.size = size;
+    vkCmdCopyBuffer(vkCommandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
+
+    vkEndCommandBuffer(vkCommandBuffer);
+    VkSubmitInfo submitInfo = {
+        .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+        .pNext = NULL,
+        .waitSemaphoreCount = 0,
+        .pWaitSemaphores = NULL,
+        .pWaitDstStageMask = NULL,
+        .commandBufferCount = 1,
+        .pCommandBuffers = &vkCommandBuffer,
+        .signalSemaphoreCount = 0,
+        .pSignalSemaphores = NULL,
+    };
+    vkQueueSubmit(pGraphicEngine->vkGraphicQueue, 1, &submitInfo, VK_NULL_HANDLE);
+    vkQueueWaitIdle(pGraphicEngine->vkGraphicQueue);
+    vkFreeCommandBuffers(pGraphicEngine->vkDevice, pGraphicEngine->graphicVkCommandPool, 1, &vkCommandBuffer);
 }

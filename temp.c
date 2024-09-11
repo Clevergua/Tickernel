@@ -1374,7 +1374,7 @@ VkResult CreateDescriptorSets()
         .pNext = NULL,
         .descriptorPool = descriptorPool,
         .descriptorSetCount = MAX_FRAMES_IN_FLIGHT,
-        .pSetLayouts = ·,
+        .pSetLayouts = descriptorSetLayouts,
     };
 
     descriptorSets = malloc(sizeof(VkDescriptorSet) * MAX_FRAMES_IN_FLIGHT);

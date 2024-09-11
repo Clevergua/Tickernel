@@ -1,15 +1,21 @@
 #pragma once
 #include <graphicEngineCore.h>
-typedef struct DeferredRenderPipelineVertexStruct
+typedef struct
 {
     vec3 position;
     vec3 color;
 } DeferredRenderPipelineVertex;
 
-typedef struct ObjectUniformBufferObjectStruct
+typedef struct
 {
     mat4 model;
 } ObjectUniformBufferObject;
+
+typedef struct
+{
+    uint32_t vertexCount;
+    DeferredRenderPipelineVertex *vertices;
+} DeferredRenderPipelineObject;
 
 void CreateDeferredRenderPipeline(GraphicEngine *pGraphicEngine);
 void DestroyDeferredRenderPipeline(GraphicEngine *pGraphicEngine);

@@ -17,6 +17,20 @@ typedef struct GlobalUniformBufferObjectStruct
     mat4 proj;
 } GlobalUniformBufferObject;
 
+typedef struct RenderPipelineObjectStruct
+{
+    uint32_t vertexCount;
+
+    VkBuffer vertexBuffer;
+    VkDeviceMemory vertexBufferMemory;
+
+    VkBuffer objectUniformBuffer;
+    VkDeviceMemory objectUniformBufferMemory;
+    void *objectUniformBufferMapped;
+
+    VkDescriptorSet *vkPipeline2DescriptorSet;
+} RenderPipelineObject;
+
 typedef struct RenderPipelineStruct
 {
     VkRenderPass vkRenderPass;
@@ -28,15 +42,18 @@ typedef struct RenderPipelineStruct
     VkDescriptorSetLayout *vkPipeline2DescriptorSetLayout;
 
     VkDescriptorPool vkDescriptorPool;
-    VkDescriptorSet **vkPipeline2DescriptorSets;
-
     uint32_t maxObjectCount;
     uint32_t objectCount;
-    VkBuffer *vertexBuffers;
-    uint32_t *vertexCounts;
-    VkBuffer *objectUniformBuffers;
-    VkDeviceMemory *objectUniformBufferMemorys;
-    void **objectUniformBuffersMapped;
+    RenderPipelineObject *renderPipelineObjects;
+    // VkBuffer *vertexBuffers;
+    // VkDeviceMemory *vertexBufferMemories;
+    // void **vertexBuffersMapped;
+    // uint32_t *vertexCounts;
+    // VkBuffer *objectUniformBuffers;
+    // VkDeviceMemory *objectUniformBufferMemories;
+    // void **objectUniformBuffersMapped;
+    // VkDescriptorSet **vkPipeline2DescriptorSets;
+
 } RenderPipeline;
 
 typedef struct GraphicImageStruct
@@ -108,3 +125,4 @@ void DestroyVkShaderModule(GraphicEngine *pGraphicEngine, VkShaderModule vkShade
 
 void CreateBuffer(GraphicEngine *pGraphicEngine, VkDeviceSize bufferSize, VkBufferUsageFlags bufferUsageFlags, VkMemoryPropertyFlags msemoryPropertyFlags, VkBuffer *pBuffer, VkDeviceMemory *pDeviceMemory);
 void DestroyBuffer(VkDevice vkDevice, VkBuffer vkBuffer, VkDeviceMemory deviceMemory);
+void CopyVkBuffer(GraphicEngine *pGraphicEngine, VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
