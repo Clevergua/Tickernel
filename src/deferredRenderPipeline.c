@@ -351,18 +351,18 @@ static void CreateGeometryPipeline(GraphicEngine *pGraphicEngine)
         .bindingCount = 2,
         .pBindings = bindings,
     };
-    result = vkCreateDescriptorSetLayout(pGraphicEngine->vkDevice, &descriptorSetLayoutCreateInfo, NULL, &pGraphicEngine->deferredRenderPipeline.vkPipeline2DescriptorSetLayout[0]);
+    result = vkCreateDescriptorSetLayout(pGraphicEngine->vkDevice, &descriptorSetLayoutCreateInfo, NULL, &pGraphicEngine->deferredRenderPipeline.vkPipelineToDescriptorSetLayout[0]);
     VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
         .pNext = NULL,
         .flags = 0,
         .setLayoutCount = 1,
-        .pSetLayouts = &pGraphicEngine->deferredRenderPipeline.vkPipeline2DescriptorSetLayout[0],
+        .pSetLayouts = &pGraphicEngine->deferredRenderPipeline.vkPipelineToDescriptorSetLayout[0],
         .pushConstantRangeCount = 0,
         .pPushConstantRanges = NULL,
     };
 
-    result = vkCreatePipelineLayout(pGraphicEngine->vkDevice, &pipelineLayoutCreateInfo, NULL, &pGraphicEngine->deferredRenderPipeline.vkPipeline2Layout[0]);
+    result = vkCreatePipelineLayout(pGraphicEngine->vkDevice, &pipelineLayoutCreateInfo, NULL, &pGraphicEngine->deferredRenderPipeline.vkPipelineToLayout[0]);
     TryThrowVulkanError(result);
     VkGraphicsPipelineCreateInfo geometryPipelineCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
@@ -379,7 +379,7 @@ static void CreateGeometryPipeline(GraphicEngine *pGraphicEngine)
         .pDepthStencilState = &pipelineDepthStencilStateCreateInfo,
         .pColorBlendState = &colorBlendStateCreateInfo,
         .pDynamicState = &dynamicState,
-        .layout = pGraphicEngine->deferredRenderPipeline.vkPipeline2Layout[0],
+        .layout = pGraphicEngine->deferredRenderPipeline.vkPipelineToLayout[0],
         .renderPass = pGraphicEngine->deferredRenderPipeline.vkRenderPass,
         .subpass = 0,
         .basePipelineHandle = VK_NULL_HANDLE,
@@ -394,8 +394,8 @@ static void CreateGeometryPipeline(GraphicEngine *pGraphicEngine)
 }
 static void DestroyGeometryPipeline(GraphicEngine *pGraphicEngine)
 {
-    vkDestroyDescriptorSetLayout(pGraphicEngine->vkDevice, pGraphicEngine->deferredRenderPipeline.vkPipeline2DescriptorSetLayout[0], NULL);
-    vkDestroyPipelineLayout(pGraphicEngine->vkDevice, pGraphicEngine->deferredRenderPipeline.vkPipeline2Layout[0], NULL);
+    vkDestroyDescriptorSetLayout(pGraphicEngine->vkDevice, pGraphicEngine->deferredRenderPipeline.vkPipelineToDescriptorSetLayout[0], NULL);
+    vkDestroyPipelineLayout(pGraphicEngine->vkDevice, pGraphicEngine->deferredRenderPipeline.vkPipelineToLayout[0], NULL);
     vkDestroyPipeline(pGraphicEngine->vkDevice, pGraphicEngine->deferredRenderPipeline.vkPipelines[0], NULL);
 }
 static void CreateLightingPipeline(GraphicEngine *pGraphicEngine)
@@ -536,7 +536,7 @@ static void CreateLightingPipeline(GraphicEngine *pGraphicEngine)
         .dynamicStateCount = dynamicStateCount,
         .pDynamicStates = dynamicStates,
     };
-    pGraphicEngine->deferredRenderPipeline.vkPipeline2Layout[1] = NULL;
+    pGraphicEngine->deferredRenderPipeline.vkPipelineToLayout[1] = NULL;
     VkGraphicsPipelineCreateInfo lightingPipelineCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
         .pNext = NULL,
@@ -552,7 +552,7 @@ static void CreateLightingPipeline(GraphicEngine *pGraphicEngine)
         .pDepthStencilState = &pipelineDepthStencilStateCreateInfo,
         .pColorBlendState = &colorBlendStateCreateInfo,
         .pDynamicState = &dynamicState,
-        .layout = pGraphicEngine->deferredRenderPipeline.vkPipeline2Layout[1],
+        .layout = pGraphicEngine->deferredRenderPipeline.vkPipelineToLayout[1],
         .renderPass = pGraphicEngine->deferredRenderPipeline.vkRenderPass,
         .subpass = 0,
         .basePipelineHandle = VK_NULL_HANDLE,
@@ -567,8 +567,8 @@ static void CreateLightingPipeline(GraphicEngine *pGraphicEngine)
 }
 static void DestroyLightingPipeline(GraphicEngine *pGraphicEngine)
 {
-    vkDestroyDescriptorSetLayout(pGraphicEngine->vkDevice, pGraphicEngine->deferredRenderPipeline.vkPipeline2DescriptorSetLayout[1], NULL);
-    vkDestroyPipelineLayout(pGraphicEngine->vkDevice, pGraphicEngine->deferredRenderPipeline.vkPipeline2Layout[1], NULL);
+    vkDestroyDescriptorSetLayout(pGraphicEngine->vkDevice, pGraphicEngine->deferredRenderPipeline.vkPipelineToDescriptorSetLayout[1], NULL);
+    vkDestroyPipelineLayout(pGraphicEngine->vkDevice, pGraphicEngine->deferredRenderPipeline.vkPipelineToLayout[1], NULL);
     vkDestroyPipeline(pGraphicEngine->vkDevice, pGraphicEngine->deferredRenderPipeline.vkPipelines[1], NULL);
 }
 
@@ -600,8 +600,8 @@ static void CreateVkPipelines(GraphicEngine *pGraphicEngine)
 {
     pGraphicEngine->deferredRenderPipeline.vkPipelineCount = 2;
     pGraphicEngine->deferredRenderPipeline.vkPipelines = TickernelMalloc(sizeof(VkPipeline) * pGraphicEngine->deferredRenderPipeline.vkPipelineCount);
-    pGraphicEngine->deferredRenderPipeline.vkPipeline2Layout = TickernelMalloc(sizeof(VkPipelineLayout) * pGraphicEngine->deferredRenderPipeline.vkPipelineCount);
-    pGraphicEngine->deferredRenderPipeline.vkPipeline2DescriptorSetLayout = TickernelMalloc(sizeof(VkDescriptorSetLayout *) * pGraphicEngine->deferredRenderPipeline.vkPipelineCount);
+    pGraphicEngine->deferredRenderPipeline.vkPipelineToLayout = TickernelMalloc(sizeof(VkPipelineLayout) * pGraphicEngine->deferredRenderPipeline.vkPipelineCount);
+    pGraphicEngine->deferredRenderPipeline.vkPipelineToDescriptorSetLayout = TickernelMalloc(sizeof(VkDescriptorSetLayout *) * pGraphicEngine->deferredRenderPipeline.vkPipelineCount);
 
     pGraphicEngine->deferredRenderPipeline.maxObjectCount = 4096;
     pGraphicEngine->deferredRenderPipeline.renderPipelineObjects = TickernelMalloc(sizeof(RenderPipelineObject) * pGraphicEngine->deferredRenderPipeline.maxObjectCount);
@@ -617,9 +617,9 @@ static void DestroyVkPipelines(GraphicEngine *pGraphicEngine)
     DestroyDescriptorPool(pGraphicEngine);
     TickernelFree(pGraphicEngine->deferredRenderPipeline.renderPipelineObjects);
 
-    TickernelFree(pGraphicEngine->deferredRenderPipeline.vkPipeline2DescriptorSetLayout);
+    TickernelFree(pGraphicEngine->deferredRenderPipeline.vkPipelineToDescriptorSetLayout);
     TickernelFree(pGraphicEngine->deferredRenderPipeline.vkPipelines);
-    TickernelFree(pGraphicEngine->deferredRenderPipeline.vkPipeline2Layout);
+    TickernelFree(pGraphicEngine->deferredRenderPipeline.vkPipelineToLayout);
 }
 
 void AddObject2DeferredRenderPipeline(GraphicEngine *pGraphicEngine, DeferredRenderPipelineObject deferredRenderPipelineObject, uint32_t *pIndex)
@@ -652,7 +652,56 @@ void AddObject2DeferredRenderPipeline(GraphicEngine *pGraphicEngine, DeferredRen
         vkMapMemory(pGraphicEngine->vkDevice, renderPipelineObject.objectUniformBufferMemory, 0, bufferSize, 0, &renderPipelineObject.objectUniformBufferMapped);
 
         // Create vkDescriptorSet
-        
+        VkDescriptorSetAllocateInfo descriptorSetAllocateInfo = {
+            .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+            .pNext = NULL,
+            .descriptorPool = pGraphicEngine->deferredRenderPipeline.vkDescriptorPool,
+            .descriptorSetCount = 1,
+            .pSetLayouts = pGraphicEngine->deferredRenderPipeline.vkPipelineToDescriptorSetLayout[0],
+        };
+
+        result = vkAllocateDescriptorSets(pGraphicEngine->vkDevice, &descriptorSetAllocateInfo, pGraphicEngine->deferredRenderPipeline.vkPipelineToDescriptorSetLayout[0]);
+        TRYRETURNVKERROR(result);
+
+        VkDescriptorBufferInfo descriptorBufferInfo = {
+            .buffer = pGraphicEngine->globalUniformBuffer,
+            .offset = 0,
+            .range = sizeof(GlobalUniformBuffer),
+        };
+         VkDescriptorBufferInfo descriptorBufferInfo = {
+            .buffer = renderPipelineObject.objectUniformBuffer,
+            .offset = 0,
+            .range = sizeof(DeferredRenderPipelineObjectUniformBuffer),
+        };
+
+        VkWriteDescriptorSet descriptorWrites[2] = {
+            {
+                .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+                .pNext = NULL,
+                .dstSet = descriptorSets[i],
+                .dstBinding = 0,
+                .dstArrayElement = 0,
+                .descriptorCount = 1,
+                .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                .pImageInfo = NULL,
+                .pBufferInfo = &descriptorBufferInfo,
+                .pTexelBufferView = NULL,
+            },
+            {
+                .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+                .pNext = NULL,
+                .dstSet = descriptorSets[i],
+                .dstBinding = 1,
+                .dstArrayElement = 0,
+                .descriptorCount = 1,
+                .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+                .pImageInfo = &imageInfo,
+                .pBufferInfo = &descriptorBufferInfo,
+                .pTexelBufferView = NULL,
+            },
+        };
+        vkUpdateDescriptorSets(pGraphicEngine->vkDevice, 2, descriptorWrites, 0, NULL);
+        // Add to renderPipelineObjects
         pGraphicEngine->deferredRenderPipeline.renderPipelineObjects[pGraphicEngine->deferredRenderPipeline.objectCount] = renderPipelineObject;
         pGraphicEngine->deferredRenderPipeline.objectCount++;
     }
@@ -776,7 +825,7 @@ void RecordDeferredRenderPipeline(GraphicEngine *pGraphicEngine)
     for (uint32_t i = 0; i < pGraphicEngine->deferredRenderPipeline.objectCount; i++)
     {
         RenderPipelineObject *pRenderPipelineObject = &pGraphicEngine->deferredRenderPipeline.renderPipelineObjects[i];
-        vkCmdBindDescriptorSets(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pGraphicEngine->deferredRenderPipeline.vkPipeline2Layout[geometryPipelineIndex], 0, 1, &pRenderPipelineObject->vkPipeline2DescriptorSet[0], 0, NULL);
+        vkCmdBindDescriptorSets(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pGraphicEngine->deferredRenderPipeline.vkPipelineToLayout[geometryPipelineIndex], 0, 1, &pRenderPipelineObject->vkPipelineToDescriptorSet[0], 0, NULL);
         VkBuffer vertexBuffers[] = {pRenderPipelineObject->vertexBuffer};
         VkDeviceSize offsets[] = {0};
         vkCmdBindVertexBuffers(vkCommandBuffer, 0, 1, vertexBuffers, offsets);

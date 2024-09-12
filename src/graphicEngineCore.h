@@ -28,7 +28,7 @@ typedef struct RenderPipelineObjectStruct
     VkDeviceMemory objectUniformBufferMemory;
     void *objectUniformBufferMapped;
 
-    VkDescriptorSet *vkPipeline2DescriptorSet;
+    VkDescriptorSet *vkPipelineToDescriptorSet;
 } RenderPipelineObject;
 
 typedef struct RenderPipelineStruct
@@ -38,8 +38,8 @@ typedef struct RenderPipelineStruct
     VkFramebuffer *vkFramebuffers;
     uint32_t vkPipelineCount;
     VkPipeline *vkPipelines;
-    VkPipelineLayout *vkPipeline2Layout;
-    VkDescriptorSetLayout *vkPipeline2DescriptorSetLayout;
+    VkPipelineLayout *vkPipelineToLayout;
+    VkDescriptorSetLayout *vkPipelineToDescriptorSetLayout;
 
     VkDescriptorPool vkDescriptorPool;
     uint32_t maxObjectCount;
