@@ -33,27 +33,24 @@ typedef struct RenderPipelineObjectStruct
 
 typedef struct RenderPipelineStruct
 {
-    VkRenderPass vkRenderPass;
-    uint32_t vkFramebufferCount;
-    VkFramebuffer *vkFramebuffers;
-    uint32_t vkPipelineCount;
-    VkPipeline *vkPipelines;
-    VkPipelineLayout *vkPipelineToLayout;
-    VkDescriptorSetLayout *vkPipelineToDescriptorSetLayout;
+    VkPipeline vkPipeline;
+    VkPipelineLayout vkPipelineLayout;
+    VkDescriptorSetLayout descriptorSetLayout;
 
     VkDescriptorPool vkDescriptorPool;
     uint32_t maxObjectCount;
     uint32_t objectCount;
     RenderPipelineObject *renderPipelineObjects;
-    // VkBuffer *vertexBuffers;
-    // VkDeviceMemory *vertexBufferMemories;
-    // void **vertexBuffersMapped;
-    // uint32_t *vertexCounts;
-    // VkBuffer *objectUniformBuffers;
-    // VkDeviceMemory *objectUniformBufferMemories;
-    // void **objectUniformBuffersMapped;
-    // VkDescriptorSet **vkPipeline2DescriptorSets;
+} RenderPipeline;
 
+typedef struct RenderPipelineStruct
+{
+    VkRenderPass vkRenderPass;
+    uint32_t vkFramebufferCount;
+    VkFramebuffer *vkFramebuffers;
+    
+    uint32_t renderPipelineCount;
+    RenderPipeline *renderPipelines;
 } RenderPipeline;
 
 typedef struct GraphicImageStruct
