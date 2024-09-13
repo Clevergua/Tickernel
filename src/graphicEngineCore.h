@@ -20,7 +20,6 @@ typedef struct GlobalUniformBufferStruct
 typedef struct RenderPipelineObjectStruct
 {
     uint32_t vertexCount;
-
     VkBuffer vertexBuffer;
     VkDeviceMemory vertexBufferMemory;
 
@@ -28,10 +27,10 @@ typedef struct RenderPipelineObjectStruct
     VkDeviceMemory objectUniformBufferMemory;
     void *objectUniformBufferMapped;
 
-    VkDescriptorSet *vkPipelineToDescriptorSet;
+    VkDescriptorSet vkDescriptorSet;
 } RenderPipelineObject;
 
-typedef struct RenderPipelineStruct
+typedef struct SubpassStruct
 {
     VkPipeline vkPipeline;
     VkPipelineLayout vkPipelineLayout;
@@ -41,17 +40,17 @@ typedef struct RenderPipelineStruct
     uint32_t maxObjectCount;
     uint32_t objectCount;
     RenderPipelineObject *renderPipelineObjects;
-} RenderPipeline;
+} Subpass;
 
-typedef struct RenderPipelineStruct
+typedef struct RenderPassStruct
 {
     VkRenderPass vkRenderPass;
     uint32_t vkFramebufferCount;
     VkFramebuffer *vkFramebuffers;
-    
-    uint32_t renderPipelineCount;
-    RenderPipeline *renderPipelines;
-} RenderPipeline;
+
+    uint32_t subpassCount;
+    Subpass *subpasses;
+} RenderPass;
 
 typedef struct GraphicImageStruct
 {
@@ -105,8 +104,8 @@ typedef struct GraphicEngineStruct
 
     GraphicImage depthGraphicImage;
     GraphicImage albedoGraphicImage;
-    RenderPipeline deferredRenderPipeline;
-    RenderPipeline uiRenderPipeline;
+    RenderPass deferredRenderPass;
+    RenderPass uiRenderPass;
 
 } GraphicEngine;
 
