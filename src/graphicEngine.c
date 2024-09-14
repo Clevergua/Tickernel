@@ -816,7 +816,7 @@ static void DestroyVkCommandBuffers(GraphicEngine *pGraphicEngine)
 
 static void RecordCommandBuffer(GraphicEngine *pGraphicEngine)
 {
-    RecordDeferredRenderPipeline(pGraphicEngine);
+    RecordDeferredRenderPass(pGraphicEngine);
 }
 
 void StartGraphicEngine(GraphicEngine *pGraphicEngine)
@@ -833,7 +833,7 @@ void StartGraphicEngine(GraphicEngine *pGraphicEngine)
     CreateVkCommandBuffers(pGraphicEngine);
     CreateGlobalUniformBuffers(pGraphicEngine);
     CreateGraphicImages(pGraphicEngine);
-    CreateDeferredRenderPipeline(pGraphicEngine);
+    CreateDeferredRenderPass(pGraphicEngine);
 }
 
 void UpdateGraphicEngine(GraphicEngine *pGraphicEngine)
@@ -851,7 +851,7 @@ void UpdateGraphicEngine(GraphicEngine *pGraphicEngine)
 
 void EndGraphicEngine(GraphicEngine *pGraphicEngine)
 {
-    DestroyDeferredRenderPipeline(pGraphicEngine);
+    DestroyDeferredRenderPass(pGraphicEngine);
     DestroyGraphicImages(pGraphicEngine);
     DestroyGlobalUniformBuffers(pGraphicEngine);
     DestroyVkCommandBuffers(pGraphicEngine);

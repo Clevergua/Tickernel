@@ -1,5 +1,5 @@
 #pragma once
-#include <deferredRenderPipeline.h>
+#include <deferredRenderPass.h>
 
 void StartGraphicEngine(GraphicEngine *pGraphicEngine);
 void UpdateGraphicEngine(GraphicEngine *pGraphicEngine);

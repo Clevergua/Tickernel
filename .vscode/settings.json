@@ -107,6 +107,10 @@
         "graphicenginecore.h": "c",
         "string.h": "c",
         "stdlib.h": "c",
-        "__verbose_abort": "cpp"
+        "__verbose_abort": "cpp",
+        "deferredrenderpass.h": "c",
+        "lightingsubpass.h": "c",
+        "geometrysubpass.h": "c",
+        "cglm.h": "c"
     }
 }

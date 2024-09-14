@@ -478,7 +478,7 @@ static void CreateSubpasses(GraphicEngine *pGraphicEngine)
     pGraphicEngine->deferredRenderPass.vkPipelineToDescriptorSetLayout = TickernelMalloc(sizeof(VkDescriptorSetLayout *) * pGraphicEngine->deferredRenderPass.vkPipelineCount);
 
     pGraphicEngine->deferredRenderPass.maxObjectCount = 4096;
-    pGraphicEngine->deferredRenderPass.renderPipelineObjects = TickernelMalloc(sizeof(RenderPipelineObject) * pGraphicEngine->deferredRenderPass.maxObjectCount);
+    pGraphicEngine->deferredRenderPass.renderPipelineObjects = TickernelMalloc(sizeof(RenderPipelineModel) * pGraphicEngine->deferredRenderPass.maxObjectCount);
     CreateDescriptorPool(pGraphicEngine);
     CreateGeometryPipeline(pGraphicEngine);
     CreateLightingPipeline(pGraphicEngine);
@@ -494,105 +494,6 @@ static void DestroySubpasses(GraphicEngine *pGraphicEngine)
     TickernelFree(pGraphicEngine->deferredRenderPass.vkPipelineToDescriptorSetLayout);
     TickernelFree(pGraphicEngine->deferredRenderPass.vkPipelines);
     TickernelFree(pGraphicEngine->deferredRenderPass.vkPipelineToLayout);
-}
-
-void AddObject2DeferredRenderPipeline(GraphicEngine *pGraphicEngine, DeferredRenderPipelineObject deferredRenderPipelineObject, uint32_t *pIndex)
-{
-    VkResult result = VK_SUCCESS;
-    RenderPipeline pDeferredRenderPipeline = pGraphicEngine->deferredRenderPass;
-    if (pGraphicEngine->deferredRenderPass.objectCount < pGraphicEngine->deferredRenderPass.maxObjectCount)
-    {
-        RenderPipelineObject renderPipelineObject;
-        renderPipelineObject.vertexCount = deferredRenderPipelineObject.vertexCount;
-
-        // Create vertexBuffer
-        VkDeviceSize bufferSize = sizeof(DeferredRenderPipelineVertex) * deferredRenderPipelineObject.vertexCount;
-        VkBuffer stagingBuffer;
-        VkDeviceMemory stagingBufferMemory;
-        CreateBuffer(pGraphicEngine, bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingBuffer, &stagingBufferMemory);
-        void *pData;
-        result = vkMapMemory(pGraphicEngine->vkDevice, stagingBufferMemory, 0, bufferSize, 0, &pData);
-        TryThrowVulkanError(result);
-        memcpy(pData, deferredRenderPipelineObject.vertices, bufferSize);
-        vkUnmapMemory(pGraphicEngine->vkDevice, stagingBufferMemory);
-        CreateBuffer(pGraphicEngine, bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &renderPipelineObject.vertexBuffer, &renderPipelineObject.vertexBufferMemory);
-        TryThrowVulkanError(result);
-        CopyVkBuffer(pGraphicEngine, stagingBuffer, renderPipelineObject.vertexBuffer, bufferSize);
-        DestroyBuffer(pGraphicEngine->vkDevice, stagingBuffer, stagingBufferMemory);
-
-        // Create objectUniformBuffer
-        bufferSize = sizeof(DeferredRenderPipelineObjectUniformBuffer);
-        CreateBuffer(pGraphicEngine, bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &renderPipelineObject.objectUniformBuffer, &renderPipelineObject.objectUniformBufferMemory);
-        vkMapMemory(pGraphicEngine->vkDevice, renderPipelineObject.objectUniformBufferMemory, 0, bufferSize, 0, &renderPipelineObject.objectUniformBufferMapped);
-
-        // Create vkDescriptorSet
-        VkDescriptorSetAllocateInfo descriptorSetAllocateInfo = {
-            .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-            .pNext = NULL,
-            .descriptorPool = pGraphicEngine->deferredRenderPipeline.vkDescriptorPool,
-            .descriptorSetCount = 1,
-            .pSetLayouts = &pGraphicEngine->deferredRenderPipeline.vkPipelineToDescriptorSetLayout[0],
-        };
-        renderPipelineObject.vkPipelineToDescriptorSet = TickernelMalloc(sizeof(VkDescriptorSet) * 2);
-
-        result = vkAllocateDescriptorSets(pGraphicEngine->vkDevice, &descriptorSetAllocateInfo, &renderPipelineObject.vkPipelineToDescriptorSet[0]);
-
-        VkDescriptorBufferInfo globalDescriptorBufferInfo = {
-            .buffer = pGraphicEngine->globalUniformBuffer,
-            .offset = 0,
-            .range = sizeof(GlobalUniformBuffer),
-        };
-        VkDescriptorBufferInfo objectDescriptorBufferInfo = {
-            .buffer = renderPipelineObject.objectUniformBuffer,
-            .offset = 0,
-            .range = sizeof(DeferredRenderPipelineObjectUniformBuffer),
-        };
-
-        VkWriteDescriptorSet descriptorWrites[2] = {
-            {
-                .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-                .pNext = NULL,
-                .dstSet = renderPipelineObject.vkPipelineToDescriptorSet[0],
-                .dstBinding = 0,
-                .dstArrayElement = 0,
-                .descriptorCount = 1,
-                .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-                .pImageInfo = NULL,
-                .pBufferInfo = &globalDescriptorBufferInfo,
-                .pTexelBufferView = NULL,
-            },
-            {
-                .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-                .pNext = NULL,
-                .dstSet = renderPipelineObject.vkPipelineToDescriptorSet[0],
-                .dstBinding = 1,
-                .dstArrayElement = 0,
-                .descriptorCount = 1,
-                .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-                .pImageInfo = NULL,
-                .pBufferInfo = &objectDescriptorBufferInfo,
-                .pTexelBufferView = NULL,
-            },
-        };
-        vkUpdateDescriptorSets(pGraphicEngine->vkDevice, 2, descriptorWrites, 0, NULL);
-        // Add to renderPipelineObjects
-        pGraphicEngine->deferredRenderPass.renderPipelineObjects[pGraphicEngine->deferredRenderPass.objectCount] = renderPipelineObject;
-        pGraphicEngine->deferredRenderPass.objectCount++;
-    }
-    else
-    {
-        /* code */
-    }
-}
-
-void RemoveObjectFromDeferredRenderPipeline(GraphicEngine *pGraphicEngine, uint32_t index)
-{
-    RenderPipelineObject *pRenderPipelineObject = &pGraphicEngine->deferredRenderPass.renderPipelineObjects[index];
-    vkFreeDescriptorSets(pGraphicEngine->vkDevice, pGraphicEngine->deferredRenderPass.vkDescriptorPool, 1, &pRenderPipelineObject->vkPipelineToDescriptorSet[0]);
-    TickernelFree(pRenderPipelineObject->vkPipelineToDescriptorSet);
-    DestroyBuffer(pGraphicEngine->vkDevice, pRenderPipelineObject->objectUniformBuffer, pRenderPipelineObject->objectUniformBufferMemory);
-
-    DestroyBuffer(pGraphicEngine->vkDevice, pRenderPipelineObject->vertexBuffer, pRenderPipelineObject->vertexBufferMemory);
 }
 
 void CreateDeferredRenderPipeline(GraphicEngine *pGraphicEngine)
@@ -700,7 +601,7 @@ void RecordDeferredRenderPipeline(GraphicEngine *pGraphicEngine)
     uint32_t geometryPipelineIndex = 0;
     for (uint32_t i = 0; i < pGraphicEngine->deferredRenderPass.objectCount; i++)
     {
-        RenderPipelineObject *pRenderPipelineObject = &pGraphicEngine->deferredRenderPass.renderPipelineObjects[i];
+        RenderPipelineModel *pRenderPipelineObject = &pGraphicEngine->deferredRenderPass.renderPipelineObjects[i];
         vkCmdBindDescriptorSets(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pGraphicEngine->deferredRenderPass.vkPipelineToLayout[geometryPipelineIndex], 0, 1, &pRenderPipelineObject->vkPipelineToDescriptorSet[0], 0, NULL);
         VkBuffer vertexBuffers[] = {pRenderPipelineObject->vertexBuffer};
         VkDeviceSize offsets[] = {0};
@@ -715,4 +616,105 @@ void RecordDeferredRenderPipeline(GraphicEngine *pGraphicEngine)
     vkCmdEndRenderPass(vkCommandBuffer);
     result = vkEndCommandBuffer(vkCommandBuffer);
     TryThrowVulkanError(result);
+}
+
+void AddObject2DeferredRenderPipeline(GraphicEngine *pGraphicEngine, GeometrySubpassModel deferredRenderPipelineObject, uint32_t *pIndex)
+{
+    RenderPass *pDeferredRenderPass = &pGraphicEngine->deferredRenderPass;
+    uint32_t geometrySubpassIndex = 0;
+    Subpass *pGeometrySubpass = &pDeferredRenderPass->subpasses[geometrySubpassIndex];
+
+    if (pGeometrySubpass->modelCount < pGeometrySubpass->maxModelCount)
+    {
+        RenderPipelineModel renderPipelineObject;
+        renderPipelineObject.vertexCount = deferredRenderPipelineObject.vertexCount;
+
+        // Create vertexBuffer
+        VkDeviceSize bufferSize = sizeof(DeferredRenderPipelineVertex) * deferredRenderPipelineObject.vertexCount;
+        VkBuffer stagingBuffer;
+        VkDeviceMemory stagingBufferMemory;
+        CreateBuffer(pGraphicEngine, bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingBuffer, &stagingBufferMemory);
+        void *pData;
+        result = vkMapMemory(pGraphicEngine->vkDevice, stagingBufferMemory, 0, bufferSize, 0, &pData);
+        TryThrowVulkanError(result);
+        memcpy(pData, deferredRenderPipelineObject.vertices, bufferSize);
+        vkUnmapMemory(pGraphicEngine->vkDevice, stagingBufferMemory);
+        CreateBuffer(pGraphicEngine, bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &renderPipelineObject.vertexBuffer, &renderPipelineObject.vertexBufferMemory);
+        TryThrowVulkanError(result);
+        CopyVkBuffer(pGraphicEngine, stagingBuffer, renderPipelineObject.vertexBuffer, bufferSize);
+        DestroyBuffer(pGraphicEngine->vkDevice, stagingBuffer, stagingBufferMemory);
+
+        // Create objectUniformBuffer
+        bufferSize = sizeof(DeferredRenderPipelineModelUniformBuffer);
+        CreateBuffer(pGraphicEngine, bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &renderPipelineObject.objectUniformBuffer, &renderPipelineObject.objectUniformBufferMemory);
+        vkMapMemory(pGraphicEngine->vkDevice, renderPipelineObject.objectUniformBufferMemory, 0, bufferSize, 0, &renderPipelineObject.objectUniformBufferMapped);
+
+        // Create vkDescriptorSet
+        VkDescriptorSetAllocateInfo descriptorSetAllocateInfo = {
+            .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+            .pNext = NULL,
+            .descriptorPool = pGraphicEngine->deferredRenderPipeline.vkDescriptorPool,
+            .descriptorSetCount = 1,
+            .pSetLayouts = &pGraphicEngine->deferredRenderPipeline.vkPipelineToDescriptorSetLayout[0],
+        };
+        renderPipelineObject.vkPipelineToDescriptorSet = TickernelMalloc(sizeof(VkDescriptorSet) * 2);
+
+        result = vkAllocateDescriptorSets(pGraphicEngine->vkDevice, &descriptorSetAllocateInfo, &renderPipelineObject.vkPipelineToDescriptorSet[0]);
+
+        VkDescriptorBufferInfo globalDescriptorBufferInfo = {
+            .buffer = pGraphicEngine->globalUniformBuffer,
+            .offset = 0,
+            .range = sizeof(GlobalUniformBuffer),
+        };
+        VkDescriptorBufferInfo objectDescriptorBufferInfo = {
+            .buffer = renderPipelineObject.objectUniformBuffer,
+            .offset = 0,
+            .range = sizeof(DeferredRenderPipelineModelUniformBuffer),
+        };
+
+        VkWriteDescriptorSet descriptorWrites[2] = {
+            {
+                .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+                .pNext = NULL,
+                .dstSet = renderPipelineObject.vkPipelineToDescriptorSet[0],
+                .dstBinding = 0,
+                .dstArrayElement = 0,
+                .descriptorCount = 1,
+                .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                .pImageInfo = NULL,
+                .pBufferInfo = &globalDescriptorBufferInfo,
+                .pTexelBufferView = NULL,
+            },
+            {
+                .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+                .pNext = NULL,
+                .dstSet = renderPipelineObject.vkPipelineToDescriptorSet[0],
+                .dstBinding = 1,
+                .dstArrayElement = 0,
+                .descriptorCount = 1,
+                .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                .pImageInfo = NULL,
+                .pBufferInfo = &objectDescriptorBufferInfo,
+                .pTexelBufferView = NULL,
+            },
+        };
+        vkUpdateDescriptorSets(pGraphicEngine->vkDevice, 2, descriptorWrites, 0, NULL);
+        // Add to renderPipelineObjects
+        pGraphicEngine->deferredRenderPass.renderPipelineObjects[pGraphicEngine->deferredRenderPass.objectCount] = renderPipelineObject;
+        pGraphicEngine->deferredRenderPass.objectCount++;
+    }
+    else
+    {
+        /* code */
+    }
+}
+
+void RemoveObjectFromDeferredRenderPipeline(GraphicEngine *pGraphicEngine, uint32_t index)
+{
+    RenderPipelineModel *pRenderPipelineObject = &pGraphicEngine->deferredRenderPass.renderPipelineObjects[index];
+    vkFreeDescriptorSets(pGraphicEngine->vkDevice, pGraphicEngine->deferredRenderPass.vkDescriptorPool, 1, &pRenderPipelineObject->vkPipelineToDescriptorSet[0]);
+    TickernelFree(pRenderPipelineObject->vkPipelineToDescriptorSet);
+    DestroyBuffer(pGraphicEngine->vkDevice, pRenderPipelineObject->objectUniformBuffer, pRenderPipelineObject->objectUniformBufferMemory);
+
+    DestroyBuffer(pGraphicEngine->vkDevice, pRenderPipelineObject->vertexBuffer, pRenderPipelineObject->vertexBufferMemory);
 }

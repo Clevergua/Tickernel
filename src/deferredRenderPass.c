@@ -1,4 +1,4 @@
-#include <deferredRenderPipeline.h>
+#include <deferredRenderPass.h>
 
 static void PrepareCurrentFrambuffer(GraphicEngine *pGraphicEngine)
 {
@@ -192,81 +192,23 @@ static void DestroyVkFramebuffers(GraphicEngine *pGraphicEngine)
     }
 }
 
-static void CreateDescriptorPool(GraphicEngine *pGraphicEngine)
-{
-    RenderPass *pDeferredRenderPass = &pGraphicEngine->deferredRenderPass;
-    uint32_t descriptorCount = 0;
-    for (uint32_t i = 0; i < pDeferredRenderPass->subpassCount; i++)
-    {
-        Subpass subpass = pDeferredRenderPass->subpasses[i];
-        descriptorCount += subpass.maxObjectCount;
-    }
-
-    VkDescriptorPoolSize poolSize[] = {
-        {
-            .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-            .descriptorCount = descriptorCount,
-        }};
-    VkDescriptorPoolCreateInfo descriptorPoolCreateInfo = {
-        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
-        .pNext = NULL,
-        .flags = 0,
-        .maxSets = descriptorCount,
-        .poolSizeCount = 1,
-        .pPoolSizes = poolSize,
-    };
-    VkResult result = vkCreateDescriptorPool(pGraphicEngine->vkDevice, &descriptorPoolCreateInfo, NULL, &pGraphicEngine->deferredRenderPass.vkDescriptorPool);
-    TryThrowVulkanError(result);
-}
-
-static void DestroyDescriptorPool(GraphicEngine *pGraphicEngine)
-{
-    vkDestroyDescriptorPool(pGraphicEngine->vkDevice, pGraphicEngine->deferredRenderPass.vkDescriptorPool, NULL);
-}
-static void CreateSubpasses(GraphicEngine *pGraphicEngine)
-{
-    RenderPass *pDeferredRenderPass = &pGraphicEngine->deferredRenderPass;
-    pDeferredRenderPass->subpassCount = 2;
-    pDeferredRenderPass->subpasses = TickernelMalloc(sizeof(Subpass) * pDeferredRenderPass->subpassCount);
-
-    // pGraphicEngine->deferredRenderPass.vkPipelineCount = 2;
-    // pGraphicEngine->deferredRenderPass.vkPipelines = TickernelMalloc(sizeof(VkPipeline) * pGraphicEngine->deferredRenderPass.vkPipelineCount);
-    // pGraphicEngine->deferredRenderPass.vkPipelineToLayout = TickernelMalloc(sizeof(VkPipelineLayout) * pGraphicEngine->deferredRenderPass.vkPipelineCount);
-    // pGraphicEngine->deferredRenderPass.vkPipelineToDescriptorSetLayout = TickernelMalloc(sizeof(VkDescriptorSetLayout *) * pGraphicEngine->deferredRenderPass.vkPipelineCount);
-
-    // pGraphicEngine->deferredRenderPass.maxObjectCount = 4096;
-    // pGraphicEngine->deferredRenderPass.renderPipelineObjects = TickernelMalloc(sizeof(RenderPipelineObject) * pGraphicEngine->deferredRenderPass.maxObjectCount);
-    CreateDescriptorPool(pGraphicEngine);
-    CreateGeometryPipeline(pGraphicEngine);
-    CreateLightingPipeline(pGraphicEngine);
-}
-
-static void DestroySubpasses(GraphicEngine *pGraphicEngine)
-{
-    DestroyGeometryPipeline(pGraphicEngine);
-    DestroyLightingPipeline(pGraphicEngine);
-    DestroyDescriptorPool(pGraphicEngine);
-    // TickernelFree(pGraphicEngine->deferredRenderPass.renderPipelineObjects);
-    // TickernelFree(pGraphicEngine->deferredRenderPass.vkPipelineToLayout);
-    // TickernelFree(pGraphicEngine->deferredRenderPass.vkPipelineToDescriptorSetLayout);
-    TickernelFree(pGraphicEngine->deferredRenderPass.subpasses);
-}
-
-void CreateDeferredRenderPipeline(GraphicEngine *pGraphicEngine)
+void CreateDeferredRenderPass(GraphicEngine *pGraphicEngine)
 {
     CreateVkRenderPass(pGraphicEngine);
     CreateVkFramebuffers(pGraphicEngine);
-    CreateSubpasses(pGraphicEngine);
+    CreateGeometrySubpass(pGraphicEngine);
+    CreateLightingSubpass(pGraphicEngine);
 }
 
-void DestroyDeferredRenderPipeline(GraphicEngine *pGraphicEngine)
+void DestroyDeferredRenderPass(GraphicEngine *pGraphicEngine)
 {
-    DestroySubpasses(pGraphicEngine);
+    DestroyGeometrySubpass(pGraphicEngine);
+    DestroyLightingSubpass(pGraphicEngine);
     DestroyVkFramebuffers(pGraphicEngine);
     DestroyVkRenderPass(pGraphicEngine);
 }
 
-void RecordDeferredRenderPipeline(GraphicEngine *pGraphicEngine)
+void RecordDeferredRenderPass(GraphicEngine *pGraphicEngine)
 {
     PrepareCurrentFrambuffer(pGraphicEngine);
     VkCommandBuffer vkCommandBuffer = pGraphicEngine->graphicVkCommandBuffers[pGraphicEngine->frameIndex];
@@ -315,18 +257,17 @@ void RecordDeferredRenderPipeline(GraphicEngine *pGraphicEngine)
         Subpass *pSubpass = &pDeferredRenderPass->subpasses[i];
         vkCmdBindPipeline(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pSubpass->vkPipeline);
         uint32_t geometryPipelineIndex = 0;
-        for (uint32_t i = 0; i < pSubpass->objectCount; i++)
+        for (uint32_t i = 0; i < pSubpass->modelCount; i++)
         {
-            RenderPipelineObject *pRenderPipelineObject = &pSubpass->renderPipelineObjects[i];
-            vkCmdBindDescriptorSets(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pSubpass->vkPipelineLayout, 0, 1, &pRenderPipelineObject->vkDescriptorSet, 0, NULL);
-            VkBuffer vertexBuffers[] = {pRenderPipelineObject->vertexBuffer};
+            SubpassModel *pSubpassModel = &pSubpass->subpassModels[i];
+            vkCmdBindDescriptorSets(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pSubpass->vkPipelineLayout, 0, 1, &pSubpassModel->vkDescriptorSet, 0, NULL);
+            VkBuffer vertexBuffers[] = {pSubpassModel->vertexBuffer};
             VkDeviceSize offsets[] = {0};
             vkCmdBindVertexBuffers(vkCommandBuffer, 0, 1, vertexBuffers, offsets);
-            uint32_t vertexCount = pRenderPipelineObject->vertexCount;
+            uint32_t vertexCount = pSubpassModel->vertexCount;
             vkCmdDraw(vkCommandBuffer, vertexCount, 1, 0, 0);
         }
     }
-
     vkCmdEndRenderPass(vkCommandBuffer);
     result = vkEndCommandBuffer(vkCommandBuffer);
     TryThrowVulkanError(result);

@@ -17,18 +17,24 @@ typedef struct GlobalUniformBufferStruct
     mat4 proj;
 } GlobalUniformBuffer;
 
-typedef struct RenderPipelineObjectStruct
+typedef struct SubpassModelStruct
 {
     uint32_t vertexCount;
     VkBuffer vertexBuffer;
     VkDeviceMemory vertexBufferMemory;
 
-    VkBuffer objectUniformBuffer;
-    VkDeviceMemory objectUniformBufferMemory;
-    void *objectUniformBufferMapped;
+    VkBuffer modelUniformBuffer;
+    VkDeviceMemory modelUniformBufferMemory;
+    void *modelUniformBufferMapped;
 
     VkDescriptorSet vkDescriptorSet;
-} RenderPipelineObject;
+} SubpassModel;
+
+typedef struct Uint32NodeStruct
+{
+    struct Uint32NodeStruct *pNext;
+    uint32_t data;
+} Uint32Node;
 
 typedef struct SubpassStruct
 {
@@ -37,9 +43,11 @@ typedef struct SubpassStruct
     VkDescriptorSetLayout descriptorSetLayout;
 
     VkDescriptorPool vkDescriptorPool;
-    uint32_t maxObjectCount;
-    uint32_t objectCount;
-    RenderPipelineObject *renderPipelineObjects;
+    uint32_t maxModelCount;
+    Uint32Node *pRemovedIndexLinkedList;
+    uint32_t modelCount;
+    SubpassModel *subpassModels;
+
 } Subpass;
 
 typedef struct RenderPassStruct
@@ -105,7 +113,6 @@ typedef struct GraphicEngineStruct
     GraphicImage depthGraphicImage;
     GraphicImage albedoGraphicImage;
     RenderPass deferredRenderPass;
-    RenderPass uiRenderPass;
 
 } GraphicEngine;
 
