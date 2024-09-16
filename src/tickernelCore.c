@@ -29,6 +29,7 @@ void TickernelGetCurrentDirectory(char *directroy, size_t size)
 #error "Unknown platform"
 #endif
 
+
 void *TickernelMalloc(size_t size)
 {
     return malloc(size);

@@ -4,6 +4,11 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <tickernelPlatform.h>
+typedef struct Uint32NodeStruct
+{
+    struct Uint32NodeStruct *pNext;
+    uint32_t data;
+} Uint32Node;
 
 void TickernelSleep(uint32_t milliseconds);
 void TickernelLog(char const *const _Format, ...);

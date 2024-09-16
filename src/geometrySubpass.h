@@ -1,10 +1,18 @@
 #pragma once
 #include <graphicEngineCore.h>
+
 typedef struct GeometrySubpassVertexStruct
 {
     vec3 position;
     vec3 color;
 } GeometrySubpassVertex;
+
+typedef struct GeometrySubpassModelStruct
+{
+    uint32_t count;
+    GeometrySubpassVertex *geometrySubpassVertices;
+
+} GeometrySubpassModel;
 
 typedef struct GeometrySubpassModelUniformBufferStruct
 {
@@ -13,5 +21,5 @@ typedef struct GeometrySubpassModelUniformBufferStruct
 
 void CreateGeometrySubpass(GraphicEngine *pGraphicEngine);
 void DestroyGeometrySubpass(GraphicEngine *pGraphicEngine);
-void AddModelToGeometrySubpass(GraphicEngine *pGraphicEngine, GeometrySubpassVertex *geometrySubpassVertices, uint32_t *outputIndex);
-void RemoveModelFromGeometrySubpass(GraphicEngine *pGraphicEngine, uint32_t inputIndex);
+void AddModelToGeometrySubpass(GraphicEngine *pGraphicEngine, uint32_t vertexCount, GeometrySubpassVertex *geometrySubpassVertices, uint32_t *pGroupIndex, uint32_t *pModelIndex);
+void RemoveModelFromGeometrySubpass(GraphicEngine *pGraphicEngine, uint32_t groupIndex, uint32_t modelIndex);

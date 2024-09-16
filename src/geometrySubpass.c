@@ -7,7 +7,7 @@ static void CreateVkPipeline(GraphicEngine *pGraphicEngine)
     Subpass *pGeometrySubpass = &pDeferredRenderPass->subpasses[geometrySubpassIndex];
 
     VkShaderModule geometryVertShaderModule;
-    CreateVkShaderModule(pGraphicEngine, "../shaders/geometry.vert", &geometryVertShaderModule);
+    CreateVkShaderModule(pGraphicEngine, "../assets/shaders/geometry.vert.spv", &geometryVertShaderModule);
     VkPipelineShaderStageCreateInfo vertShaderStageCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
         .pNext = NULL,
@@ -19,7 +19,7 @@ static void CreateVkPipeline(GraphicEngine *pGraphicEngine)
     };
 
     VkShaderModule geometryFragShaderModule;
-    CreateVkShaderModule(pGraphicEngine, "../shaders/geometry.frag", &geometryFragShaderModule);
+    CreateVkShaderModule(pGraphicEngine, "../assets/shaders/geometry.frag.spv", &geometryFragShaderModule);
     VkPipelineShaderStageCreateInfo fragShaderStageCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
         .pNext = NULL,
@@ -40,7 +40,7 @@ static void CreateVkPipeline(GraphicEngine *pGraphicEngine)
             .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
         },
     };
-    uint32_t vertexAttributeDescriptionCount = 3;
+    uint32_t vertexAttributeDescriptionCount = 2;
     VkVertexInputAttributeDescription vertexAttributeDescriptions[] = {
         {
             .location = 0,
@@ -67,7 +67,7 @@ static void CreateVkPipeline(GraphicEngine *pGraphicEngine)
         .sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
         .pNext = NULL,
         .flags = 0,
-        .topology = VK_PRIMITIVE_TOPOLOGY_POINT_LIST,
+        .topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
         .primitiveRestartEnable = VK_FALSE,
     };
     VkViewport viewport = {
@@ -100,21 +100,21 @@ static void CreateVkPipeline(GraphicEngine *pGraphicEngine)
         .pNext = NULL,
         .flags = 0,
         .rasterizerDiscardEnable = VK_FALSE,
-        .polygonMode = VK_POLYGON_MODE_POINT,
-        .cullMode = VK_CULL_MODE_NONE,
+        .polygonMode = VK_POLYGON_MODE_FILL,
+        .cullMode = VK_CULL_MODE_BACK_BIT,
         .frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE,
         .depthBiasEnable = VK_FALSE,
         .depthBiasConstantFactor = 0,
         .depthBiasClamp = VK_FALSE,
         .depthBiasSlopeFactor = 0,
-        .lineWidth = 1.0f,
+        .lineWidth = 0,
     };
     VkPipelineDepthStencilStateCreateInfo pipelineDepthStencilStateCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
         .pNext = NULL,
         .flags = 0,
         .depthTestEnable = VK_TRUE,
-        .depthWriteEnable = VK_TRUE,
+        .depthWriteEnable = VK_FALSE,
         .depthCompareOp = VK_COMPARE_OP_LESS,
         .depthBoundsTestEnable = VK_FALSE,
         .stencilTestEnable = VK_FALSE,
@@ -222,7 +222,6 @@ static void CreateVkPipeline(GraphicEngine *pGraphicEngine)
     DestroyVkShaderModule(pGraphicEngine, geometryVertShaderModule);
     DestroyVkShaderModule(pGraphicEngine, geometryFragShaderModule);
 }
-
 static void DestroyVkPipeline(GraphicEngine *pGraphicEngine)
 {
     RenderPass *pDeferredRenderPass = &pGraphicEngine->deferredRenderPass;
@@ -233,95 +232,61 @@ static void DestroyVkPipeline(GraphicEngine *pGraphicEngine)
     vkDestroyPipeline(pGraphicEngine->vkDevice, pGeometrySubpass->vkPipeline, NULL);
 }
 
-static void CreateGeometrySubpassModels(GraphicEngine *pGraphicEngine)
+static void CreateGeometryModelGroups(GraphicEngine *pGraphicEngine)
 {
     RenderPass *pDeferredRenderPass = &pGraphicEngine->deferredRenderPass;
     uint32_t geometrySubpassIndex = 0;
     Subpass *pGeometrySubpass = &pDeferredRenderPass->subpasses[geometrySubpassIndex];
 
-    pGeometrySubpass->maxModelCount = 256;
-    pGeometrySubpass->modelCount = 0;
-    pGeometrySubpass->subpassModels = TickernelMalloc(sizeof(SubpassModel) * pGeometrySubpass->maxModelCount);
-    pGeometrySubpass->pRemovedIndexLinkedList = NULL;
+    pGeometrySubpass->maxModelGroupCount = 1;
+    pGeometrySubpass->modelCountPerGroup = 256;
+    pGeometrySubpass->modelGroupCount = 0;
+    pGeometrySubpass->modelGroups = TickernelMalloc(sizeof(ModelGroup) * pGeometrySubpass->maxModelGroupCount);
 }
-static void DestroyGeometrySubpassModels(GraphicEngine *pGraphicEngine)
+static void DestroyGeometryModelGroups(GraphicEngine *pGraphicEngine)
 {
     RenderPass *pDeferredRenderPass = &pGraphicEngine->deferredRenderPass;
     uint32_t geometrySubpassIndex = 0;
     Subpass *pGeometrySubpass = &pDeferredRenderPass->subpasses[geometrySubpassIndex];
-    while (NULL != pGeometrySubpass->pRemovedIndexLinkedList)
+
+    for (uint32_t groupIndex = 0; groupIndex < pGeometrySubpass->modelGroupCount; groupIndex++)
     {
-        Uint32Node *pNode = pGeometrySubpass->pRemovedIndexLinkedList;
-        pGeometrySubpass->pRemovedIndexLinkedList = pGeometrySubpass->pRemovedIndexLinkedList->pNext;
-        TickernelFree(pNode);
+        ModelGroup modelGroup = pGeometrySubpass->modelGroups[groupIndex];
+        DestroyModelGroup(pGraphicEngine, modelGroup);
     }
-    TickernelFree(pGeometrySubpass->subpassModels);
+    TickernelFree(pGeometrySubpass->modelGroups);
 }
 
-static void CreateDescriptorPool(GraphicEngine *pGraphicEngine)
+void CreateGeometrySubpass(GraphicEngine *pGraphicEngine)
 {
     RenderPass *pDeferredRenderPass = &pGraphicEngine->deferredRenderPass;
     uint32_t geometrySubpassIndex = 0;
     Subpass *pGeometrySubpass = &pDeferredRenderPass->subpasses[geometrySubpassIndex];
-    VkDescriptorPoolSize poolSize[] = {
-        {
-            .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-            .descriptorCount = pGeometrySubpass->maxModelCount * 2,
-        }};
-    VkDescriptorPoolCreateInfo descriptorPoolCreateInfo = {
-        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
-        .pNext = NULL,
-        .flags = 0,
-        .maxSets = pGeometrySubpass->maxModelCount,
-        .poolSizeCount = 1,
-        .pPoolSizes = poolSize,
-    };
-    VkResult result = vkCreateDescriptorPool(pGraphicEngine->vkDevice, &descriptorPoolCreateInfo, NULL, &pGeometrySubpass->vkDescriptorPool);
-    TryThrowVulkanError(result);
+    CreateVkPipeline(pGraphicEngine);
+    CreateGeometryModelGroups(pGraphicEngine);
+    pGeometrySubpass->vkDescriptorTypeToCount = TickernelMalloc(sizeof(uint32_t) * MAX_VK_DESCRIPTOR_TPYE);
+    pGeometrySubpass->vkDescriptorTypeToCount[VK_DESCRIPTOR_TYPE_SAMPLER] = 0;                // 0,
+    pGeometrySubpass->vkDescriptorTypeToCount[VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER] = 0; // 1,
+    pGeometrySubpass->vkDescriptorTypeToCount[VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE] = 0;          // 2,
+    pGeometrySubpass->vkDescriptorTypeToCount[VK_DESCRIPTOR_TYPE_STORAGE_IMAGE] = 0;          // 3,
+    pGeometrySubpass->vkDescriptorTypeToCount[VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER] = 0;   // 4,
+    pGeometrySubpass->vkDescriptorTypeToCount[VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER] = 0;   // 5,
+    pGeometrySubpass->vkDescriptorTypeToCount[VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER] = 2;         // 6,
+    pGeometrySubpass->vkDescriptorTypeToCount[VK_DESCRIPTOR_TYPE_STORAGE_BUFFER] = 0;         // 7,
+    pGeometrySubpass->vkDescriptorTypeToCount[VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC] = 0; // 8,
+    pGeometrySubpass->vkDescriptorTypeToCount[VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC] = 0; // 9,
+    pGeometrySubpass->vkDescriptorTypeToCount[VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT] = 0;       // 10,
 }
-static void DestroyDescriptorPool(GraphicEngine *pGraphicEngine)
+void DestroyGeometrySubpass(GraphicEngine *pGraphicEngine)
+{
+    DestroyGeometryModelGroups(pGraphicEngine);
+    DestroyVkPipeline(pGraphicEngine);
+}
+void AddModelToGeometrySubpass(GraphicEngine *pGraphicEngine, uint32_t vertexCount, GeometrySubpassVertex *geometrySubpassVertices, uint32_t *pGroupIndex, uint32_t *pModelIndex)
 {
     RenderPass *pDeferredRenderPass = &pGraphicEngine->deferredRenderPass;
     uint32_t geometrySubpassIndex = 0;
     Subpass *pGeometrySubpass = &pDeferredRenderPass->subpasses[geometrySubpassIndex];
-    vkDestroyDescriptorPool(pGraphicEngine->vkDevice, pGeometrySubpass->vkDescriptorPool, NULL);
-}
-
-static void CreateSubpassModel(GraphicEngine *pGraphicEngine, SubpassModel *pOutputSubpassModel);
-{
-    pOutputSubpassModel.vertexCount = deferredRenderPipelineObject.vertexCount;
-
-    // Create vertexBuffer
-    VkDeviceSize bufferSize = sizeof(GeometrySubpassVertex) * deferredRenderPipelineObject.vertexCount;
-    VkBuffer stagingBuffer;
-    VkDeviceMemory stagingBufferMemory;
-    CreateBuffer(pGraphicEngine, bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingBuffer, &stagingBufferMemory);
-    void *pData;
-    result = vkMapMemory(pGraphicEngine->vkDevice, stagingBufferMemory, 0, bufferSize, 0, &pData);
-    TryThrowVulkanError(result);
-    memcpy(pData, deferredRenderPipelineObject.vertices, bufferSize);
-    vkUnmapMemory(pGraphicEngine->vkDevice, stagingBufferMemory);
-    CreateBuffer(pGraphicEngine, bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &pOutputSubpassModel.vertexBuffer, &pOutputSubpassModel.vertexBufferMemory);
-    TryThrowVulkanError(result);
-    CopyVkBuffer(pGraphicEngine, stagingBuffer, pOutputSubpassModel.vertexBuffer, bufferSize);
-    DestroyBuffer(pGraphicEngine->vkDevice, stagingBuffer, stagingBufferMemory);
-
-    // Create objectUniformBuffer
-    bufferSize = sizeof(DeferredRenderPipelineModelUniformBuffer);
-    CreateBuffer(pGraphicEngine, bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &pOutputSubpassModel.objectUniformBuffer, &pOutputSubpassModel.objectUniformBufferMemory);
-    vkMapMemory(pGraphicEngine->vkDevice, pOutputSubpassModel.objectUniformBufferMemory, 0, bufferSize, 0, &pOutputSubpassModel.objectUniformBufferMapped);
-
-    // Create vkDescriptorSet
-    VkDescriptorSetAllocateInfo descriptorSetAllocateInfo = {
-        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-        .pNext = NULL,
-        .descriptorPool = pGraphicEngine->deferredRenderPipeline.vkDescriptorPool,
-        .descriptorSetCount = 1,
-        .pSetLayouts = &pGraphicEngine->deferredRenderPipeline.vkPipelineToDescriptorSetLayout[0],
-    };
-    pOutputSubpassModel.vkPipelineToDescriptorSet = TickernelMalloc(sizeof(VkDescriptorSet) * 2);
-
-    result = vkAllocateDescriptorSets(pGraphicEngine->vkDevice, &descriptorSetAllocateInfo, &pOutputSubpassModel.vkPipelineToDescriptorSet[0]);
 
     VkDescriptorBufferInfo globalDescriptorBufferInfo = {
         .buffer = pGraphicEngine->globalUniformBuffer,
@@ -329,16 +294,16 @@ static void CreateSubpassModel(GraphicEngine *pGraphicEngine, SubpassModel *pOut
         .range = sizeof(GlobalUniformBuffer),
     };
     VkDescriptorBufferInfo objectDescriptorBufferInfo = {
-        .buffer = pOutputSubpassModel.objectUniformBuffer,
+        .buffer = pSubpassModel->modelUniformBuffer,
         .offset = 0,
-        .range = sizeof(DeferredRenderPipelineModelUniformBuffer),
+        .range = sizeof(GeometrySubpassModelUniformBuffer),
     };
 
     VkWriteDescriptorSet descriptorWrites[2] = {
         {
             .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
             .pNext = NULL,
-            .dstSet = pOutputSubpassModel.vkPipelineToDescriptorSet[0],
+            .dstSet = pSubpassModel->vkDescriptorSet,
             .dstBinding = 0,
             .dstArrayElement = 0,
             .descriptorCount = 1,
@@ -350,7 +315,7 @@ static void CreateSubpassModel(GraphicEngine *pGraphicEngine, SubpassModel *pOut
         {
             .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
             .pNext = NULL,
-            .dstSet = pOutputSubpassModel.vkPipelineToDescriptorSet[0],
+            .dstSet = pSubpassModel->vkDescriptorSet,
             .dstBinding = 1,
             .dstArrayElement = 0,
             .descriptorCount = 1,
@@ -360,61 +325,83 @@ static void CreateSubpassModel(GraphicEngine *pGraphicEngine, SubpassModel *pOut
             .pTexelBufferView = NULL,
         },
     };
-    vkUpdateDescriptorSets(pGraphicEngine->vkDevice, 2, descriptorWrites, 0, NULL);
-}
-static void DestroySubpassModel(GraphicEngine *pGraphicEngine, SubpassModel *pSubpassModel);
-{
-}
+    SubpassModelCreateInfo subpassModelCreateInfo = {
+        .vertexCount = vertexCount,
+        .vertexSize = sizeof(GeometrySubpassVertex),
+        .vertices = geometrySubpassVertices,
+        // .modelUniformBufferSize =,
+        .vkDescriptorSetLayout = pGeometrySubpass->descriptorSetLayout,
+    };
 
-void CreateGeometrySubpass(GraphicEngine *pGraphicEngine)
-{
-    CreateVkPipeline(pGraphicEngine);
-    CreateGeometrySubpassModels(pGraphicEngine);
-    CreateDescriptorPool(pGraphicEngine);
+    AddModelToSubpass(pGraphicEngine->vkDevice, )
 }
+void RemoveModelFromGeometrySubpass(GraphicEngine *pGraphicEngine, uint32_t groupIndex, uint32_t modelIndex)
+{
+}
+// void CreateSubpassModel(GraphicEngine *pGraphicEngine, uint32_t vertexCount, VkDeviceSize vertexSize, void *vertices, ModelGroup *pModelGroup, VkDescriptorSetLayout vkDescriptorSetLayout, uint32_t modelIndex, SubpassModel *pSubpassModel)
+// {
+//     pSubpassModel->vertexCount = vertexCount;
+//     VkDeviceSize vertexBufferSize = vertexSize * vertexCount;
+//     CreateVertexBuffer(pGraphicEngine, vertexBufferSize, vertices, &pSubpassModel->vertexBuffer, &pSubpassModel->vertexBufferMemory);
 
-void DestroyGeometrySubpass(GraphicEngine *pGraphicEngine)
-{
-    DestroyDescriptorPool(pGraphicEngine);
-    DestroyGeometrySubpassModels(pGraphicEngine);
-    DestroyVkPipeline(pGraphicEngine);
-}
+//     VkDeviceSize uniformBufferSize = sizeof(GeometrySubpassModelUniformBuffer);
+//     CreateBuffer(pGraphicEngine, uniformBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &pSubpassModel->modelUniformBuffer, &pSubpassModel->modelUniformBufferMemory);
+//     vkMapMemory(pGraphicEngine->vkDevice, *&pSubpassModel->modelUniformBufferMemory, 0, uniformBufferSize, 0, pSubpassModel->modelUniformBufferMapped);
+//     // Create vkDescriptorSet
+//     VkDescriptorSetAllocateInfo descriptorSetAllocateInfo = {
+//         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+//         .pNext = NULL,
+//         .descriptorPool = pModelGroup->vkDescriptorPool,
+//         .descriptorSetCount = 1,
+//         .pSetLayouts = &vkDescriptorSetLayout,
+//     };
+//     VkResult result = vkAllocateDescriptorSets(pGraphicEngine->vkDevice, &descriptorSetAllocateInfo, &pSubpassModel->vkDescriptorSet);
 
-void AddModelToGeometrySubpass(GraphicEngine *pGraphicEngine, GeometrySubpassVertex *geometrySubpassVertices, uint32_t *pOutputIndex)
-{
-    RenderPass *pDeferredRenderPass = &pGraphicEngine->deferredRenderPass;
-    uint32_t geometrySubpassIndex = 0;
-    Subpass *pGeometrySubpass = &pDeferredRenderPass->subpasses[geometrySubpassIndex];
-    if (NULL != pGeometrySubpass->pRemovedIndexLinkedList)
-    {
-        uint32_t index = pGeometrySubpass->pRemovedIndexLinkedList->data;
-        Uint32Node *pNode = pGeometrySubpass->pRemovedIndexLinkedList;
-        pGeometrySubpass->pRemovedIndexLinkedList = pGeometrySubpass->pRemovedIndexLinkedList->pNext;
-        TickernelFree(pNode);
-        CreateSubpassModel(pGraphicEngine, &pGeometrySubpass->subpassModels[index]);
-    }
-    else if (pGeometrySubpass->modelCount < pGeometrySubpass->maxModelCount)
-    {
-        uint32_t index = pGeometrySubpass->modelCount;
-        CreateSubpassModel(pGraphicEngine, &pGeometrySubpass->subpassModels[index]);
-        pGeometrySubpass->modelCount++;
-    }
-    else
-    {
-        uint32_t oldMaxModelCount = pGeometrySubpass->maxModelCount;
-        pGeometrySubpass->maxModelCount = pGeometrySubpass->maxModelCount * 2;
-        SubpassModel *oldModels = pGeometrySubpass->subpassModels;
-        pGeometrySubpass->subpassModels = TickernelMalloc(sizeof(SubpassModel) * pGeometrySubpass->maxModelCount);
-        memcpy(pGeometrySubpass->subpassModels, oldModels, sizeof(SubpassModel) * oldMaxModelCount);
-        // TODO: Recreate descriptor pool!
-        uint32_t index = pGeometrySubpass->modelCount;
-        CreateSubpassModel(pGraphicEngine, &pGeometrySubpass->subpassModels[index]);
-        pGeometrySubpass->modelCount++;
-    }
-}
-void RemoveModelFromGeometrySubpass(GraphicEngine *pGraphicEngine, uint32_t inputIndex)
-{
-    RenderPass *pDeferredRenderPass = &pGraphicEngine->deferredRenderPass;
-    uint32_t geometrySubpassIndex = 0;
-    Subpass *pGeometrySubpass = &pDeferredRenderPass->subpasses[geometrySubpassIndex];
-}
+//     VkDescriptorBufferInfo globalDescriptorBufferInfo = {
+//         .buffer = pGraphicEngine->globalUniformBuffer,
+//         .offset = 0,
+//         .range = sizeof(GlobalUniformBuffer),
+//     };
+//     VkDescriptorBufferInfo objectDescriptorBufferInfo = {
+//         .buffer = pSubpassModel->modelUniformBuffer,
+//         .offset = 0,
+//         .range = sizeof(GeometrySubpassModelUniformBuffer),
+//     };
+
+//     VkWriteDescriptorSet descriptorWrites[2] = {
+//         {
+//             .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+//             .pNext = NULL,
+//             .dstSet = pSubpassModel->vkDescriptorSet,
+//             .dstBinding = 0,
+//             .dstArrayElement = 0,
+//             .descriptorCount = 1,
+//             .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+//             .pImageInfo = NULL,
+//             .pBufferInfo = &globalDescriptorBufferInfo,
+//             .pTexelBufferView = NULL,
+//         },
+//         {
+//             .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+//             .pNext = NULL,
+//             .dstSet = pSubpassModel->vkDescriptorSet,
+//             .dstBinding = 1,
+//             .dstArrayElement = 0,
+//             .descriptorCount = 1,
+//             .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+//             .pImageInfo = NULL,
+//             .pBufferInfo = &objectDescriptorBufferInfo,
+//             .pTexelBufferView = NULL,
+//         },
+//     };
+//     vkUpdateDescriptorSets(pGraphicEngine->vkDevice, 2, descriptorWrites, 0, NULL);
+// }
+
+// void DestroySubpassModel(GraphicEngine *pGraphicEngine, ModelGroup *pModelGroup, uint32_t modelIndex)
+// {
+//     SubpassModel *pSubpassModel = &pModelGroup->subpassModels[modelIndex];
+//     VkResult result = vkFreeDescriptorSets(pGraphicEngine->vkDevice, pModelGroup->vkDescriptorPool, 1, &pSubpassModel->vkDescriptorSet);
+//     TryThrowVulkanError(result);
+//     DestroyBuffer(pGraphicEngine->vkDevice, pSubpassModel->modelUniformBuffer, pSubpassModel->modelUniformBufferMemory);
+//     DestroyVertexBuffer(pGraphicEngine, pSubpassModel->vertexBuffer, pSubpassModel->vertexBufferMemory);
+// }

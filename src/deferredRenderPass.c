@@ -158,11 +158,15 @@ static void CreateVkRenderPass(GraphicEngine *pGraphicEngine)
     VkResult result = VK_SUCCESS;
     result = vkCreateRenderPass(pGraphicEngine->vkDevice, &vkRenderPassCreateInfo, NULL, &pGraphicEngine->deferredRenderPass.vkRenderPass);
     TryThrowVulkanError(result);
+
+    pGraphicEngine->deferredRenderPass.subpassCount = 2;
+    pGraphicEngine->deferredRenderPass.subpasses = TickernelMalloc(sizeof(Subpass) * pGraphicEngine->deferredRenderPass.subpassCount);
 }
 
 static void DestroyVkRenderPass(GraphicEngine *pGraphicEngine)
 {
     vkDestroyRenderPass(pGraphicEngine->vkDevice, pGraphicEngine->deferredRenderPass.vkRenderPass, NULL);
+    TickernelFree(pGraphicEngine->deferredRenderPass.subpasses);
 }
 
 static void CreateVkFramebuffers(GraphicEngine *pGraphicEngine)
@@ -196,6 +200,7 @@ void CreateDeferredRenderPass(GraphicEngine *pGraphicEngine)
 {
     CreateVkRenderPass(pGraphicEngine);
     CreateVkFramebuffers(pGraphicEngine);
+
     CreateGeometrySubpass(pGraphicEngine);
     CreateLightingSubpass(pGraphicEngine);
 }
@@ -252,20 +257,24 @@ void RecordDeferredRenderPass(GraphicEngine *pGraphicEngine)
             .pClearValues = clearValues,
         };
     vkCmdBeginRenderPass(vkCommandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
-    for (uint32_t i = 0; i < pDeferredRenderPass->subpassCount; i++)
+    for (uint32_t subpassIndex = 0; subpassIndex < pDeferredRenderPass->subpassCount; subpassIndex++)
     {
-        Subpass *pSubpass = &pDeferredRenderPass->subpasses[i];
+        Subpass *pSubpass = &pDeferredRenderPass->subpasses[subpassIndex];
         vkCmdBindPipeline(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pSubpass->vkPipeline);
         uint32_t geometryPipelineIndex = 0;
-        for (uint32_t i = 0; i < pSubpass->modelCount; i++)
+        for (uint32_t modelGroupIndex = 0; modelGroupIndex < pSubpass->modelGroupCount; modelGroupIndex++)
         {
-            SubpassModel *pSubpassModel = &pSubpass->subpassModels[i];
-            vkCmdBindDescriptorSets(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pSubpass->vkPipelineLayout, 0, 1, &pSubpassModel->vkDescriptorSet, 0, NULL);
-            VkBuffer vertexBuffers[] = {pSubpassModel->vertexBuffer};
-            VkDeviceSize offsets[] = {0};
-            vkCmdBindVertexBuffers(vkCommandBuffer, 0, 1, vertexBuffers, offsets);
-            uint32_t vertexCount = pSubpassModel->vertexCount;
-            vkCmdDraw(vkCommandBuffer, vertexCount, 1, 0, 0);
+            ModelGroup *pModelGroup = &pSubpass->modelGroups[modelGroupIndex];
+            for (uint32_t modelIndex = 0; modelIndex < pModelGroup->modelCount; modelIndex++)
+            {
+                SubpassModel *pSubpassModel = &pModelGroup->subpassModels[modelGroupIndex];
+                vkCmdBindDescriptorSets(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pSubpass->vkPipelineLayout, 0, 1, &pSubpassModel->vkDescriptorSet, 0, NULL);
+                VkBuffer vertexBuffers[] = {pSubpassModel->vertexBuffer};
+                VkDeviceSize offsets[] = {0};
+                vkCmdBindVertexBuffers(vkCommandBuffer, 0, 1, vertexBuffers, offsets);
+                uint32_t vertexCount = pSubpassModel->vertexCount;
+                vkCmdDraw(vkCommandBuffer, vertexCount, 1, 0, 0);
+            }
         }
     }
     vkCmdEndRenderPass(vkCommandBuffer);

@@ -1,5 +1,129 @@
 #include <graphicEngineCore.h>
+static void CopyVkBuffer(GraphicEngine *pGraphicEngine, VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
+{
+    VkCommandBuffer vkCommandBuffer;
+    VkCommandBufferAllocateInfo vkCommandBufferAllocateInfo = {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+        .pNext = NULL,
+        .commandPool = pGraphicEngine->graphicVkCommandPool,
+        .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+        .commandBufferCount = 1,
+    };
+    VkResult result = vkAllocateCommandBuffers(pGraphicEngine->vkDevice, &vkCommandBufferAllocateInfo, pGraphicEngine->graphicVkCommandBuffers);
+    TryThrowVulkanError(result);
 
+    VkCommandBufferBeginInfo vkCommandBufferBeginInfo =
+        {
+            .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+            .pNext = NULL,
+            .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
+            .pInheritanceInfo = NULL,
+        };
+    result = vkBeginCommandBuffer(vkCommandBuffer, &vkCommandBufferBeginInfo);
+    TryThrowVulkanError(result);
+    vkBeginCommandBuffer(vkCommandBuffer, &vkCommandBufferBeginInfo);
+
+    VkBufferCopy copyRegion;
+    copyRegion.size = size;
+    vkCmdCopyBuffer(vkCommandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
+
+    vkEndCommandBuffer(vkCommandBuffer);
+    VkSubmitInfo submitInfo = {
+        .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+        .pNext = NULL,
+        .waitSemaphoreCount = 0,
+        .pWaitSemaphores = NULL,
+        .pWaitDstStageMask = NULL,
+        .commandBufferCount = 1,
+        .pCommandBuffers = &vkCommandBuffer,
+        .signalSemaphoreCount = 0,
+        .pSignalSemaphores = NULL,
+    };
+    vkQueueSubmit(pGraphicEngine->vkGraphicQueue, 1, &submitInfo, VK_NULL_HANDLE);
+    vkQueueWaitIdle(pGraphicEngine->vkGraphicQueue);
+    vkFreeCommandBuffers(pGraphicEngine->vkDevice, pGraphicEngine->graphicVkCommandPool, 1, &vkCommandBuffer);
+}
+static void CreateSubpassModel(GraphicEngine *pGraphicEngine, SubpassModelCreateInfo subpassModelCreateInfo, ModelGroup *pModelGroup, uint32_t modelIndex)
+{
+    SubpassModel *pSubpassModel = &pModelGroup->subpassModels[modelIndex];
+
+    // Create vertex buffer
+    pSubpassModel->vertexCount = subpassModelCreateInfo.vertexCount;
+    VkDeviceSize vertexBufferSize = subpassModelCreateInfo.vertexSize * subpassModelCreateInfo.vertexCount;
+    VkBuffer stagingBuffer;
+    VkDeviceMemory stagingBufferMemory;
+    CreateBuffer(pGraphicEngine, vertexBufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingBuffer, &stagingBufferMemory);
+    void *pData;
+    VkResult result = vkMapMemory(pGraphicEngine->vkDevice, stagingBufferMemory, 0, vertexBufferSize, 0, &pData);
+    TryThrowVulkanError(result);
+    memcpy(pData, subpassModelCreateInfo.vertices, vertexBufferSize);
+    vkUnmapMemory(pGraphicEngine->vkDevice, stagingBufferMemory);
+    CreateBuffer(pGraphicEngine, vertexBufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &pSubpassModel->vertexBuffer, &pSubpassModel->vertexBufferMemory);
+    TryThrowVulkanError(result);
+    CopyVkBuffer(pGraphicEngine, stagingBuffer, *&pSubpassModel->vertexBuffer, vertexBufferSize);
+    DestroyBuffer(pGraphicEngine->vkDevice, stagingBuffer, stagingBufferMemory);
+
+    // Create object uniform buffer
+    CreateBuffer(pGraphicEngine, subpassModelCreateInfo.modelUniformBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &pSubpassModel->modelUniformBuffer, &pSubpassModel->modelUniformBufferMemory);
+    vkMapMemory(pGraphicEngine->vkDevice, *&pSubpassModel->modelUniformBufferMemory, 0, subpassModelCreateInfo.modelUniformBufferSize, 0, pSubpassModel->modelUniformBufferMapped);
+    
+    // Create vkDescriptorSet
+    VkDescriptorSetAllocateInfo descriptorSetAllocateInfo = {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+        .pNext = NULL,
+        .descriptorPool = pModelGroup->vkDescriptorPool,
+        .descriptorSetCount = 1,
+        .pSetLayouts = &subpassModelCreateInfo.vkDescriptorSetLayout,
+    };
+    result = vkAllocateDescriptorSets(pGraphicEngine->vkDevice, &descriptorSetAllocateInfo, &pSubpassModel->vkDescriptorSet);
+
+    VkDescriptorBufferInfo globalDescriptorBufferInfo = {
+        .buffer = pGraphicEngine->globalUniformBuffer,
+        .offset = 0,
+        .range = sizeof(GlobalUniformBuffer),
+    };
+    VkDescriptorBufferInfo objectDescriptorBufferInfo = {
+        .buffer = pSubpassModel->modelUniformBuffer,
+        .offset = 0,
+        .range = sizeof(GeometrySubpassModelUniformBuffer),
+    };
+
+    VkWriteDescriptorSet descriptorWrites[2] = {
+        {
+            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            .pNext = NULL,
+            .dstSet = pSubpassModel->vkDescriptorSet,
+            .dstBinding = 0,
+            .dstArrayElement = 0,
+            .descriptorCount = 1,
+            .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+            .pImageInfo = NULL,
+            .pBufferInfo = &globalDescriptorBufferInfo,
+            .pTexelBufferView = NULL,
+        },
+        {
+            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            .pNext = NULL,
+            .dstSet = pSubpassModel->vkDescriptorSet,
+            .dstBinding = 1,
+            .dstArrayElement = 0,
+            .descriptorCount = 1,
+            .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+            .pImageInfo = NULL,
+            .pBufferInfo = &objectDescriptorBufferInfo,
+            .pTexelBufferView = NULL,
+        },
+    };
+    vkUpdateDescriptorSets(pGraphicEngine->vkDevice, 2, subpassModelCreateInfo.vkWriteDescriptorSets, 0, NULL);
+}
+static void DestroySubpassModel(GraphicEngine *pGraphicEngine, ModelGroup modelGroup, uint32_t modelIndex)
+{
+    SubpassModel *pSubpassModel = &modelGroup.subpassModels[modelIndex];
+    VkResult result = vkFreeDescriptorSets(pGraphicEngine->vkDevice, modelGroup.vkDescriptorPool, 1, &pSubpassModel->vkDescriptorSet);
+    TryThrowVulkanError(result);
+    DestroyBuffer(pGraphicEngine->vkDevice, pSubpassModel->modelUniformBuffer, pSubpassModel->modelUniformBufferMemory);
+    DestroyBuffer(pGraphicEngine->vkDevice, pSubpassModel->vertexBuffer, pSubpassModel->vertexBufferMemory);
+}
 void CreateBuffer(GraphicEngine *pGraphicEngine, VkDeviceSize bufferSize, VkBufferUsageFlags bufferUsageFlags, VkMemoryPropertyFlags msemoryPropertyFlags, VkBuffer *pBuffer, VkDeviceMemory *pDeviceMemory)
 {
     VkResult result = VK_SUCCESS;
@@ -209,47 +333,125 @@ void DestroyVkShaderModule(GraphicEngine *pGraphicEngine, VkShaderModule vkShade
     vkDestroyShaderModule(pGraphicEngine->vkDevice, vkShaderModule, NULL);
 }
 
-void CopyVkBuffer(GraphicEngine *pGraphicEngine, VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
+void CreateModelGroup(GraphicEngine *pGraphicEngine, Subpass *pSubpass, ModelGroup *pModelGroup)
 {
-    VkCommandBuffer vkCommandBuffer;
-    VkCommandBufferAllocateInfo vkCommandBufferAllocateInfo = {
-        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
-        .pNext = NULL,
-        .commandPool = pGraphicEngine->graphicVkCommandPool,
-        .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
-        .commandBufferCount = 1,
-    };
-    VkResult result = vkAllocateCommandBuffers(pGraphicEngine->vkDevice, &vkCommandBufferAllocateInfo, pGraphicEngine->graphicVkCommandBuffers);
-    TryThrowVulkanError(result);
+    pModelGroup->modelCount = 0;
+    pModelGroup->subpassModels = TickernelMalloc(sizeof(SubpassModel) * pSubpass->modelCountPerGroup);
+    pModelGroup->pRemovedIndexLinkedList = NULL;
 
-    VkCommandBufferBeginInfo vkCommandBufferBeginInfo =
-        {
-            .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
-            .pNext = NULL,
-            .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
-            .pInheritanceInfo = NULL,
+    VkDescriptorPoolSize poolSizes[MAX_VK_DESCRIPTOR_TPYE];
+    for (uint32_t vkDescriptorType = 0; vkDescriptorType < MAX_VK_DESCRIPTOR_TPYE; vkDescriptorType++)
+    {
+        poolSizes[vkDescriptorType] = (VkDescriptorPoolSize){
+            .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+            .descriptorCount = pSubpass->modelCountPerGroup * pSubpass->vkDescriptorTypeToCount[vkDescriptorType],
         };
-    result = vkBeginCommandBuffer(vkCommandBuffer, &vkCommandBufferBeginInfo);
-    TryThrowVulkanError(result);
-    vkBeginCommandBuffer(vkCommandBuffer, &vkCommandBufferBeginInfo);
+    }
 
-    VkBufferCopy copyRegion;
-    copyRegion.size = size;
-    vkCmdCopyBuffer(vkCommandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
-
-    vkEndCommandBuffer(vkCommandBuffer);
-    VkSubmitInfo submitInfo = {
-        .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+    VkDescriptorPoolCreateInfo descriptorPoolCreateInfo = {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
         .pNext = NULL,
-        .waitSemaphoreCount = 0,
-        .pWaitSemaphores = NULL,
-        .pWaitDstStageMask = NULL,
-        .commandBufferCount = 1,
-        .pCommandBuffers = &vkCommandBuffer,
-        .signalSemaphoreCount = 0,
-        .pSignalSemaphores = NULL,
+        .flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
+        .maxSets = pSubpass->modelCountPerGroup,
+        .poolSizeCount = 1,
+        .pPoolSizes = poolSizes,
     };
-    vkQueueSubmit(pGraphicEngine->vkGraphicQueue, 1, &submitInfo, VK_NULL_HANDLE);
-    vkQueueWaitIdle(pGraphicEngine->vkGraphicQueue);
-    vkFreeCommandBuffers(pGraphicEngine->vkDevice, pGraphicEngine->graphicVkCommandPool, 1, &vkCommandBuffer);
+    VkResult result = vkCreateDescriptorPool(pGraphicEngine->vkDevice, &descriptorPoolCreateInfo, NULL, &pModelGroup->vkDescriptorPool);
+    TryThrowVulkanError(result);
+}
+static void DestroyModelGroup(GraphicEngine *pGraphicEngine, ModelGroup modelGroup)
+{
+    RenderPass *pDeferredRenderPass = &pGraphicEngine->deferredRenderPass;
+    uint32_t subpassIndex = 0;
+    Subpass *pSubpass = &pDeferredRenderPass->subpasses[subpassIndex];
+
+    for (uint32_t modelIndex = 0; modelIndex < modelGroup.modelCount; modelIndex++)
+    {
+        DestroySubpassModel(pGraphicEngine, modelGroup, modelIndex);
+    }
+
+    vkDestroyDescriptorPool(pGraphicEngine->vkDevice, modelGroup.vkDescriptorPool, NULL);
+    TickernelFree(modelGroup.subpassModels);
+}
+
+void AddModelToSubpass(GraphicEngine *pGraphicEngine, SubpassModelCreateInfo subpassModelCreateInfo, Subpass *pSubpass, uint32_t *pGroupIndex, uint32_t *pModelIndex)
+{
+    for (uint32_t groupIndex = 0; groupIndex < pSubpass->modelGroupCount; groupIndex++)
+    {
+        ModelGroup *pModelGroup = &pSubpass->modelGroups[groupIndex];
+        if (NULL != pModelGroup->pRemovedIndexLinkedList)
+        {
+            uint32_t modelIndex = pModelGroup->pRemovedIndexLinkedList->data;
+            Uint32Node *pNode = pModelGroup->pRemovedIndexLinkedList;
+            pModelGroup->pRemovedIndexLinkedList = pModelGroup->pRemovedIndexLinkedList->pNext;
+            TickernelFree(pNode);
+            CreateSubpassModel(pGraphicEngine, subpassModelCreateInfo, pModelGroup, modelIndex);
+            *pGroupIndex = groupIndex;
+            *pModelIndex = modelIndex;
+            return;
+        }
+        else if (pModelGroup->modelCount < pSubpass->modelCountPerGroup)
+        {
+            uint32_t modelIndex = pModelGroup->modelCount;
+            CreateSubpassModel(pGraphicEngine, subpassModelCreateInfo, pModelGroup, modelIndex);
+            pModelGroup->modelCount++;
+            *pGroupIndex = groupIndex;
+            *pModelIndex = modelIndex;
+            return;
+        }
+        else
+        {
+            // continue;
+        }
+    }
+
+    // Create group & create model
+    if (pSubpass->modelGroupCount < pSubpass->maxModelGroupCount)
+    {
+        uint32_t groupIndex = pSubpass->modelGroupCount;
+        // create model group
+        CreateModelGroup(pGraphicEngine, pSubpass, &pSubpass->modelGroups[groupIndex]);
+        pSubpass->modelGroupCount++;
+        // create model
+        ModelGroup *pModelGroup = &pSubpass->modelGroups[groupIndex];
+        uint32_t modelIndex = pModelGroup->modelCount;
+        CreateSubpassModel(pGraphicEngine, subpassModelCreateInfo, pModelGroup, modelIndex);
+        pModelGroup->modelCount++;
+
+        *pGroupIndex = groupIndex;
+        *pModelIndex = modelIndex;
+        return;
+    }
+    else
+    {
+        uint32_t oldCount = pSubpass->maxModelGroupCount;
+        ModelGroup *oldModelGroups = pSubpass->modelGroups;
+        pSubpass->maxModelGroupCount = pSubpass->maxModelGroupCount * 2;
+        pSubpass->modelGroups = TickernelMalloc(sizeof(ModelGroup) * pSubpass->maxModelGroupCount);
+        memcpy(pSubpass->modelGroups, oldModelGroups, oldCount * sizeof(ModelGroup));
+        TickernelFree(oldModelGroups);
+        // create model group
+        uint32_t groupIndex = pSubpass->modelGroupCount;
+        CreateModelGroup(pGraphicEngine, pSubpass, &pSubpass->modelGroups[groupIndex]);
+        pSubpass->modelGroupCount++;
+        // create model
+        ModelGroup *pModelGroup = &pSubpass->modelGroups[groupIndex];
+        uint32_t modelIndex = pModelGroup->modelCount;
+        CreateSubpassModel(pGraphicEngine, subpassModelCreateInfo, pModelGroup, modelIndex);
+        pModelGroup->modelCount++;
+
+        *pGroupIndex = groupIndex;
+        *pModelIndex = modelIndex;
+        return;
+    }
+}
+void RemoveModelFromSubpass(GraphicEngine *pGraphicEngine, uint32_t groupIndex, uint32_t modelIndex, Subpass *pSubpass)
+{
+    ModelGroup *pModelGroup = &pSubpass->modelGroups[groupIndex];
+
+    Uint32Node *newNode = TickernelMalloc(sizeof(Uint32Node));
+    newNode->data = modelIndex;
+    newNode->pNext = pModelGroup->pRemovedIndexLinkedList;
+    pModelGroup->pRemovedIndexLinkedList = newNode;
+    DestroySubpassModel(pGraphicEngine, *pModelGroup, modelIndex);
 }
