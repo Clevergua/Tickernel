@@ -256,7 +256,7 @@ static void CreateGeometrySubpassModel(GraphicEngine *pGraphicEngine, uint32_t v
         .descriptorSetCount = 1,
         .pSetLayouts = &pGeometrySubpass->descriptorSetLayout,
     };
-    VkResult result = vkAllocateDescriptorSets(pGraphicEngine->vkDevice, &descriptorSetAllocateInfo, &pSubpassModel->vkDescriptorSet);
+    result = vkAllocateDescriptorSets(pGraphicEngine->vkDevice, &descriptorSetAllocateInfo, &pSubpassModel->vkDescriptorSet);
 
     VkDescriptorBufferInfo globalDescriptorBufferInfo = {
         .buffer = pGraphicEngine->globalUniformBuffer,
