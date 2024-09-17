@@ -101,7 +101,7 @@ static void CreateVkPipeline(GraphicEngine *pGraphicEngine)
         .depthBiasConstantFactor = 0,
         .depthBiasClamp = VK_FALSE,
         .depthBiasSlopeFactor = 0,
-        .lineWidth = 0,
+        .lineWidth = 1.0f,
     };
     VkPipelineDepthStencilStateCreateInfo pipelineDepthStencilStateCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
@@ -117,14 +117,59 @@ static void CreateVkPipeline(GraphicEngine *pGraphicEngine)
         .minDepthBounds = 0,
         .maxDepthBounds = 1,
     };
-
+    VkPipelineColorBlendAttachmentState pipelineColorBlendAttachmentState = {
+        .blendEnable = VK_TRUE,
+        .srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA,
+        .dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+        .colorBlendOp = VK_BLEND_OP_ADD,
+        .srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE,
+        .dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
+        .alphaBlendOp = VK_BLEND_OP_ADD,
+        .colorWriteMask = VK_COLOR_COMPONENT_A_BIT | VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT,
+    };
+    VkPipelineColorBlendStateCreateInfo colorBlendStateCreateInfo = {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
+        .pNext = NULL,
+        .flags = 0,
+        .logicOpEnable = VK_FALSE,
+        .logicOp = VK_LOGIC_OP_COPY,
+        .attachmentCount = 1,
+        .pAttachments = &pipelineColorBlendAttachmentState,
+        .blendConstants[0] = 0.0f,
+        .blendConstants[1] = 0.0f,
+        .blendConstants[2] = 0.0f,
+        .blendConstants[3] = 0.0f,
+    };
+    VkDescriptorSetLayoutBinding globalUniformLayoutBinding = {
+        .binding = 0,
+        .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+        .descriptorCount = 1,
+        .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
+        .pImmutableSamplers = NULL,
+    };
+    VkDescriptorSetLayoutBinding depthAttachmentLayoutBinding = {
+        .binding = 1,
+        .descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT,
+        .descriptorCount = 1,
+        .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
+        .pImmutableSamplers = NULL,
+    };
+    VkDescriptorSetLayoutBinding albedoAttachmentLayoutBinding = {
+        .binding = 2,
+        .descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT,
+        .descriptorCount = 1,
+        .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
+        .pImmutableSamplers = NULL,
+    };
+    VkDescriptorSetLayoutBinding *bindings = (VkDescriptorSetLayoutBinding[]){globalUniformLayoutBinding, depthAttachmentLayoutBinding, albedoAttachmentLayoutBinding};
     VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
         .pNext = NULL,
         .flags = 0,
-        .bindingCount = 0,
-        .pBindings = NULL,
+        .bindingCount = 3,
+        .pBindings = bindings,
     };
+
     VkResult result = vkCreateDescriptorSetLayout(pGraphicEngine->vkDevice, &descriptorSetLayoutCreateInfo, NULL, &pLightingSubpass->descriptorSetLayout);
     VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
@@ -151,7 +196,7 @@ static void CreateVkPipeline(GraphicEngine *pGraphicEngine)
         .pRasterizationState = &pipelineRasterizationStateCreateInfo,
         .pMultisampleState = NULL,
         .pDepthStencilState = &pipelineDepthStencilStateCreateInfo,
-        .pColorBlendState = NULL,
+        .pColorBlendState = &colorBlendStateCreateInfo,
         .pDynamicState = NULL,
         .layout = pLightingSubpass->vkPipelineLayout,
         .renderPass = pDeferredRenderPass->vkRenderPass,
@@ -197,13 +242,23 @@ static void CreateLightingSubpassModel(GraphicEngine *pGraphicEngine, uint32_t v
         .pSetLayouts = &pLightingSubpass->descriptorSetLayout,
     };
     VkResult result = vkAllocateDescriptorSets(pGraphicEngine->vkDevice, &descriptorSetAllocateInfo, &pSubpassModel->vkDescriptorSet);
-
+    TryThrowVulkanError(result);
     VkDescriptorBufferInfo globalDescriptorBufferInfo = {
         .buffer = pGraphicEngine->globalUniformBuffer,
         .offset = 0,
         .range = sizeof(GlobalUniformBuffer),
     };
-    VkWriteDescriptorSet descriptorWrites[1] = {
+    // VkDescriptorImageInfo depthVkDescriptorImageInfo = {
+    //     .sampler = NULL,
+    //     .imageView = pGraphicEngine->depthGraphicImage.vkImageView,
+    //     .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+    // };
+    // VkDescriptorImageInfo albedoVkDescriptorImageInfo = {
+    //     .sampler = NULL,
+    //     .imageView = pGraphicEngine->albedoGraphicImage.vkImageView,
+    //     .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+    // };
+    VkWriteDescriptorSet descriptorWrites[] = {
         {
             .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
             .pNext = NULL,
@@ -216,8 +271,32 @@ static void CreateLightingSubpassModel(GraphicEngine *pGraphicEngine, uint32_t v
             .pBufferInfo = &globalDescriptorBufferInfo,
             .pTexelBufferView = NULL,
         },
+        // {
+        //     .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+        //     .pNext = NULL,
+        //     .dstSet = pSubpassModel->vkDescriptorSet,
+        //     .dstBinding = 0,
+        //     .dstArrayElement = 0,
+        //     .descriptorCount = 1,
+        //     .descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT,
+        //     .pImageInfo = &depthVkDescriptorImageInfo,
+        //     .pBufferInfo = NULL,
+        //     .pTexelBufferView = NULL,
+        // },
+        // {
+        //     .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+        //     .pNext = NULL,
+        //     .dstSet = pSubpassModel->vkDescriptorSet,
+        //     .dstBinding = 1,
+        //     .dstArrayElement = 0,
+        //     .descriptorCount = 1,
+        //     .descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT,
+        //     .pImageInfo = &albedoVkDescriptorImageInfo,
+        //     .pBufferInfo = NULL,
+        //     .pTexelBufferView = NULL,
+        // },
     };
-    vkUpdateDescriptorSets(pGraphicEngine->vkDevice, 2, descriptorWrites, 0, NULL);
+    vkUpdateDescriptorSets(pGraphicEngine->vkDevice, 1, descriptorWrites, 0, NULL);
 }
 static void DestroyLightingSubpassModel(GraphicEngine *pGraphicEngine, uint32_t groupIndex, uint32_t modelIndex)
 {
@@ -280,7 +359,7 @@ void CreateLightingSubpass(GraphicEngine *pGraphicEngine)
     pLightingSubpass->vkDescriptorTypeToCount[VK_DESCRIPTOR_TYPE_STORAGE_BUFFER] = 0;         // 7,
     pLightingSubpass->vkDescriptorTypeToCount[VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC] = 0; // 8,
     pLightingSubpass->vkDescriptorTypeToCount[VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC] = 0; // 9,
-    pLightingSubpass->vkDescriptorTypeToCount[VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT] = 0;       // 10,
+    pLightingSubpass->vkDescriptorTypeToCount[VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT] = 2;       // 10,
 }
 void DestroyLightingSubpass(GraphicEngine *pGraphicEngine)
 {
@@ -294,10 +373,8 @@ void AddModelToLightingSubpass(GraphicEngine *pGraphicEngine, uint32_t vertexCou
     uint32_t lightingSubpassIndex = 1;
     Subpass *pLightingSubpass = &pDeferredRenderPass->subpasses[lightingSubpassIndex];
 
-    uint32_t groupIndex;
-    uint32_t modelIndex;
-    AddModelToSubpass(pGraphicEngine, pLightingSubpass, &groupIndex, &modelIndex);
-    CreateLightingSubpassModel(pGraphicEngine, vertexCount, lightingSubpassVertices, groupIndex, modelIndex);
+    AddModelToSubpass(pGraphicEngine, pLightingSubpass, pGroupIndex, pModelIndex);
+    CreateLightingSubpassModel(pGraphicEngine, vertexCount, lightingSubpassVertices, *pGroupIndex, *pModelIndex);
 }
 void RemoveModelFromLightingSubpass(GraphicEngine *pGraphicEngine, uint32_t groupIndex, uint32_t modelIndex)
 {

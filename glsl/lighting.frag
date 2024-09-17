@@ -1,8 +1,14 @@
 #version 450
 precision highp float;
 
-layout(input_attachment_index = 0, binding = 0) uniform subpassInput i_depth;
-layout(input_attachment_index = 1, binding = 1) uniform subpassInput i_albedo;
+layout(binding = 0) uniform GlobalUniform
+{
+    mat4 view;
+    mat4 proj;
+} globalUniform;
+
+layout(input_attachment_index = 0, binding = 1) uniform subpassInput i_depth;
+layout(input_attachment_index = 1, binding = 2) uniform subpassInput i_albedo;
 
 layout(location = 0) in vec2 in_uv;
 layout(location = 0) out vec4 o_color;

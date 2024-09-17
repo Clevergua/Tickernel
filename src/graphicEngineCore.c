@@ -79,7 +79,7 @@ static void CopyVkBuffer(GraphicEngine *pGraphicEngine, VkBuffer srcBuffer, VkBu
         .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
         .commandBufferCount = 1,
     };
-    VkResult result = vkAllocateCommandBuffers(pGraphicEngine->vkDevice, &vkCommandBufferAllocateInfo, pGraphicEngine->graphicVkCommandBuffers);
+    VkResult result = vkAllocateCommandBuffers(pGraphicEngine->vkDevice, &vkCommandBufferAllocateInfo, &vkCommandBuffer);
     TryThrowVulkanError(result);
 
     VkCommandBufferBeginInfo vkCommandBufferBeginInfo =
@@ -91,10 +91,12 @@ static void CopyVkBuffer(GraphicEngine *pGraphicEngine, VkBuffer srcBuffer, VkBu
         };
     result = vkBeginCommandBuffer(vkCommandBuffer, &vkCommandBufferBeginInfo);
     TryThrowVulkanError(result);
-    vkBeginCommandBuffer(vkCommandBuffer, &vkCommandBufferBeginInfo);
 
-    VkBufferCopy copyRegion;
-    copyRegion.size = size;
+    VkBufferCopy copyRegion = {
+        .srcOffset = 0,
+        .dstOffset = 0,
+        .size = size,
+    };
     vkCmdCopyBuffer(vkCommandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
 
     vkEndCommandBuffer(vkCommandBuffer);
@@ -284,13 +286,18 @@ void CreateModelGroup(GraphicEngine *pGraphicEngine, Subpass *pSubpass, ModelGro
     pModelGroup->subpassModels = TickernelMalloc(sizeof(SubpassModel) * pSubpass->modelCountPerGroup);
     pModelGroup->pRemovedIndexLinkedList = NULL;
 
+    uint32_t poolSizeCount = 0;
     VkDescriptorPoolSize poolSizes[MAX_VK_DESCRIPTOR_TPYE];
     for (uint32_t vkDescriptorType = 0; vkDescriptorType < MAX_VK_DESCRIPTOR_TPYE; vkDescriptorType++)
     {
-        poolSizes[vkDescriptorType] = (VkDescriptorPoolSize){
-            .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-            .descriptorCount = pSubpass->modelCountPerGroup * pSubpass->vkDescriptorTypeToCount[vkDescriptorType],
-        };
+        if (pSubpass->vkDescriptorTypeToCount[vkDescriptorType] > 0)
+        {
+            poolSizes[poolSizeCount] = (VkDescriptorPoolSize){
+                .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                .descriptorCount = pSubpass->modelCountPerGroup * pSubpass->vkDescriptorTypeToCount[vkDescriptorType],
+            };
+            poolSizeCount++;
+        }
     }
 
     VkDescriptorPoolCreateInfo descriptorPoolCreateInfo = {
@@ -298,7 +305,7 @@ void CreateModelGroup(GraphicEngine *pGraphicEngine, Subpass *pSubpass, ModelGro
         .pNext = NULL,
         .flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
         .maxSets = pSubpass->modelCountPerGroup,
-        .poolSizeCount = 1,
+        .poolSizeCount = poolSizeCount,
         .pPoolSizes = poolSizes,
     };
     VkResult result = vkCreateDescriptorPool(pGraphicEngine->vkDevice, &descriptorPoolCreateInfo, NULL, &pModelGroup->vkDescriptorPool);
@@ -308,6 +315,12 @@ void DestroyModelGroup(GraphicEngine *pGraphicEngine, ModelGroup modelGroup)
 {
     vkDestroyDescriptorPool(pGraphicEngine->vkDevice, modelGroup.vkDescriptorPool, NULL);
     TickernelFree(modelGroup.subpassModels);
+    while (NULL != modelGroup.pRemovedIndexLinkedList)
+    {
+        Uint32Node *pNode = modelGroup.pRemovedIndexLinkedList;
+        modelGroup.pRemovedIndexLinkedList = modelGroup.pRemovedIndexLinkedList->pNext;
+        TickernelFree(pNode);
+    }
 }
 
 void AddModelToSubpass(GraphicEngine *pGraphicEngine, Subpass *pSubpass, uint32_t *pGroupIndex, uint32_t *pModelIndex)

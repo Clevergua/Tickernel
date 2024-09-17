@@ -107,7 +107,7 @@ static void CreateVkPipeline(GraphicEngine *pGraphicEngine)
         .depthBiasConstantFactor = 0,
         .depthBiasClamp = VK_FALSE,
         .depthBiasSlopeFactor = 0,
-        .lineWidth = 0,
+        .lineWidth = 1.0f,
     };
     VkPipelineDepthStencilStateCreateInfo pipelineDepthStencilStateCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
@@ -257,7 +257,8 @@ static void CreateGeometrySubpassModel(GraphicEngine *pGraphicEngine, uint32_t v
         .pSetLayouts = &pGeometrySubpass->descriptorSetLayout,
     };
     result = vkAllocateDescriptorSets(pGraphicEngine->vkDevice, &descriptorSetAllocateInfo, &pSubpassModel->vkDescriptorSet);
-
+    TryThrowVulkanError(result);
+    
     VkDescriptorBufferInfo globalDescriptorBufferInfo = {
         .buffer = pGraphicEngine->globalUniformBuffer,
         .offset = 0,

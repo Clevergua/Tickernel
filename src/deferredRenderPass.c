@@ -203,10 +203,24 @@ void CreateDeferredRenderPass(GraphicEngine *pGraphicEngine)
 
     CreateGeometrySubpass(pGraphicEngine);
     CreateLightingSubpass(pGraphicEngine);
+
+    LightingSubpassVertex lightingSubpassVertices[] = {
+        {0, 0, 0},
+        {0, 0, 0},
+        {0, 0, 0},
+    };
+    AddModelToLightingSubpass(pGraphicEngine, 3, lightingSubpassVertices, &pGraphicEngine->fullScreenVerticesGroupIndex, &pGraphicEngine->fullScreenVerticesModelIndex);
+    GeometrySubpassVertex geometrySubpassVertices[] = {
+        {0, 0, 0},
+
+    };
+    uint32_t a, b;
+    AddModelToGeometrySubpass(pGraphicEngine, 1, geometrySubpassVertices, &a, &b);
 }
 
 void DestroyDeferredRenderPass(GraphicEngine *pGraphicEngine)
 {
+    RemoveModelFromLightingSubpass(pGraphicEngine, pGraphicEngine->fullScreenVerticesGroupIndex, pGraphicEngine->fullScreenVerticesModelIndex);
     DestroyGeometrySubpass(pGraphicEngine);
     DestroyLightingSubpass(pGraphicEngine);
     DestroyVkFramebuffers(pGraphicEngine);

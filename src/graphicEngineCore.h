@@ -117,7 +117,8 @@ typedef struct GraphicEngineStruct
     GraphicImage depthGraphicImage;
     GraphicImage albedoGraphicImage;
     RenderPass deferredRenderPass;
-
+    uint32_t fullScreenVerticesGroupIndex;
+    uint32_t fullScreenVerticesModelIndex;
 } GraphicEngine;
 
 void TryThrowVulkanError(VkResult vkResult);

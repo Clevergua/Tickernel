@@ -633,11 +633,11 @@ static void CreateGraphicImages(GraphicEngine *pGraphicEngine)
     VkExtent3D vkExtent3D = {
         .width = pGraphicEngine->swapchainExtent.width,
         .height = pGraphicEngine->swapchainExtent.height,
-        .depth = 0,
+        .depth = 1,
     };
     VkFormat depthVkFormat;
     FindDepthFormat(pGraphicEngine, &depthVkFormat);
-    CreateGraphicImage(pGraphicEngine, vkExtent3D, depthVkFormat, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT, &pGraphicEngine->depthGraphicImage);
+    CreateGraphicImage(pGraphicEngine, vkExtent3D, depthVkFormat, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_IMAGE_ASPECT_DEPTH_BIT , &pGraphicEngine->depthGraphicImage);
     CreateGraphicImage(pGraphicEngine, vkExtent3D, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_IMAGE_ASPECT_COLOR_BIT, &pGraphicEngine->albedoGraphicImage);
 }
 
@@ -779,9 +779,6 @@ static void CreateVkCommandBuffers(GraphicEngine *pGraphicEngine)
 
 static void CreateGlobalUniformBuffers(GraphicEngine *pGraphicEngine)
 {
-    pGraphicEngine->globalUniformBuffer = TickernelMalloc(sizeof(VkBuffer) * pGraphicEngine->swapchainImageCount);
-    pGraphicEngine->globalUniformBufferMemory = TickernelMalloc(sizeof(VkDeviceMemory) * pGraphicEngine->swapchainImageCount);
-    pGraphicEngine->globalUniformBufferMapped = TickernelMalloc(sizeof(void *) * pGraphicEngine->swapchainImageCount);
     size_t bufferSize = sizeof(GlobalUniformBuffer);
     VkResult result = VK_SUCCESS;
     CreateBuffer(pGraphicEngine, bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &pGraphicEngine->globalUniformBuffer, &pGraphicEngine->globalUniformBufferMemory);
@@ -791,11 +788,8 @@ static void CreateGlobalUniformBuffers(GraphicEngine *pGraphicEngine)
 
 static void DestroyGlobalUniformBuffers(GraphicEngine *pGraphicEngine)
 {
-    // vkUnmapMemory(pGraphicEngine->vkDevice, pGraphicEngine->globalUniformBufferMapped);
+    vkUnmapMemory(pGraphicEngine->vkDevice, pGraphicEngine->globalUniformBufferMemory);
     DestroyBuffer(pGraphicEngine->vkDevice, pGraphicEngine->globalUniformBuffer, pGraphicEngine->globalUniformBufferMemory);
-    TickernelFree(pGraphicEngine->globalUniformBufferMapped);
-    TickernelFree(pGraphicEngine->globalUniformBufferMemory);
-    TickernelFree(pGraphicEngine->globalUniformBuffer);
 }
 
 static void UpdateGlobalUniformBuffer(GraphicEngine *pGraphicEngine)
