@@ -232,6 +232,84 @@ static void DestroyVkPipeline(GraphicEngine *pGraphicEngine)
     vkDestroyPipeline(pGraphicEngine->vkDevice, pGeometrySubpass->vkPipeline, NULL);
 }
 
+static void CreateGeometrySubpassModel(GraphicEngine *pGraphicEngine, uint32_t vertexCount, GeometrySubpassVertex *geometrySubpassVertices, uint32_t groupIndex, uint32_t modelIndex)
+{
+    RenderPass *pDeferredRenderPass = &pGraphicEngine->deferredRenderPass;
+    uint32_t geometrySubpassIndex = 0;
+    Subpass *pGeometrySubpass = &pDeferredRenderPass->subpasses[geometrySubpassIndex];
+
+    SubpassModel *pSubpassModel = &pGeometrySubpass->modelGroups[groupIndex].subpassModels[modelIndex];
+    pSubpassModel->vertexCount = vertexCount;
+    VkDeviceSize vertexBufferSize = sizeof(GeometrySubpassVertex) * vertexCount;
+    CreateVertexBuffer(pGraphicEngine, vertexBufferSize, geometrySubpassVertices, &pSubpassModel->vertexBuffer, &pSubpassModel->vertexBufferMemory);
+
+    VkDeviceSize uniformBufferSize = sizeof(GeometrySubpassModelUniformBuffer);
+    CreateBuffer(pGraphicEngine, uniformBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &pSubpassModel->modelUniformBuffer, &pSubpassModel->modelUniformBufferMemory);
+    VkResult result = vkMapMemory(pGraphicEngine->vkDevice, *&pSubpassModel->modelUniformBufferMemory, 0, uniformBufferSize, 0, &pSubpassModel->modelUniformBufferMapped);
+    TryThrowVulkanError(result);
+    // Create vkDescriptorSet
+    ModelGroup *pModelGroup = &pGeometrySubpass->modelGroups[groupIndex];
+    VkDescriptorSetAllocateInfo descriptorSetAllocateInfo = {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+        .pNext = NULL,
+        .descriptorPool = pModelGroup->vkDescriptorPool,
+        .descriptorSetCount = 1,
+        .pSetLayouts = &pGeometrySubpass->descriptorSetLayout,
+    };
+    VkResult result = vkAllocateDescriptorSets(pGraphicEngine->vkDevice, &descriptorSetAllocateInfo, &pSubpassModel->vkDescriptorSet);
+
+    VkDescriptorBufferInfo globalDescriptorBufferInfo = {
+        .buffer = pGraphicEngine->globalUniformBuffer,
+        .offset = 0,
+        .range = sizeof(GlobalUniformBuffer),
+    };
+    VkDescriptorBufferInfo objectDescriptorBufferInfo = {
+        .buffer = pSubpassModel->modelUniformBuffer,
+        .offset = 0,
+        .range = sizeof(GeometrySubpassModelUniformBuffer),
+    };
+    VkWriteDescriptorSet descriptorWrites[2] = {
+        {
+            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            .pNext = NULL,
+            .dstSet = pSubpassModel->vkDescriptorSet,
+            .dstBinding = 0,
+            .dstArrayElement = 0,
+            .descriptorCount = 1,
+            .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+            .pImageInfo = NULL,
+            .pBufferInfo = &globalDescriptorBufferInfo,
+            .pTexelBufferView = NULL,
+        },
+        {
+            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            .pNext = NULL,
+            .dstSet = pSubpassModel->vkDescriptorSet,
+            .dstBinding = 1,
+            .dstArrayElement = 0,
+            .descriptorCount = 1,
+            .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+            .pImageInfo = NULL,
+            .pBufferInfo = &objectDescriptorBufferInfo,
+            .pTexelBufferView = NULL,
+        },
+    };
+    vkUpdateDescriptorSets(pGraphicEngine->vkDevice, 2, descriptorWrites, 0, NULL);
+}
+static void DestroyGeometrySubpassModel(GraphicEngine *pGraphicEngine, uint32_t groupIndex, uint32_t modelIndex)
+{
+    RenderPass *pDeferredRenderPass = &pGraphicEngine->deferredRenderPass;
+    uint32_t geometrySubpassIndex = 0;
+    Subpass *pGeometrySubpass = &pDeferredRenderPass->subpasses[geometrySubpassIndex];
+    ModelGroup *pModelGroup = &pGeometrySubpass->modelGroups[groupIndex];
+    SubpassModel *pSubpassModel = &pModelGroup->subpassModels[modelIndex];
+
+    VkResult result = vkFreeDescriptorSets(pGraphicEngine->vkDevice, pModelGroup->vkDescriptorPool, 1, &pSubpassModel->vkDescriptorSet);
+    TryThrowVulkanError(result);
+    DestroyBuffer(pGraphicEngine->vkDevice, pSubpassModel->modelUniformBuffer, pSubpassModel->modelUniformBufferMemory);
+    DestroyVertexBuffer(pGraphicEngine, pSubpassModel->vertexBuffer, pSubpassModel->vertexBufferMemory);
+}
+
 static void CreateGeometryModelGroups(GraphicEngine *pGraphicEngine)
 {
     RenderPass *pDeferredRenderPass = &pGraphicEngine->deferredRenderPass;
@@ -251,8 +329,12 @@ static void DestroyGeometryModelGroups(GraphicEngine *pGraphicEngine)
 
     for (uint32_t groupIndex = 0; groupIndex < pGeometrySubpass->modelGroupCount; groupIndex++)
     {
-        ModelGroup modelGroup = pGeometrySubpass->modelGroups[groupIndex];
-        DestroyModelGroup(pGraphicEngine, modelGroup);
+        ModelGroup *pModelGroup = &pGeometrySubpass->modelGroups[groupIndex];
+        for (uint32_t modelIndex = 0; modelIndex < pModelGroup->modelCount; modelIndex++)
+        {
+            DestroyGeometrySubpassModel(pGraphicEngine, groupIndex, modelIndex);
+        }
+        DestroyModelGroup(pGraphicEngine, *pModelGroup);
     }
     TickernelFree(pGeometrySubpass->modelGroups);
 }
@@ -282,126 +364,26 @@ void DestroyGeometrySubpass(GraphicEngine *pGraphicEngine)
     DestroyGeometryModelGroups(pGraphicEngine);
     DestroyVkPipeline(pGraphicEngine);
 }
+
 void AddModelToGeometrySubpass(GraphicEngine *pGraphicEngine, uint32_t vertexCount, GeometrySubpassVertex *geometrySubpassVertices, uint32_t *pGroupIndex, uint32_t *pModelIndex)
 {
     RenderPass *pDeferredRenderPass = &pGraphicEngine->deferredRenderPass;
     uint32_t geometrySubpassIndex = 0;
     Subpass *pGeometrySubpass = &pDeferredRenderPass->subpasses[geometrySubpassIndex];
 
-    VkDescriptorBufferInfo globalDescriptorBufferInfo = {
-        .buffer = pGraphicEngine->globalUniformBuffer,
-        .offset = 0,
-        .range = sizeof(GlobalUniformBuffer),
-    };
-    VkDescriptorBufferInfo objectDescriptorBufferInfo = {
-        .buffer = pSubpassModel->modelUniformBuffer,
-        .offset = 0,
-        .range = sizeof(GeometrySubpassModelUniformBuffer),
-    };
-
-    VkWriteDescriptorSet descriptorWrites[2] = {
-        {
-            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-            .pNext = NULL,
-            .dstSet = pSubpassModel->vkDescriptorSet,
-            .dstBinding = 0,
-            .dstArrayElement = 0,
-            .descriptorCount = 1,
-            .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-            .pImageInfo = NULL,
-            .pBufferInfo = &globalDescriptorBufferInfo,
-            .pTexelBufferView = NULL,
-        },
-        {
-            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-            .pNext = NULL,
-            .dstSet = pSubpassModel->vkDescriptorSet,
-            .dstBinding = 1,
-            .dstArrayElement = 0,
-            .descriptorCount = 1,
-            .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-            .pImageInfo = NULL,
-            .pBufferInfo = &objectDescriptorBufferInfo,
-            .pTexelBufferView = NULL,
-        },
-    };
-    SubpassModelCreateInfo subpassModelCreateInfo = {
-        .vertexCount = vertexCount,
-        .vertexSize = sizeof(GeometrySubpassVertex),
-        .vertices = geometrySubpassVertices,
-        // .modelUniformBufferSize =,
-        .vkDescriptorSetLayout = pGeometrySubpass->descriptorSetLayout,
-    };
-
-    AddModelToSubpass(pGraphicEngine->vkDevice, )
+    uint32_t groupIndex;
+    uint32_t modelIndex;
+    AddModelToSubpass(pGraphicEngine, pGeometrySubpass, &groupIndex, &modelIndex);
+    CreateGeometrySubpassModel(pGraphicEngine, vertexCount, geometrySubpassVertices, groupIndex, modelIndex);
 }
 void RemoveModelFromGeometrySubpass(GraphicEngine *pGraphicEngine, uint32_t groupIndex, uint32_t modelIndex)
 {
+    RenderPass *pDeferredRenderPass = &pGraphicEngine->deferredRenderPass;
+    uint32_t geometrySubpassIndex = 0;
+    Subpass *pGeometrySubpass = &pDeferredRenderPass->subpasses[geometrySubpassIndex];
+    ModelGroup *pModelGroup = &pGeometrySubpass->modelGroups[groupIndex];
+    SubpassModel *pSubpassModel = &pModelGroup->subpassModels[modelIndex];
+
+    DestroyGeometrySubpassModel(pGraphicEngine, groupIndex, modelIndex);
+    RemoveModelFromSubpass(pGraphicEngine, groupIndex, modelIndex, pGeometrySubpass);
 }
-// void CreateSubpassModel(GraphicEngine *pGraphicEngine, uint32_t vertexCount, VkDeviceSize vertexSize, void *vertices, ModelGroup *pModelGroup, VkDescriptorSetLayout vkDescriptorSetLayout, uint32_t modelIndex, SubpassModel *pSubpassModel)
-// {
-//     pSubpassModel->vertexCount = vertexCount;
-//     VkDeviceSize vertexBufferSize = vertexSize * vertexCount;
-//     CreateVertexBuffer(pGraphicEngine, vertexBufferSize, vertices, &pSubpassModel->vertexBuffer, &pSubpassModel->vertexBufferMemory);
-
-//     VkDeviceSize uniformBufferSize = sizeof(GeometrySubpassModelUniformBuffer);
-//     CreateBuffer(pGraphicEngine, uniformBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &pSubpassModel->modelUniformBuffer, &pSubpassModel->modelUniformBufferMemory);
-//     vkMapMemory(pGraphicEngine->vkDevice, *&pSubpassModel->modelUniformBufferMemory, 0, uniformBufferSize, 0, pSubpassModel->modelUniformBufferMapped);
-//     // Create vkDescriptorSet
-//     VkDescriptorSetAllocateInfo descriptorSetAllocateInfo = {
-//         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-//         .pNext = NULL,
-//         .descriptorPool = pModelGroup->vkDescriptorPool,
-//         .descriptorSetCount = 1,
-//         .pSetLayouts = &vkDescriptorSetLayout,
-//     };
-//     VkResult result = vkAllocateDescriptorSets(pGraphicEngine->vkDevice, &descriptorSetAllocateInfo, &pSubpassModel->vkDescriptorSet);
-
-//     VkDescriptorBufferInfo globalDescriptorBufferInfo = {
-//         .buffer = pGraphicEngine->globalUniformBuffer,
-//         .offset = 0,
-//         .range = sizeof(GlobalUniformBuffer),
-//     };
-//     VkDescriptorBufferInfo objectDescriptorBufferInfo = {
-//         .buffer = pSubpassModel->modelUniformBuffer,
-//         .offset = 0,
-//         .range = sizeof(GeometrySubpassModelUniformBuffer),
-//     };
-
-//     VkWriteDescriptorSet descriptorWrites[2] = {
-//         {
-//             .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-//             .pNext = NULL,
-//             .dstSet = pSubpassModel->vkDescriptorSet,
-//             .dstBinding = 0,
-//             .dstArrayElement = 0,
-//             .descriptorCount = 1,
-//             .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-//             .pImageInfo = NULL,
-//             .pBufferInfo = &globalDescriptorBufferInfo,
-//             .pTexelBufferView = NULL,
-//         },
-//         {
-//             .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-//             .pNext = NULL,
-//             .dstSet = pSubpassModel->vkDescriptorSet,
-//             .dstBinding = 1,
-//             .dstArrayElement = 0,
-//             .descriptorCount = 1,
-//             .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-//             .pImageInfo = NULL,
-//             .pBufferInfo = &objectDescriptorBufferInfo,
-//             .pTexelBufferView = NULL,
-//         },
-//     };
-//     vkUpdateDescriptorSets(pGraphicEngine->vkDevice, 2, descriptorWrites, 0, NULL);
-// }
-
-// void DestroySubpassModel(GraphicEngine *pGraphicEngine, ModelGroup *pModelGroup, uint32_t modelIndex)
-// {
-//     SubpassModel *pSubpassModel = &pModelGroup->subpassModels[modelIndex];
-//     VkResult result = vkFreeDescriptorSets(pGraphicEngine->vkDevice, pModelGroup->vkDescriptorPool, 1, &pSubpassModel->vkDescriptorSet);
-//     TryThrowVulkanError(result);
-//     DestroyBuffer(pGraphicEngine->vkDevice, pSubpassModel->modelUniformBuffer, pSubpassModel->modelUniformBufferMemory);
-//     DestroyVertexBuffer(pGraphicEngine, pSubpassModel->vertexBuffer, pSubpassModel->vertexBufferMemory);
-// }

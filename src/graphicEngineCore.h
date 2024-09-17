@@ -18,17 +18,6 @@ typedef struct GlobalUniformBufferStruct
     mat4 proj;
 } GlobalUniformBuffer;
 
-typedef struct SubpassModelCreateInfoStruct
-{
-    uint32_t vertexCount;
-    VkDeviceSize vertexSize;
-    void *vertices;
-
-    VkDescriptorSetLayout vkDescriptorSetLayout;
-    VkDeviceSize modelUniformBufferSize;
-
-} SubpassModelCreateInfo;
-
 typedef struct SubpassModelStruct
 {
     uint32_t vertexCount;
@@ -144,8 +133,11 @@ void DestroyVkShaderModule(GraphicEngine *pGraphicEngine, VkShaderModule vkShade
 void CreateBuffer(GraphicEngine *pGraphicEngine, VkDeviceSize bufferSize, VkBufferUsageFlags bufferUsageFlags, VkMemoryPropertyFlags msemoryPropertyFlags, VkBuffer *pBuffer, VkDeviceMemory *pDeviceMemory);
 void DestroyBuffer(VkDevice vkDevice, VkBuffer vkBuffer, VkDeviceMemory deviceMemory);
 
+void CreateVertexBuffer(GraphicEngine *pGraphicEngine, VkDeviceSize vertexBufferSize, void *vertices, VkBuffer *pVertexBuffer, VkDeviceMemory *pVertexBufferMemory);
+void DestroyVertexBuffer(GraphicEngine *pGraphicEngine, VkBuffer vertexBuffer, VkDeviceMemory vertexBufferMemory);
+
 void CreateModelGroup(GraphicEngine *pGraphicEngine, Subpass *pGeometrySubpass, ModelGroup *pModelGroup);
 void DestroyModelGroup(GraphicEngine *pGraphicEngine, ModelGroup modelGroup);
 
-void AddModelToSubpass(GraphicEngine *pGraphicEngine, SubpassModelCreateInfo subpassModelCreateInfo, Subpass *pSubpass, uint32_t *pGroupIndex, uint32_t *pModelIndex);
+void AddModelToSubpass(GraphicEngine *pGraphicEngine, Subpass *pSubpass, uint32_t *pGroupIndex, uint32_t *pModelIndex);
 void RemoveModelFromSubpass(GraphicEngine *pGraphicEngine, uint32_t groupIndex, uint32_t modelIndex, Subpass *pSubpass);

@@ -22,4 +22,4 @@ typedef struct GeometrySubpassModelUniformBufferStruct
 void CreateGeometrySubpass(GraphicEngine *pGraphicEngine);
 void DestroyGeometrySubpass(GraphicEngine *pGraphicEngine);
 void AddModelToGeometrySubpass(GraphicEngine *pGraphicEngine, uint32_t vertexCount, GeometrySubpassVertex *geometrySubpassVertices, uint32_t *pGroupIndex, uint32_t *pModelIndex);
-void RemoveModelFromGeometrySubpass(GraphicEngine *pGraphicEngine, uint32_t groupIndex, uint32_t modelIndex);
+void RemoveModelFromLightingSubpass(GraphicEngine *pGraphicEngine, uint32_t groupIndex, uint32_t modelIndex);

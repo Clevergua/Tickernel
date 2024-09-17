@@ -791,7 +791,7 @@ static void CreateGlobalUniformBuffers(GraphicEngine *pGraphicEngine)
 
 static void DestroyGlobalUniformBuffers(GraphicEngine *pGraphicEngine)
 {
-    vkUnmapMemory(pGraphicEngine->vkDevice, pGraphicEngine->globalUniformBufferMapped);
+    // vkUnmapMemory(pGraphicEngine->vkDevice, pGraphicEngine->globalUniformBufferMapped);
     DestroyBuffer(pGraphicEngine->vkDevice, pGraphicEngine->globalUniformBuffer, pGraphicEngine->globalUniformBufferMemory);
     TickernelFree(pGraphicEngine->globalUniformBufferMapped);
     TickernelFree(pGraphicEngine->globalUniformBufferMemory);
