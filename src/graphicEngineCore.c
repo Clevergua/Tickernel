@@ -293,7 +293,7 @@ void CreateModelGroup(GraphicEngine *pGraphicEngine, Subpass *pSubpass, ModelGro
         if (pSubpass->vkDescriptorTypeToCount[vkDescriptorType] > 0)
         {
             poolSizes[poolSizeCount] = (VkDescriptorPoolSize){
-                .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                .type = vkDescriptorType,
                 .descriptorCount = pSubpass->modelCountPerGroup * pSubpass->vkDescriptorTypeToCount[vkDescriptorType],
             };
             poolSizeCount++;
