@@ -1,6 +1,7 @@
 #version 450
 precision highp float;
 
+
 layout(binding = 0) uniform GlobalUniform
 {
     mat4 view;
