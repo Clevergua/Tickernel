@@ -67,7 +67,7 @@ static void CreateVkPipeline(GraphicEngine *pGraphicEngine)
         .sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
         .pNext = NULL,
         .flags = 0,
-        .topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+        .topology = VK_PRIMITIVE_TOPOLOGY_POINT_LIST,
         .primitiveRestartEnable = VK_FALSE,
     };
     VkViewport viewport = {
@@ -100,7 +100,7 @@ static void CreateVkPipeline(GraphicEngine *pGraphicEngine)
         .pNext = NULL,
         .flags = 0,
         .rasterizerDiscardEnable = VK_FALSE,
-        .polygonMode = VK_POLYGON_MODE_FILL,
+        .polygonMode = VK_POLYGON_MODE_POINT,
         .cullMode = VK_CULL_MODE_BACK_BIT,
         .frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE,
         .depthBiasEnable = VK_FALSE,
@@ -108,6 +108,17 @@ static void CreateVkPipeline(GraphicEngine *pGraphicEngine)
         .depthBiasClamp = VK_FALSE,
         .depthBiasSlopeFactor = 0,
         .lineWidth = 1.0f,
+    };
+    VkPipelineMultisampleStateCreateInfo pipelineMultisampleStateCreateInfo = {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
+        .pNext = NULL,
+        .flags = 0,
+        .rasterizationSamples = VK_SAMPLE_COUNT_1_BIT,
+        .sampleShadingEnable = VK_FALSE,
+        .minSampleShading = 0,
+        .pSampleMask = NULL,
+        .alphaToCoverageEnable = VK_FALSE,
+        .alphaToOneEnable = VK_FALSE,
     };
     VkPipelineDepthStencilStateCreateInfo pipelineDepthStencilStateCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
@@ -205,7 +216,7 @@ static void CreateVkPipeline(GraphicEngine *pGraphicEngine)
         .pTessellationState = NULL,
         .pViewportState = &pipelineViewportStateInfo,
         .pRasterizationState = &pipelineRasterizationStateCreateInfo,
-        .pMultisampleState = NULL,
+        .pMultisampleState = &pipelineMultisampleStateCreateInfo,
         .pDepthStencilState = &pipelineDepthStencilStateCreateInfo,
         .pColorBlendState = &colorBlendStateCreateInfo,
         .pDynamicState = &dynamicState,
@@ -213,7 +224,7 @@ static void CreateVkPipeline(GraphicEngine *pGraphicEngine)
         .renderPass = pDeferredRenderPass->vkRenderPass,
         .subpass = geometrySubpassIndex,
         .basePipelineHandle = VK_NULL_HANDLE,
-        .basePipelineIndex = 0,
+        .basePipelineIndex = -1,
     };
 
     VkPipelineCache pipelineCache = NULL;
@@ -258,7 +269,7 @@ static void CreateGeometrySubpassModel(GraphicEngine *pGraphicEngine, uint32_t v
     };
     result = vkAllocateDescriptorSets(pGraphicEngine->vkDevice, &descriptorSetAllocateInfo, &pSubpassModel->vkDescriptorSet);
     TryThrowVulkanError(result);
-    
+
     VkDescriptorBufferInfo globalDescriptorBufferInfo = {
         .buffer = pGraphicEngine->globalUniformBuffer,
         .offset = 0,
@@ -296,6 +307,7 @@ static void CreateGeometrySubpassModel(GraphicEngine *pGraphicEngine, uint32_t v
         },
     };
     vkUpdateDescriptorSets(pGraphicEngine->vkDevice, 2, descriptorWrites, 0, NULL);
+    pSubpassModel->isValid = true;
 }
 static void DestroyGeometrySubpassModel(GraphicEngine *pGraphicEngine, uint32_t groupIndex, uint32_t modelIndex)
 {
@@ -305,6 +317,7 @@ static void DestroyGeometrySubpassModel(GraphicEngine *pGraphicEngine, uint32_t 
     ModelGroup *pModelGroup = &pGeometrySubpass->modelGroups[groupIndex];
     SubpassModel *pSubpassModel = &pModelGroup->subpassModels[modelIndex];
 
+    pSubpassModel->isValid = false;
     VkResult result = vkFreeDescriptorSets(pGraphicEngine->vkDevice, pModelGroup->vkDescriptorPool, 1, &pSubpassModel->vkDescriptorSet);
     TryThrowVulkanError(result);
     DestroyBuffer(pGraphicEngine->vkDevice, pSubpassModel->modelUniformBuffer, pSubpassModel->modelUniformBufferMemory);
@@ -333,7 +346,15 @@ static void DestroyGeometryModelGroups(GraphicEngine *pGraphicEngine)
         ModelGroup *pModelGroup = &pGeometrySubpass->modelGroups[groupIndex];
         for (uint32_t modelIndex = 0; modelIndex < pModelGroup->modelCount; modelIndex++)
         {
-            DestroyGeometrySubpassModel(pGraphicEngine, groupIndex, modelIndex);
+            SubpassModel *pSubpassModel = &pModelGroup->subpassModels[modelIndex];
+            if (pSubpassModel->isValid)
+            {
+                DestroyGeometrySubpassModel(pGraphicEngine, groupIndex, modelIndex);
+            }
+            else
+            {
+                // Has removed;
+            }
         }
         DestroyModelGroup(pGraphicEngine, *pModelGroup);
     }

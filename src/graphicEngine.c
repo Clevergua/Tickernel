@@ -410,7 +410,9 @@ static void CreateLogicalDevice(GraphicEngine *pGraphicEngine)
     }
     char *extensionNames[] = {
         VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-        // "VK_KHR_portability_subset"
+#if PLATFORM_OSX
+        "VK_KHR_portability_subset",
+#endif
     };
     uint32_t extensionCount = GET_ARRAY_COUNT(extensionNames);
     VkDeviceCreateInfo vkDeviceCreateInfo =
@@ -637,7 +639,7 @@ static void CreateGraphicImages(GraphicEngine *pGraphicEngine)
     };
     VkFormat depthVkFormat;
     FindDepthFormat(pGraphicEngine, &depthVkFormat);
-    CreateGraphicImage(pGraphicEngine, vkExtent3D, depthVkFormat, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_IMAGE_ASPECT_DEPTH_BIT , &pGraphicEngine->depthGraphicImage);
+    CreateGraphicImage(pGraphicEngine, vkExtent3D, depthVkFormat, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_IMAGE_ASPECT_DEPTH_BIT, &pGraphicEngine->depthGraphicImage);
     CreateGraphicImage(pGraphicEngine, vkExtent3D, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_IMAGE_ASPECT_COLOR_BIT, &pGraphicEngine->albedoGraphicImage);
 }
 

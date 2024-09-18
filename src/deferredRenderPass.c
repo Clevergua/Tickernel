@@ -240,6 +240,28 @@ void RecordDeferredRenderPass(GraphicEngine *pGraphicEngine)
         };
     VkResult result = vkBeginCommandBuffer(vkCommandBuffer, &vkCommandBufferBeginInfo);
     TryThrowVulkanError(result);
+
+    VkViewport viewport =
+        {
+            .x = 0.0f,
+            .y = 0.0f,
+            .width = pGraphicEngine->swapchainExtent.width,
+            .height = pGraphicEngine->swapchainExtent.height,
+            .minDepth = 0.0f,
+            .maxDepth = 1.0f,
+        };
+    vkCmdSetViewport(vkCommandBuffer, 0, 1, &viewport);
+    VkOffset2D scissorOffset =
+        {
+            .x = 0,
+            .y = 0,
+        };
+    VkRect2D scissor =
+        {
+            .offset = scissorOffset,
+            .extent = pGraphicEngine->swapchainExtent,
+        };
+    vkCmdSetScissor(vkCommandBuffer, 0, 1, &scissor);
     VkOffset2D offset =
         {
             .x = 0,
@@ -274,6 +296,7 @@ void RecordDeferredRenderPass(GraphicEngine *pGraphicEngine)
     for (uint32_t subpassIndex = 0; subpassIndex < pDeferredRenderPass->subpassCount; subpassIndex++)
     {
         Subpass *pSubpass = &pDeferredRenderPass->subpasses[subpassIndex];
+
         vkCmdBindPipeline(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pSubpass->vkPipeline);
         uint32_t geometryPipelineIndex = 0;
         for (uint32_t modelGroupIndex = 0; modelGroupIndex < pSubpass->modelGroupCount; modelGroupIndex++)
@@ -282,13 +305,25 @@ void RecordDeferredRenderPass(GraphicEngine *pGraphicEngine)
             for (uint32_t modelIndex = 0; modelIndex < pModelGroup->modelCount; modelIndex++)
             {
                 SubpassModel *pSubpassModel = &pModelGroup->subpassModels[modelGroupIndex];
-                vkCmdBindDescriptorSets(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pSubpass->vkPipelineLayout, 0, 1, &pSubpassModel->vkDescriptorSet, 0, NULL);
-                VkBuffer vertexBuffers[] = {pSubpassModel->vertexBuffer};
-                VkDeviceSize offsets[] = {0};
-                vkCmdBindVertexBuffers(vkCommandBuffer, 0, 1, vertexBuffers, offsets);
-                uint32_t vertexCount = pSubpassModel->vertexCount;
-                vkCmdDraw(vkCommandBuffer, vertexCount, 1, 0, 0);
+                if (pSubpassModel->isValid)
+                {
+                    vkCmdBindDescriptorSets(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pSubpass->vkPipelineLayout, 0, 1, &pSubpassModel->vkDescriptorSet, 0, NULL);
+
+                    VkBuffer vertexBuffers[] = {pSubpassModel->vertexBuffer};
+                    VkDeviceSize offsets[] = {0};
+                    vkCmdBindVertexBuffers(vkCommandBuffer, 0, 1, vertexBuffers, offsets);
+                    uint32_t vertexCount = pSubpassModel->vertexCount;
+                    vkCmdDraw(vkCommandBuffer, vertexCount, 1, 0, 0);
+                }
             }
+        }
+        if (subpassIndex < pDeferredRenderPass->subpassCount - 1)
+        {
+            vkCmdNextSubpass(vkCommandBuffer, VK_SUBPASS_CONTENTS_INLINE);
+        }
+        else
+        {
+            // Finial subpass;
         }
     }
     vkCmdEndRenderPass(vkCommandBuffer);

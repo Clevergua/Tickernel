@@ -94,7 +94,7 @@ static void CreateVkPipeline(GraphicEngine *pGraphicEngine)
         .pNext = NULL,
         .flags = 0,
         .rasterizerDiscardEnable = VK_FALSE,
-        .polygonMode = VK_POLYGON_MODE_POINT,
+        .polygonMode = VK_POLYGON_MODE_FILL,
         .cullMode = VK_CULL_MODE_NONE,
         .frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE,
         .depthBiasEnable = VK_FALSE,
@@ -102,6 +102,17 @@ static void CreateVkPipeline(GraphicEngine *pGraphicEngine)
         .depthBiasClamp = VK_FALSE,
         .depthBiasSlopeFactor = 0,
         .lineWidth = 1.0f,
+    };
+    VkPipelineMultisampleStateCreateInfo pipelineMultisampleStateCreateInfo = {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
+        .pNext = NULL,
+        .flags = 0,
+        .rasterizationSamples = VK_SAMPLE_COUNT_1_BIT,
+        .sampleShadingEnable = VK_FALSE,
+        .minSampleShading = 0,
+        .pSampleMask = NULL,
+        .alphaToCoverageEnable = VK_FALSE,
+        .alphaToOneEnable = VK_FALSE,
     };
     VkPipelineDepthStencilStateCreateInfo pipelineDepthStencilStateCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
@@ -194,7 +205,7 @@ static void CreateVkPipeline(GraphicEngine *pGraphicEngine)
         .pTessellationState = NULL,
         .pViewportState = &pipelineViewportStateInfo,
         .pRasterizationState = &pipelineRasterizationStateCreateInfo,
-        .pMultisampleState = NULL,
+        .pMultisampleState = &pipelineMultisampleStateCreateInfo,
         .pDepthStencilState = &pipelineDepthStencilStateCreateInfo,
         .pColorBlendState = &colorBlendStateCreateInfo,
         .pDynamicState = NULL,
@@ -202,7 +213,7 @@ static void CreateVkPipeline(GraphicEngine *pGraphicEngine)
         .renderPass = pDeferredRenderPass->vkRenderPass,
         .subpass = lightingSubpassIndex,
         .basePipelineHandle = VK_NULL_HANDLE,
-        .basePipelineIndex = 0,
+        .basePipelineIndex = -1,
     };
 
     VkPipelineCache pipelineCache = NULL;
@@ -248,16 +259,16 @@ static void CreateLightingSubpassModel(GraphicEngine *pGraphicEngine, uint32_t v
         .offset = 0,
         .range = sizeof(GlobalUniformBuffer),
     };
-    // VkDescriptorImageInfo depthVkDescriptorImageInfo = {
-    //     .sampler = NULL,
-    //     .imageView = pGraphicEngine->depthGraphicImage.vkImageView,
-    //     .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-    // };
-    // VkDescriptorImageInfo albedoVkDescriptorImageInfo = {
-    //     .sampler = NULL,
-    //     .imageView = pGraphicEngine->albedoGraphicImage.vkImageView,
-    //     .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-    // };
+    VkDescriptorImageInfo depthVkDescriptorImageInfo = {
+        .sampler = NULL,
+        .imageView = pGraphicEngine->depthGraphicImage.vkImageView,
+        .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+    };
+    VkDescriptorImageInfo albedoVkDescriptorImageInfo = {
+        .sampler = NULL,
+        .imageView = pGraphicEngine->albedoGraphicImage.vkImageView,
+        .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+    };
     VkWriteDescriptorSet descriptorWrites[] = {
         {
             .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
@@ -271,32 +282,33 @@ static void CreateLightingSubpassModel(GraphicEngine *pGraphicEngine, uint32_t v
             .pBufferInfo = &globalDescriptorBufferInfo,
             .pTexelBufferView = NULL,
         },
-        // {
-        //     .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-        //     .pNext = NULL,
-        //     .dstSet = pSubpassModel->vkDescriptorSet,
-        //     .dstBinding = 0,
-        //     .dstArrayElement = 0,
-        //     .descriptorCount = 1,
-        //     .descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT,
-        //     .pImageInfo = &depthVkDescriptorImageInfo,
-        //     .pBufferInfo = NULL,
-        //     .pTexelBufferView = NULL,
-        // },
-        // {
-        //     .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-        //     .pNext = NULL,
-        //     .dstSet = pSubpassModel->vkDescriptorSet,
-        //     .dstBinding = 1,
-        //     .dstArrayElement = 0,
-        //     .descriptorCount = 1,
-        //     .descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT,
-        //     .pImageInfo = &albedoVkDescriptorImageInfo,
-        //     .pBufferInfo = NULL,
-        //     .pTexelBufferView = NULL,
-        // },
+        {
+            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            .pNext = NULL,
+            .dstSet = pSubpassModel->vkDescriptorSet,
+            .dstBinding = 1,
+            .dstArrayElement = 0,
+            .descriptorCount = 1,
+            .descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT,
+            .pImageInfo = &depthVkDescriptorImageInfo,
+            .pBufferInfo = NULL,
+            .pTexelBufferView = NULL,
+        },
+        {
+            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            .pNext = NULL,
+            .dstSet = pSubpassModel->vkDescriptorSet,
+            .dstBinding = 2,
+            .dstArrayElement = 0,
+            .descriptorCount = 1,
+            .descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT,
+            .pImageInfo = &albedoVkDescriptorImageInfo,
+            .pBufferInfo = NULL,
+            .pTexelBufferView = NULL,
+        },
     };
     vkUpdateDescriptorSets(pGraphicEngine->vkDevice, 1, descriptorWrites, 0, NULL);
+    pSubpassModel->isValid = true;
 }
 static void DestroyLightingSubpassModel(GraphicEngine *pGraphicEngine, uint32_t groupIndex, uint32_t modelIndex)
 {
@@ -305,7 +317,7 @@ static void DestroyLightingSubpassModel(GraphicEngine *pGraphicEngine, uint32_t 
     Subpass *pLightingSubpass = &pDeferredRenderPass->subpasses[lightingSubpassIndex];
     ModelGroup *pModelGroup = &pLightingSubpass->modelGroups[groupIndex];
     SubpassModel *pSubpassModel = &pModelGroup->subpassModels[modelIndex];
-
+    pSubpassModel->isValid = false;
     VkResult result = vkFreeDescriptorSets(pGraphicEngine->vkDevice, pModelGroup->vkDescriptorPool, 1, &pSubpassModel->vkDescriptorSet);
     TryThrowVulkanError(result);
     DestroyBuffer(pGraphicEngine->vkDevice, pSubpassModel->modelUniformBuffer, pSubpassModel->modelUniformBufferMemory);
@@ -328,13 +340,32 @@ static void DestroyLightingModelGroups(GraphicEngine *pGraphicEngine)
     RenderPass *pDeferredRenderPass = &pGraphicEngine->deferredRenderPass;
     uint32_t lightingSubpassIndex = 1;
     Subpass *pLightingSubpass = &pDeferredRenderPass->subpasses[lightingSubpassIndex];
-
     for (uint32_t groupIndex = 0; groupIndex < pLightingSubpass->modelGroupCount; groupIndex++)
     {
         ModelGroup *pModelGroup = &pLightingSubpass->modelGroups[groupIndex];
-        for (uint32_t modelIndex = 0; modelIndex < pModelGroup->modelCount; modelIndex++)
+        ModelGroup modelGroup = *pModelGroup;
+        bool removedIndices[modelGroup.modelCount];
+        for (uint32_t i = 0; i < modelGroup.modelCount; i++)
         {
-            DestroyLightingSubpassModel(pGraphicEngine, groupIndex, modelIndex);
+            removedIndices[i] = false;
+        }
+        Uint32Node *node = modelGroup.pRemovedIndexLinkedList;
+        while (NULL != node)
+        {
+            removedIndices[node->data] = true;
+            node = node->pNext;
+        }
+        for (uint32_t modelIndex = 0; modelIndex < modelGroup.modelCount; modelIndex++)
+        {
+            SubpassModel *pSubpassModel = &pModelGroup->subpassModels[modelIndex];
+            if (pSubpassModel->isValid)
+            {
+                DestroyLightingSubpassModel(pGraphicEngine, groupIndex, modelIndex);
+            }
+            else
+            {
+                // Has removed.
+            }
         }
         DestroyModelGroup(pGraphicEngine, *pModelGroup);
     }

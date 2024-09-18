@@ -29,6 +29,7 @@ typedef struct SubpassModelStruct
     void *modelUniformBufferMapped;
 
     VkDescriptorSet vkDescriptorSet;
+    bool isValid;
 } SubpassModel;
 
 typedef struct ModelGroupStruct

@@ -111,6 +111,7 @@
         "deferredrenderpass.h": "c",
         "lightingsubpass.h": "c",
         "geometrysubpass.h": "c",
-        "cglm.h": "c"
+        "cglm.h": "c",
+        "unistd.h": "c"
     }
 }
