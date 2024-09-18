@@ -847,6 +847,9 @@ void UpdateGraphicEngine(GraphicEngine *pGraphicEngine)
 
 void EndGraphicEngine(GraphicEngine *pGraphicEngine)
 {
+    VkResult result = vkDeviceWaitIdle(pGraphicEngine->vkDevice);
+    TryThrowVulkanError(result);
+
     DestroyDeferredRenderPass(pGraphicEngine);
     DestroyGraphicImages(pGraphicEngine);
     DestroyGlobalUniformBuffers(pGraphicEngine);

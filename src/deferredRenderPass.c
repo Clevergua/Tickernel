@@ -102,34 +102,34 @@ static void CreateVkRenderPass(GraphicEngine *pGraphicEngine)
         .pPreserveAttachments = NULL,
     };
 
-    VkAttachmentReference lightColorAttachmentReference = {
+    VkAttachmentReference lightingColorAttachmentReference = {
         .attachment = 0,
         .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
     };
-    VkAttachmentReference lightDepthAttachmentReference = {
+    VkAttachmentReference lightingDepthAttachmentReference = {
         .attachment = 1,
         .layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL,
     };
-    VkAttachmentReference lightAlbedoAttachmentReference = {
+    VkAttachmentReference lightingAlbedoAttachmentReference = {
         .attachment = 2,
         .layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
     };
-    VkSubpassDescription ligthSubpassDescription = {
+    VkSubpassDescription ligthtingSubpassDescription = {
         .flags = 0,
         .pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
         .inputAttachmentCount = 2,
-        .pInputAttachments = (const VkAttachmentReference[]){lightDepthAttachmentReference, lightAlbedoAttachmentReference},
+        .pInputAttachments = (const VkAttachmentReference[]){lightingDepthAttachmentReference, lightingAlbedoAttachmentReference},
         .colorAttachmentCount = 1,
-        .pColorAttachments = &lightColorAttachmentReference,
+        .pColorAttachments = &lightingColorAttachmentReference,
         .pResolveAttachments = NULL,
-        .pDepthStencilAttachment = &geometryDepthAttachmentReference,
+        .pDepthStencilAttachment = NULL,
         .preserveAttachmentCount = 0,
         .pPreserveAttachments = NULL,
     };
     uint32_t subpassCount = 2;
     VkSubpassDescription vkSubpassDescriptions[] = {
         geometrySubpassDescription,
-        ligthSubpassDescription,
+        ligthtingSubpassDescription,
     };
     uint32_t dependencyCount = subpassCount - 1;
     VkSubpassDependency subpassDependencies[dependencyCount];
@@ -275,7 +275,7 @@ void RecordDeferredRenderPass(GraphicEngine *pGraphicEngine)
     uint32_t clearValueCount = 2;
     VkClearValue *clearValues = (VkClearValue[]){
         {
-            .color = {0.0f, 0.0f, 0.0f, 1.0f},
+            .color = {1.0f, 0.0f, 0.0f, 1.0f},
         },
         {
             .depthStencil = {1.0f, 0},
