@@ -39,7 +39,7 @@ static void CreateVkInstance(GraphicEngine *pGraphicEngine)
     void *pVkInstanceCreateInfoNext;
     char *engineExtensionNamesInStack[] = {
         VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
-        VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME,
+        // VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME,
     };
     if (pGraphicEngine->enableValidationLayers)
     {
@@ -108,7 +108,8 @@ static void CreateVkInstance(GraphicEngine *pGraphicEngine)
         {
             .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
             .pNext = pVkInstanceCreateInfoNext,
-            .flags = VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR,
+            .flags = 0,
+            // .flags = VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR,
             .pApplicationInfo = &appInfo,
             .enabledLayerCount = enabledLayerCount,
             .ppEnabledLayerNames = (const char *const *)enabledLayerNames,

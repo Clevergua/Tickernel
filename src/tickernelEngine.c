@@ -64,7 +64,7 @@ void RunTickernelEngine(TickernelEngine *pTickernelEngine)
         {
             sleepMilliseconds = 0;
         }
-        printf("Tickernel Tick!\n    Framecount: %u\n    TimeCost/Total: %ums/%ums\n", pTickernelEngine->frameCount, deltaMilliseconds, millisecondsPerFrame);
+        printf("Tickernel Tick!\n    Framecount: %u\n    TimeCost/TimePerFrame: %ums/%ums\n", pTickernelEngine->frameCount, deltaMilliseconds, millisecondsPerFrame);
         TickernelSleep(sleepMilliseconds);
         pTickernelEngine->frameCount++;
     }

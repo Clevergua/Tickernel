@@ -44,7 +44,7 @@ static void CreateVkRenderPass(GraphicEngine *pGraphicEngine)
         .flags = 0,
         .format = pGraphicEngine->surfaceFormat.format,
         .samples = VK_SAMPLE_COUNT_1_BIT,
-        .loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+        .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
         .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
         .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
         .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
@@ -275,7 +275,7 @@ void RecordDeferredRenderPass(GraphicEngine *pGraphicEngine)
     uint32_t clearValueCount = 2;
     VkClearValue *clearValues = (VkClearValue[]){
         {
-            .color = {1.0f, 0.0f, 0.0f, 1.0f},
+            .color = {0.0f, 0.382f, 0.382f, 1.0f},
         },
         {
             .depthStencil = {1.0f, 0},
