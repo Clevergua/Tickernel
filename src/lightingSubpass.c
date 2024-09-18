@@ -307,7 +307,7 @@ static void CreateLightingSubpassModel(GraphicEngine *pGraphicEngine, uint32_t v
             .pTexelBufferView = NULL,
         },
     };
-    vkUpdateDescriptorSets(pGraphicEngine->vkDevice, 1, descriptorWrites, 0, NULL);
+    vkUpdateDescriptorSets(pGraphicEngine->vkDevice, 3, descriptorWrites, 0, NULL);
     pSubpassModel->isValid = true;
 }
 static void DestroyLightingSubpassModel(GraphicEngine *pGraphicEngine, uint32_t groupIndex, uint32_t modelIndex)
