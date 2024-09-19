@@ -246,7 +246,7 @@ void DestroyGraphicImage(GraphicEngine *pGraphicEngine, GraphicImage graphicImag
 void CreateVkShaderModule(GraphicEngine *pGraphicEngine, const char *filePath, VkShaderModule *pVkShaderModule)
 {
     printf("Path: %s\n", filePath);
-    FILE *pFile = fopen(filePath, "rb");
+    FILE *pFile = fopen(filePath, "r");
     fseek(pFile, 0, SEEK_END);
     size_t fileLength = ftell(pFile);
     rewind(pFile);

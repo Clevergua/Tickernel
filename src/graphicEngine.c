@@ -39,14 +39,15 @@ static void CreateVkInstance(GraphicEngine *pGraphicEngine)
     void *pVkInstanceCreateInfoNext;
     char *engineExtensionNamesInStack[] = {
         VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
-        // VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME,
+#if PLATFORM_OSX
+        VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME,
+#endif
     };
     if (pGraphicEngine->enableValidationLayers)
     {
         char *enabledLayerNamesInStack[] = {
             "VK_LAYER_KHRONOS_validation",
         };
-
         enabledLayerNamesCountInStack = GET_ARRAY_COUNT(enabledLayerNamesInStack);
         engineExtensionNamesCountInStack = GET_ARRAY_COUNT(engineExtensionNamesInStack);
         enabledLayerNames = enabledLayerNamesInStack;
@@ -108,8 +109,13 @@ static void CreateVkInstance(GraphicEngine *pGraphicEngine)
         {
             .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
             .pNext = pVkInstanceCreateInfoNext,
+#if PLATFORM_OSX
+            .flags = VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR,
+
+#else
             .flags = 0,
-            // .flags = VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR,
+
+#endif
             .pApplicationInfo = &appInfo,
             .enabledLayerCount = enabledLayerCount,
             .ppEnabledLayerNames = (const char *const *)enabledLayerNames,
