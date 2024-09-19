@@ -804,7 +804,17 @@ static void DestroyGlobalUniformBuffers(GraphicEngine *pGraphicEngine)
 static void UpdateGlobalUniformBuffer(GraphicEngine *pGraphicEngine)
 {
     GlobalUniformBuffer ubo;
-    // glm_rotate(ubo.model, pGraphicEngine->frameCount * glm_rad(0.01f), (vec3){0.0f, 0.0f, 1.0f});
+    GeometrySubpassModelUniformBuffer geometrySubpassModelUniformBuffer = {
+        .model = {
+            {1, 0, 0, 0},
+            {0, 1, 0, 0},
+            {0, 0, 1, 0},
+            {0, 0, 0, 1},
+        },
+    };
+    glm_rotate(geometrySubpassModelUniformBuffer.model, pGraphicEngine->frameCount * glm_rad(0.01f), (vec3){0.0f, 0.0f, 1.0f});
+    memcpy(pGraphicEngine->deferredRenderPass.subpasses[0].subpassModels[0].modelUniformBufferMapped, &geometrySubpassModelUniformBuffer, sizeof(geometrySubpassModelUniformBuffer));
+
     glm_lookat((vec3){2.0f, 2.0f, 2.0f}, (vec3){0.0f, 0.0f, 0.0f}, (vec3){0.0f, 0.0f, 1.0f}, ubo.view);
     glm_perspective(glm_rad(45.0f), pGraphicEngine->swapchainExtent.width / (float)pGraphicEngine->swapchainExtent.height, 0.1f, 10.0f, ubo.proj);
     ubo.proj[1][1] *= -1;
