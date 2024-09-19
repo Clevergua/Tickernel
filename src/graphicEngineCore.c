@@ -280,121 +280,63 @@ void DestroyVkShaderModule(GraphicEngine *pGraphicEngine, VkShaderModule vkShade
     vkDestroyShaderModule(pGraphicEngine->vkDevice, vkShaderModule, NULL);
 }
 
-void CreateModelGroup(GraphicEngine *pGraphicEngine, Subpass *pSubpass, ModelGroup *pModelGroup)
+void AddModelToSubpass(GraphicEngine *pGraphicEngine, Subpass *pSubpass, uint32_t *pIndex)
 {
-    pModelGroup->modelCount = 0;
-    pModelGroup->subpassModels = TickernelMalloc(sizeof(SubpassModel) * pSubpass->modelCountPerGroup);
-    pModelGroup->pRemovedIndexLinkedList = NULL;
-
-    uint32_t poolSizeCount = 0;
-    VkDescriptorPoolSize poolSizes[MAX_VK_DESCRIPTOR_TPYE];
-    for (uint32_t vkDescriptorType = 0; vkDescriptorType < MAX_VK_DESCRIPTOR_TPYE; vkDescriptorType++)
+    if (NULL != pSubpass->pRemovedIndexLinkedList)
     {
-        if (pSubpass->vkDescriptorTypeToCount[vkDescriptorType] > 0)
-        {
-            poolSizes[poolSizeCount] = (VkDescriptorPoolSize){
-                .type = vkDescriptorType,
-                .descriptorCount = pSubpass->modelCountPerGroup * pSubpass->vkDescriptorTypeToCount[vkDescriptorType],
-            };
-            poolSizeCount++;
-        }
-    }
-
-    VkDescriptorPoolCreateInfo descriptorPoolCreateInfo = {
-        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
-        .pNext = NULL,
-        .flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
-        .maxSets = pSubpass->modelCountPerGroup,
-        .poolSizeCount = poolSizeCount,
-        .pPoolSizes = poolSizes,
-    };
-    VkResult result = vkCreateDescriptorPool(pGraphicEngine->vkDevice, &descriptorPoolCreateInfo, NULL, &pModelGroup->vkDescriptorPool);
-    TryThrowVulkanError(result);
-}
-void DestroyModelGroup(GraphicEngine *pGraphicEngine, ModelGroup modelGroup)
-{
-    vkDestroyDescriptorPool(pGraphicEngine->vkDevice, modelGroup.vkDescriptorPool, NULL);
-    TickernelFree(modelGroup.subpassModels);
-    while (NULL != modelGroup.pRemovedIndexLinkedList)
-    {
-        Uint32Node *pNode = modelGroup.pRemovedIndexLinkedList;
-        modelGroup.pRemovedIndexLinkedList = modelGroup.pRemovedIndexLinkedList->pNext;
+        uint32_t modelIndex = pSubpass->pRemovedIndexLinkedList->data;
+        Uint32Node *pNode = pSubpass->pRemovedIndexLinkedList;
+        pSubpass->pRemovedIndexLinkedList = pSubpass->pRemovedIndexLinkedList->pNext;
         TickernelFree(pNode);
+        *pIndex = modelIndex;
+        return;
     }
-}
-
-void AddModelToSubpass(GraphicEngine *pGraphicEngine, Subpass *pSubpass, uint32_t *pGroupIndex, uint32_t *pModelIndex)
-{
-    for (uint32_t groupIndex = 0; groupIndex < pSubpass->modelGroupCount; groupIndex++)
+    else if (pSubpass->subpassModelCount < pSubpass->vkDescriptorPoolCount * pSubpass->modelCountPerDescriptorPool)
     {
-        ModelGroup *pModelGroup = &pSubpass->modelGroups[groupIndex];
-        if (NULL != pModelGroup->pRemovedIndexLinkedList)
-        {
-            uint32_t modelIndex = pModelGroup->pRemovedIndexLinkedList->data;
-            Uint32Node *pNode = pModelGroup->pRemovedIndexLinkedList;
-            pModelGroup->pRemovedIndexLinkedList = pModelGroup->pRemovedIndexLinkedList->pNext;
-            TickernelFree(pNode);
-            *pGroupIndex = groupIndex;
-            *pModelIndex = modelIndex;
-            return;
-        }
-        else if (pModelGroup->modelCount < pSubpass->modelCountPerGroup)
-        {
-            uint32_t modelIndex = pModelGroup->modelCount;
-            pModelGroup->modelCount++;
-            *pGroupIndex = groupIndex;
-            *pModelIndex = modelIndex;
-            return;
-        }
-        else
-        {
-            // continue;
-        }
-    }
-
-    // Create group & create model
-    if (pSubpass->modelGroupCount < pSubpass->maxModelGroupCount)
-    {
-        uint32_t groupIndex = pSubpass->modelGroupCount;
-        // create model group
-        CreateModelGroup(pGraphicEngine, pSubpass, &pSubpass->modelGroups[groupIndex]);
-        pSubpass->modelGroupCount++;
-        // create model
-        ModelGroup *pModelGroup = &pSubpass->modelGroups[groupIndex];
-        uint32_t modelIndex = pModelGroup->modelCount;
-        pModelGroup->modelCount++;
-
-        *pGroupIndex = groupIndex;
-        *pModelIndex = modelIndex;
+        *pIndex = pSubpass->subpassModelCount;
+        pSubpass->subpassModelCount++;
         return;
     }
     else
     {
-        uint32_t oldCount = pSubpass->maxModelGroupCount;
-        ModelGroup *oldModelGroups = pSubpass->modelGroups;
-        pSubpass->maxModelGroupCount = pSubpass->maxModelGroupCount * 2;
-        pSubpass->modelGroups = TickernelMalloc(sizeof(ModelGroup) * pSubpass->maxModelGroupCount);
-        memcpy(pSubpass->modelGroups, oldModelGroups, oldCount * sizeof(ModelGroup));
-        TickernelFree(oldModelGroups);
-        // create model group
-        uint32_t groupIndex = pSubpass->modelGroupCount;
-        CreateModelGroup(pGraphicEngine, pSubpass, &pSubpass->modelGroups[groupIndex]);
-        pSubpass->modelGroupCount++;
-        // create model
-        ModelGroup *pModelGroup = &pSubpass->modelGroups[groupIndex];
-        uint32_t modelIndex = pModelGroup->modelCount;
-        pModelGroup->modelCount++;
+        uint32_t newVkDescriptorPoolCount = pSubpass->vkDescriptorPoolCount + 1;
+        VkDescriptorPool *newVkDescriptorPools = TickernelMalloc(sizeof(VkDescriptorPool) * newVkDescriptorPoolCount);
+        memcpy(newVkDescriptorPools, pSubpass->vkDescriptorPools, sizeof(VkDescriptorPool) * pSubpass->vkDescriptorPoolCount);
+        TickernelFree(pSubpass->vkDescriptorPools);
+        VkDescriptorPoolCreateInfo descriptorPoolCreateInfo = {
+            .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+            .pNext = NULL,
+            .flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
+            .maxSets = pSubpass->modelCountPerDescriptorPool,
+            .poolSizeCount = pSubpass->vkDescriptorPoolSizeCount,
+            .pPoolSizes = pSubpass->vkDescriptorPoolSizes,
+        };
+        VkResult result = vkCreateDescriptorPool(pGraphicEngine->vkDevice, &descriptorPoolCreateInfo, NULL, &newVkDescriptorPools[pSubpass->vkDescriptorPoolCount]);
+        TryThrowVulkanError(result);
+        pSubpass->vkDescriptorPoolCount = newVkDescriptorPoolCount;
+        pSubpass->vkDescriptorPools = newVkDescriptorPools;
 
-        *pGroupIndex = groupIndex;
-        *pModelIndex = modelIndex;
+        SubpassModel *newModels = TickernelMalloc(sizeof(SubpassModel) * pSubpass->modelCountPerDescriptorPool * newVkDescriptorPoolCount);
+        memcpy(newModels, pSubpass->subpassModels, sizeof(SubpassModel) * pSubpass->subpassModelCount);
+        TickernelFree(pSubpass->subpassModels);
+        pSubpass->subpassModels = newModels;       
+
+        *pIndex = pSubpass->subpassModelCount;
+        pSubpass->subpassModelCount++;
         return;
     }
 }
-void RemoveModelFromSubpass(GraphicEngine *pGraphicEngine, uint32_t groupIndex, uint32_t modelIndex, Subpass *pSubpass)
+void RemoveModelFromSubpass(GraphicEngine *pGraphicEngine, uint32_t index, Subpass *pSubpass)
 {
-    ModelGroup *pModelGroup = &pSubpass->modelGroups[groupIndex];
-    Uint32Node *newNode = TickernelMalloc(sizeof(Uint32Node));
-    newNode->data = modelIndex;
-    newNode->pNext = pModelGroup->pRemovedIndexLinkedList;
-    pModelGroup->pRemovedIndexLinkedList = newNode;
+    if (index == (pSubpass->subpassModelCount - 1))
+    {
+        pSubpass->subpassModelCount--;
+    }
+    else
+    {
+        Uint32Node *newNode = TickernelMalloc(sizeof(Uint32Node));
+        newNode->data = index;
+        newNode->pNext = pSubpass->pRemovedIndexLinkedList;
+        pSubpass->pRemovedIndexLinkedList = newNode;
+    }
 }

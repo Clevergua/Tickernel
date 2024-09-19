@@ -32,27 +32,20 @@ typedef struct SubpassModelStruct
     bool isValid;
 } SubpassModel;
 
-typedef struct ModelGroupStruct
-{
-    uint32_t modelCount;
-    SubpassModel *subpassModels;
-    Uint32Node *pRemovedIndexLinkedList;
-
-    VkDescriptorPool vkDescriptorPool;
-} ModelGroup;
-
 typedef struct SubpassStruct
 {
     VkPipeline vkPipeline;
     VkPipelineLayout vkPipelineLayout;
     VkDescriptorSetLayout descriptorSetLayout;
 
-    uint32_t maxModelGroupCount;
-    uint32_t modelGroupCount;
-    ModelGroup *modelGroups;
-    uint32_t modelCountPerGroup;
-
-    uint32_t *vkDescriptorTypeToCount;
+    uint32_t modelCountPerDescriptorPool;
+    uint32_t vkDescriptorPoolCount;
+    VkDescriptorPool *vkDescriptorPools;
+    uint32_t subpassModelCount;
+    SubpassModel *subpassModels;
+    Uint32Node *pRemovedIndexLinkedList;
+    uint32_t vkDescriptorPoolSizeCount;
+    VkDescriptorPoolSize *vkDescriptorPoolSizes;
 } Subpass;
 
 typedef struct RenderPassStruct
@@ -118,8 +111,7 @@ typedef struct GraphicEngineStruct
     GraphicImage depthGraphicImage;
     GraphicImage albedoGraphicImage;
     RenderPass deferredRenderPass;
-    uint32_t fullScreenVerticesGroupIndex;
-    uint32_t fullScreenVerticesModelIndex;
+    uint32_t fullScreenTriangleModelIndex;
 } GraphicEngine;
 
 void TryThrowVulkanError(VkResult vkResult);
@@ -138,8 +130,5 @@ void DestroyBuffer(VkDevice vkDevice, VkBuffer vkBuffer, VkDeviceMemory deviceMe
 void CreateVertexBuffer(GraphicEngine *pGraphicEngine, VkDeviceSize vertexBufferSize, void *vertices, VkBuffer *pVertexBuffer, VkDeviceMemory *pVertexBufferMemory);
 void DestroyVertexBuffer(GraphicEngine *pGraphicEngine, VkBuffer vertexBuffer, VkDeviceMemory vertexBufferMemory);
 
-void CreateModelGroup(GraphicEngine *pGraphicEngine, Subpass *pGeometrySubpass, ModelGroup *pModelGroup);
-void DestroyModelGroup(GraphicEngine *pGraphicEngine, ModelGroup modelGroup);
-
-void AddModelToSubpass(GraphicEngine *pGraphicEngine, Subpass *pSubpass, uint32_t *pGroupIndex, uint32_t *pModelIndex);
-void RemoveModelFromSubpass(GraphicEngine *pGraphicEngine, uint32_t groupIndex, uint32_t modelIndex, Subpass *pSubpass);
+void AddModelToSubpass(GraphicEngine *pGraphicEngine, Subpass *pSubpass, uint32_t *pModelIndex);
+void RemoveModelFromSubpass(GraphicEngine *pGraphicEngine, uint32_t modelIndex, Subpass *pSubpass);

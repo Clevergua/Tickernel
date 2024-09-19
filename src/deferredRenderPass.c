@@ -209,18 +209,18 @@ void CreateDeferredRenderPass(GraphicEngine *pGraphicEngine)
         {0, 0, 0},
         {0, 0, 0},
     };
-    AddModelToLightingSubpass(pGraphicEngine, 3, lightingSubpassVertices, &pGraphicEngine->fullScreenVerticesGroupIndex, &pGraphicEngine->fullScreenVerticesModelIndex);
+    AddModelToLightingSubpass(pGraphicEngine, 3, lightingSubpassVertices, &pGraphicEngine->fullScreenTriangleModelIndex);
     GeometrySubpassVertex geometrySubpassVertices[] = {
         {0, 0, 0},
 
     };
-    uint32_t a, b;
-    AddModelToGeometrySubpass(pGraphicEngine, 1, geometrySubpassVertices, &a, &b);
+    uint32_t a;
+    AddModelToGeometrySubpass(pGraphicEngine, 1, geometrySubpassVertices, &a);
 }
 
 void DestroyDeferredRenderPass(GraphicEngine *pGraphicEngine)
 {
-    RemoveModelFromLightingSubpass(pGraphicEngine, pGraphicEngine->fullScreenVerticesGroupIndex, pGraphicEngine->fullScreenVerticesModelIndex);
+    RemoveModelFromLightingSubpass(pGraphicEngine, pGraphicEngine->fullScreenTriangleModelIndex);
     DestroyGeometrySubpass(pGraphicEngine);
     DestroyLightingSubpass(pGraphicEngine);
     DestroyVkFramebuffers(pGraphicEngine);
@@ -299,22 +299,18 @@ void RecordDeferredRenderPass(GraphicEngine *pGraphicEngine)
 
         vkCmdBindPipeline(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pSubpass->vkPipeline);
         uint32_t geometryPipelineIndex = 0;
-        for (uint32_t modelGroupIndex = 0; modelGroupIndex < pSubpass->modelGroupCount; modelGroupIndex++)
+        for (uint32_t modelIndex = 0; modelIndex < pSubpass->subpassModelCount; modelIndex++)
         {
-            ModelGroup *pModelGroup = &pSubpass->modelGroups[modelGroupIndex];
-            for (uint32_t modelIndex = 0; modelIndex < pModelGroup->modelCount; modelIndex++)
+            SubpassModel *pSubpassModel = &pSubpass->subpassModels[modelIndex];
+            if (pSubpassModel->isValid)
             {
-                SubpassModel *pSubpassModel = &pModelGroup->subpassModels[modelGroupIndex];
-                if (pSubpassModel->isValid)
-                {
-                    vkCmdBindDescriptorSets(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pSubpass->vkPipelineLayout, 0, 1, &pSubpassModel->vkDescriptorSet, 0, NULL);
+                vkCmdBindDescriptorSets(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pSubpass->vkPipelineLayout, 0, 1, &pSubpassModel->vkDescriptorSet, 0, NULL);
 
-                    VkBuffer vertexBuffers[] = {pSubpassModel->vertexBuffer};
-                    VkDeviceSize offsets[] = {0};
-                    vkCmdBindVertexBuffers(vkCommandBuffer, 0, 1, vertexBuffers, offsets);
-                    uint32_t vertexCount = pSubpassModel->vertexCount;
-                    vkCmdDraw(vkCommandBuffer, vertexCount, 1, 0, 0);
-                }
+                VkBuffer vertexBuffers[] = {pSubpassModel->vertexBuffer};
+                VkDeviceSize offsets[] = {0};
+                vkCmdBindVertexBuffers(vkCommandBuffer, 0, 1, vertexBuffers, offsets);
+                uint32_t vertexCount = pSubpassModel->vertexCount;
+                vkCmdDraw(vkCommandBuffer, vertexCount, 1, 0, 0);
             }
         }
         if (subpassIndex < pDeferredRenderPass->subpassCount - 1)

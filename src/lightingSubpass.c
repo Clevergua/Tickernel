@@ -232,23 +232,23 @@ static void DestroyVkPipeline(GraphicEngine *pGraphicEngine)
     vkDestroyPipeline(pGraphicEngine->vkDevice, pLightingSubpass->vkPipeline, NULL);
 }
 
-static void CreateLightingSubpassModel(GraphicEngine *pGraphicEngine, uint32_t vertexCount, LightingSubpassVertex *lightingSubpassVertices, uint32_t groupIndex, uint32_t modelIndex)
+static void CreateLightingSubpassModel(GraphicEngine *pGraphicEngine, uint32_t vertexCount, LightingSubpassVertex *lightingSubpassVertices, uint32_t index)
 {
     RenderPass *pDeferredRenderPass = &pGraphicEngine->deferredRenderPass;
     uint32_t lightingSubpassIndex = 1;
     Subpass *pLightingSubpass = &pDeferredRenderPass->subpasses[lightingSubpassIndex];
 
-    SubpassModel *pSubpassModel = &pLightingSubpass->modelGroups[groupIndex].subpassModels[modelIndex];
+    SubpassModel *pSubpassModel = &pLightingSubpass->subpassModels[index];
     pSubpassModel->vertexCount = vertexCount;
     VkDeviceSize vertexBufferSize = sizeof(LightingSubpassVertex) * vertexCount;
     CreateVertexBuffer(pGraphicEngine, vertexBufferSize, lightingSubpassVertices, &pSubpassModel->vertexBuffer, &pSubpassModel->vertexBufferMemory);
 
     // Create vkDescriptorSet
-    ModelGroup *pModelGroup = &pLightingSubpass->modelGroups[groupIndex];
+    uint32_t poolIndex = index / pLightingSubpass->modelCountPerDescriptorPool;
     VkDescriptorSetAllocateInfo descriptorSetAllocateInfo = {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
         .pNext = NULL,
-        .descriptorPool = pModelGroup->vkDescriptorPool,
+        .descriptorPool = pLightingSubpass->vkDescriptorPools[poolIndex],
         .descriptorSetCount = 1,
         .pSetLayouts = &pLightingSubpass->descriptorSetLayout,
     };
@@ -311,66 +311,19 @@ static void CreateLightingSubpassModel(GraphicEngine *pGraphicEngine, uint32_t v
     vkUpdateDescriptorSets(pGraphicEngine->vkDevice, 3, descriptorWrites, 0, NULL);
     pSubpassModel->isValid = true;
 }
-static void DestroyLightingSubpassModel(GraphicEngine *pGraphicEngine, uint32_t groupIndex, uint32_t modelIndex)
+static void DestroyLightingSubpassModel(GraphicEngine *pGraphicEngine, uint32_t index)
 {
     RenderPass *pDeferredRenderPass = &pGraphicEngine->deferredRenderPass;
     uint32_t lightingSubpassIndex = 1;
     Subpass *pLightingSubpass = &pDeferredRenderPass->subpasses[lightingSubpassIndex];
-    ModelGroup *pModelGroup = &pLightingSubpass->modelGroups[groupIndex];
-    SubpassModel *pSubpassModel = &pModelGroup->subpassModels[modelIndex];
+    SubpassModel *pSubpassModel = &pLightingSubpass->subpassModels[index];
     pSubpassModel->isValid = false;
-    VkResult result = vkFreeDescriptorSets(pGraphicEngine->vkDevice, pModelGroup->vkDescriptorPool, 1, &pSubpassModel->vkDescriptorSet);
+
+    uint32_t poolIndex = index / pLightingSubpass->modelCountPerDescriptorPool;
+    VkResult result = vkFreeDescriptorSets(pGraphicEngine->vkDevice, pLightingSubpass->vkDescriptorPools[poolIndex], 1, &pSubpassModel->vkDescriptorSet);
     TryThrowVulkanError(result);
 
     DestroyVertexBuffer(pGraphicEngine, pSubpassModel->vertexBuffer, pSubpassModel->vertexBufferMemory);
-}
-
-static void CreateLightingModelGroups(GraphicEngine *pGraphicEngine)
-{
-    RenderPass *pDeferredRenderPass = &pGraphicEngine->deferredRenderPass;
-    uint32_t lightingSubpassIndex = 1;
-    Subpass *pLightingSubpass = &pDeferredRenderPass->subpasses[lightingSubpassIndex];
-
-    pLightingSubpass->maxModelGroupCount = 1;
-    pLightingSubpass->modelCountPerGroup = 1;
-    pLightingSubpass->modelGroupCount = 0;
-    pLightingSubpass->modelGroups = TickernelMalloc(sizeof(ModelGroup) * pLightingSubpass->maxModelGroupCount);
-}
-static void DestroyLightingModelGroups(GraphicEngine *pGraphicEngine)
-{
-    RenderPass *pDeferredRenderPass = &pGraphicEngine->deferredRenderPass;
-    uint32_t lightingSubpassIndex = 1;
-    Subpass *pLightingSubpass = &pDeferredRenderPass->subpasses[lightingSubpassIndex];
-    for (uint32_t groupIndex = 0; groupIndex < pLightingSubpass->modelGroupCount; groupIndex++)
-    {
-        ModelGroup *pModelGroup = &pLightingSubpass->modelGroups[groupIndex];
-        ModelGroup modelGroup = *pModelGroup;
-        bool removedIndices[modelGroup.modelCount];
-        for (uint32_t i = 0; i < modelGroup.modelCount; i++)
-        {
-            removedIndices[i] = false;
-        }
-        Uint32Node *node = modelGroup.pRemovedIndexLinkedList;
-        while (NULL != node)
-        {
-            removedIndices[node->data] = true;
-            node = node->pNext;
-        }
-        for (uint32_t modelIndex = 0; modelIndex < modelGroup.modelCount; modelIndex++)
-        {
-            SubpassModel *pSubpassModel = &pModelGroup->subpassModels[modelIndex];
-            if (pSubpassModel->isValid)
-            {
-                DestroyLightingSubpassModel(pGraphicEngine, groupIndex, modelIndex);
-            }
-            else
-            {
-                // Has removed.
-            }
-        }
-        DestroyModelGroup(pGraphicEngine, *pModelGroup);
-    }
-    TickernelFree(pLightingSubpass->modelGroups);
 }
 
 void CreateLightingSubpass(GraphicEngine *pGraphicEngine)
@@ -379,40 +332,75 @@ void CreateLightingSubpass(GraphicEngine *pGraphicEngine)
     uint32_t lightingSubpassIndex = 1;
     Subpass *pLightingSubpass = &pDeferredRenderPass->subpasses[lightingSubpassIndex];
     CreateVkPipeline(pGraphicEngine);
-    CreateLightingModelGroups(pGraphicEngine);
-    pLightingSubpass->vkDescriptorTypeToCount = TickernelMalloc(sizeof(uint32_t) * MAX_VK_DESCRIPTOR_TPYE);
-    pLightingSubpass->vkDescriptorTypeToCount[VK_DESCRIPTOR_TYPE_SAMPLER] = 0;                // 0,
-    pLightingSubpass->vkDescriptorTypeToCount[VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER] = 0; // 1,
-    pLightingSubpass->vkDescriptorTypeToCount[VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE] = 0;          // 2,
-    pLightingSubpass->vkDescriptorTypeToCount[VK_DESCRIPTOR_TYPE_STORAGE_IMAGE] = 0;          // 3,
-    pLightingSubpass->vkDescriptorTypeToCount[VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER] = 0;   // 4,
-    pLightingSubpass->vkDescriptorTypeToCount[VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER] = 0;   // 5,
-    pLightingSubpass->vkDescriptorTypeToCount[VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER] = 1;         // 6,
-    pLightingSubpass->vkDescriptorTypeToCount[VK_DESCRIPTOR_TYPE_STORAGE_BUFFER] = 0;         // 7,
-    pLightingSubpass->vkDescriptorTypeToCount[VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC] = 0; // 8,
-    pLightingSubpass->vkDescriptorTypeToCount[VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC] = 0; // 9,
-    pLightingSubpass->vkDescriptorTypeToCount[VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT] = 2;       // 10,
+
+    pLightingSubpass->modelCountPerDescriptorPool = 1;
+    pLightingSubpass->vkDescriptorPoolCount = 0;
+    pLightingSubpass->vkDescriptorPools = NULL;
+
+    pLightingSubpass->vkDescriptorPoolSizeCount = 2;
+    pLightingSubpass->vkDescriptorPoolSizes = TickernelMalloc(sizeof(VkDescriptorPoolSize) * pLightingSubpass->vkDescriptorPoolSizeCount);
+    pLightingSubpass->vkDescriptorPoolSizes[0] = (VkDescriptorPoolSize){
+        .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+        .descriptorCount = pLightingSubpass->modelCountPerDescriptorPool,
+    };
+    pLightingSubpass->vkDescriptorPoolSizes[1] = (VkDescriptorPoolSize){
+        .type = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT,
+        .descriptorCount = pLightingSubpass->modelCountPerDescriptorPool * 2,
+    };
+
+    pLightingSubpass->subpassModelCount = 0;
+    pLightingSubpass->subpassModels = NULL;
+    pLightingSubpass->pRemovedIndexLinkedList = NULL;
 }
 void DestroyLightingSubpass(GraphicEngine *pGraphicEngine)
 {
-    DestroyLightingModelGroups(pGraphicEngine);
+    RenderPass *pDeferredRenderPass = &pGraphicEngine->deferredRenderPass;
+    uint32_t lightingSubpassIndex = 1;
+    Subpass *pLightingSubpass = &pDeferredRenderPass->subpasses[lightingSubpassIndex];
+    for (uint32_t i = 0; i < pLightingSubpass->vkDescriptorPoolCount * pLightingSubpass->modelCountPerDescriptorPool; i++)
+    {
+        if (pLightingSubpass->subpassModels[i].isValid)
+        {
+            DestroyLightingSubpassModel(pGraphicEngine, i);
+        }
+        else
+        {
+            // Skip deleted
+        }
+    }
+    TickernelFree(pLightingSubpass->subpassModels);
+
+    for (uint32_t i = 0; i < pLightingSubpass->vkDescriptorPoolCount; i++)
+    {
+        vkDestroyDescriptorPool(pGraphicEngine->vkDevice, pLightingSubpass->vkDescriptorPools[i], NULL);
+    }
+    TickernelFree(pLightingSubpass->vkDescriptorPools);
+
+    TickernelFree(pLightingSubpass->vkDescriptorPoolSizes);
+    while (NULL != pLightingSubpass->pRemovedIndexLinkedList)
+    {
+        Uint32Node *pNode = pLightingSubpass->pRemovedIndexLinkedList;
+        pLightingSubpass->pRemovedIndexLinkedList = pLightingSubpass->pRemovedIndexLinkedList->pNext;
+        TickernelFree(pNode);
+    }
     DestroyVkPipeline(pGraphicEngine);
 }
 
-void AddModelToLightingSubpass(GraphicEngine *pGraphicEngine, uint32_t vertexCount, LightingSubpassVertex *lightingSubpassVertices, uint32_t *pGroupIndex, uint32_t *pModelIndex)
+void AddModelToLightingSubpass(GraphicEngine *pGraphicEngine, uint32_t vertexCount, LightingSubpassVertex *lightingSubpassVertices, uint32_t *pIndex)
 {
     RenderPass *pDeferredRenderPass = &pGraphicEngine->deferredRenderPass;
     uint32_t lightingSubpassIndex = 1;
     Subpass *pLightingSubpass = &pDeferredRenderPass->subpasses[lightingSubpassIndex];
 
-    AddModelToSubpass(pGraphicEngine, pLightingSubpass, pGroupIndex, pModelIndex);
-    CreateLightingSubpassModel(pGraphicEngine, vertexCount, lightingSubpassVertices, *pGroupIndex, *pModelIndex);
+    AddModelToSubpass(pGraphicEngine, pLightingSubpass, pIndex);
+    CreateLightingSubpassModel(pGraphicEngine, vertexCount, lightingSubpassVertices, *pIndex);
 }
-void RemoveModelFromLightingSubpass(GraphicEngine *pGraphicEngine, uint32_t groupIndex, uint32_t modelIndex)
+void RemoveModelFromLightingSubpass(GraphicEngine *pGraphicEngine, uint32_t index)
 {
     RenderPass *pDeferredRenderPass = &pGraphicEngine->deferredRenderPass;
     uint32_t lightingSubpassIndex = 1;
     Subpass *pLightingSubpass = &pDeferredRenderPass->subpasses[lightingSubpassIndex];
-    DestroyLightingSubpassModel(pGraphicEngine, groupIndex, modelIndex);
-    RemoveModelFromSubpass(pGraphicEngine, groupIndex, modelIndex, pLightingSubpass);
+
+    DestroyLightingSubpassModel(pGraphicEngine, index);
+    RemoveModelFromSubpass(pGraphicEngine, index, pLightingSubpass);
 }
