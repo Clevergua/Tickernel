@@ -4,7 +4,7 @@
 typedef struct GeometrySubpassVertexStruct
 {
     vec3 position;
-    vec3 color;
+    vec4 color;
 } GeometrySubpassVertex;
 
 typedef struct GeometrySubpassModelStruct

@@ -357,7 +357,7 @@ void DestroyLightingSubpass(GraphicEngine *pGraphicEngine)
     RenderPass *pDeferredRenderPass = &pGraphicEngine->deferredRenderPass;
     uint32_t lightingSubpassIndex = 1;
     Subpass *pLightingSubpass = &pDeferredRenderPass->subpasses[lightingSubpassIndex];
-    for (uint32_t i = 0; i < pLightingSubpass->vkDescriptorPoolCount * pLightingSubpass->modelCountPerDescriptorPool; i++)
+    for (uint32_t i = 0; i < pLightingSubpass->modelCountPerDescriptorPool; i++)
     {
         if (pLightingSubpass->subpassModels[i].isValid)
         {

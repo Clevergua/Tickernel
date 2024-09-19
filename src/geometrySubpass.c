@@ -334,7 +334,7 @@ void CreateGeometrySubpass(GraphicEngine *pGraphicEngine)
     pGeometrySubpass->modelCountPerDescriptorPool = 256;
     pGeometrySubpass->vkDescriptorPoolCount = 0;
     pGeometrySubpass->vkDescriptorPools = NULL;
-    
+
     pGeometrySubpass->vkDescriptorPoolSizeCount = 1;
     pGeometrySubpass->vkDescriptorPoolSizes = TickernelMalloc(sizeof(VkDescriptorPoolSize) * pGeometrySubpass->vkDescriptorPoolSizeCount);
     pGeometrySubpass->vkDescriptorPoolSizes[0] = (VkDescriptorPoolSize){
@@ -351,7 +351,7 @@ void DestroyGeometrySubpass(GraphicEngine *pGraphicEngine)
     RenderPass *pDeferredRenderPass = &pGraphicEngine->deferredRenderPass;
     uint32_t geometrySubpassIndex = 0;
     Subpass *pGeometrySubpass = &pDeferredRenderPass->subpasses[geometrySubpassIndex];
-    for (uint32_t i = 0; i < pGeometrySubpass->vkDescriptorPoolCount * pGeometrySubpass->modelCountPerDescriptorPool; i++)
+    for (uint32_t i = 0; i < pGeometrySubpass->subpassModelCount; i++)
     {
         if (pGeometrySubpass->subpassModels[i].isValid)
         {
