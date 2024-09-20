@@ -7,7 +7,11 @@ static void CreateVkPipeline(GraphicEngine *pGraphicEngine)
     Subpass *pGeometrySubpass = &pDeferredRenderPass->subpasses[geometrySubpassIndex];
 
     VkShaderModule geometryVertShaderModule;
-    CreateVkShaderModule(pGraphicEngine, "../assets/shaders/geometry.vert.spv", &geometryVertShaderModule);
+    char geometryVertShaderPath[FILENAME_MAX];
+    geometryVertShaderPath[0] = '\0';
+    TickernelCombinePaths(geometryVertShaderPath, FILENAME_MAX, pGraphicEngine->assetsPath);
+    TickernelCombinePaths(geometryVertShaderPath, FILENAME_MAX, "shaders/geometry.vert.spv");
+    CreateVkShaderModule(pGraphicEngine, "assets/shaders/geometry.vert.spv", &geometryVertShaderModule);
     VkPipelineShaderStageCreateInfo vertShaderStageCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
         .pNext = NULL,
@@ -19,7 +23,11 @@ static void CreateVkPipeline(GraphicEngine *pGraphicEngine)
     };
 
     VkShaderModule geometryFragShaderModule;
-    CreateVkShaderModule(pGraphicEngine, "../assets/shaders/geometry.frag.spv", &geometryFragShaderModule);
+    char geometryFragShaderPath[FILENAME_MAX];
+    geometryFragShaderPath[0] = '\0';
+    TickernelCombinePaths(geometryFragShaderPath, FILENAME_MAX, pGraphicEngine->assetsPath);
+    TickernelCombinePaths(geometryFragShaderPath, FILENAME_MAX, "shaders/geometry.frag.spv");
+    CreateVkShaderModule(pGraphicEngine, "assets/shaders/geometry.frag.spv", &geometryFragShaderModule);
     VkPipelineShaderStageCreateInfo fragShaderStageCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
         .pNext = NULL,

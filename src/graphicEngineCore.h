@@ -75,7 +75,8 @@ typedef struct GraphicEngineStruct
     int width;
     int targetSwapchainImageCount;
     VkPresentModeKHR targetPresentMode;
-
+    char *assetsPath;
+    
     // Runtime
     GLFWwindow *pGLFWWindow;
     VkInstance vkInstance;

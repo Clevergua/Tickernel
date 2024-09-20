@@ -3,32 +3,36 @@
 #include <string.h>
 #if PLATFORM_POSIX
 #include <unistd.h>
-void TickernelSleep(uint32_t milliseconds)
-{
-    usleep(milliseconds * 1000);
-}
-
-void TickernelGetCurrentDirectory(char *directroy, size_t size)
-{
-    getcwd(directroy, size);
-}
 #define Tickernel_PATH_SEPARATOR "/"
 #elif PLATFORM_WINDOWS
 #include <windows.h>
-void TickernelSleep(uint32_t milliseconds)
-{
-    Sleep(milliseconds);
-}
-
-void TickernelGetCurrentDirectory(char *directroy, size_t size)
-{
-    GetCurrentDirectory(size, directroy);
-}
 #define Tickernel_PATH_SEPARATOR "\\"
 #else
 #error "Unknown platform"
 #endif
 
+void TickernelSleep(uint32_t milliseconds)
+{
+#if PLATFORM_POSIX
+    usleep(milliseconds * 1000);
+#elif PLATFORM_WINDOWS
+    Sleep(milliseconds);
+#else
+#error "Unknown platform"
+#endif
+}
+
+void TickernelGetCurrentDirectory(char *path, size_t size)
+{
+#if PLATFORM_POSIX
+    char *result = getcwd(path, size);
+    printf("Current working directory: %s\n", result);
+#elif PLATFORM_WINDOWS
+    GetCurrentDirectory(size, path);
+#else
+#error "Unknown platform"
+#endif
+}
 
 void *TickernelMalloc(size_t size)
 {

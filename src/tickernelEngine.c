@@ -7,21 +7,22 @@
 static void TickernelStart(TickernelEngine *pTickernelEngine)
 {
     printf("Tickernel Start!\n");
-    pTickernelEngine->pGraphicEngine = TickernelMalloc(sizeof(GraphicEngine));
-    pTickernelEngine->pGraphicEngine->enableValidationLayers = true;
-    pTickernelEngine->pGraphicEngine->name = "Tickernel Engine";
-    pTickernelEngine->pGraphicEngine->targetPresentMode = VK_PRESENT_MODE_FIFO_KHR;
-    pTickernelEngine->pGraphicEngine->width = 1920;
-    pTickernelEngine->pGraphicEngine->height = 1080;
-    pTickernelEngine->pGraphicEngine->targetSwapchainImageCount = 2;
 
     pTickernelEngine->pLuaEngine = TickernelMalloc(sizeof(LuaEngine));
-
     pTickernelEngine->assetsPath = TickernelMalloc(FILENAME_MAX);
     TickernelGetCurrentDirectory(pTickernelEngine->assetsPath, FILENAME_MAX);
     TickernelCombinePaths(pTickernelEngine->assetsPath, FILENAME_MAX, "assets");
 
-    StartGraphicEngine(pTickernelEngine->pGraphicEngine);
+    pTickernelEngine->pGraphicEngine = TickernelMalloc(sizeof(GraphicEngine));
+    GraphicEngine *pGraphicEngine = pTickernelEngine->pGraphicEngine;
+    pGraphicEngine->enableValidationLayers = true;
+    pGraphicEngine->name = "Tickernel Engine";
+    pGraphicEngine->targetPresentMode = VK_PRESENT_MODE_FIFO_KHR;
+    pGraphicEngine->width = 1920;
+    pGraphicEngine->height = 1080;
+    pGraphicEngine->targetSwapchainImageCount = 2;
+    pGraphicEngine->assetsPath = pTickernelEngine->assetsPath;
+    StartGraphicEngine(pGraphicEngine);
     StartLua(pTickernelEngine->pLuaEngine, pTickernelEngine->assetsPath);
 }
 
