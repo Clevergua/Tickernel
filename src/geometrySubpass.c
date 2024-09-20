@@ -8,10 +8,9 @@ static void CreateVkPipeline(GraphicEngine *pGraphicEngine)
 
     VkShaderModule geometryVertShaderModule;
     char geometryVertShaderPath[FILENAME_MAX];
-    geometryVertShaderPath[0] = '\0';
-    TickernelCombinePaths(geometryVertShaderPath, FILENAME_MAX, pGraphicEngine->assetsPath);
-    TickernelCombinePaths(geometryVertShaderPath, FILENAME_MAX, "shaders/geometry.vert.spv");
-    CreateVkShaderModule(pGraphicEngine, "assets/shaders/geometry.vert.spv", &geometryVertShaderModule);
+    strcpy(geometryVertShaderPath, pGraphicEngine->shadersPath);
+    TickernelCombinePaths(geometryVertShaderPath, FILENAME_MAX, "geometry.vert.spv");
+    CreateVkShaderModule(pGraphicEngine, geometryVertShaderPath, &geometryVertShaderModule);
     VkPipelineShaderStageCreateInfo vertShaderStageCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
         .pNext = NULL,
@@ -23,11 +22,11 @@ static void CreateVkPipeline(GraphicEngine *pGraphicEngine)
     };
 
     VkShaderModule geometryFragShaderModule;
+
     char geometryFragShaderPath[FILENAME_MAX];
-    geometryFragShaderPath[0] = '\0';
-    TickernelCombinePaths(geometryFragShaderPath, FILENAME_MAX, pGraphicEngine->assetsPath);
-    TickernelCombinePaths(geometryFragShaderPath, FILENAME_MAX, "shaders/geometry.frag.spv");
-    CreateVkShaderModule(pGraphicEngine, "assets/shaders/geometry.frag.spv", &geometryFragShaderModule);
+    strcpy(geometryFragShaderPath, pGraphicEngine->shadersPath);
+    TickernelCombinePaths(geometryFragShaderPath, FILENAME_MAX, "geometry.frag.spv");
+    CreateVkShaderModule(pGraphicEngine, geometryFragShaderPath, &geometryFragShaderModule);
     VkPipelineShaderStageCreateInfo fragShaderStageCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
         .pNext = NULL,
@@ -192,6 +191,7 @@ static void CreateVkPipeline(GraphicEngine *pGraphicEngine)
         .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
         .pImmutableSamplers = NULL,
     };
+
     VkDescriptorSetLayoutBinding *bindings = (VkDescriptorSetLayoutBinding[]){globalUniformLayoutBinding, modelUniformLayoutBinding};
     VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
@@ -232,7 +232,7 @@ static void CreateVkPipeline(GraphicEngine *pGraphicEngine)
         .renderPass = pDeferredRenderPass->vkRenderPass,
         .subpass = geometrySubpassIndex,
         .basePipelineHandle = VK_NULL_HANDLE,
-        .basePipelineIndex = -1,
+        .basePipelineIndex = 0,
     };
 
     VkPipelineCache pipelineCache = NULL;

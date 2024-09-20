@@ -9,7 +9,7 @@ static void TickernelStart(TickernelEngine *pTickernelEngine)
     printf("Tickernel Start!\n");
 
     pTickernelEngine->pLuaEngine = TickernelMalloc(sizeof(LuaEngine));
-    pTickernelEngine->assetsPath = TickernelMalloc(FILENAME_MAX);
+    pTickernelEngine->assetsPath = TickernelMalloc(sizeof(char) * FILENAME_MAX);
     TickernelGetCurrentDirectory(pTickernelEngine->assetsPath, FILENAME_MAX);
     TickernelCombinePaths(pTickernelEngine->assetsPath, FILENAME_MAX, "assets");
 
@@ -21,7 +21,10 @@ static void TickernelStart(TickernelEngine *pTickernelEngine)
     pGraphicEngine->width = 1920;
     pGraphicEngine->height = 1080;
     pGraphicEngine->targetSwapchainImageCount = 2;
-    pGraphicEngine->assetsPath = pTickernelEngine->assetsPath;
+    pGraphicEngine->shadersPath = TickernelMalloc(sizeof(char) * FILENAME_MAX);
+    strcpy(pGraphicEngine->shadersPath, pTickernelEngine->assetsPath);
+    TickernelCombinePaths(pGraphicEngine->shadersPath, FILENAME_MAX, "shaders");
+
     StartGraphicEngine(pGraphicEngine);
     StartLua(pTickernelEngine->pLuaEngine, pTickernelEngine->assetsPath);
 }

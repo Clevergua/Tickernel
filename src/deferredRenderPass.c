@@ -66,7 +66,7 @@ static void CreateVkRenderPass(GraphicEngine *pGraphicEngine)
         .flags = 0,
         .format = pGraphicEngine->albedoGraphicImage.vkFormat,
         .samples = VK_SAMPLE_COUNT_1_BIT,
-        .loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+        .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
         .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
         .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
         .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
@@ -206,16 +206,31 @@ void CreateDeferredRenderPass(GraphicEngine *pGraphicEngine)
 
     LightingSubpassVertex lightingSubpassVertices[] = {
         {0, 0, 0},
-        {0, 0, 0},
-        {0, 0, 0},
+        {0, 1, 0},
+        {1, 0, 0},
     };
     AddModelToLightingSubpass(pGraphicEngine, 3, lightingSubpassVertices, &pGraphicEngine->fullScreenTriangleModelIndex);
-    GeometrySubpassVertex geometrySubpassVertices[] = {
-        {0, 0, 0},
 
-    };
+    uint32_t c = 1000000;
+    GeometrySubpassVertex *geometrySubpassVertices = TickernelMalloc(sizeof(GeometrySubpassVertex) * c);
+    for (uint32_t i = 0; i < 100; i++)
+    {
+        for (uint32_t j = 0; j < 100; j++)
+        {
+            for (uint32_t k = 0; k < 100; k++)
+            {
+                geometrySubpassVertices[i * 10000 + j * 100 + k * 1].position[0] = i * 1.0f - 50.0f;
+                geometrySubpassVertices[i * 10000 + j * 100 + k * 1].position[1] = j * 1.0f - 50.0f;
+                geometrySubpassVertices[i * 10000 + j * 100 + k * 1].position[2] = k * 1.0f - 50.0f;
+                geometrySubpassVertices[i * 10000 + j * 100 + k * 1].color[0] = i * 0.01f;
+                geometrySubpassVertices[i * 10000 + j * 100 + k * 1].color[1] = j * 0.01f;
+                geometrySubpassVertices[i * 10000 + j * 100 + k * 1].color[2] = k * 0.01f;
+                geometrySubpassVertices[i * 10000 + j * 100 + k * 1].color[3] = 1.0f;
+            }
+        }
+    }
     uint32_t a;
-    AddModelToGeometrySubpass(pGraphicEngine, 1, geometrySubpassVertices, &a);
+    AddModelToGeometrySubpass(pGraphicEngine, c, geometrySubpassVertices, &a);
 }
 
 void DestroyDeferredRenderPass(GraphicEngine *pGraphicEngine)
@@ -272,15 +287,17 @@ void RecordDeferredRenderPass(GraphicEngine *pGraphicEngine)
             .offset = offset,
             .extent = pGraphicEngine->swapchainExtent,
         };
-    uint32_t clearValueCount = 2;
+    uint32_t clearValueCount = 3;
     VkClearValue *clearValues = (VkClearValue[]){
         {
-            .color = {0.0f, 0.382f, 0.382f, 1.0f},
+            .color = {0.0f, 0.0f, 0.0f, 1.0f},
         },
         {
             .depthStencil = {1.0f, 0},
         },
-    };
+        {
+            .color = {0.0f, 0.0f, 0.0f, 1.0f},
+        }};
     RenderPass *pDeferredRenderPass = &pGraphicEngine->deferredRenderPass;
     VkRenderPassBeginInfo renderPassBeginInfo =
         {

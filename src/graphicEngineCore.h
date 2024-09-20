@@ -1,5 +1,4 @@
 #pragma once
-
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -75,8 +74,8 @@ typedef struct GraphicEngineStruct
     int width;
     int targetSwapchainImageCount;
     VkPresentModeKHR targetPresentMode;
-    char *assetsPath;
-    
+    char *shadersPath;
+
     // Runtime
     GLFWwindow *pGLFWWindow;
     VkInstance vkInstance;

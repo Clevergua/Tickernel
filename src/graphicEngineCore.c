@@ -245,33 +245,39 @@ void DestroyGraphicImage(GraphicEngine *pGraphicEngine, GraphicImage graphicImag
 
 void CreateVkShaderModule(GraphicEngine *pGraphicEngine, const char *filePath, VkShaderModule *pVkShaderModule)
 {
-    printf("Path: %s\n", filePath);
     FILE *pFile = fopen(filePath, "rb");
-    fseek(pFile, 0, SEEK_END);
-    size_t fileLength = ftell(pFile);
-    rewind(pFile);
-
-    uint32_t *pCode = calloc(fileLength, 1);
-    size_t codeSize = fread(pCode, 1, fileLength, pFile);
-
-    fclose(pFile);
-    if (codeSize == fileLength)
+    if (NULL == pFile)
     {
-        printf("Succeeded to read file!\n");
-        VkShaderModuleCreateInfo shaderModuleCreateInfo = {
-            .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
-            .pNext = NULL,
-            .flags = 0,
-            .codeSize = codeSize,
-            .pCode = pCode,
-        };
-        VkShaderModule shaderModule;
-        vkCreateShaderModule(pGraphicEngine->vkDevice, &shaderModuleCreateInfo, NULL, pVkShaderModule);
-        free(pCode);
+        printf("Failed to read file with path: %s\n", filePath);
     }
     else
     {
-        printf("Failed to read file codeSize:%zu fileLength:%zu\n", codeSize, fileLength);
+        fseek(pFile, 0, SEEK_END);
+        size_t fileLength = ftell(pFile);
+        rewind(pFile);
+
+        uint32_t *pCode = calloc(fileLength, 1);
+        size_t codeSize = fread(pCode, 1, fileLength, pFile);
+
+        fclose(pFile);
+        if (codeSize == fileLength)
+        {
+            printf("Succeeded to read file!\n");
+            VkShaderModuleCreateInfo shaderModuleCreateInfo = {
+                .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
+                .pNext = NULL,
+                .flags = 0,
+                .codeSize = codeSize,
+                .pCode = pCode,
+            };
+            VkShaderModule shaderModule;
+            vkCreateShaderModule(pGraphicEngine->vkDevice, &shaderModuleCreateInfo, NULL, pVkShaderModule);
+            free(pCode);
+        }
+        else
+        {
+            printf("Failed to read file codeSize:%zu fileLength:%zu\n", codeSize, fileLength);
+        }
     }
 }
 
@@ -319,7 +325,7 @@ void AddModelToSubpass(GraphicEngine *pGraphicEngine, Subpass *pSubpass, uint32_
         SubpassModel *newModels = TickernelMalloc(sizeof(SubpassModel) * pSubpass->modelCountPerDescriptorPool * newVkDescriptorPoolCount);
         memcpy(newModels, pSubpass->subpassModels, sizeof(SubpassModel) * pSubpass->subpassModelCount);
         TickernelFree(pSubpass->subpassModels);
-        pSubpass->subpassModels = newModels;       
+        pSubpass->subpassModels = newModels;
 
         *pIndex = pSubpass->subpassModelCount;
         pSubpass->subpassModelCount++;

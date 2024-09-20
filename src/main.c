@@ -1,5 +1,6 @@
 #include <tickernelEngine.h>
 #include <assert.h>
+
 void TestFunction(int *a)
 {
     int *b = a;
@@ -9,7 +10,7 @@ int main(int argc, const char *argv[])
 {
     TickernelEngine *pTickernelEngine = TickernelMalloc(sizeof(TickernelEngine));
     *pTickernelEngine = (TickernelEngine){
-        .targetFrameRate = 1,
+        .targetFrameRate = 30,
         // .frameCount = 4294967294,
         .frameCount = 0,
         .canTick = true,
