@@ -33,6 +33,7 @@ static void TickernelUpdate(TickernelEngine *pTickernelEngine)
 {
     printf("Tickernel Update!\n");
     UpdateLua(pTickernelEngine->pLuaEngine);
+    
     UpdateGraphicEngine(pTickernelEngine->pGraphicEngine);
 }
 

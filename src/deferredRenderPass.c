@@ -203,27 +203,6 @@ void CreateDeferredRenderPass(GraphicEngine *pGraphicEngine)
 
     CreateGeometrySubpass(pGraphicEngine);
     CreateLightingSubpass(pGraphicEngine);
-
-    uint32_t c = 1000000;
-    GeometrySubpassVertex *geometrySubpassVertices = TickernelMalloc(sizeof(GeometrySubpassVertex) * c);
-    for (uint32_t i = 0; i < 100; i++)
-    {
-        for (uint32_t j = 0; j < 100; j++)
-        {
-            for (uint32_t k = 0; k < 100; k++)
-            {
-                geometrySubpassVertices[i * 10000 + j * 100 + k * 1].position[0] = i * 1.0f - 50.0f;
-                geometrySubpassVertices[i * 10000 + j * 100 + k * 1].position[1] = j * 1.0f - 50.0f;
-                geometrySubpassVertices[i * 10000 + j * 100 + k * 1].position[2] = k * 1.0f - 50.0f;
-                geometrySubpassVertices[i * 10000 + j * 100 + k * 1].color[0] = i * 0.01f;
-                geometrySubpassVertices[i * 10000 + j * 100 + k * 1].color[1] = j * 0.01f;
-                geometrySubpassVertices[i * 10000 + j * 100 + k * 1].color[2] = k * 0.01f;
-                geometrySubpassVertices[i * 10000 + j * 100 + k * 1].color[3] = 1.0f;
-            }
-        }
-    }
-    uint32_t a;
-    AddModelToGeometrySubpass(pGraphicEngine, c, geometrySubpassVertices, &a);
 }
 
 void DestroyDeferredRenderPass(GraphicEngine *pGraphicEngine)
