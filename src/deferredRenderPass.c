@@ -204,13 +204,6 @@ void CreateDeferredRenderPass(GraphicEngine *pGraphicEngine)
     CreateGeometrySubpass(pGraphicEngine);
     CreateLightingSubpass(pGraphicEngine);
 
-    LightingSubpassVertex lightingSubpassVertices[] = {
-        {0, 0, 0},
-        {0, 1, 0},
-        {1, 0, 0},
-    };
-    AddModelToLightingSubpass(pGraphicEngine, 3, lightingSubpassVertices, &pGraphicEngine->fullScreenTriangleModelIndex);
-
     uint32_t c = 1000000;
     GeometrySubpassVertex *geometrySubpassVertices = TickernelMalloc(sizeof(GeometrySubpassVertex) * c);
     for (uint32_t i = 0; i < 100; i++)
@@ -235,7 +228,6 @@ void CreateDeferredRenderPass(GraphicEngine *pGraphicEngine)
 
 void DestroyDeferredRenderPass(GraphicEngine *pGraphicEngine)
 {
-    RemoveModelFromLightingSubpass(pGraphicEngine, pGraphicEngine->fullScreenTriangleModelIndex);
     DestroyGeometrySubpass(pGraphicEngine);
     DestroyLightingSubpass(pGraphicEngine);
     DestroyVkFramebuffers(pGraphicEngine);
@@ -310,35 +302,31 @@ void RecordDeferredRenderPass(GraphicEngine *pGraphicEngine)
             .pClearValues = clearValues,
         };
     vkCmdBeginRenderPass(vkCommandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
-    for (uint32_t subpassIndex = 0; subpassIndex < pDeferredRenderPass->subpassCount; subpassIndex++)
+    
+    Subpass *pGeometrySubpass = &pDeferredRenderPass->subpasses[0];
+    vkCmdBindPipeline(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pGeometrySubpass->vkPipeline);
+    for (uint32_t modelIndex = 0; modelIndex < pGeometrySubpass->subpassModelCount; modelIndex++)
     {
-        Subpass *pSubpass = &pDeferredRenderPass->subpasses[subpassIndex];
+        SubpassModel *pSubpassModel = &pGeometrySubpass->subpassModels[modelIndex];
+        if (pSubpassModel->isValid)
+        {
+            vkCmdBindDescriptorSets(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pGeometrySubpass->vkPipelineLayout, 0, 1, &pSubpassModel->vkDescriptorSet, 0, NULL);
 
-        vkCmdBindPipeline(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pSubpass->vkPipeline);
-        uint32_t geometryPipelineIndex = 0;
-        for (uint32_t modelIndex = 0; modelIndex < pSubpass->subpassModelCount; modelIndex++)
-        {
-            SubpassModel *pSubpassModel = &pSubpass->subpassModels[modelIndex];
-            if (pSubpassModel->isValid)
-            {
-                vkCmdBindDescriptorSets(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pSubpass->vkPipelineLayout, 0, 1, &pSubpassModel->vkDescriptorSet, 0, NULL);
-
-                VkBuffer vertexBuffers[] = {pSubpassModel->vertexBuffer};
-                VkDeviceSize offsets[] = {0};
-                vkCmdBindVertexBuffers(vkCommandBuffer, 0, 1, vertexBuffers, offsets);
-                uint32_t vertexCount = pSubpassModel->vertexCount;
-                vkCmdDraw(vkCommandBuffer, vertexCount, 1, 0, 0);
-            }
-        }
-        if (subpassIndex < pDeferredRenderPass->subpassCount - 1)
-        {
-            vkCmdNextSubpass(vkCommandBuffer, VK_SUBPASS_CONTENTS_INLINE);
-        }
-        else
-        {
-            // Finial subpass;
+            VkBuffer vertexBuffers[] = {pSubpassModel->vertexBuffer};
+            VkDeviceSize offsets[] = {0};
+            vkCmdBindVertexBuffers(vkCommandBuffer, 0, 1, vertexBuffers, offsets);
+            uint32_t vertexCount = pSubpassModel->vertexCount;
+            vkCmdDraw(vkCommandBuffer, vertexCount, 1, 0, 0);
         }
     }
+    vkCmdNextSubpass(vkCommandBuffer, VK_SUBPASS_CONTENTS_INLINE);
+
+    Subpass *pLightingSubpass = &pDeferredRenderPass->subpasses[1];
+    SubpassModel *pSubpassModel = &pLightingSubpass->subpassModels[0];
+    vkCmdBindPipeline(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pLightingSubpass->vkPipeline);
+    vkCmdBindDescriptorSets(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pLightingSubpass->vkPipelineLayout, 0, 1, &pSubpassModel->vkDescriptorSet, 0, NULL);
+    vkCmdDraw(vkCommandBuffer, pSubpassModel->vertexCount, 1, 0, 0);
+
     vkCmdEndRenderPass(vkCommandBuffer);
     result = vkEndCommandBuffer(vkCommandBuffer);
     TryThrowVulkanError(result);

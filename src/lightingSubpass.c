@@ -38,30 +38,14 @@ static void CreateVkPipeline(GraphicEngine *pGraphicEngine)
     uint32_t stageCount = 2;
     VkPipelineShaderStageCreateInfo *pipelineShaderStageCreateInfos = (VkPipelineShaderStageCreateInfo[]){vertShaderStageCreateInfo, fragShaderStageCreateInfo};
 
-    uint32_t vertexBindingDescriptionCount = 1;
-    VkVertexInputBindingDescription *vertexBindingDescriptions = (VkVertexInputBindingDescription[]){
-        {
-            .binding = 0,
-            .stride = sizeof(LightingSubpassVertex),
-            .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
-        },
-    };
-    uint32_t vertexAttributeDescriptionCount = 1;
-    VkVertexInputAttributeDescription vertexAttributeDescriptions[] = {
-        {
-            .location = 0,
-            .binding = 0,
-            .format = VK_FORMAT_R32G32B32_SFLOAT,
-            .offset = offsetof(LightingSubpassVertex, position),
-        }};
     VkPipelineVertexInputStateCreateInfo vkPipelineVertexInputStateCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
         .pNext = NULL,
         .flags = 0,
-        .vertexBindingDescriptionCount = vertexBindingDescriptionCount,
-        .pVertexBindingDescriptions = vertexBindingDescriptions,
-        .vertexAttributeDescriptionCount = vertexAttributeDescriptionCount,
-        .pVertexAttributeDescriptions = vertexAttributeDescriptions,
+        .vertexBindingDescriptionCount = 0,
+        .pVertexBindingDescriptions = NULL,
+        .vertexAttributeDescriptionCount = 0,
+        .pVertexAttributeDescriptions = NULL,
     };
     VkPipelineInputAssemblyStateCreateInfo pipelineInputAssemblyStateCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
@@ -238,16 +222,20 @@ static void DestroyVkPipeline(GraphicEngine *pGraphicEngine)
     vkDestroyPipeline(pGraphicEngine->vkDevice, pLightingSubpass->vkPipeline, NULL);
 }
 
-static void CreateLightingSubpassModel(GraphicEngine *pGraphicEngine, uint32_t vertexCount, LightingSubpassVertex *lightingSubpassVertices, uint32_t index)
+static void CreateLightingSubpassModel(GraphicEngine *pGraphicEngine, uint32_t index)
 {
     RenderPass *pDeferredRenderPass = &pGraphicEngine->deferredRenderPass;
     uint32_t lightingSubpassIndex = 1;
     Subpass *pLightingSubpass = &pDeferredRenderPass->subpasses[lightingSubpassIndex];
 
     SubpassModel *pSubpassModel = &pLightingSubpass->subpassModels[index];
-    pSubpassModel->vertexCount = vertexCount;
-    VkDeviceSize vertexBufferSize = sizeof(LightingSubpassVertex) * vertexCount;
-    CreateVertexBuffer(pGraphicEngine, vertexBufferSize, lightingSubpassVertices, &pSubpassModel->vertexBuffer, &pSubpassModel->vertexBufferMemory);
+    pSubpassModel->vertexCount = 3;
+    pSubpassModel->vertexBuffer = NULL;
+    pSubpassModel->vertexBufferMemory = NULL;
+    
+    pSubpassModel->modelUniformBuffer = NULL;
+    pSubpassModel->modelUniformBufferMemory = NULL;
+    pSubpassModel->modelUniformBufferMapped = NULL;
 
     // Create vkDescriptorSet
     uint32_t poolIndex = index / pLightingSubpass->modelCountPerDescriptorPool;
@@ -265,7 +253,6 @@ static void CreateLightingSubpassModel(GraphicEngine *pGraphicEngine, uint32_t v
         .offset = 0,
         .range = sizeof(GlobalUniformBuffer),
     };
-
     VkDescriptorImageInfo depthVkDescriptorImageInfo = {
         .sampler = NULL,
         .imageView = pGraphicEngine->depthGraphicImage.vkImageView,
@@ -357,12 +344,20 @@ void CreateLightingSubpass(GraphicEngine *pGraphicEngine)
     pLightingSubpass->subpassModelCount = 0;
     pLightingSubpass->subpassModels = NULL;
     pLightingSubpass->pRemovedIndexLinkedList = NULL;
+
+    uint32_t index;
+    AddModelToSubpass(pGraphicEngine, pLightingSubpass, &index);
+    CreateLightingSubpassModel(pGraphicEngine, index);
 }
 void DestroyLightingSubpass(GraphicEngine *pGraphicEngine)
 {
     RenderPass *pDeferredRenderPass = &pGraphicEngine->deferredRenderPass;
     uint32_t lightingSubpassIndex = 1;
     Subpass *pLightingSubpass = &pDeferredRenderPass->subpasses[lightingSubpassIndex];
+
+    DestroyLightingSubpassModel(pGraphicEngine, 0);
+    RemoveModelFromSubpass(pGraphicEngine, 0, pLightingSubpass);
+
     for (uint32_t i = 0; i < pLightingSubpass->modelCountPerDescriptorPool; i++)
     {
         if (pLightingSubpass->subpassModels[i].isValid)
@@ -390,23 +385,4 @@ void DestroyLightingSubpass(GraphicEngine *pGraphicEngine)
         TickernelFree(pNode);
     }
     DestroyVkPipeline(pGraphicEngine);
-}
-
-void AddModelToLightingSubpass(GraphicEngine *pGraphicEngine, uint32_t vertexCount, LightingSubpassVertex *lightingSubpassVertices, uint32_t *pIndex)
-{
-    RenderPass *pDeferredRenderPass = &pGraphicEngine->deferredRenderPass;
-    uint32_t lightingSubpassIndex = 1;
-    Subpass *pLightingSubpass = &pDeferredRenderPass->subpasses[lightingSubpassIndex];
-
-    AddModelToSubpass(pGraphicEngine, pLightingSubpass, pIndex);
-    CreateLightingSubpassModel(pGraphicEngine, vertexCount, lightingSubpassVertices, *pIndex);
-}
-void RemoveModelFromLightingSubpass(GraphicEngine *pGraphicEngine, uint32_t index)
-{
-    RenderPass *pDeferredRenderPass = &pGraphicEngine->deferredRenderPass;
-    uint32_t lightingSubpassIndex = 1;
-    Subpass *pLightingSubpass = &pDeferredRenderPass->subpasses[lightingSubpassIndex];
-
-    DestroyLightingSubpassModel(pGraphicEngine, index);
-    RemoveModelFromSubpass(pGraphicEngine, index, pLightingSubpass);
 }
