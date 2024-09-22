@@ -818,17 +818,6 @@ static void DestroyVkCommandBuffers(GraphicEngine *pGraphicEngine)
 
 static void RecordCommandBuffer(GraphicEngine *pGraphicEngine)
 {
-    GeometrySubpassModelUniformBuffer geometrySubpassModelUniformBuffer = {
-        .model = {
-            {1, 0, 0, 0},
-            {0, 1, 0, 0},
-            {0, 0, 1, 0},
-            {0, 0, 0, 1},
-        },
-    };
-    glm_rotate(geometrySubpassModelUniformBuffer.model, pGraphicEngine->frameCount * glm_rad(0.1f), (vec3){0.0f, 0.0f, 1.0f});
-    memcpy(pGraphicEngine->deferredRenderPass.subpasses[0].subpassModels[0].modelUniformBufferMapped, &geometrySubpassModelUniformBuffer, sizeof(geometrySubpassModelUniformBuffer));
-
     RecordDeferredRenderPass(pGraphicEngine);
 }
 

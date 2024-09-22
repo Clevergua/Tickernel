@@ -33,13 +33,12 @@ static void TickernelUpdate(TickernelEngine *pTickernelEngine)
 {
     printf("Tickernel Update!\n");
     UpdateLua(pTickernelEngine->pLuaEngine);
-    
     UpdateGraphicEngine(pTickernelEngine->pGraphicEngine);
 }
 
 static void TickernelEnd(TickernelEngine *pTickernelEngine)
 {
-    // EndLua(pTickernelEngine->pLuaEngine);
+    EndLua(pTickernelEngine->pLuaEngine);
     EndGraphicEngine(pTickernelEngine->pGraphicEngine);
 
     TickernelFree(pTickernelEngine->assetsPath);

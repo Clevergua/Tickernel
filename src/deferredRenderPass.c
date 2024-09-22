@@ -281,7 +281,7 @@ void RecordDeferredRenderPass(GraphicEngine *pGraphicEngine)
             .pClearValues = clearValues,
         };
     vkCmdBeginRenderPass(vkCommandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
-    
+
     Subpass *pGeometrySubpass = &pDeferredRenderPass->subpasses[0];
     vkCmdBindPipeline(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pGeometrySubpass->vkPipeline);
     for (uint32_t modelIndex = 0; modelIndex < pGeometrySubpass->subpassModelCount; modelIndex++)

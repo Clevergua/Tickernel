@@ -405,3 +405,19 @@ void RemoveModelFromGeometrySubpass(GraphicEngine *pGraphicEngine, uint32_t inde
     DestroyGeometrySubpassModel(pGraphicEngine, index);
     RemoveModelFromSubpass(pGraphicEngine, index, pGeometrySubpass);
 }
+void UpdateModelUniformToGeometrySubpass(GraphicEngine *pGraphicEngine, uint32_t index, GeometrySubpassModelUniformBuffer geometrySubpassModelUniformBuffer)
+{
+    RenderPass *pDeferredRenderPass = &pGraphicEngine->deferredRenderPass;
+    uint32_t geometrySubpassIndex = 0;
+    Subpass *pGeometrySubpass = &pDeferredRenderPass->subpasses[geometrySubpassIndex];
+    SubpassModel *pSubpassModel = &pGeometrySubpass->subpassModels[index];
+    if (pSubpassModel->isValid)
+    {
+        memcpy(pGraphicEngine->deferredRenderPass.subpasses[geometrySubpassIndex].subpassModels[index].modelUniformBufferMapped, &geometrySubpassModelUniformBuffer, sizeof(geometrySubpassModelUniformBuffer));
+    }
+    else
+    {
+        printf("Geometry subpass model index: %d reference a invaild model!", index);
+        abort();
+    }
+}
