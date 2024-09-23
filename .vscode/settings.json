@@ -116,6 +116,13 @@
         "luaengine.h": "c",
         "cstdarg": "cpp",
         "cwctype": "cpp",
-        "stdint.h": "c"
+        "stdint.h": "c",
+        "limits.h": "c",
+        "time.h": "c",
+        "windows.h": "c",
+        "windef.h": "c",
+        "minwindef.h": "c",
+        "lualib.h": "c",
+        "lauxlib.h": "c"
     }
 }

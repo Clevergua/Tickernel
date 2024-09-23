@@ -1,5 +1,4 @@
 #include <tickernelEngine.h>
-#include <time.h>
 
 #define MILLISECONDS_PER_SECOND 1000
 #define NANOSECONDS_PER_MILLISECOND 1000000
@@ -8,7 +7,6 @@ static void TickernelStart(TickernelEngine *pTickernelEngine)
 {
     printf("Tickernel Start!\n");
 
-    pTickernelEngine->pLuaEngine = TickernelMalloc(sizeof(LuaEngine));
     pTickernelEngine->pGraphicEngine = TickernelMalloc(sizeof(GraphicEngine));
     GraphicEngine *pGraphicEngine = pTickernelEngine->pGraphicEngine;
     pGraphicEngine->enableValidationLayers = true;
@@ -17,12 +15,19 @@ static void TickernelStart(TickernelEngine *pTickernelEngine)
     pGraphicEngine->width = 1280;
     pGraphicEngine->height = 720;
     pGraphicEngine->targetSwapchainImageCount = 2;
-    pGraphicEngine->shadersPath = TickernelMalloc(sizeof(char) * PATH_MAX);
+    pGraphicEngine->shadersPath = TickernelMalloc(sizeof(char) * FILENAME_MAX);
     strcpy(pGraphicEngine->shadersPath, pTickernelEngine->assetsPath);
-    TickernelCombinePaths(pGraphicEngine->shadersPath, PATH_MAX, "shaders");
+    TickernelCombinePaths(pGraphicEngine->shadersPath, FILENAME_MAX, "shaders");
 
     StartGraphicEngine(pGraphicEngine);
-    StartLua(pTickernelEngine->pLuaEngine, pTickernelEngine->assetsPath);
+
+    pTickernelEngine->pLuaEngine = TickernelMalloc(sizeof(char) * sizeof(LuaEngine));
+    LuaEngine *pLuaEngine = pTickernelEngine->pLuaEngine;
+    pLuaEngine->pGraphicEngine = pTickernelEngine->pGraphicEngine;
+    pLuaEngine->luaAssetsPath = TickernelMalloc(FILENAME_MAX);
+    strcpy(pLuaEngine->luaAssetsPath, pTickernelEngine->assetsPath);
+    TickernelCombinePaths(pLuaEngine->luaAssetsPath, FILENAME_MAX, "lua");
+    StartLua(pLuaEngine);
 }
 
 static void TickernelUpdate(TickernelEngine *pTickernelEngine)

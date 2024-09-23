@@ -9,7 +9,7 @@ void TestFunction(int *a)
 int main(int argc, const char *argv[])
 {
     const char *pathseparator = TickernelGetPathSeparator();
-    char *assetsPath = TickernelMalloc(sizeof(char) * PATH_MAX);
+    char *assetsPath = TickernelMalloc(sizeof(char) * FILENAME_MAX);
     strcpy(assetsPath, argv[0]);
 
     size_t fileNameLength = strlen(assetsPath);
@@ -25,8 +25,8 @@ int main(int argc, const char *argv[])
             // continue;
         }
     }
-    TickernelCombinePaths(assetsPath, PATH_MAX, "assets");
-    printf("Assets path : %s with length: %lu\n", assetsPath, strlen(assetsPath));
+    TickernelCombinePaths(assetsPath, FILENAME_MAX, "assets");
+    printf("Assets path : %s with length: %llu\n", assetsPath, strlen(assetsPath));
     TickernelEngine *pTickernelEngine = TickernelMalloc(sizeof(TickernelEngine));
     *pTickernelEngine = (TickernelEngine){
         .targetFrameRate = 1,

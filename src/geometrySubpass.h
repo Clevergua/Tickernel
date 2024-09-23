@@ -23,3 +23,4 @@ void CreateGeometrySubpass(GraphicEngine *pGraphicEngine);
 void DestroyGeometrySubpass(GraphicEngine *pGraphicEngine);
 void AddModelToGeometrySubpass(GraphicEngine *pGraphicEngine, uint32_t vertexCount, GeometrySubpassVertex *geometrySubpassVertices, uint32_t *pIndex);
 void RemoveModelFromGeometrySubpass(GraphicEngine *pGraphicEngine, uint32_t index);
+void UpdateModelUniformToGeometrySubpass(GraphicEngine *pGraphicEngine, uint32_t index, GeometrySubpassModelUniformBuffer geometrySubpassModelUniformBuffer);

@@ -1,7 +1,4 @@
 #pragma once
-
-#include <tickernelCore.h>
-#include <graphicEngine.h>
 #include <luaEngine.h>
 typedef struct TickernelEngineStruct
 {

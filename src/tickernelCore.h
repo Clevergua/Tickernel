@@ -4,7 +4,16 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <tickernelPlatform.h>
-
+#include <time.h>
+#include <stdarg.h>
+#include <string.h>
+#if PLATFORM_POSIX
+#include <unistd.h>
+#elif PLATFORM_WINDOWS
+#include <windows.h>
+#else
+#error "Unknown platform"
+#endif
 typedef struct Uint32NodeStruct
 {
     struct Uint32NodeStruct *pNext;

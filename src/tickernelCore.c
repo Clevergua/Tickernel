@@ -1,13 +1,5 @@
 #include <tickernelCore.h>
-#include <stdarg.h>
-#include <string.h>
-#if PLATFORM_POSIX
-#include <unistd.h>
-#elif PLATFORM_WINDOWS
-#include <windows.h>
-#else
-#error "Unknown platform"
-#endif
+
 
 void TickernelSleep(uint32_t milliseconds)
 {
