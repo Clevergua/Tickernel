@@ -3,10 +3,8 @@
 #include <string.h>
 #if PLATFORM_POSIX
 #include <unistd.h>
-#define Tickernel_PATH_SEPARATOR "/"
 #elif PLATFORM_WINDOWS
 #include <windows.h>
-#define Tickernel_PATH_SEPARATOR "\\"
 #else
 #error "Unknown platform"
 #endif
@@ -17,18 +15,6 @@ void TickernelSleep(uint32_t milliseconds)
     usleep(milliseconds * 1000);
 #elif PLATFORM_WINDOWS
     Sleep(milliseconds);
-#else
-#error "Unknown platform"
-#endif
-}
-
-void TickernelGetCurrentDirectory(char *path, size_t size)
-{
-#if PLATFORM_POSIX
-    char *result = getcwd(path, size);
-    printf("Current working directory: %s\n", result);
-#elif PLATFORM_WINDOWS
-    GetCurrentDirectory(size, path);
 #else
 #error "Unknown platform"
 #endif
@@ -82,13 +68,14 @@ bool TickernelEndsWith(const char *str, const char *suffix)
 
 void TickernelCombinePaths(char *dstPath, size_t dstPathSize, const char *srcPath)
 {
+    const char *pathSeparator = TickernelGetPathSeparator();
     size_t dstPathLength = strlen(dstPath);
     size_t srcPathLength = strlen(srcPath);
-    if (TickernelEndsWith(dstPath, Tickernel_PATH_SEPARATOR))
+    if (TickernelEndsWith(dstPath, pathSeparator))
     {
-        if (TickernelStartsWith(srcPath, Tickernel_PATH_SEPARATOR))
+        if (TickernelStartsWith(srcPath, pathSeparator))
         {
-            size_t separatorLength = strlen(Tickernel_PATH_SEPARATOR);
+            size_t separatorLength = strlen(pathSeparator);
             dstPath[dstPathLength - separatorLength] = '\0';
             strcat(dstPath, srcPath);
         }
@@ -97,13 +84,24 @@ void TickernelCombinePaths(char *dstPath, size_t dstPathSize, const char *srcPat
             strcat(dstPath, srcPath);
         }
     }
-    else if (TickernelStartsWith(srcPath, Tickernel_PATH_SEPARATOR))
+    else if (TickernelStartsWith(srcPath, pathSeparator))
     {
         strcat(dstPath, srcPath);
     }
     else
     {
-        strcat(dstPath, Tickernel_PATH_SEPARATOR);
+        strcat(dstPath, pathSeparator);
         strcat(dstPath, srcPath);
     }
+}
+
+const char *TickernelGetPathSeparator()
+{
+#if PLATFORM_POSIX
+    return "/";
+#elif PLATFORM_WINDOWS
+    return "\\";
+#else
+#error "Unknown platform"
+#endif
 }

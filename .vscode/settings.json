@@ -115,6 +115,7 @@
         "unistd.h": "c",
         "luaengine.h": "c",
         "cstdarg": "cpp",
-        "cwctype": "cpp"
+        "cwctype": "cpp",
+        "stdint.h": "c"
     }
 }

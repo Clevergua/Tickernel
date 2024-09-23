@@ -7,9 +7,9 @@ static void CreateVkPipeline(GraphicEngine *pGraphicEngine)
     Subpass *pLightingSubpass = &pDeferredRenderPass->subpasses[lightingSubpassIndex];
 
     VkShaderModule lightingVertShaderModule;
-    char lightingVertShaderPath[FILENAME_MAX];
+    char lightingVertShaderPath[PATH_MAX];
     strcpy(lightingVertShaderPath, pGraphicEngine->shadersPath);
-    TickernelCombinePaths(lightingVertShaderPath, FILENAME_MAX, "lighting.vert.spv");
+    TickernelCombinePaths(lightingVertShaderPath, PATH_MAX, "lighting.vert.spv");
     CreateVkShaderModule(pGraphicEngine, lightingVertShaderPath, &lightingVertShaderModule);
     VkPipelineShaderStageCreateInfo vertShaderStageCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
@@ -22,9 +22,9 @@ static void CreateVkPipeline(GraphicEngine *pGraphicEngine)
     };
 
     VkShaderModule lightingFragShaderModule;
-    char lightingFragShaderPath[FILENAME_MAX];
+    char lightingFragShaderPath[PATH_MAX];
     strcpy(lightingFragShaderPath, pGraphicEngine->shadersPath);
-    TickernelCombinePaths(lightingFragShaderPath, FILENAME_MAX, "lighting.frag.spv");
+    TickernelCombinePaths(lightingFragShaderPath, PATH_MAX, "lighting.frag.spv");
     CreateVkShaderModule(pGraphicEngine, lightingFragShaderPath, &lightingFragShaderModule);
     VkPipelineShaderStageCreateInfo fragShaderStageCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,

@@ -1,6 +1,7 @@
 #pragma once
 #include <stdbool.h>
 #include <stdio.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 #include <vulkan/vulkan.h>

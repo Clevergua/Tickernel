@@ -30,9 +30,9 @@ static void AssertLuaType(int type, int targetType)
 void StartLua(LuaEngine *pLuaEngine, const char *assetPath)
 {
     // Initialize lua assets path.
-    pLuaEngine->luaAssetsPath = TickernelMalloc(FILENAME_MAX);
+    pLuaEngine->luaAssetsPath = TickernelMalloc(PATH_MAX);
     strcpy(pLuaEngine->luaAssetsPath, assetPath);
-    TickernelCombinePaths(pLuaEngine->luaAssetsPath, FILENAME_MAX, "lua");
+    TickernelCombinePaths(pLuaEngine->luaAssetsPath, PATH_MAX, "lua");
 
     // New lua state
     pLuaEngine->pLuaState = luaL_newstate();
@@ -40,18 +40,18 @@ void StartLua(LuaEngine *pLuaEngine, const char *assetPath)
     luaL_openlibs(pLuaState);
 
     // Set package path
-    char packagePath[FILENAME_MAX];
+    char packagePath[PATH_MAX];
     strcpy(packagePath, pLuaEngine->luaAssetsPath);
-    TickernelCombinePaths(packagePath, FILENAME_MAX, "?.lua;");
+    TickernelCombinePaths(packagePath, PATH_MAX, "?.lua;");
     lua_getglobal(pLuaState, "package");
     lua_pushstring(pLuaState, packagePath);
     lua_setfield(pLuaState, -2, "path");
     lua_pop(pLuaState, 1);
 
     // Do file main.lua
-    char luaMainFilePath[FILENAME_MAX];
+    char luaMainFilePath[PATH_MAX];
     strcpy(luaMainFilePath, pLuaEngine->luaAssetsPath);
-    TickernelCombinePaths(luaMainFilePath, FILENAME_MAX, "main.lua");
+    TickernelCombinePaths(luaMainFilePath, PATH_MAX, "main.lua");
     // Put engine state on the stack
     int luaResult = luaL_dofile(pLuaState, luaMainFilePath);
     TryThrowLuaError(luaResult);

@@ -9,10 +9,6 @@ static void TickernelStart(TickernelEngine *pTickernelEngine)
     printf("Tickernel Start!\n");
 
     pTickernelEngine->pLuaEngine = TickernelMalloc(sizeof(LuaEngine));
-    pTickernelEngine->assetsPath = TickernelMalloc(sizeof(char) * FILENAME_MAX);
-    TickernelGetCurrentDirectory(pTickernelEngine->assetsPath, FILENAME_MAX);
-    TickernelCombinePaths(pTickernelEngine->assetsPath, FILENAME_MAX, "assets");
-
     pTickernelEngine->pGraphicEngine = TickernelMalloc(sizeof(GraphicEngine));
     GraphicEngine *pGraphicEngine = pTickernelEngine->pGraphicEngine;
     pGraphicEngine->enableValidationLayers = true;
@@ -21,9 +17,9 @@ static void TickernelStart(TickernelEngine *pTickernelEngine)
     pGraphicEngine->width = 1280;
     pGraphicEngine->height = 720;
     pGraphicEngine->targetSwapchainImageCount = 2;
-    pGraphicEngine->shadersPath = TickernelMalloc(sizeof(char) * FILENAME_MAX);
+    pGraphicEngine->shadersPath = TickernelMalloc(sizeof(char) * PATH_MAX);
     strcpy(pGraphicEngine->shadersPath, pTickernelEngine->assetsPath);
-    TickernelCombinePaths(pGraphicEngine->shadersPath, FILENAME_MAX, "shaders");
+    TickernelCombinePaths(pGraphicEngine->shadersPath, PATH_MAX, "shaders");
 
     StartGraphicEngine(pGraphicEngine);
     StartLua(pTickernelEngine->pLuaEngine, pTickernelEngine->assetsPath);
@@ -41,7 +37,6 @@ static void TickernelEnd(TickernelEngine *pTickernelEngine)
     EndLua(pTickernelEngine->pLuaEngine);
     EndGraphicEngine(pTickernelEngine->pGraphicEngine);
 
-    TickernelFree(pTickernelEngine->assetsPath);
     TickernelFree(pTickernelEngine->pLuaEngine);
     TickernelFree(pTickernelEngine->pGraphicEngine);
     printf("Tickernel End!\n");
