@@ -30,8 +30,9 @@ int main(int argc, const char *argv[])
     TickernelEngine *pTickernelEngine = TickernelMalloc(sizeof(TickernelEngine));
     *pTickernelEngine = (TickernelEngine){
         .targetFrameRate = 1,
+        .frameCount = 4294967290,
         // .frameCount = 4294967294,
-        .frameCount = 0,
+        // .frameCount = 0,
         .canTick = true,
         .pGraphicEngine = NULL,
         .pLuaEngine = NULL,
@@ -40,5 +41,6 @@ int main(int argc, const char *argv[])
     RunTickernelEngine(pTickernelEngine);
     TickernelFree(pTickernelEngine);
     TickernelFree(assetsPath);
+    getchar();
     return EXIT_SUCCESS;
 }

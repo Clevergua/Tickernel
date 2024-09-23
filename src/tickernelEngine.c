@@ -37,6 +37,7 @@ static void TickernelEnd(TickernelEngine *pTickernelEngine)
     EndLua(pTickernelEngine->pLuaEngine);
     EndGraphicEngine(pTickernelEngine->pGraphicEngine);
 
+    TickernelFree(pTickernelEngine->pGraphicEngine->shadersPath);
     TickernelFree(pTickernelEngine->pLuaEngine);
     TickernelFree(pTickernelEngine->pGraphicEngine);
     printf("Tickernel End!\n");

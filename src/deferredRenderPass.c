@@ -194,6 +194,7 @@ static void DestroyVkFramebuffers(GraphicEngine *pGraphicEngine)
             vkDestroyFramebuffer(pGraphicEngine->vkDevice, pDeferredRenderPass->vkFramebuffers[i], NULL);
         }
     }
+    TickernelFree(pDeferredRenderPass->vkFramebuffers);
 }
 
 void CreateDeferredRenderPass(GraphicEngine *pGraphicEngine)
