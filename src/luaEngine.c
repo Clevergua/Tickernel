@@ -98,9 +98,9 @@ static int AddModel(lua_State *pLuaState)
     }
     else
     {
-        //  gameState vertices colors
+        //  vertices colors
         lua_pop(pLuaState, 2);
-        //  gameState
+        // 
         return 0;
     }
 }
