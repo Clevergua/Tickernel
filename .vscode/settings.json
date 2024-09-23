@@ -113,6 +113,8 @@
         "geometrysubpass.h": "c",
         "cglm.h": "c",
         "unistd.h": "c",
-        "luaengine.h": "c"
+        "luaengine.h": "c",
+        "cstdarg": "cpp",
+        "cwctype": "cpp"
     }
 }

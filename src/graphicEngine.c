@@ -132,7 +132,15 @@ static void DestroyVKInstance(GraphicEngine *pGraphicEngine)
 
 static void CreateGLFWWindow(GraphicEngine *pGraphicEngine)
 {
-    glfwInit();
+    int result = glfwInit();
+    if (result == GLFW_TRUE)
+    {
+        // continue;
+    }
+    else
+    {
+        printf("glfwInit Failed!");
+    }
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     glfwInitHint(GLFW_RESIZABLE, GLFW_FALSE);
     pGraphicEngine->pGLFWWindow = glfwCreateWindow(pGraphicEngine->width, pGraphicEngine->height, pGraphicEngine->name, NULL, NULL);
@@ -842,6 +850,7 @@ void UpdateGraphicEngine(GraphicEngine *pGraphicEngine)
 {
     pGraphicEngine->frameIndex = pGraphicEngine->frameCount % pGraphicEngine->swapchainImageCount;
     bool hasRecreateSwapchain = false;
+    glfwPollEvents();
     WaitForGPU(pGraphicEngine);
     AcquireImage(pGraphicEngine);
     UpdateGlobalUniformBuffer(pGraphicEngine);
