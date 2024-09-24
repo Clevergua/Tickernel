@@ -26,7 +26,7 @@ int main(int argc, const char *argv[])
         }
     }
     TickernelCombinePaths(assetsPath, FILENAME_MAX, "assets");
-    printf("Assets path : %s with length: %lu\n", assetsPath, strlen(assetsPath));
+    // printf("Assets path : %s with length: %lu\n", assetsPath, strlen(assetsPath));
     TickernelEngine *pTickernelEngine = TickernelMalloc(sizeof(TickernelEngine));
     *pTickernelEngine = (TickernelEngine){
         .targetFrameRate = 1,

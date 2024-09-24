@@ -16,6 +16,8 @@ typedef struct GlobalUniformBufferStruct
 {
     mat4 view;
     mat4 proj;
+    mat4 inv_view_proj;
+    vec3 camera_world_pos;
 } GlobalUniformBuffer;
 
 typedef struct SubpassModelStruct
@@ -113,6 +115,9 @@ typedef struct GraphicEngineStruct
     GraphicImage albedoGraphicImage;
     RenderPass deferredRenderPass;
     uint32_t fullScreenTriangleModelIndex;
+
+    vec3 cameraPosition;
+    vec3 targetPosition;
 } GraphicEngine;
 
 void TryThrowVulkanError(VkResult vkResult);

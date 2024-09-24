@@ -23,5 +23,9 @@ end
 ---@param modelMatrix table
 function gameState.UpdateModel(index, modelMatrix)
 end
-
+---SetCamera
+---@param cameraPosition table
+---@param targetPosition table
+function gameState.SetCamera(cameraPosition, targetPosition)
+end
 return gameState

@@ -19,8 +19,10 @@ layout(binding = 1) uniform ObjectUniform
 
 void main(void)
 {
-    gl_Position = globalUniform.proj * globalUniform.view * objectUniform.model * vec4(i_position, 1);
+    vec4 worldPosition = objectUniform.model * vec4(i_position, 1);
+    vec4 viewPosition = globalUniform.view * worldPosition;
+    gl_Position = globalUniform.proj * viewPosition;
     o_albedo = i_color;
     float z = (0.5f * (gl_Position.z / gl_Position.w) + 0.5f);
-    gl_PointSize = z * z * 20.0f;
+    gl_PointSize = 6.18f / z;
 }

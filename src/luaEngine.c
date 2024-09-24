@@ -110,7 +110,7 @@ static int RemoveModel(lua_State *pLuaState)
 {
     uint32_t index = luaL_checkinteger(pLuaState, -1);
     lua_pop(pLuaState, 1);
-    
+
     int gameStateTpye = lua_getglobal(pLuaState, "gameState");
     AssertLuaType(gameStateTpye, LUA_TTABLE);
     int pGraphicEngineTpye = lua_getfield(pLuaState, -1, "pGraphicEngine");
@@ -159,6 +159,32 @@ static int UpdateModel(lua_State *pLuaState)
     return 0;
 }
 
+static int SetCamera(lua_State *pLuaState)
+{
+    int gameStateTpye = lua_getglobal(pLuaState, "gameState");
+    AssertLuaType(gameStateTpye, LUA_TTABLE);
+    int pGraphicEngineTpye = lua_getfield(pLuaState, -1, "pGraphicEngine");
+    AssertLuaType(pGraphicEngineTpye, LUA_TLIGHTUSERDATA);
+    GraphicEngine *pGraphicEngine = lua_touserdata(pLuaState, -1);
+    lua_pop(pLuaState, 2);
+
+    for (uint32_t i = 0; i < 3; i++)
+    {
+        int targetPositionValueType = lua_geti(pLuaState, -1, i + 1);
+        AssertLuaType(targetPositionValueType, LUA_TNUMBER);
+        pGraphicEngine->targetPosition[i] = luaL_checknumber(pLuaState, -1);
+        lua_pop(pLuaState, 1);
+
+        int cameraPositionValueType = lua_geti(pLuaState, -2, i + 1);
+        AssertLuaType(cameraPositionValueType, LUA_TNUMBER);
+        pGraphicEngine->cameraPosition[i] = luaL_checknumber(pLuaState, -1);
+        lua_pop(pLuaState, 1);
+    }
+    lua_pop(pLuaState, 2);
+
+    return 0;
+}
+
 void StartLua(LuaEngine *pLuaEngine)
 {
     // New lua state
@@ -189,11 +215,14 @@ void StartLua(LuaEngine *pLuaEngine)
     lua_pushcfunction(pLuaState, AddModel);
     lua_setfield(pLuaState, -2, "AddModel");
 
-    // lua_pushcfunction(pLuaState, RemoveModel);
-    // lua_setfield(pLuaState, -2, "RemoveModel");
+    lua_pushcfunction(pLuaState, RemoveModel);
+    lua_setfield(pLuaState, -2, "RemoveModel");
 
     lua_pushcfunction(pLuaState, UpdateModel);
     lua_setfield(pLuaState, -2, "UpdateModel");
+
+    lua_pushcfunction(pLuaState, SetCamera);
+    lua_setfield(pLuaState, -2, "SetCamera");
 
     // Call start
     int startFunctionType = lua_getfield(pLuaState, -1, "Start");

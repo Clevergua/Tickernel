@@ -5,25 +5,25 @@ function gameState.Start()
     print("Lua Start")
     local vertices = {}
     local colors = {}
-    local dirtColor = { 0.6, 0.3, 0.3 ,0}
-    local grassColor = { 0.3, 0.5, 0.2 ,0}
-    for z = 1, 100 do
-        for y = 1, 200 do
-            for x = 1, 200 do
-                local noiseValue = gameMath.PerlinNoise3D(0, x * 0.007, y * 0.007, z * 0.007)
-                local temperature = gameMath.PerlinNoise3D(321, x * 0.07, y * 0.07, z * 0.07)
-                local density = noiseValue - z * 0.015 + 1
-                if density > 0.3 then
-                    table.insert(vertices, { x - 50, y - 50, z - 50 })
-                    if temperature > 0.1 then
-                        table.insert(colors, dirtColor)
-                    else
-                        table.insert(colors, grassColor)
-                    end
-                end
-            end
+    local dirtColor = { 0.6, 0.3, 0.3, 0 }
+    local grassColor = { 0.3, 0.5, 0.2, 0 }
+    local x_max = 100
+    local y_max = 100
+
+    for y = 1, y_max do
+        for x = 1, x_max do
+            table.insert(vertices, { (x - x_max / 2) * 0.01, (y - y_max / 2) * 0.01, 0.5 })
+            table.insert(colors, dirtColor)
         end
     end
+
+    for y = 1, y_max do
+        for x = 1, x_max do
+            table.insert(vertices, { (x - x_max / 2) * 0.01, (y - y_max / 2) * 0.01, 0.0 })
+            table.insert(colors, grassColor)
+        end
+    end
+
     local index = gameState.AddModel(vertices, colors)
     local model = {
         { 1, 0, 0, 0 },
@@ -36,10 +36,15 @@ end
 
 function gameState.End()
     print("Lua Start")
+
 end
 
+local cameraPosition = { 0, -2, 2 }
+local targetPosition = { 0, 0, 0 }
 function gameState.Update()
     print("Lua Update")
+    cameraPosition[2] = cameraPosition[2] + 0.1
+    gameState.SetCamera(cameraPosition, targetPosition)
 end
 
 _G.gameState = gameState

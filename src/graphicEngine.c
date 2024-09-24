@@ -812,9 +812,13 @@ static void DestroyGlobalUniformBuffers(GraphicEngine *pGraphicEngine)
 static void UpdateGlobalUniformBuffer(GraphicEngine *pGraphicEngine)
 {
     GlobalUniformBuffer ubo;
-    glm_lookat((vec3){120.0f, 120.0f, 120.0f}, (vec3){0.0f, 0.0f, 0.0f}, (vec3){0.0f, 0.0f, 1.0f}, ubo.view);
+    glm_lookat(pGraphicEngine->cameraPosition, pGraphicEngine->targetPosition, (vec3){0.0f, 0.0f, 1.0f}, ubo.view);
     glm_perspective(glm_rad(45.0f), pGraphicEngine->swapchainExtent.width / (float)pGraphicEngine->swapchainExtent.height, 0.1f, 1000.0f, ubo.proj);
     ubo.proj[1][1] *= -1;
+    mat4 view_proj;
+    glm_mat4_mul(ubo.proj, ubo.proj, view_proj);
+    glm_mat4_inv(view_proj, ubo.inv_view_proj);
+    glm_vec3_copy(pGraphicEngine->cameraPosition, ubo.camera_world_pos);
     memcpy(pGraphicEngine->globalUniformBufferMapped, &ubo, sizeof(ubo));
 }
 
@@ -832,6 +836,7 @@ static void RecordCommandBuffer(GraphicEngine *pGraphicEngine)
 void StartGraphicEngine(GraphicEngine *pGraphicEngine)
 {
     pGraphicEngine->frameCount = 0;
+
     CreateGLFWWindow(pGraphicEngine);
     CreateVkInstance(pGraphicEngine);
     CreateVKSurface(pGraphicEngine);

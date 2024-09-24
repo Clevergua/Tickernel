@@ -123,6 +123,8 @@
         "windef.h": "c",
         "minwindef.h": "c",
         "lualib.h": "c",
-        "lauxlib.h": "c"
+        "lauxlib.h": "c",
+        "plane.h": "c",
+        "lua.h": "c"
     }
 }
