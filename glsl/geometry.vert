@@ -22,5 +22,5 @@ void main(void)
     gl_Position = globalUniform.proj * globalUniform.view * objectUniform.model * vec4(i_position, 1);
     o_albedo = i_color;
     float z = (0.5f * (gl_Position.z / gl_Position.w) + 0.5f);
-    gl_PointSize = z * 5.0f;
+    gl_PointSize = z * z * 20.0f;
 }

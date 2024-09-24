@@ -32,13 +32,6 @@ static void AssertLuaType(int type, int targetType)
 
 static int AddModel(lua_State *pLuaState)
 {
-    int gameStateTpye = lua_getglobal(pLuaState, "gameState");
-    AssertLuaType(gameStateTpye, LUA_TTABLE);
-    int pGraphicEngineTpye = lua_getfield(pLuaState, -1, "pGraphicEngine");
-    AssertLuaType(pGraphicEngineTpye, LUA_TLIGHTUSERDATA);
-    GraphicEngine *pGraphicEngine = lua_touserdata(pLuaState, -1);
-    lua_pop(pLuaState, 2);
-
     lua_len(pLuaState, -2);
     //  vertices colors length
 
@@ -88,6 +81,14 @@ static int AddModel(lua_State *pLuaState)
         lua_pop(pLuaState, 2);
 
         uint32_t outputIndex;
+
+        int gameStateTpye = lua_getglobal(pLuaState, "gameState");
+        AssertLuaType(gameStateTpye, LUA_TTABLE);
+        int pGraphicEngineTpye = lua_getfield(pLuaState, -1, "pGraphicEngine");
+        AssertLuaType(pGraphicEngineTpye, LUA_TLIGHTUSERDATA);
+        GraphicEngine *pGraphicEngine = lua_touserdata(pLuaState, -1);
+        lua_pop(pLuaState, 2);
+
         AddModelToGeometrySubpass(pGraphicEngine, vertexCount, geometrySubpassVertices, &outputIndex);
 
         TickernelFree(geometrySubpassVertices);
@@ -100,12 +101,16 @@ static int AddModel(lua_State *pLuaState)
     {
         //  vertices colors
         lua_pop(pLuaState, 2);
-        // 
+        //
         return 0;
     }
 }
-static int UpdateModel(lua_State *pLuaState)
+
+static int RemoveModel(lua_State *pLuaState)
 {
+    uint32_t index = luaL_checkinteger(pLuaState, -1);
+    lua_pop(pLuaState, 1);
+    
     int gameStateTpye = lua_getglobal(pLuaState, "gameState");
     AssertLuaType(gameStateTpye, LUA_TTABLE);
     int pGraphicEngineTpye = lua_getfield(pLuaState, -1, "pGraphicEngine");
@@ -113,6 +118,12 @@ static int UpdateModel(lua_State *pLuaState)
     GraphicEngine *pGraphicEngine = lua_touserdata(pLuaState, -1);
     lua_pop(pLuaState, 2);
 
+    RemoveModelFromGeometrySubpass(pGraphicEngine, index);
+    return 0;
+}
+
+static int UpdateModel(lua_State *pLuaState)
+{
     //  index modelMatrix
     GeometrySubpassModelUniformBuffer buffer;
     for (uint32_t column = 0; column < 4; column++)
@@ -137,6 +148,13 @@ static int UpdateModel(lua_State *pLuaState)
     // index
     uint32_t index = luaL_checkinteger(pLuaState, -1);
     lua_pop(pLuaState, 1);
+
+    int gameStateTpye = lua_getglobal(pLuaState, "gameState");
+    AssertLuaType(gameStateTpye, LUA_TTABLE);
+    int pGraphicEngineTpye = lua_getfield(pLuaState, -1, "pGraphicEngine");
+    AssertLuaType(pGraphicEngineTpye, LUA_TLIGHTUSERDATA);
+    GraphicEngine *pGraphicEngine = lua_touserdata(pLuaState, -1);
+    lua_pop(pLuaState, 2);
     UpdateModelUniformToGeometrySubpass(pGraphicEngine, index, buffer);
     return 0;
 }

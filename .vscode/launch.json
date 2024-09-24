@@ -8,7 +8,7 @@
             "type": "lua",
             "request": "launch",
             "name": "Debug",
-            "program": "${workspaceFolder}/assets/lua/main.lua"
+            "program": "${workspaceFolder}/assets/lua/gameMath.lua"
         }
     ]
 }

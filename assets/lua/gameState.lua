@@ -1,16 +1,16 @@
-table.empty = {};
+table.empty = {}
 
 local gameState = {
     pGraphicEngine = nil,
-};
+}
 
-local integer = 0;
+local integer = 0
 ---Add model to geometry subpass
 ---@param vertices table
 ---@param colors table
 ---@return integer
 function gameState.AddModel(vertices, colors)
-    return integer;
+    return integer
 end
 
 ---Add model to geometry subpass
@@ -24,4 +24,4 @@ end
 function gameState.UpdateModel(index, modelMatrix)
 end
 
-return gameState;
+return gameState
