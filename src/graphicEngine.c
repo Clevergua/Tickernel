@@ -656,12 +656,14 @@ static void CreateGraphicImages(GraphicEngine *pGraphicEngine)
     FindDepthFormat(pGraphicEngine, &depthVkFormat);
     CreateGraphicImage(pGraphicEngine, vkExtent3D, depthVkFormat, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_IMAGE_ASPECT_DEPTH_BIT, &pGraphicEngine->depthGraphicImage);
     CreateGraphicImage(pGraphicEngine, vkExtent3D, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_IMAGE_ASPECT_COLOR_BIT, &pGraphicEngine->albedoGraphicImage);
+    CreateGraphicImage(pGraphicEngine, vkExtent3D, VK_FORMAT_A2R10G10B10_UNORM_PACK32, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_IMAGE_ASPECT_COLOR_BIT, &pGraphicEngine->normalGraphicImage);
 }
 
 static void DestroyGraphicImages(GraphicEngine *pGraphicEngine)
 {
-    DestroyGraphicImage(pGraphicEngine, pGraphicEngine->depthGraphicImage);
+    DestroyGraphicImage(pGraphicEngine, pGraphicEngine->normalGraphicImage);
     DestroyGraphicImage(pGraphicEngine, pGraphicEngine->albedoGraphicImage);
+    DestroyGraphicImage(pGraphicEngine, pGraphicEngine->depthGraphicImage);
 }
 
 static void RecreateResources(GraphicEngine *pGraphicEngine)
@@ -813,7 +815,7 @@ static void UpdateGlobalUniformBuffer(GraphicEngine *pGraphicEngine)
 {
     GlobalUniformBuffer ubo;
     glm_lookat(pGraphicEngine->cameraPosition, pGraphicEngine->targetPosition, (vec3){0.0f, 0.0f, 1.0f}, ubo.view);
-    glm_perspective(glm_rad(45.0f), pGraphicEngine->swapchainExtent.width / (float)pGraphicEngine->swapchainExtent.height, 0.1f, 1000.0f, ubo.proj);
+    glm_perspective(glm_rad(30.0f), pGraphicEngine->swapchainExtent.width / (float)pGraphicEngine->swapchainExtent.height, 0.1f, 1000.0f, ubo.proj);
     ubo.proj[1][1] *= -1;
     mat4 view_proj;
     glm_mat4_mul(ubo.proj, ubo.proj, view_proj);

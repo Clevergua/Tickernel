@@ -18,8 +18,7 @@ static void PrepareCurrentFrambuffer(GraphicEngine *pGraphicEngine)
             }
         }
     }
-    uint32_t attachmentCount = 3;
-    VkImageView attachments[] = {pGraphicEngine->swapchainImageViews[pGraphicEngine->frameIndex], pGraphicEngine->depthGraphicImage.vkImageView, pGraphicEngine->albedoGraphicImage.vkImageView};
+    VkImageView attachments[] = {pGraphicEngine->swapchainImageViews[pGraphicEngine->frameIndex], pGraphicEngine->depthGraphicImage.vkImageView, pGraphicEngine->albedoGraphicImage.vkImageView, pGraphicEngine->normalGraphicImage.vkImageView};
     if (INVALID_VKFRAMEBUFFER == pDeferredRenderPass->vkFramebuffers[pGraphicEngine->frameIndex])
     {
         VkFramebufferCreateInfo vkFramebufferCreateInfo = {
@@ -27,7 +26,7 @@ static void PrepareCurrentFrambuffer(GraphicEngine *pGraphicEngine)
             .pNext = NULL,
             .flags = 0,
             .renderPass = pDeferredRenderPass->vkRenderPass,
-            .attachmentCount = attachmentCount,
+            .attachmentCount = 4,
             .pAttachments = attachments,
             .width = pGraphicEngine->swapchainExtent.width,
             .height = pGraphicEngine->swapchainExtent.height,
@@ -73,12 +72,23 @@ static void CreateVkRenderPass(GraphicEngine *pGraphicEngine)
         .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
         .finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
     };
-
-    uint32_t attachmentCount = 3;
+    VkAttachmentDescription normalAttachmentDescription = {
+        .flags = 0,
+        .format = pGraphicEngine->normalGraphicImage.vkFormat,
+        .samples = VK_SAMPLE_COUNT_1_BIT,
+        .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+        .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+        .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+        .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+        .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+        .finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+    };
+    uint32_t attachmentCount = 4;
     VkAttachmentDescription vkAttachmentDescriptions[] = {
         colorAttachmentDescription,
         depthAttachmentDescription,
         albedoAttachmentDescription,
+        normalAttachmentDescription,
     };
 
     VkAttachmentReference geometryDepthAttachmentReference = {
@@ -89,13 +99,18 @@ static void CreateVkRenderPass(GraphicEngine *pGraphicEngine)
         .attachment = 2,
         .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
     };
+    VkAttachmentReference geometryNormalAttachmentReference = {
+        .attachment = 3,
+        .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+    };
+    VkAttachmentReference colorAttachments[] = {geometryAlbedoAttachmentReference, geometryNormalAttachmentReference};
     VkSubpassDescription geometrySubpassDescription = {
         .flags = 0,
         .pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
         .inputAttachmentCount = 0,
         .pInputAttachments = NULL,
-        .colorAttachmentCount = 1,
-        .pColorAttachments = &geometryAlbedoAttachmentReference,
+        .colorAttachmentCount = 2,
+        .pColorAttachments = colorAttachments,
         .pResolveAttachments = NULL,
         .pDepthStencilAttachment = &geometryDepthAttachmentReference,
         .preserveAttachmentCount = 0,
@@ -114,11 +129,15 @@ static void CreateVkRenderPass(GraphicEngine *pGraphicEngine)
         .attachment = 2,
         .layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
     };
+    VkAttachmentReference lightingNormalAttachmentReference = {
+        .attachment = 3,
+        .layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+    };
     VkSubpassDescription ligthtingSubpassDescription = {
         .flags = 0,
         .pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
-        .inputAttachmentCount = 2,
-        .pInputAttachments = (const VkAttachmentReference[]){lightingDepthAttachmentReference, lightingAlbedoAttachmentReference},
+        .inputAttachmentCount = 3,
+        .pInputAttachments = (const VkAttachmentReference[]){lightingDepthAttachmentReference, lightingAlbedoAttachmentReference, lightingNormalAttachmentReference},
         .colorAttachmentCount = 1,
         .pColorAttachments = &lightingColorAttachmentReference,
         .pResolveAttachments = NULL,
@@ -259,7 +278,7 @@ void RecordDeferredRenderPass(GraphicEngine *pGraphicEngine)
             .offset = offset,
             .extent = pGraphicEngine->swapchainExtent,
         };
-    uint32_t clearValueCount = 3;
+    uint32_t clearValueCount = 4;
     VkClearValue *clearValues = (VkClearValue[]){
         {
             .color = {0.0f, 0.0f, 0.0f, 1.0f},
@@ -269,7 +288,11 @@ void RecordDeferredRenderPass(GraphicEngine *pGraphicEngine)
         },
         {
             .color = {0.0f, 0.0f, 0.0f, 1.0f},
-        }};
+        },
+        {
+            .color = {0.0f, 0.0f, 0.0f, 0.0f},
+        },
+    };
     RenderPass *pDeferredRenderPass = &pGraphicEngine->deferredRenderPass;
     VkRenderPassBeginInfo renderPassBeginInfo =
         {

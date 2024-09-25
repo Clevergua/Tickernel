@@ -113,6 +113,7 @@ typedef struct GraphicEngineStruct
 
     GraphicImage depthGraphicImage;
     GraphicImage albedoGraphicImage;
+    GraphicImage normalGraphicImage;
     RenderPass deferredRenderPass;
     uint32_t fullScreenTriangleModelIndex;
 

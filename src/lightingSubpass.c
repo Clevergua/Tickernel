@@ -162,12 +162,19 @@ static void CreateVkPipeline(GraphicEngine *pGraphicEngine)
         .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
         .pImmutableSamplers = NULL,
     };
-    VkDescriptorSetLayoutBinding *bindings = (VkDescriptorSetLayoutBinding[]){globalUniformLayoutBinding, depthAttachmentLayoutBinding, albedoAttachmentLayoutBinding};
+    VkDescriptorSetLayoutBinding normalAttachmentLayoutBinding = {
+        .binding = 3,
+        .descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT,
+        .descriptorCount = 1,
+        .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
+        .pImmutableSamplers = NULL,
+    };
+    VkDescriptorSetLayoutBinding *bindings = (VkDescriptorSetLayoutBinding[]){globalUniformLayoutBinding, depthAttachmentLayoutBinding, albedoAttachmentLayoutBinding, normalAttachmentLayoutBinding};
     VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
         .pNext = NULL,
         .flags = 0,
-        .bindingCount = 3,
+        .bindingCount = 4,
         .pBindings = bindings,
     };
 
@@ -232,7 +239,7 @@ static void CreateLightingSubpassModel(GraphicEngine *pGraphicEngine, uint32_t i
     pSubpassModel->vertexCount = 3;
     pSubpassModel->vertexBuffer = NULL;
     pSubpassModel->vertexBufferMemory = NULL;
-    
+
     pSubpassModel->modelUniformBuffer = NULL;
     pSubpassModel->modelUniformBufferMemory = NULL;
     pSubpassModel->modelUniformBufferMapped = NULL;
@@ -261,6 +268,11 @@ static void CreateLightingSubpassModel(GraphicEngine *pGraphicEngine, uint32_t i
     VkDescriptorImageInfo albedoVkDescriptorImageInfo = {
         .sampler = NULL,
         .imageView = pGraphicEngine->albedoGraphicImage.vkImageView,
+        .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+    };
+    VkDescriptorImageInfo normalVkDescriptorImageInfo = {
+        .sampler = NULL,
+        .imageView = pGraphicEngine->normalGraphicImage.vkImageView,
         .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
     };
     VkWriteDescriptorSet descriptorWrites[] = {
@@ -300,8 +312,20 @@ static void CreateLightingSubpassModel(GraphicEngine *pGraphicEngine, uint32_t i
             .pBufferInfo = NULL,
             .pTexelBufferView = NULL,
         },
+        {
+            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            .pNext = NULL,
+            .dstSet = pSubpassModel->vkDescriptorSet,
+            .dstBinding = 3,
+            .dstArrayElement = 0,
+            .descriptorCount = 1,
+            .descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT,
+            .pImageInfo = &normalVkDescriptorImageInfo,
+            .pBufferInfo = NULL,
+            .pTexelBufferView = NULL,
+        },
     };
-    vkUpdateDescriptorSets(pGraphicEngine->vkDevice, 3, descriptorWrites, 0, NULL);
+    vkUpdateDescriptorSets(pGraphicEngine->vkDevice, 4, descriptorWrites, 0, NULL);
     pSubpassModel->isValid = true;
 }
 static void DestroyLightingSubpassModel(GraphicEngine *pGraphicEngine, uint32_t index)
@@ -338,7 +362,7 @@ void CreateLightingSubpass(GraphicEngine *pGraphicEngine)
     };
     pLightingSubpass->vkDescriptorPoolSizes[1] = (VkDescriptorPoolSize){
         .type = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT,
-        .descriptorCount = pLightingSubpass->modelCountPerDescriptorPool * 2,
+        .descriptorCount = pLightingSubpass->modelCountPerDescriptorPool * 3,
     };
 
     pLightingSubpass->subpassModelCount = 0;
