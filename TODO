@@ -1,5 +1,9 @@
-Draw Examples;
-Shader Cache;
-UI Render Pass;
-Remove GLFW;
-Resize window;
+// Calculate normal;
+// Lighting shader;
+// Find models;
+// Obj loading;
+// Shader cache;
+// Remove GLFW;
+// Resize window;
+// Transparent RenderPass;
+// GUI RenderPass;
