@@ -545,7 +545,38 @@ static void CreateSwapchain(GraphicEngine *pGraphicEngine)
         // Do nothing.
     }
 
-    pGraphicEngine->swapchainExtent = vkSurfaceCapabilities.currentExtent;
+    VkExtent2D swapchainExtent;
+    if (pGraphicEngine->width > vkSurfaceCapabilities.maxImageExtent.width)
+    {
+        swapchainExtent.width = vkSurfaceCapabilities.maxImageExtent.width;
+    }
+    else
+    {
+        if (pGraphicEngine->width < vkSurfaceCapabilities.minImageExtent.width)
+        {
+            swapchainExtent.width = pGraphicEngine->width;
+        }
+        else
+        {
+            swapchainExtent.width = pGraphicEngine->width;
+        }
+    }
+
+    if (pGraphicEngine->height > vkSurfaceCapabilities.maxImageExtent.height)
+    {
+        swapchainExtent.height = vkSurfaceCapabilities.maxImageExtent.height;
+    }
+    else
+    {
+        if (pGraphicEngine->height < vkSurfaceCapabilities.minImageExtent.height)
+        {
+            swapchainExtent.height = pGraphicEngine->height;
+        }
+        else
+        {
+            swapchainExtent.height = pGraphicEngine->height;
+        }
+    }
     VkSharingMode imageSharingMode;
     uint32_t queueFamilyIndexCount;
     uint32_t *pQueueFamilyIndices;
@@ -571,7 +602,7 @@ static void CreateSwapchain(GraphicEngine *pGraphicEngine)
             .minImageCount = swapchainImageCount,
             .imageFormat = pGraphicEngine->surfaceFormat.format,
             .imageColorSpace = pGraphicEngine->surfaceFormat.colorSpace,
-            .imageExtent = pGraphicEngine->swapchainExtent,
+            .imageExtent = swapchainExtent,
             .imageArrayLayers = 1,
             .imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
             .imageSharingMode = imageSharingMode,
@@ -648,8 +679,8 @@ static void DestroySignals(GraphicEngine *pGraphicEngine)
 static void CreateGraphicImages(GraphicEngine *pGraphicEngine)
 {
     VkExtent3D vkExtent3D = {
-        .width = pGraphicEngine->swapchainExtent.width,
-        .height = pGraphicEngine->swapchainExtent.height,
+        .width = pGraphicEngine->width,
+        .height = pGraphicEngine->height,
         .depth = 1,
     };
     VkFormat depthVkFormat;
@@ -666,7 +697,7 @@ static void DestroyGraphicImages(GraphicEngine *pGraphicEngine)
     DestroyGraphicImage(pGraphicEngine, pGraphicEngine->depthGraphicImage);
 }
 
-static void RecreateResources(GraphicEngine *pGraphicEngine)
+static void RecreateSwapchain(GraphicEngine *pGraphicEngine)
 {
     VkResult result = VK_SUCCESS;
 
@@ -722,20 +753,29 @@ static void AcquireImage(GraphicEngine *pGraphicEngine)
     VkDevice vkDevice = pGraphicEngine->vkDevice;
     // Acquire next image
     result = vkAcquireNextImageKHR(vkDevice, pGraphicEngine->vkSwapchain, UINT64_MAX, pGraphicEngine->imageAvailableSemaphore, VK_NULL_HANDLE, &pGraphicEngine->acquiredImageIndex);
-    if (VK_SUCCESS == result || VK_SUBOPTIMAL_KHR == result)
+    if (VK_SUCCESS == result)
     {
         pGraphicEngine->hasRecreatedSwapchain = false;
         return;
     }
-    else if (VK_ERROR_OUT_OF_DATE_KHR == result)
-    {
-        RecreateResources(pGraphicEngine);
-        pGraphicEngine->hasRecreatedSwapchain = true;
-        return;
-    }
     else
     {
-        TryThrowVulkanError(result);
+        printf("Vulkan error code when AcquireImage: %d\n", result);
+        if (VK_SUBOPTIMAL_KHR == result)
+        {
+            pGraphicEngine->hasRecreatedSwapchain = false;
+            return;
+        }
+        else if (VK_ERROR_OUT_OF_DATE_KHR == result)
+        {
+            RecreateSwapchain(pGraphicEngine);
+            pGraphicEngine->hasRecreatedSwapchain = true;
+            return;
+        }
+        else
+        {
+            TryThrowVulkanError(result);
+        }
     }
 }
 
@@ -766,7 +806,6 @@ static void Present(GraphicEngine *pGraphicEngine)
 {
     VkResult result = VK_SUCCESS;
     uint32_t frameIndex = pGraphicEngine->frameIndex;
-    // Present
     VkPresentInfoKHR presentInfo = {
         .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
         .pNext = NULL,
@@ -778,7 +817,22 @@ static void Present(GraphicEngine *pGraphicEngine)
         .pResults = NULL,
     };
     result = vkQueuePresentKHR(pGraphicEngine->vkPresentQueue, &presentInfo);
-    TryThrowVulkanError(result);
+    if (result == VK_SUCCESS)
+    {
+        // continue
+    }
+    else
+    {
+        printf("Vulkan error code when Present: %d\n", result);
+        if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
+        {
+            // continue
+        }
+        else
+        {
+            abort();
+        }
+    }
 }
 
 static void CreateVkCommandBuffers(GraphicEngine *pGraphicEngine)
@@ -815,7 +869,7 @@ static void UpdateGlobalUniformBuffer(GraphicEngine *pGraphicEngine)
 {
     GlobalUniformBuffer ubo;
     glm_lookat(pGraphicEngine->cameraPosition, pGraphicEngine->targetPosition, (vec3){0.0f, 0.0f, 1.0f}, ubo.view);
-    glm_perspective(glm_rad(30.0f), pGraphicEngine->swapchainExtent.width / (float)pGraphicEngine->swapchainExtent.height, 0.1f, 1000.0f, ubo.proj);
+    glm_perspective(glm_rad(45.0f), pGraphicEngine->width / (float)pGraphicEngine->height, 0.1f, 1024.0f, ubo.proj);
     ubo.proj[1][1] *= -1;
     mat4 view_proj;
     glm_mat4_mul(ubo.proj, ubo.proj, view_proj);
@@ -856,7 +910,6 @@ void StartGraphicEngine(GraphicEngine *pGraphicEngine)
 void UpdateGraphicEngine(GraphicEngine *pGraphicEngine)
 {
     pGraphicEngine->frameIndex = pGraphicEngine->frameCount % pGraphicEngine->swapchainImageCount;
-    bool hasRecreateSwapchain = false;
     glfwPollEvents();
     WaitForGPU(pGraphicEngine);
     AcquireImage(pGraphicEngine);

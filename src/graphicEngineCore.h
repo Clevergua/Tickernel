@@ -92,7 +92,7 @@ typedef struct GraphicEngineStruct
     VkQueue vkPresentQueue;
     VkSwapchainKHR vkSwapchain;
     VkSurfaceFormatKHR surfaceFormat;
-    VkExtent2D swapchainExtent;
+    // VkExtent2D swapchainExtent;
     uint32_t swapchainImageCount;
     VkImage *swapchainImages;
     VkImageView *swapchainImageViews;

@@ -76,11 +76,15 @@ static void CreateVkPipeline(GraphicEngine *pGraphicEngine)
         .topology = VK_PRIMITIVE_TOPOLOGY_POINT_LIST,
         .primitiveRestartEnable = VK_FALSE,
     };
+    VkExtent2D extent = {
+        .width = pGraphicEngine->width,
+        .height = pGraphicEngine->height,
+    };
     VkViewport viewport = {
         .x = 0.0f,
         .y = 0.0f,
-        .width = pGraphicEngine->swapchainExtent.width,
-        .height = pGraphicEngine->swapchainExtent.height,
+        .width = pGraphicEngine->width,
+        .height = pGraphicEngine->height,
         .minDepth = 0.0f,
         .maxDepth = 1.0f,
     };
@@ -90,7 +94,7 @@ static void CreateVkPipeline(GraphicEngine *pGraphicEngine)
     };
     VkRect2D scissor = {
         .offset = offset,
-        .extent = pGraphicEngine->swapchainExtent,
+        .extent = extent,
     };
     VkPipelineViewportStateCreateInfo pipelineViewportStateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,

@@ -65,37 +65,48 @@ function gameState.Start()
     --     end
     -- end
 
+    -- local vertices = {}
+    -- local colors = {}
+    -- local xMax = 200;
+    -- local yMax = 200;
+    -- local zMax = 200;
+    -- local center = { xMax / 2.0, yMax / 2.0, zMax / 2.0 }
+    -- local r = 90
+    -- local color = { 0.2, 0.2, 0.6, 1 }
+    -- local light = 0.3
+    -- local color2 = { color[1] + light, color[2] + light, color[3] + light, 1 }
+    -- for i = 1, xMax do
+    --     for j = 1, yMax do
+    --         local isFirst = true
+    --         for k = 1, zMax do
+    --             local rk = zMax - k
+    --             local x = i - center[1]
+    --             local y = j - center[2]
+    --             local z = rk - center[3]
+    --             if x * x + y * y + z * z < r * r then
+    --                 if isFirst then
+    --                     isFirst = false
+    --                     table.insert(colors, color2)
+    --                 else
+    --                     table.insert(colors, color)
+    --                 end
+    --                 table.insert(vertices, { x / xMax, y / yMax, z / zMax })
+    --             end
+    --         end
+    --     end
+    -- end
+
+
     local vertices = {}
     local colors = {}
-    local xMax = 200;
-    local yMax = 200;
-    local zMax = 200;
-    local center = { xMax / 2.0, yMax / 2.0, zMax / 2.0 }
-    local r = 90
-    local color = { 0.2, 0.2, 0.6, 1 }
-    local light = 0.3
-    local color2 = { color[1] + light, color[2] + light, color[3] + light, 1 }
+    local xMax = 1024;
+    local zMax = 1024;
     for i = 1, xMax do
-        for j = 1, yMax do
-            local isFirst = true
-            for k = 1, zMax do
-                local rk = zMax - k
-                local x = i - center[1]
-                local y = j - center[2]
-                local z = rk - center[3]
-                if x * x + y * y + z * z < r * r then
-                    if isFirst then
-                        isFirst = false
-                        table.insert(colors, color2)
-                    else
-                        table.insert(colors, color)
-                    end
-                    table.insert(vertices, { x / xMax, y / yMax, z / zMax })
-                end
-            end
+        for k = 1, zMax do
+            table.insert(colors, { i / xMax, k / zMax, 1, 1 })
+            table.insert(vertices, { i - xMax / 2, 0, k - zMax / 2 })
         end
     end
-
     local index = gameState.AddModel(vertices, colors)
     local model = {
         { 1, 0, 0, 0 },
@@ -110,11 +121,10 @@ function gameState.End()
     print("Lua Start")
 end
 
-local cameraPosition = { 0, -2, 2 }
+local cameraPosition = { 0, -1024, 0 }
 local targetPosition = { 0, 0, 0 }
 function gameState.Update()
     print("Lua Update")
-    cameraPosition[2] = cameraPosition[2] + 0.1
     gameState.SetCamera(cameraPosition, targetPosition)
 end
 

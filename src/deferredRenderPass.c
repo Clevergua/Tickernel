@@ -28,12 +28,16 @@ static void PrepareCurrentFrambuffer(GraphicEngine *pGraphicEngine)
             .renderPass = pDeferredRenderPass->vkRenderPass,
             .attachmentCount = 4,
             .pAttachments = attachments,
-            .width = pGraphicEngine->swapchainExtent.width,
-            .height = pGraphicEngine->swapchainExtent.height,
+            .width = pGraphicEngine->width,
+            .height = pGraphicEngine->height,
             .layers = 1,
         };
         VkResult result = vkCreateFramebuffer(pGraphicEngine->vkDevice, &vkFramebufferCreateInfo, NULL, &pDeferredRenderPass->vkFramebuffers[pGraphicEngine->frameIndex]);
         TryThrowVulkanError(result);
+    }
+    else
+    {
+        // continue;
     }
 }
 
@@ -251,8 +255,8 @@ void RecordDeferredRenderPass(GraphicEngine *pGraphicEngine)
         {
             .x = 0.0f,
             .y = 0.0f,
-            .width = pGraphicEngine->swapchainExtent.width,
-            .height = pGraphicEngine->swapchainExtent.height,
+            .width = pGraphicEngine->width,
+            .height = pGraphicEngine->height,
             .minDepth = 0.0f,
             .maxDepth = 1.0f,
         };
@@ -262,11 +266,15 @@ void RecordDeferredRenderPass(GraphicEngine *pGraphicEngine)
             .x = 0,
             .y = 0,
         };
-    VkRect2D scissor =
-        {
-            .offset = scissorOffset,
-            .extent = pGraphicEngine->swapchainExtent,
-        };
+    VkExtent2D extent = {
+        .width = pGraphicEngine->width,
+        .height = pGraphicEngine->height,
+
+    };
+    VkRect2D scissor = {
+        .offset = scissorOffset,
+        .extent = extent,
+    };
     vkCmdSetScissor(vkCommandBuffer, 0, 1, &scissor);
     VkOffset2D offset =
         {
@@ -276,7 +284,7 @@ void RecordDeferredRenderPass(GraphicEngine *pGraphicEngine)
     VkRect2D renderArea =
         {
             .offset = offset,
-            .extent = pGraphicEngine->swapchainExtent,
+            .extent = extent,
         };
     uint32_t clearValueCount = 4;
     VkClearValue *clearValues = (VkClearValue[]){
