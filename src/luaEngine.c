@@ -44,39 +44,34 @@ static int AddModel(lua_State *pLuaState)
         GeometrySubpassVertex *geometrySubpassVertices = TickernelMalloc(sizeof(GeometrySubpassVertex) * vertexCount);
         for (uint32_t i = 0; i < vertexCount; i++)
         {
-            int colorType = lua_geti(pLuaState, -1, i + 1);
-            //  vertices colors color
-
-            AssertLuaType(colorType, LUA_TTABLE);
-            uint32_t colorLength = 4;
-            for (uint32_t j = 0; j < colorLength; j++)
-            {
-                int colorValueType = lua_geti(pLuaState, -1, j + 1);
-                //  vertices colors color value
-
-                AssertLuaType(colorValueType, LUA_TNUMBER);
-                geometrySubpassVertices[i].color[j] = luaL_checknumber(pLuaState, -1);
-                lua_pop(pLuaState, 1);
-                //  vertices colors color
-            }
-            lua_pop(pLuaState, 1);
-            //  vertices colors
-
-            int vertexType = lua_geti(pLuaState, -2, i + 1);
-            //  vertices colors vertex
+            int vertexType = lua_geti(pLuaState, -3, i + 1);
             AssertLuaType(vertexType, LUA_TTABLE);
             uint32_t vertexLength = 3;
             for (uint32_t j = 0; j < vertexLength; j++)
             {
                 int vertexValueType = lua_geti(pLuaState, -1, j + 1);
-                //  vertices colors vertex value
-
                 AssertLuaType(vertexValueType, LUA_TNUMBER);
                 geometrySubpassVertices[i].position[j] = luaL_checknumber(pLuaState, -1);
                 lua_pop(pLuaState, 1);
-                //  vertices colors vertex
             }
             lua_pop(pLuaState, 1);
+
+            int colorType = lua_geti(pLuaState, -2, i + 1);
+            AssertLuaType(colorType, LUA_TTABLE);
+            uint32_t colorLength = 4;
+            for (uint32_t j = 0; j < colorLength; j++)
+            {
+                int colorValueType = lua_geti(pLuaState, -1, j + 1);
+                AssertLuaType(colorValueType, LUA_TNUMBER);
+                geometrySubpassVertices[i].color[j] = luaL_checknumber(pLuaState, -1);
+                lua_pop(pLuaState, 1);
+            }
+            lua_pop(pLuaState, 1);
+
+            // int normalFlagType = lua_geti(pLuaState, -1, i + 1);
+            // AssertLuaType(normalFlagType, LUA_TNUMBER);
+            // geometrySubpassVertices[i].normalFlag = luaL_checkinteger(pLuaState, -1);
+            // lua_pop(pLuaState, 1);
         }
         lua_pop(pLuaState, 2);
 

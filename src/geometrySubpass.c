@@ -59,6 +59,12 @@ static void CreateVkPipeline(GraphicEngine *pGraphicEngine)
             .binding = 0,
             .format = VK_FORMAT_R32G32B32_SFLOAT,
             .offset = offsetof(GeometrySubpassVertex, color),
+        },
+        {
+            .location = 2,
+            .binding = 0,
+            .format = VK_FORMAT_R32_UINT,
+            .offset = offsetof(GeometrySubpassVertex, normalFlag),
         }};
     VkPipelineVertexInputStateCreateInfo vkPipelineVertexInputStateCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
@@ -410,7 +416,6 @@ void AddModelToGeometrySubpass(GraphicEngine *pGraphicEngine, uint32_t vertexCou
     RenderPass *pDeferredRenderPass = &pGraphicEngine->deferredRenderPass;
     uint32_t geometrySubpassIndex = 0;
     Subpass *pGeometrySubpass = &pDeferredRenderPass->subpasses[geometrySubpassIndex];
-
     AddModelToSubpass(pGraphicEngine, pGeometrySubpass, pIndex);
     CreateGeometrySubpassModel(pGraphicEngine, vertexCount, geometrySubpassVertices, *pIndex);
 }

@@ -17,7 +17,7 @@ typedef struct GlobalUniformBufferStruct
     mat4 view;
     mat4 proj;
     mat4 inv_view_proj;
-    vec3 camera_world_pos;
+    float farZ;
 } GlobalUniformBuffer;
 
 typedef struct SubpassModelStruct

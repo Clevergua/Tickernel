@@ -869,12 +869,12 @@ static void UpdateGlobalUniformBuffer(GraphicEngine *pGraphicEngine)
 {
     GlobalUniformBuffer ubo;
     glm_lookat(pGraphicEngine->cameraPosition, pGraphicEngine->targetPosition, (vec3){0.0f, 0.0f, 1.0f}, ubo.view);
-    glm_perspective(glm_rad(45.0f), pGraphicEngine->width / (float)pGraphicEngine->height, 0.1f, 1024.0f, ubo.proj);
+    ubo.farZ = 1024.0f;
+    glm_perspective(glm_rad(45.0f), pGraphicEngine->width / (float)pGraphicEngine->height, 1.0f, ubo.farZ, ubo.proj);
     ubo.proj[1][1] *= -1;
     mat4 view_proj;
     glm_mat4_mul(ubo.proj, ubo.proj, view_proj);
     glm_mat4_inv(view_proj, ubo.inv_view_proj);
-    glm_vec3_copy(pGraphicEngine->cameraPosition, ubo.camera_world_pos);
     memcpy(pGraphicEngine->globalUniformBufferMapped, &ubo, sizeof(ubo));
 }
 

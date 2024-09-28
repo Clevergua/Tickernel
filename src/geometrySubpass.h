@@ -5,6 +5,7 @@ typedef struct GeometrySubpassVertexStruct
 {
     vec3 position;
     vec4 color;
+    uint32_t normalFlag;
 } GeometrySubpassVertex;
 
 typedef struct GeometrySubpassModelStruct
