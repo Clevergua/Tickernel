@@ -29,7 +29,7 @@ int main(int argc, const char *argv[])
     // printf("Assets path : %s with length: %lu\n", assetsPath, strlen(assetsPath));
     TickernelEngine *pTickernelEngine = TickernelMalloc(sizeof(TickernelEngine));
     *pTickernelEngine = (TickernelEngine){
-        .targetFrameRate = 32,
+        .targetFrameRate = 8,
         // .frameCount = 4294967294,
         .frameCount = 0,
         .canTick = true,

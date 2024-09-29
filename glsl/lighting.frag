@@ -21,10 +21,7 @@ void main()
     vec4 world_w = globalUniform.inv_view_proj * clip;
     vec3 position = world_w.xyz / world_w.w;
 
-    vec3 normal = subpassLoad(i_normal).xyz;
-
-    o_color = subpassLoad(i_albedo);
-    return;
+    vec3 normal = subpassLoad(i_normal).xyz - 0.5 * 2;
 
     vec3 lightDirection = vec3(0, 0, -1);
     vec4 lightColor = vec4(1, 1, 1, 1);

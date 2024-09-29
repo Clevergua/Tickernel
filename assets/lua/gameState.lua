@@ -9,7 +9,7 @@ local integer = 0
 ---@param vertices table
 ---@param colors table
 ---@return integer
-function gameState.AddModel(vertices, colors)
+function gameState.AddModel(vertices, colors, normals)
     return integer
 end
 

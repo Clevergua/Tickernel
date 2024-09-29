@@ -68,10 +68,10 @@ static int AddModel(lua_State *pLuaState)
             }
             lua_pop(pLuaState, 1);
 
-            // int normalFlagType = lua_geti(pLuaState, -1, i + 1);
-            // AssertLuaType(normalFlagType, LUA_TNUMBER);
-            // geometrySubpassVertices[i].normalFlag = luaL_checkinteger(pLuaState, -1);
-            // lua_pop(pLuaState, 1);
+            int normalFlagType = lua_geti(pLuaState, -1, i + 1);
+            AssertLuaType(normalFlagType, LUA_TNUMBER);
+            geometrySubpassVertices[i].normalFlag = luaL_checkinteger(pLuaState, -1);
+            lua_pop(pLuaState, 1);
         }
         lua_pop(pLuaState, 2);
 

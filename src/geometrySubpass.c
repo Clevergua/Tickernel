@@ -46,7 +46,7 @@ static void CreateVkPipeline(GraphicEngine *pGraphicEngine)
             .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
         },
     };
-    uint32_t vertexAttributeDescriptionCount = 2;
+    uint32_t vertexAttributeDescriptionCount = 3;
     VkVertexInputAttributeDescription vertexAttributeDescriptions[] = {
         {
             .location = 0,

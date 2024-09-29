@@ -1,26 +1,67 @@
 local gameState = require("gameState")
 local gameMath = require("gameMath")
 
+function CalculateNormalFlag(indexMap, xMax, yMax, zMax, cx, cy, cz)
+    local normalFlag = 0
+    local index = 0
+    for dz = -1, 1 do
+        for dy = -1, 1 do
+            for dx = -1, 1 do
+                if dx == 0 and dy == 0 and dz == 0 then
+                    -- continue
+                else
+                    local x = cx + dx
+                    local y = cy + dy
+                    local z = cz + dz
+                    if x < 1 or x > xMax or y < 1 or y > yMax or z < 1 or z > zMax or indexMap[x][y][z] == 0 then
+                        -- do nothing
+                    else
+                        normalFlag = normalFlag + 2 ^ index
+                    end
+                end
+                index = index + 1
+            end
+        end
+    end
+    return normalFlag
+end
+
 function gameState.Start()
     print("Lua Start")
     local vertices = {}
     local colors = {}
-    local normalFlags = {}
-    local xMax = 200.0;
-    local yMax = 200.0;
+    local normals = {}
+    local xMax = 100.0;
+    local yMax = 100.0;
+    local zMax = 100.0;
     local indexMap = {}
     for i = 1, xMax do
         indexMap[i] = {}
         for j = 1, yMax do
-            table.insert(vertices, { i - xMax / 2, j - yMax / 2, 0 })
-            table.insert(colors, { i / xMax, j / yMax, 0, 1 })
-            table.insert(normalFlags, 0)
-            indexMap[i][j] = #vertices;
+            indexMap[i][j] = {}
+            for k = 1, zMax do
+                if true then
+                    table.insert(vertices, { i - xMax / 2, j - yMax / 2, k - zMax / 2 })
+                    -- table.insert(colors, { i / xMax, j / yMax, k / zMax, 1 })
+                    table.insert(colors, { 1, 1, 1, 1 })
+                    table.insert(normals, 0)
+                    indexMap[i][j][k] = #vertices;
+                else
+                    indexMap[i][j][k] = 0;
+                end
+            end
         end
     end
 
-
-    local index = gameState.AddModel(vertices, colors)
+    for x = 1, xMax do
+        for y = 1, yMax do
+            for z = 1, zMax do
+                local index = indexMap[x][y][z]
+                normals[index] = CalculateNormalFlag(indexMap, xMax, yMax, zMax, x, y, z)
+            end
+        end
+    end
+    local index = gameState.AddModel(vertices, colors, normals)
     local model = {
         { 1, 0, 0, 0 },
         { 0, 1, 0, 0 },
