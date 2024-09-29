@@ -14,7 +14,6 @@ layout(binding = 0) uniform GlobalUniform
     mat4 proj;
     mat4 inv_view_proj;
     float farZ;
-    vec3 cameraWorldPosition;
 }
 globalUniform;
 
@@ -30,52 +29,62 @@ void main(void)
     vec4 viewPosition = globalUniform.view * worldPosition;
     gl_Position = globalUniform.proj * viewPosition;
     o_albedo = i_color;
-    vec3 normals[27] = {
-        {-1,-1,-1},
-        {0,-1,-1},
-        {1,-1,-1},
-
-        {-1,0,-1},
-        {0,0,-1},
-        {1,0,-1},
-
-        {-1,1,-1},
-        {0,1,-1},
-        {1,1,-1},
-
-        {-1,-1,0},
-        {0,-1,0},
-        {1,-1,0},
-
+    vec3 normals[6] = {
         {-1,0,0},
-        {0,0,0},
         {1,0,0},
-
-        {-1,1,0},
+        {0,-1,0},
         {0,1,0},
-        {1,1,0},
-
-        {-1,-1,1},
-        {0,-1,1},
-        {1,-1,1},
-
-        {-1,0,1},
+        {0,0,-1},
         {0,0,1},
-        {1,0,1},
-
-        {-1,1,1},
-        {0,1,1},
-        {1,1,1},
     };
+    // vec3 normals[27] = {
+    //     {-1,-1,-1},
+    //     {0,-1,-1},
+    //     {1,-1,-1},
 
-    float maxDotValue = 0;
-    for(int i = 0; i < 27; i++) 
+    //     {-1,0,-1},
+    //     {0,0,-1},
+    //     {1,0,-1},
+
+    //     {-1,1,-1},
+    //     {0,1,-1},
+    //     {1,1,-1},
+
+    //     {-1,-1,0},
+    //     {0,-1,0},
+    //     {1,-1,0},
+
+    //     {-1,0,0},
+    //     {0,0,0},
+    //     {1,0,0},
+
+    //     {-1,1,0},
+    //     {0,1,0},
+    //     {1,1,0},
+
+    //     {-1,-1,1},
+    //     {0,-1,1},
+    //     {1,-1,1},
+
+    //     {-1,0,1},
+    //     {0,0,1},
+    //     {1,0,1},
+
+    //     {-1,1,1},
+    //     {0,1,1},
+    //     {1,1,1},
+    // };
+
+    float minDotValue = 1;
+    for(int i = 0; i < 6; i++) 
     {
-        vec3 n = normals[i] * ((i_normalFlag & (1 << i)) >> i);
-        float dotValue = dot(normalize(globalUniform.cameraWorldPosition - worldPosition.xyz), n);
-        if(dotValue >  maxDotValue) {
-            maxDotValue = dotValue;
-            o_normal = normalize(n);
+        if((i_normalFlag & (1 << i)) != 0){
+            vec4 n = globalUniform.view * vec4(normals[i], 1);
+            float dotValue = dot(normalize(viewPosition.xyz), normalize(n.xyz));
+            if(dotValue < minDotValue) {
+                minDotValue = dotValue;
+                o_normal = normalize(n.xyz);
+            }
         }
     }
     gl_PointSize = (globalUniform.farZ / -viewPosition.z) * 1.5;
