@@ -115,6 +115,12 @@ local DotGridGradient3D = function(ix, iy, iz, x, y, z, seed)
     return dx * gx + dy * gy + dz * gz
 end
 
+---comment
+---@param seed number
+---@param x number
+---@param y number
+---@param z number
+---@return number
 function gameMath.PerlinNoise3D(seed, x, y, z)
     -- Determine grid cell coordinates
     local x0 = math.floor(x)
@@ -139,5 +145,4 @@ function gameMath.PerlinNoise3D(seed, x, y, z)
 
     return SmoothLerp(y0, y1, sz);
 end
-
 return gameMath

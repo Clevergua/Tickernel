@@ -63,8 +63,8 @@ static void CreateVkPipeline(GraphicEngine *pGraphicEngine)
         {
             .location = 2,
             .binding = 0,
-            .format = VK_FORMAT_R32_UINT,
-            .offset = offsetof(GeometrySubpassVertex, normalFlag),
+            .format = VK_FORMAT_R32G32B32_SFLOAT,
+            .offset = offsetof(GeometrySubpassVertex, normal),
         }};
     VkPipelineVertexInputStateCreateInfo vkPipelineVertexInputStateCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,

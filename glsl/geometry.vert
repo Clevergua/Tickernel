@@ -3,7 +3,7 @@ precision highp float;
 
 layout(location = 0) in vec3 i_position;
 layout(location = 1) in vec4 i_color;
-layout(location = 2) in uint i_normalFlag;
+layout(location = 2) in vec3 i_normal;
 
 layout(location = 0) out vec4 o_albedo;
 layout(location = 1) out vec3 o_normal;
@@ -30,53 +30,6 @@ void main(void)
     vec4 viewPosition = globalUniform.view * worldPosition;
     gl_Position = globalUniform.proj * viewPosition;
     o_albedo = i_color;
-    vec3 normals[27] = {
-        {-1,-1,-1},
-        {0,-1,-1},
-        {1,-1,-1},
-
-        {-1,0,-1},
-        {0,0,-1},
-        {1,0,-1},
-
-        {-1,1,-1},
-        {0,1,-1},
-        {1,1,-1},
-
-        {-1,-1,0},
-        {0,-1,0},
-        {1,-1,0},
-
-        {-1,0,0},
-        {0,0,0},
-        {1,0,0},
-
-        {-1,1,0},
-        {0,1,0},
-        {1,1,0},
-
-        {-1,-1,1},
-        {0,-1,1},
-        {1,-1,1},
-
-        {-1,0,1},
-        {0,0,1},
-        {1,0,1},
-
-        {-1,1,1},
-        {0,1,1},
-        {1,1,1},
-    };
-
-    float maxDotValue = 0;
-    for(int i = 0; i < 27; i++) 
-    {
-        vec3 n = normals[i] * ((i_normalFlag & (1 << i)) >> i);
-        float dotValue = dot(normalize(globalUniform.cameraWorldPosition - worldPosition.xyz), n);
-        if(dotValue >  maxDotValue) {
-            maxDotValue = dotValue;
-            o_normal = normalize(n);
-        }
-    }
-    gl_PointSize = (globalUniform.farZ / -viewPosition.z) * 1.5;
+    o_normal = i_normal;
+    gl_PointSize = (globalUniform.farZ / -viewPosition.z) * 1;
 }
