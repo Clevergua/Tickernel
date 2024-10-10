@@ -868,7 +868,6 @@ static void DestroyGlobalUniformBuffers(GraphicEngine *pGraphicEngine)
 static void UpdateGlobalUniformBuffer(GraphicEngine *pGraphicEngine)
 {
     GlobalUniformBuffer ubo;
-    glm_vec3_copy(pGraphicEngine->cameraPosition, ubo.cameraWorldPosition);
     glm_lookat(pGraphicEngine->cameraPosition, pGraphicEngine->targetPosition, (vec3){0.0f, 0.0f, 1.0f}, ubo.view);
     ubo.farZ = 1024.0f;
     glm_perspective(glm_rad(45.0f), pGraphicEngine->width / (float)pGraphicEngine->height, 1.0f, ubo.farZ, ubo.proj);
