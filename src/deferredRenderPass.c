@@ -3,24 +3,6 @@
 static void PrepareCurrentFrambuffer(GraphicEngine *pGraphicEngine)
 {
     RenderPass *pDeferredRenderPass = &pGraphicEngine->deferredRenderPass;
-    if (pGraphicEngine->hasRecreatedSwapchain)
-    {
-        UpdateLightingSubpassModel(pGraphicEngine);
-        for (uint32_t i = 0; i < pDeferredRenderPass->vkFramebufferCount; i++)
-        {
-            if (pDeferredRenderPass->vkFramebuffers[i] == INVALID_VKFRAMEBUFFER)
-            {
-                // continue;
-            }
-            else
-            {
-                vkDestroyFramebuffer(pGraphicEngine->vkDevice, pDeferredRenderPass->vkFramebuffers[i], NULL);
-                pDeferredRenderPass->vkFramebuffers[i] = INVALID_VKFRAMEBUFFER;
-            }
-        }
-        pGraphicEngine->hasRecreatedSwapchain = false;
-    }
-
     if (INVALID_VKFRAMEBUFFER == pDeferredRenderPass->vkFramebuffers[pGraphicEngine->frameIndex])
     {
         VkImageView attachments[] = {pGraphicEngine->swapchainImageViews[pGraphicEngine->frameIndex], pGraphicEngine->depthGraphicImage.vkImageView, pGraphicEngine->albedoGraphicImage.vkImageView, pGraphicEngine->normalGraphicImage.vkImageView};
@@ -243,6 +225,7 @@ void DestroyDeferredRenderPass(GraphicEngine *pGraphicEngine)
 void RecordDeferredRenderPass(GraphicEngine *pGraphicEngine)
 {
     PrepareCurrentFrambuffer(pGraphicEngine);
+
     VkCommandBuffer vkCommandBuffer = pGraphicEngine->graphicVkCommandBuffers[pGraphicEngine->frameIndex];
     VkCommandBufferBeginInfo vkCommandBufferBeginInfo =
         {
@@ -324,6 +307,9 @@ void RecordDeferredRenderPass(GraphicEngine *pGraphicEngine)
         SubpassModel *pSubpassModel = &pGeometrySubpass->subpassModels[modelIndex];
         if (pSubpassModel->isValid)
         {
+            vkCmdSetViewport(vkCommandBuffer, 0, 1, &viewport);
+            vkCmdSetScissor(vkCommandBuffer, 0, 1, &scissor);
+
             vkCmdBindDescriptorSets(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pGeometrySubpass->vkPipelineLayout, 0, 1, &pSubpassModel->vkDescriptorSet, 0, NULL);
 
             VkBuffer vertexBuffers[] = {pSubpassModel->vertexBuffer};
@@ -335,9 +321,14 @@ void RecordDeferredRenderPass(GraphicEngine *pGraphicEngine)
     }
     vkCmdNextSubpass(vkCommandBuffer, VK_SUBPASS_CONTENTS_INLINE);
 
+    // lighting subpass
     Subpass *pLightingSubpass = &pDeferredRenderPass->subpasses[1];
     SubpassModel *pSubpassModel = &pLightingSubpass->subpassModels[0];
+
+
     vkCmdBindPipeline(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pLightingSubpass->vkPipeline);
+    vkCmdSetViewport(vkCommandBuffer, 0, 1, &viewport);
+    vkCmdSetScissor(vkCommandBuffer, 0, 1, &scissor);
     vkCmdBindDescriptorSets(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pLightingSubpass->vkPipelineLayout, 0, 1, &pSubpassModel->vkDescriptorSet, 0, NULL);
     vkCmdDraw(vkCommandBuffer, pSubpassModel->vertexCount, 1, 0, 0);
 

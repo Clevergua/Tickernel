@@ -105,7 +105,6 @@ typedef struct GraphicEngineStruct
     VkFence renderFinishedFence;
     uint32_t frameCount;
     uint32_t frameIndex;
-    bool hasRecreatedSwapchain;
 
     VkBuffer globalUniformBuffer;
     VkDeviceMemory globalUniformBufferMemory;

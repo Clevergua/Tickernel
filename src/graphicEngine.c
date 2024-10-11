@@ -144,6 +144,8 @@ static void CreateGLFWWindow(GraphicEngine *pGraphicEngine)
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     glfwInitHint(GLFW_RESIZABLE, GLFW_FALSE);
     pGraphicEngine->pGLFWWindow = glfwCreateWindow(pGraphicEngine->width, pGraphicEngine->height, pGraphicEngine->name, NULL, NULL);
+    // glfwSetWindowUserPointer(pGraphicEngine->pGLFWWindow, NULL);
+    // glfwSetFramebufferSizeCallback(pGraphicEngine->pGLFWWindow, OnFrameBufferResized);
 }
 
 static void DestroyGLFWWindow(GraphicEngine *pGraphicEngine)
@@ -554,7 +556,7 @@ static void CreateSwapchain(GraphicEngine *pGraphicEngine)
     {
         if (pGraphicEngine->width < vkSurfaceCapabilities.minImageExtent.width)
         {
-            swapchainExtent.width = pGraphicEngine->width;
+            swapchainExtent.width = vkSurfaceCapabilities.minImageExtent.width;
         }
         else
         {
@@ -570,7 +572,7 @@ static void CreateSwapchain(GraphicEngine *pGraphicEngine)
     {
         if (pGraphicEngine->height < vkSurfaceCapabilities.minImageExtent.height)
         {
-            swapchainExtent.height = pGraphicEngine->height;
+            swapchainExtent.height = vkSurfaceCapabilities.minImageExtent.height;
         }
         else
         {
@@ -708,7 +710,16 @@ static void RecreateSwapchain(GraphicEngine *pGraphicEngine)
         glfwGetFramebufferSize(pGraphicEngine->pGLFWWindow, &width, &height);
         glfwWaitEvents();
     }
-
+    if (width != pGraphicEngine->width || height != pGraphicEngine->height)
+    {
+        printf("Swapchain's width and height have changed! (%d, %d) to (%d, %d)", pGraphicEngine->width, pGraphicEngine->height, width, height);
+        pGraphicEngine->width = width;
+        pGraphicEngine->height = height;
+    }
+    else
+    {
+        // Do nothing
+    }
     result = vkDeviceWaitIdle(pGraphicEngine->vkDevice);
     TryThrowVulkanError(result);
 
@@ -718,7 +729,20 @@ static void RecreateSwapchain(GraphicEngine *pGraphicEngine)
     DestroyGraphicImages(pGraphicEngine);
     CreateGraphicImages(pGraphicEngine);
 
-    pGraphicEngine->hasRecreatedSwapchain = true;
+    RenderPass *pDeferredRenderPass = &pGraphicEngine->deferredRenderPass;
+    RecreateLightingSubpassModel(pGraphicEngine);
+    for (uint32_t i = 0; i < pDeferredRenderPass->vkFramebufferCount; i++)
+    {
+        if (pDeferredRenderPass->vkFramebuffers[i] == INVALID_VKFRAMEBUFFER)
+        {
+            // continue;
+        }
+        else
+        {
+            vkDestroyFramebuffer(pGraphicEngine->vkDevice, pDeferredRenderPass->vkFramebuffers[i], NULL);
+            pDeferredRenderPass->vkFramebuffers[i] = INVALID_VKFRAMEBUFFER;
+        }
+    }
 }
 
 static void CreateCommandPools(GraphicEngine *pGraphicEngine)

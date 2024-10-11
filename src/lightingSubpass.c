@@ -144,6 +144,19 @@ static void CreateVkPipeline(GraphicEngine *pGraphicEngine)
         .blendConstants[2] = 0.0f,
         .blendConstants[3] = 0.0f,
     };
+    uint32_t dynamicStateCount = 2;
+    VkDynamicState dynamicStates[] = {
+        VK_DYNAMIC_STATE_VIEWPORT,
+        VK_DYNAMIC_STATE_SCISSOR,
+    };
+    VkPipelineDynamicStateCreateInfo dynamicState = {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO,
+        .pNext = NULL,
+        .flags = 0,
+        .dynamicStateCount = dynamicStateCount,
+        .pDynamicStates = dynamicStates,
+    };
+
     VkDescriptorSetLayoutBinding globalUniformLayoutBinding = {
         .binding = 0,
         .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
@@ -208,7 +221,7 @@ static void CreateVkPipeline(GraphicEngine *pGraphicEngine)
         .pMultisampleState = &pipelineMultisampleStateCreateInfo,
         .pDepthStencilState = &pipelineDepthStencilStateCreateInfo,
         .pColorBlendState = &colorBlendStateCreateInfo,
-        .pDynamicState = NULL,
+        .pDynamicState = &dynamicState,
         .layout = pLightingSubpass->vkPipelineLayout,
         .renderPass = pDeferredRenderPass->vkRenderPass,
         .subpass = lightingSubpassIndex,
@@ -414,7 +427,7 @@ void DestroyLightingSubpass(GraphicEngine *pGraphicEngine)
     }
     DestroyVkPipeline(pGraphicEngine);
 }
-void UpdateLightingSubpassModel(GraphicEngine *pGraphicEngine)
+void RecreateLightingSubpassModel(GraphicEngine *pGraphicEngine)
 {
     DestroyLightingSubpassModel(pGraphicEngine, 0);
     CreateLightingSubpassModel(pGraphicEngine, 0);
