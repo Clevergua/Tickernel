@@ -66,7 +66,7 @@ static void CreateVkPipeline(GraphicEngine *pGraphicEngine)
         .x = 0,
         .y = 0,
     };
-    VkExtent2D extent ;
+    VkExtent2D extent;
     extent.width = pGraphicEngine->width;
     extent.height = pGraphicEngine->height;
     VkRect2D scissor = {
@@ -376,6 +376,7 @@ void CreateLightingSubpass(GraphicEngine *pGraphicEngine)
     AddModelToSubpass(pGraphicEngine, pLightingSubpass, &index);
     CreateLightingSubpassModel(pGraphicEngine, index);
 }
+
 void DestroyLightingSubpass(GraphicEngine *pGraphicEngine)
 {
     RenderPass *pDeferredRenderPass = &pGraphicEngine->deferredRenderPass;
@@ -412,4 +413,9 @@ void DestroyLightingSubpass(GraphicEngine *pGraphicEngine)
         TickernelFree(pNode);
     }
     DestroyVkPipeline(pGraphicEngine);
+}
+void UpdateLightingSubpassModel(GraphicEngine *pGraphicEngine)
+{
+    DestroyLightingSubpassModel(pGraphicEngine, 0);
+    CreateLightingSubpassModel(pGraphicEngine, 0);
 }

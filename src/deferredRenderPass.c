@@ -5,6 +5,7 @@ static void PrepareCurrentFrambuffer(GraphicEngine *pGraphicEngine)
     RenderPass *pDeferredRenderPass = &pGraphicEngine->deferredRenderPass;
     if (pGraphicEngine->hasRecreatedSwapchain)
     {
+        UpdateLightingSubpassModel(pGraphicEngine);
         for (uint32_t i = 0; i < pDeferredRenderPass->vkFramebufferCount; i++)
         {
             if (pDeferredRenderPass->vkFramebuffers[i] == INVALID_VKFRAMEBUFFER)
@@ -17,10 +18,12 @@ static void PrepareCurrentFrambuffer(GraphicEngine *pGraphicEngine)
                 pDeferredRenderPass->vkFramebuffers[i] = INVALID_VKFRAMEBUFFER;
             }
         }
+        pGraphicEngine->hasRecreatedSwapchain = false;
     }
-    VkImageView attachments[] = {pGraphicEngine->swapchainImageViews[pGraphicEngine->frameIndex], pGraphicEngine->depthGraphicImage.vkImageView, pGraphicEngine->albedoGraphicImage.vkImageView, pGraphicEngine->normalGraphicImage.vkImageView};
+
     if (INVALID_VKFRAMEBUFFER == pDeferredRenderPass->vkFramebuffers[pGraphicEngine->frameIndex])
     {
+        VkImageView attachments[] = {pGraphicEngine->swapchainImageViews[pGraphicEngine->frameIndex], pGraphicEngine->depthGraphicImage.vkImageView, pGraphicEngine->albedoGraphicImage.vkImageView, pGraphicEngine->normalGraphicImage.vkImageView};
         VkFramebufferCreateInfo vkFramebufferCreateInfo = {
             .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
             .pNext = NULL,

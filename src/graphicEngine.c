@@ -717,6 +717,8 @@ static void RecreateSwapchain(GraphicEngine *pGraphicEngine)
 
     DestroyGraphicImages(pGraphicEngine);
     CreateGraphicImages(pGraphicEngine);
+
+    pGraphicEngine->hasRecreatedSwapchain = true;
 }
 
 static void CreateCommandPools(GraphicEngine *pGraphicEngine)
@@ -745,38 +747,6 @@ static void WaitForGPU(GraphicEngine *pGraphicEngine)
     TryThrowVulkanError(result);
     result = vkResetFences(pGraphicEngine->vkDevice, 1, &pGraphicEngine->renderFinishedFence);
     TryThrowVulkanError(result);
-}
-
-static void AcquireImage(GraphicEngine *pGraphicEngine)
-{
-    VkResult result = VK_SUCCESS;
-    VkDevice vkDevice = pGraphicEngine->vkDevice;
-    // Acquire next image
-    result = vkAcquireNextImageKHR(vkDevice, pGraphicEngine->vkSwapchain, UINT64_MAX, pGraphicEngine->imageAvailableSemaphore, VK_NULL_HANDLE, &pGraphicEngine->acquiredImageIndex);
-    if (VK_SUCCESS == result)
-    {
-        pGraphicEngine->hasRecreatedSwapchain = false;
-        return;
-    }
-    else
-    {
-        printf("Vulkan error code when AcquireImage: %d\n", result);
-        if (VK_SUBOPTIMAL_KHR == result)
-        {
-            pGraphicEngine->hasRecreatedSwapchain = false;
-            return;
-        }
-        else if (VK_ERROR_OUT_OF_DATE_KHR == result)
-        {
-            RecreateSwapchain(pGraphicEngine);
-            pGraphicEngine->hasRecreatedSwapchain = true;
-            return;
-        }
-        else
-        {
-            TryThrowVulkanError(result);
-        }
-    }
 }
 
 static void SubmitCommandBuffer(GraphicEngine *pGraphicEngine)
@@ -826,7 +796,7 @@ static void Present(GraphicEngine *pGraphicEngine)
         printf("Vulkan error code when Present: %d\n", result);
         if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
         {
-            // continue
+            RecreateSwapchain(pGraphicEngine);
         }
         else
         {
@@ -912,12 +882,31 @@ void UpdateGraphicEngine(GraphicEngine *pGraphicEngine)
     pGraphicEngine->frameIndex = pGraphicEngine->frameCount % pGraphicEngine->swapchainImageCount;
     glfwPollEvents();
     WaitForGPU(pGraphicEngine);
-    AcquireImage(pGraphicEngine);
-    UpdateGlobalUniformBuffer(pGraphicEngine);
-    RecordCommandBuffer(pGraphicEngine);
-    SubmitCommandBuffer(pGraphicEngine);
-    Present(pGraphicEngine);
-    pGraphicEngine->frameCount++;
+    VkResult result = VK_SUCCESS;
+    VkDevice vkDevice = pGraphicEngine->vkDevice;
+    // Acquire next image
+    result = vkAcquireNextImageKHR(vkDevice, pGraphicEngine->vkSwapchain, UINT64_MAX, pGraphicEngine->imageAvailableSemaphore, VK_NULL_HANDLE, &pGraphicEngine->acquiredImageIndex);
+    if (VK_SUCCESS == result || VK_SUBOPTIMAL_KHR == result)
+    {
+        UpdateGlobalUniformBuffer(pGraphicEngine);
+        RecordCommandBuffer(pGraphicEngine);
+        SubmitCommandBuffer(pGraphicEngine);
+        Present(pGraphicEngine);
+        pGraphicEngine->frameCount++;
+    }
+    else
+    {
+        if (VK_ERROR_OUT_OF_DATE_KHR == result)
+        {
+            RecreateSwapchain(pGraphicEngine);
+            pGraphicEngine->frameCount++;
+            return;
+        }
+        else
+        {
+            TryThrowVulkanError(result);
+        }
+    }
 }
 
 void EndGraphicEngine(GraphicEngine *pGraphicEngine)

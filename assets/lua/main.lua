@@ -6,8 +6,8 @@ function gameState.Start()
     local vertices = {}
     local colors = {}
     local normals = {}
-    local xMax = 200.0;
-    local yMax = 200.0;
+    local xMax = 100.0;
+    local yMax = 100.0;
     local zMax = 100.0;
     local indexMap = {}
     local r = 50
@@ -16,9 +16,9 @@ function gameState.Start()
         for y = 1, yMax do
             indexMap[x][y] = {}
             for z = 1, zMax do
-                local n = gameMath.PerlinNoise3D(312312, x * 0.03, y * 0.03, z * 0.03)
-                if n < -0.3 then
-                    -- if (x - r) ^ 2 + (y - r) ^ 2 + (z - r) ^ 2 < r ^ 2 then
+                -- local n = gameMath.PerlinNoise3D(312, x * 0.03, y * 0.03, z * 0.03)
+                -- if n * n < 0.03  then
+                if (x - r) ^ 2 + (y - r) ^ 2 + (z - r) ^ 2 < r ^ 2 then
                     table.insert(vertices, { x - xMax / 2, y - yMax / 2, z - zMax / 2 })
                     table.insert(colors, { x / xMax, y / yMax, z / zMax, 1 })
                     table.insert(normals, { 0, 0, 0 })
@@ -174,8 +174,8 @@ local a = 0;
 
 function gameState.Update()
     print("Lua Update")
-    a = a + 0.1
-    local distance = 400
+    a = a + 0.001
+    local distance = 200
     cameraPosition[1] = -distance * math.sin(a)
     cameraPosition[2] = distance * math.cos(a)
 
