@@ -31,5 +31,5 @@ void main(void)
     gl_Position = globalUniform.proj * viewPosition;
     o_albedo = i_color;
     o_normal = i_normal;
-    gl_PointSize = (globalUniform.farZ / -viewPosition.z);
+    gl_PointSize = (globalUniform.farZ / -viewPosition.z) * 1.25;
 }

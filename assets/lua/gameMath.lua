@@ -23,6 +23,16 @@ function gameMath.LCGRandom(v)
     return (1140671485 * v + 12820163) % 16777216
 end
 
+function gameMath.PingPong(a, b, t)
+    local floor = math.floor(t)
+    local remainder = t - floor
+    if floor % 2 == 0 then
+        return a + (b - a) * remainder
+    else
+        return a + (b - a) * (1 - remainder)
+    end
+end
+
 local SmoothLerp = function(a, b, t)
     t = t * t * t * (6 * t * t - 15 * t + 10)
     return a + (b - a) * t

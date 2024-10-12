@@ -73,13 +73,15 @@ typedef struct GraphicEngineStruct
     // Config
     bool enableValidationLayers;
     char *name;
-    int height;
-    int width;
+    int windowHeight;
+    int windowWidth;
     int targetSwapchainImageCount;
     VkPresentModeKHR targetPresentMode;
     char *shadersPath;
 
     // Runtime
+    int height;
+    int width;
     GLFWwindow *pGLFWWindow;
     VkInstance vkInstance;
     VkSurfaceKHR vkSurface;

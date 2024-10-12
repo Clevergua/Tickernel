@@ -143,7 +143,7 @@ static void CreateGLFWWindow(GraphicEngine *pGraphicEngine)
     }
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     glfwInitHint(GLFW_RESIZABLE, GLFW_FALSE);
-    pGraphicEngine->pGLFWWindow = glfwCreateWindow(pGraphicEngine->width, pGraphicEngine->height, pGraphicEngine->name, NULL, NULL);
+    pGraphicEngine->pGLFWWindow = glfwCreateWindow(pGraphicEngine->windowWidth, pGraphicEngine->windowHeight, pGraphicEngine->name, NULL, NULL);
     // glfwSetWindowUserPointer(pGraphicEngine->pGLFWWindow, NULL);
     // glfwSetFramebufferSizeCallback(pGraphicEngine->pGLFWWindow, OnFrameBufferResized);
 }
@@ -547,6 +547,7 @@ static void CreateSwapchain(GraphicEngine *pGraphicEngine)
         // Do nothing.
     }
 
+    glfwGetFramebufferSize(pGraphicEngine->pGLFWWindow, &pGraphicEngine->width, &pGraphicEngine->height);
     VkExtent2D swapchainExtent;
     if (pGraphicEngine->width > vkSurfaceCapabilities.maxImageExtent.width)
     {
@@ -765,7 +766,6 @@ static void DestroyCommandPools(GraphicEngine *pGraphicEngine)
 static void WaitForGPU(GraphicEngine *pGraphicEngine)
 {
     VkResult result = VK_SUCCESS;
-
     // Wait for gpu
     result = vkWaitForFences(pGraphicEngine->vkDevice, 1, &pGraphicEngine->renderFinishedFence, VK_TRUE, UINT64_MAX);
     TryThrowVulkanError(result);
@@ -863,7 +863,7 @@ static void UpdateGlobalUniformBuffer(GraphicEngine *pGraphicEngine)
 {
     GlobalUniformBuffer ubo;
     glm_lookat(pGraphicEngine->cameraPosition, pGraphicEngine->targetPosition, (vec3){0.0f, 0.0f, 1.0f}, ubo.view);
-    ubo.farZ = 1024.0f;
+    ubo.farZ = pGraphicEngine->width;
     glm_perspective(glm_rad(45.0f), pGraphicEngine->width / (float)pGraphicEngine->height, 1.0f, ubo.farZ, ubo.proj);
     ubo.proj[1][1] *= -1;
     mat4 view_proj;
@@ -920,10 +920,10 @@ void UpdateGraphicEngine(GraphicEngine *pGraphicEngine)
     }
     else
     {
-        if (VK_ERROR_OUT_OF_DATE_KHR == result)
+        if (VK_ERROR_OUT_OF_DATE_KHR == result || VK_SUBOPTIMAL_KHR == result)
         {
             RecreateSwapchain(pGraphicEngine);
-            pGraphicEngine->frameCount++;
+            // pGraphicEngine->frameCount++;
             return;
         }
         else
