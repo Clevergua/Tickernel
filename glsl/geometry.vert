@@ -13,8 +13,7 @@ layout(binding = 0) uniform GlobalUniform
     mat4 view;
     mat4 proj;
     mat4 inv_view_proj;
-    float farZ;
-    vec3 cameraWorldPosition;
+    float pointSizeFactor;
 }
 globalUniform;
 
@@ -31,5 +30,5 @@ void main(void)
     gl_Position = globalUniform.proj * viewPosition;
     o_albedo = i_color;
     o_normal = i_normal;
-    gl_PointSize = (globalUniform.farZ / -viewPosition.z) * 1.25;
+    gl_PointSize = globalUniform.pointSizeFactor / -viewPosition.z;
 }

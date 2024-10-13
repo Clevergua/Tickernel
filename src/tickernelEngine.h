@@ -4,7 +4,7 @@ typedef struct TickernelEngineStruct
 {
     int targetFrameRate;
     uint32_t frameCount;
-    bool canTick;
+    bool canUpdate;
     char *assetsPath;
 
     GraphicEngine *pGraphicEngine;

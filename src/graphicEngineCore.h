@@ -17,7 +17,7 @@ typedef struct GlobalUniformBufferStruct
     mat4 view;
     mat4 proj;
     mat4 inv_view_proj;
-    float farZ;
+    float pointSizeFactor;
 } GlobalUniformBuffer;
 
 typedef struct SubpassModelStruct

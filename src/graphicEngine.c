@@ -863,8 +863,9 @@ static void UpdateGlobalUniformBuffer(GraphicEngine *pGraphicEngine)
 {
     GlobalUniformBuffer ubo;
     glm_lookat(pGraphicEngine->cameraPosition, pGraphicEngine->targetPosition, (vec3){0.0f, 0.0f, 1.0f}, ubo.view);
-    ubo.farZ = pGraphicEngine->width;
-    glm_perspective(glm_rad(45.0f), pGraphicEngine->width / (float)pGraphicEngine->height, 1.0f, ubo.farZ, ubo.proj);
+    float deg = 90.0f;
+    ubo.pointSizeFactor = 0.52f * pGraphicEngine->height / tanf(glm_rad(deg / 2));
+    glm_perspective(glm_rad(deg), pGraphicEngine->width / (float)pGraphicEngine->height, 1.0f, 2048.0f, ubo.proj);
     ubo.proj[1][1] *= -1;
     mat4 view_proj;
     glm_mat4_mul(ubo.proj, ubo.proj, view_proj);
@@ -901,34 +902,44 @@ void StartGraphicEngine(GraphicEngine *pGraphicEngine)
     CreateDeferredRenderPass(pGraphicEngine);
 }
 
-void UpdateGraphicEngine(GraphicEngine *pGraphicEngine)
+void UpdateGraphicEngine(GraphicEngine *pGraphicEngine, bool *pCanUpdate)
 {
-    pGraphicEngine->frameIndex = pGraphicEngine->frameCount % pGraphicEngine->swapchainImageCount;
-    glfwPollEvents();
-    WaitForGPU(pGraphicEngine);
-    VkResult result = VK_SUCCESS;
-    VkDevice vkDevice = pGraphicEngine->vkDevice;
-    // Acquire next image
-    result = vkAcquireNextImageKHR(vkDevice, pGraphicEngine->vkSwapchain, UINT64_MAX, pGraphicEngine->imageAvailableSemaphore, VK_NULL_HANDLE, &pGraphicEngine->acquiredImageIndex);
-    if (VK_SUCCESS == result || VK_SUBOPTIMAL_KHR == result)
+    if (glfwWindowShouldClose(pGraphicEngine->pGLFWWindow))
     {
-        UpdateGlobalUniformBuffer(pGraphicEngine);
-        RecordCommandBuffer(pGraphicEngine);
-        SubmitCommandBuffer(pGraphicEngine);
-        Present(pGraphicEngine);
-        pGraphicEngine->frameCount++;
+        VkResult vkResult = vkDeviceWaitIdle(pGraphicEngine->vkDevice);
+        TryThrowVulkanError(vkResult);
+        *pCanUpdate = false;
     }
     else
     {
-        if (VK_ERROR_OUT_OF_DATE_KHR == result || VK_SUBOPTIMAL_KHR == result)
+
+        pGraphicEngine->frameIndex = pGraphicEngine->frameCount % pGraphicEngine->swapchainImageCount;
+        glfwPollEvents();
+        WaitForGPU(pGraphicEngine);
+        VkResult result = VK_SUCCESS;
+        VkDevice vkDevice = pGraphicEngine->vkDevice;
+        // Acquire next image
+        result = vkAcquireNextImageKHR(vkDevice, pGraphicEngine->vkSwapchain, UINT64_MAX, pGraphicEngine->imageAvailableSemaphore, VK_NULL_HANDLE, &pGraphicEngine->acquiredImageIndex);
+        if (VK_SUCCESS == result || VK_SUBOPTIMAL_KHR == result)
         {
-            RecreateSwapchain(pGraphicEngine);
-            // pGraphicEngine->frameCount++;
-            return;
+            UpdateGlobalUniformBuffer(pGraphicEngine);
+            RecordCommandBuffer(pGraphicEngine);
+            SubmitCommandBuffer(pGraphicEngine);
+            Present(pGraphicEngine);
+            pGraphicEngine->frameCount++;
         }
         else
         {
-            TryThrowVulkanError(result);
+            if (VK_ERROR_OUT_OF_DATE_KHR == result || VK_SUBOPTIMAL_KHR == result)
+            {
+                RecreateSwapchain(pGraphicEngine);
+                // pGraphicEngine->frameCount++;
+                return;
+            }
+            else
+            {
+                TryThrowVulkanError(result);
+            }
         }
     }
 }

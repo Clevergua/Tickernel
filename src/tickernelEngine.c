@@ -12,8 +12,8 @@ static void TickernelStart(TickernelEngine *pTickernelEngine)
     pGraphicEngine->enableValidationLayers = true;
     pGraphicEngine->name = "Tickernel Engine";
     pGraphicEngine->targetPresentMode = VK_PRESENT_MODE_FIFO_KHR;
-    pGraphicEngine->windowWidth = 512;
-    pGraphicEngine->windowHeight = 512;
+    pGraphicEngine->windowWidth = 1920;
+    pGraphicEngine->windowHeight = 1080;
     pGraphicEngine->targetSwapchainImageCount = 2;
     pGraphicEngine->shadersPath = TickernelMalloc(sizeof(char) * FILENAME_MAX);
     strcpy(pGraphicEngine->shadersPath, pTickernelEngine->assetsPath);
@@ -30,11 +30,11 @@ static void TickernelStart(TickernelEngine *pTickernelEngine)
     StartLua(pLuaEngine);
 }
 
-static void TickernelUpdate(TickernelEngine *pTickernelEngine)
+static void TickernelUpdate(TickernelEngine *pTickernelEngine, bool *pCanUpdate)
 {
     printf("Tickernel Update!\n");
     UpdateLua(pTickernelEngine->pLuaEngine);
-    UpdateGraphicEngine(pTickernelEngine->pGraphicEngine);
+    UpdateGraphicEngine(pTickernelEngine->pGraphicEngine, pCanUpdate);
 }
 
 static void TickernelEnd(TickernelEngine *pTickernelEngine)
@@ -51,12 +51,12 @@ static void TickernelEnd(TickernelEngine *pTickernelEngine)
 void RunTickernelEngine(TickernelEngine *pTickernelEngine)
 {
     TickernelStart(pTickernelEngine);
-    while (pTickernelEngine->canTick && pTickernelEngine->frameCount < UINT32_MAX)
+    while (pTickernelEngine->canUpdate && pTickernelEngine->frameCount < UINT32_MAX)
     {
         uint32_t millisecondsPerFrame = MILLISECONDS_PER_SECOND / pTickernelEngine->targetFrameRate;
         struct timespec frameStartTime;
         timespec_get(&frameStartTime, TIME_UTC);
-        TickernelUpdate(pTickernelEngine);
+        TickernelUpdate(pTickernelEngine, &pTickernelEngine->canUpdate);
         struct timespec frameEndTime;
         timespec_get(&frameEndTime, TIME_UTC);
         uint32_t deltaMilliseconds = (frameEndTime.tv_sec - frameStartTime.tv_sec) * MILLISECONDS_PER_SECOND + (frameEndTime.tv_nsec - frameStartTime.tv_nsec) / NANOSECONDS_PER_MILLISECOND;

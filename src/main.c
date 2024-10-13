@@ -32,7 +32,7 @@ int main(int argc, const char *argv[])
         .targetFrameRate = 60,
         // .frameCount = 4294967294,
         .frameCount = 0,
-        .canTick = true,
+        .canUpdate = true,
         .pGraphicEngine = NULL,
         .pLuaEngine = NULL,
         .assetsPath = assetsPath,

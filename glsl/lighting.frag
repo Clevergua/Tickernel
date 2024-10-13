@@ -5,7 +5,7 @@ layout(binding = 0) uniform GlobalUniform
     mat4 view;
     mat4 proj;
     mat4 inv_view_proj;
-    float farZ;
+    float pointSizeFactor;
 } globalUniform;
 
 layout(input_attachment_index = 0, binding = 1) uniform subpassInput i_depth;
