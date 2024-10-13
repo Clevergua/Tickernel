@@ -17,7 +17,7 @@ function gameState.Start()
             indexMap[x][y] = {}
             for z = 1, zMax do
                 local n = gameMath.PerlinNoise3D(312, x * 0.03, y * 0.03, z * 0.03)
-                if n  < 0.03  then
+                if n  < 0.2  then
                 -- if (x - r) ^ 2 + (y - r) ^ 2 + (z - r) ^ 2 < r ^ 2 then
                     table.insert(vertices, { x - xMax / 2, y - yMax / 2, z - zMax / 2 })
                     table.insert(colors, { x / xMax, y / yMax, z / zMax, 1 })
