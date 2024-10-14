@@ -4,7 +4,7 @@ static int top;
     {                        \
         top = lua_gettop(L); \
     }
-static void TryThrowLuaError(int luaResult)
+static void TryThrowLuaError(lua_State *pLuaState, int luaResult)
 {
     if (LUA_OK == luaResult)
     {
@@ -12,7 +12,9 @@ static void TryThrowLuaError(int luaResult)
     }
     else
     {
-        printf("Lua error code: %d!\n", luaResult);
+        const char *msg = lua_tostring(pLuaState, -1);
+        lua_pop(pLuaState, 1);
+        printf("Lua error code: %d!\n   Error msg: %s\n", luaResult, msg);
         abort();
     }
 }
@@ -209,7 +211,7 @@ void StartLua(LuaEngine *pLuaEngine)
     TickernelCombinePaths(luaMainFilePath, FILENAME_MAX, "main.lua");
     // Put engine state on the stack
     int luaResult = luaL_dofile(pLuaState, luaMainFilePath);
-    TryThrowLuaError(luaResult);
+    TryThrowLuaError(pLuaState, luaResult);
 
     lua_pushlightuserdata(pLuaState, pLuaEngine->pGraphicEngine);
     lua_setfield(pLuaState, -2, "pGraphicEngine");
@@ -230,7 +232,7 @@ void StartLua(LuaEngine *pLuaEngine)
     int startFunctionType = lua_getfield(pLuaState, -1, "Start");
     AssertLuaType(startFunctionType, LUA_TFUNCTION);
     luaResult = lua_pcall(pLuaState, 0, 0, 0);
-    TryThrowLuaError(luaResult);
+    TryThrowLuaError(pLuaState, luaResult);
 }
 
 void UpdateLua(LuaEngine *pLuaEngine)
@@ -240,7 +242,7 @@ void UpdateLua(LuaEngine *pLuaEngine)
     int startFunctionType = lua_getfield(pLuaState, -1, "Update");
     AssertLuaType(startFunctionType, LUA_TFUNCTION);
     int luaResult = lua_pcall(pLuaState, 0, 0, 0);
-    TryThrowLuaError(luaResult);
+    TryThrowLuaError(pLuaState, luaResult);
 }
 
 void EndLua(LuaEngine *pLuaEngine)
@@ -250,7 +252,7 @@ void EndLua(LuaEngine *pLuaEngine)
     int startFunctionType = lua_getfield(pLuaState, -1, "End");
     AssertLuaType(startFunctionType, LUA_TFUNCTION);
     int luaResult = lua_pcall(pLuaState, 0, 0, 0);
-    TryThrowLuaError(luaResult);
+    TryThrowLuaError(pLuaState, luaResult);
 
     //  Pop engine state off the stack
     lua_pop(pLuaState, 1);
