@@ -27,6 +27,9 @@ static void TickernelStart(TickernelEngine *pTickernelEngine)
     pLuaEngine->luaAssetsPath = TickernelMalloc(FILENAME_MAX);
     strcpy(pLuaEngine->luaAssetsPath, pTickernelEngine->assetsPath);
     TickernelCombinePaths(pLuaEngine->luaAssetsPath, FILENAME_MAX, "lua");
+    pLuaEngine->modelAssetsPath = TickernelMalloc(FILENAME_MAX);
+    strcpy(pLuaEngine->modelAssetsPath, pTickernelEngine->assetsPath);
+    TickernelCombinePaths(pLuaEngine->modelAssetsPath, FILENAME_MAX, "models");
     StartLua(pLuaEngine);
 }
 

@@ -1,6 +1,5 @@
 #include <tickernelCore.h>
 
-
 void TickernelSleep(uint32_t milliseconds)
 {
 #if PLATFORM_POSIX

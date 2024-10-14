@@ -8,6 +8,7 @@ typedef struct LuaEngineStruct
 {
     lua_State *pLuaState;
     char *luaAssetsPath;
+    char *modelAssetsPath;
     GraphicEngine *pGraphicEngine;
 } LuaEngine;
 

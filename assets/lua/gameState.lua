@@ -23,9 +23,24 @@ end
 ---@param modelMatrix table
 function gameState.UpdateModel(index, modelMatrix)
 end
+
 ---SetCamera
 ---@param cameraPosition table
 ---@param targetPosition table
 function gameState.SetCamera(cameraPosition, targetPosition)
 end
+
+local model = {
+    vertexCount = 0,
+    propertyCount = 0,
+    names = {},
+    types = {},
+    indexToProperties = {},
+}
+---Deserialize .ply model
+---@param path string
+function gameState.DeserializePLYModel(path)
+    return model
+end
+
 return gameState

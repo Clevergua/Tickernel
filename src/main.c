@@ -1,12 +1,11 @@
 #include <tickernelEngine.h>
 #include <assert.h>
-
+#include <plySerializer.h>
 int main(int argc, const char *argv[])
 {
     const char *pathseparator = TickernelGetPathSeparator();
     char *assetsPath = TickernelMalloc(sizeof(char) * FILENAME_MAX);
     strcpy(assetsPath, argv[0]);
-
     size_t fileNameLength = strlen(assetsPath);
     for (size_t i = fileNameLength - 1; i >= 0; i--)
     {
@@ -21,7 +20,14 @@ int main(int argc, const char *argv[])
         }
     }
     TickernelCombinePaths(assetsPath, FILENAME_MAX, "assets");
-    // printf("Assets path : %s with length: %lu\n", assetsPath, strlen(assetsPath));
+
+    // char *plyPath = TickernelMalloc(sizeof(char) * FILENAME_MAX);
+    // strcpy(plyPath, assetsPath);
+    // TickernelCombinePaths(plyPath, FILENAME_MAX, "models");
+    // TickernelCombinePaths(plyPath, FILENAME_MAX, "LargeBuilding01.ply");
+    // PLYModel* pPLYModel = TickernelMalloc(sizeof(PLYModel));
+    // DeserializePLYModel(plyPath, pPLYModel, TickernelMalloc);
+
     TickernelEngine *pTickernelEngine = TickernelMalloc(sizeof(TickernelEngine));
     *pTickernelEngine = (TickernelEngine){
         .targetFrameRate = 60,

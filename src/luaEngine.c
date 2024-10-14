@@ -1,4 +1,5 @@
 #include <luaEngine.h>
+#include <plySerializer.h>
 static int top;
 #define LUA_PEEK_TOP(L)      \
     {                        \
@@ -186,6 +187,29 @@ static int SetCamera(lua_State *pLuaState)
     }
     lua_pop(pLuaState, 2);
 
+    return 0;
+}
+
+static int DeserializePLYModel(lua_State *pLuaState)
+{
+    uint32_t index = luaL_checkinteger(pLuaState, -1);
+    lua_pop(pLuaState, 1);
+
+    int gameStateTpye = lua_getglobal(pLuaState, "gameState");
+    AssertLuaType(gameStateTpye, LUA_TTABLE);
+    int pGraphicEngineTpye = lua_getfield(pLuaState, -1, "pGraphicEngine");
+    AssertLuaType(pGraphicEngineTpye, LUA_TLIGHTUSERDATA);
+    GraphicEngine *pGraphicEngine = lua_touserdata(pLuaState, -1);
+    lua_pop(pLuaState, 2);
+
+    RemoveModelFromGeometrySubpass(pGraphicEngine, index);
+
+    char *plyPath = TickernelMalloc(sizeof(char) * FILENAME_MAX);
+    strcpy(plyPath, assetsPath);
+    TickernelCombinePaths(plyPath, FILENAME_MAX, "models");
+    TickernelCombinePaths(plyPath, FILENAME_MAX, "LargeBuilding01.ply");
+    PLYModel *pPLYModel = TickernelMalloc(sizeof(PLYModel));
+    DeserializePLYModel(plyPath, pPLYModel, TickernelMalloc);
     return 0;
 }
 
