@@ -29,6 +29,7 @@ function gameState.Start()
             end
         end
     end
+
     for x = 1, xMax do
         for y = 1, yMax do
             for z = 1, zMax do
@@ -175,10 +176,9 @@ local a = 0;
 function gameState.Update()
     print("Lua Update")
     a = a + 0.001
-    local distance = gameMath.PingPong(100, 200, a)
+    local distance = gameMath.PingPong(100, 500, a)
     cameraPosition[1] = -distance * math.sin(a)
     cameraPosition[2] = distance * math.cos(a)
-
     gameState.SetCamera(cameraPosition, targetPosition)
 end
 

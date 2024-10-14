@@ -111,7 +111,6 @@ static void CreateVkInstance(GraphicEngine *pGraphicEngine)
             .pNext = pVkInstanceCreateInfoNext,
 #if PLATFORM_OSX
             .flags = VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR,
-
 #else
             .flags = 0,
 

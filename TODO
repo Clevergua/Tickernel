@@ -1,10 +1,6 @@
-// Lua log error
-// Calculate normal;
-// Lighting shader;
-// Find models;
+// Lighting shader add lights;
 // Obj loading;
 // Shader cache;
 // Remove GLFW;
-// Resize window;
 // Transparent RenderPass;
 // GUI RenderPass;
