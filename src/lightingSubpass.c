@@ -8,7 +8,8 @@ static void CreateVkPipeline(GraphicEngine *pGraphicEngine)
 
     VkShaderModule lightingVertShaderModule;
     char lightingVertShaderPath[FILENAME_MAX];
-    strcpy(lightingVertShaderPath, pGraphicEngine->shadersPath);
+    strcpy(lightingVertShaderPath, pGraphicEngine->assetsPath);
+    TickernelCombinePaths(lightingVertShaderPath, FILENAME_MAX, "shaders");
     TickernelCombinePaths(lightingVertShaderPath, FILENAME_MAX, "lighting.vert.spv");
     CreateVkShaderModule(pGraphicEngine, lightingVertShaderPath, &lightingVertShaderModule);
     VkPipelineShaderStageCreateInfo vertShaderStageCreateInfo = {
@@ -23,7 +24,8 @@ static void CreateVkPipeline(GraphicEngine *pGraphicEngine)
 
     VkShaderModule lightingFragShaderModule;
     char lightingFragShaderPath[FILENAME_MAX];
-    strcpy(lightingFragShaderPath, pGraphicEngine->shadersPath);
+    strcpy(lightingFragShaderPath, pGraphicEngine->assetsPath);
+    TickernelCombinePaths(lightingFragShaderPath, FILENAME_MAX, "shaders");
     TickernelCombinePaths(lightingFragShaderPath, FILENAME_MAX, "lighting.frag.spv");
     CreateVkShaderModule(pGraphicEngine, lightingFragShaderPath, &lightingFragShaderModule);
     VkPipelineShaderStageCreateInfo fragShaderStageCreateInfo = {

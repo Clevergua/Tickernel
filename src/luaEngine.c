@@ -190,27 +190,71 @@ static int SetCamera(lua_State *pLuaState)
     return 0;
 }
 
-static int DeserializePLYModel(lua_State *pLuaState)
+static int LoadModel(lua_State *pLuaState)
 {
-    uint32_t index = luaL_checkinteger(pLuaState, -1);
+    const char *path = luaL_checkstring(pLuaState, -1);
     lua_pop(pLuaState, 1);
 
-    int gameStateTpye = lua_getglobal(pLuaState, "gameState");
-    AssertLuaType(gameStateTpye, LUA_TTABLE);
-    int pGraphicEngineTpye = lua_getfield(pLuaState, -1, "pGraphicEngine");
-    AssertLuaType(pGraphicEngineTpye, LUA_TLIGHTUSERDATA);
-    GraphicEngine *pGraphicEngine = lua_touserdata(pLuaState, -1);
-    lua_pop(pLuaState, 2);
-
-    RemoveModelFromGeometrySubpass(pGraphicEngine, index);
-
-    char *plyPath = TickernelMalloc(sizeof(char) * FILENAME_MAX);
-    strcpy(plyPath, assetsPath);
-    TickernelCombinePaths(plyPath, FILENAME_MAX, "models");
-    TickernelCombinePaths(plyPath, FILENAME_MAX, "LargeBuilding01.ply");
     PLYModel *pPLYModel = TickernelMalloc(sizeof(PLYModel));
-    DeserializePLYModel(plyPath, pPLYModel, TickernelMalloc);
-    return 0;
+    DeserializePLYModel(path, pPLYModel, TickernelMalloc);
+
+    lua_newtable(pLuaState);
+    lua_pushstring(pLuaState, "vertexCount");
+    lua_pushinteger(pLuaState, pPLYModel->vertexCount);
+    lua_settable(pLuaState, -3);
+
+    lua_pushstring(pLuaState, "propertyCount");
+    lua_pushinteger(pLuaState, pPLYModel->propertyCount);
+    lua_settable(pLuaState, -3);
+
+    lua_pushstring(pLuaState, "names");
+    lua_newtable(pLuaState);
+    for (uint32_t i = 0; i < pPLYModel->propertyCount; i++)
+    {
+        lua_pushinteger(pLuaState, i + 1);
+        lua_pushstring(pLuaState, pPLYModel->names[i]);
+        lua_settable(pLuaState, -3);
+    }
+    lua_settable(pLuaState, -3);
+
+    lua_pushstring(pLuaState, "types");
+    lua_newtable(pLuaState);
+    for (uint32_t i = 0; i < pPLYModel->propertyCount; i++)
+    {
+        lua_pushinteger(pLuaState, i + 1);
+        lua_pushstring(pLuaState, pPLYModel->types[i]);
+        lua_settable(pLuaState, -3);
+    }
+    lua_settable(pLuaState, -3);
+
+    lua_pushstring(pLuaState, "indexToProperties");
+    lua_newtable(pLuaState);
+    for (uint32_t i = 0; i < pPLYModel->propertyCount; i++)
+    {
+        lua_pushinteger(pLuaState, i + 1);
+        lua_newtable(pLuaState);
+        for (uint32_t j = 0; j < pPLYModel->vertexCount; j++)
+        {
+            char *typeName = pPLYModel->types[i];
+            lua_pushinteger(pLuaState, j + 1);
+            if (0 == strcmp(typeName, "int32"))
+            {
+                lua_pushnumber(pLuaState, pPLYModel->indexToProperties[i][j].int32Value);
+            }
+            else if (0 == strcmp(typeName, "uchar"))
+            {
+                lua_pushnumber(pLuaState, pPLYModel->indexToProperties[i][j].ucharValue);
+            }
+            else
+            {
+                abort();
+            }
+            lua_settable(pLuaState, -3);
+        }
+        lua_settable(pLuaState, -3);
+    }
+    lua_settable(pLuaState, -3);
+    return 1;
 }
 
 void StartLua(LuaEngine *pLuaEngine)
@@ -222,7 +266,8 @@ void StartLua(LuaEngine *pLuaEngine)
 
     // Set package path
     char packagePath[FILENAME_MAX];
-    strcpy(packagePath, pLuaEngine->luaAssetsPath);
+    strcpy(packagePath, pLuaEngine->assetsPath);
+    TickernelCombinePaths(packagePath, FILENAME_MAX, "lua");
     TickernelCombinePaths(packagePath, FILENAME_MAX, "?.lua;");
     lua_getglobal(pLuaState, "package");
     lua_pushstring(pLuaState, packagePath);
@@ -231,7 +276,8 @@ void StartLua(LuaEngine *pLuaEngine)
 
     // Do file main.lua
     char luaMainFilePath[FILENAME_MAX];
-    strcpy(luaMainFilePath, pLuaEngine->luaAssetsPath);
+    strcpy(luaMainFilePath, pLuaEngine->assetsPath);
+    TickernelCombinePaths(luaMainFilePath, FILENAME_MAX, "lua");
     TickernelCombinePaths(luaMainFilePath, FILENAME_MAX, "main.lua");
     // Put engine state on the stack
     int luaResult = luaL_dofile(pLuaState, luaMainFilePath);
@@ -239,6 +285,12 @@ void StartLua(LuaEngine *pLuaEngine)
 
     lua_pushlightuserdata(pLuaState, pLuaEngine->pGraphicEngine);
     lua_setfield(pLuaState, -2, "pGraphicEngine");
+
+    lua_pushstring(pLuaState, pLuaEngine->assetsPath);
+    lua_setfield(pLuaState, -2, "assetsPath");
+
+    lua_pushstring(pLuaState, TickernelGetPathSeparator());
+    lua_setfield(pLuaState, -2, "pathSeparator");
 
     lua_pushcfunction(pLuaState, AddModel);
     lua_setfield(pLuaState, -2, "AddModel");
@@ -251,6 +303,9 @@ void StartLua(LuaEngine *pLuaEngine)
 
     lua_pushcfunction(pLuaState, SetCamera);
     lua_setfield(pLuaState, -2, "SetCamera");
+
+    lua_pushcfunction(pLuaState, LoadModel);
+    lua_setfield(pLuaState, -2, "LoadModel");
 
     // Call start
     int startFunctionType = lua_getfield(pLuaState, -1, "Start");
@@ -282,5 +337,4 @@ void EndLua(LuaEngine *pLuaEngine)
     lua_pop(pLuaState, 1);
 
     lua_close(pLuaEngine->pLuaState);
-    TickernelFree(pLuaEngine->luaAssetsPath);
 }

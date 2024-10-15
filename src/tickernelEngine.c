@@ -15,21 +15,16 @@ static void TickernelStart(TickernelEngine *pTickernelEngine)
     pGraphicEngine->windowWidth = 1920;
     pGraphicEngine->windowHeight = 1080;
     pGraphicEngine->targetSwapchainImageCount = 2;
-    pGraphicEngine->shadersPath = TickernelMalloc(sizeof(char) * FILENAME_MAX);
-    strcpy(pGraphicEngine->shadersPath, pTickernelEngine->assetsPath);
-    TickernelCombinePaths(pGraphicEngine->shadersPath, FILENAME_MAX, "shaders");
-
+    pGraphicEngine->assetsPath = TickernelMalloc(sizeof(char) * FILENAME_MAX);
+    strcpy(pGraphicEngine->assetsPath, pTickernelEngine->assetsPath);
     StartGraphicEngine(pGraphicEngine);
 
     pTickernelEngine->pLuaEngine = TickernelMalloc(sizeof(char) * sizeof(LuaEngine));
     LuaEngine *pLuaEngine = pTickernelEngine->pLuaEngine;
     pLuaEngine->pGraphicEngine = pTickernelEngine->pGraphicEngine;
-    pLuaEngine->luaAssetsPath = TickernelMalloc(FILENAME_MAX);
-    strcpy(pLuaEngine->luaAssetsPath, pTickernelEngine->assetsPath);
-    TickernelCombinePaths(pLuaEngine->luaAssetsPath, FILENAME_MAX, "lua");
-    pLuaEngine->modelAssetsPath = TickernelMalloc(FILENAME_MAX);
-    strcpy(pLuaEngine->modelAssetsPath, pTickernelEngine->assetsPath);
-    TickernelCombinePaths(pLuaEngine->modelAssetsPath, FILENAME_MAX, "models");
+
+    pLuaEngine->assetsPath = TickernelMalloc(FILENAME_MAX);
+    strcpy(pLuaEngine->assetsPath, pTickernelEngine->assetsPath);
     StartLua(pLuaEngine);
 }
 
@@ -42,12 +37,14 @@ static void TickernelUpdate(TickernelEngine *pTickernelEngine, bool *pCanUpdate)
 
 static void TickernelEnd(TickernelEngine *pTickernelEngine)
 {
-    EndLua(pTickernelEngine->pLuaEngine);
-    EndGraphicEngine(pTickernelEngine->pGraphicEngine);
-
-    TickernelFree(pTickernelEngine->pGraphicEngine->shadersPath);
-    TickernelFree(pTickernelEngine->pLuaEngine);
-    TickernelFree(pTickernelEngine->pGraphicEngine);
+    LuaEngine *pLuaEngine = pTickernelEngine->pLuaEngine;
+    EndLua(pLuaEngine);
+    TickernelFree(pLuaEngine->assetsPath);
+    TickernelFree(pLuaEngine);
+    GraphicEngine *pGraphicEngine = pTickernelEngine->pGraphicEngine;
+    EndGraphicEngine(pGraphicEngine);
+    TickernelFree(pGraphicEngine->assetsPath);
+    TickernelFree(pGraphicEngine);
     printf("Tickernel End!\n");
 }
 

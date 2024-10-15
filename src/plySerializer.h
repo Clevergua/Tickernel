@@ -7,11 +7,11 @@
 typedef union PLYPropertyUnion
 {
     char charValue;
-    u_char ucharValue;
+    unsigned char ucharValue;
     short shortValue;
-    u_short ushortValue;
+    unsigned short ushortValue;
     int intValue;
-    u_int uintValue;
+    unsigned int uintValue;
     float floatValue;
     double doubleValue;
     int8_t int8Value;
@@ -110,7 +110,7 @@ void DeserializePLYModel(const char *filename, PLYModel *pPLYModel, PLYMalloc pl
             }
             else if (strcmp(typeName, "uchar") == 0)
             {
-                fscanf(file, "%u", (u_int *)&pPLYModel->indexToProperties[j][i].ucharValue);
+                fscanf(file, "%u", (unsigned int *)&pPLYModel->indexToProperties[j][i].ucharValue);
             }
             else
             {

@@ -2,6 +2,8 @@ table.empty = {}
 
 local gameState = {
     pGraphicEngine = nil,
+    assetsPath = "",
+    pathSeparator = "",
 }
 
 local integer = 0
@@ -39,7 +41,7 @@ local model = {
 }
 ---Deserialize .ply model
 ---@param path string
-function gameState.DeserializePLYModel(path)
+function gameState.LoadModel(path)
     return model
 end
 

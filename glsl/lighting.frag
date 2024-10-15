@@ -6,7 +6,8 @@ layout(binding = 0) uniform GlobalUniform
     mat4 proj;
     mat4 inv_view_proj;
     float pointSizeFactor;
-} globalUniform;
+}
+globalUniform;
 
 layout(input_attachment_index = 0, binding = 1) uniform subpassInput i_depth;
 layout(input_attachment_index = 1, binding = 2) uniform subpassInput i_albedo;
@@ -22,8 +23,8 @@ void main()
     vec3 position = world_w.xyz / world_w.w;
 
     vec3 normal = subpassLoad(i_normal).xyz - 0.5 * 2;
-    vec3 lightDirection = vec3(0, 0, -1);
-    vec4 lightColor = vec4(1, 1, 1, 1);
+    vec3 lightDirection = vec3(0, -1, -1);
+    vec4 lightColor = vec4(1.0);
     float ndl = max(dot(normalize(normal), normalize(lightDirection)), 0.0);
     float halfLambert = ndl * 0.5 + 0.5;
     vec4 albedo = subpassLoad(i_albedo);

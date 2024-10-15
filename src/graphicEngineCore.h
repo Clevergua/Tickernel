@@ -77,7 +77,7 @@ typedef struct GraphicEngineStruct
     int windowWidth;
     int targetSwapchainImageCount;
     VkPresentModeKHR targetPresentMode;
-    char *shadersPath;
+    char *assetsPath;
 
     // Runtime
     int height;
