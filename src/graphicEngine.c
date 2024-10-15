@@ -912,7 +912,6 @@ void UpdateGraphicEngine(GraphicEngine *pGraphicEngine, bool *pCanUpdate)
     }
     else
     {
-
         pGraphicEngine->frameIndex = pGraphicEngine->frameCount % pGraphicEngine->swapchainImageCount;
         glfwPollEvents();
         WaitForGPU(pGraphicEngine);

@@ -23,7 +23,7 @@ void main()
     vec3 position = world_w.xyz / world_w.w;
 
     vec3 normal = subpassLoad(i_normal).xyz - 0.5 * 2;
-    vec3 lightDirection = vec3(0, -1, -1);
+    vec3 lightDirection = vec3(-1, -1, -1);
     vec4 lightColor = vec4(1.0);
     float ndl = max(dot(normalize(normal), normalize(lightDirection)), 0.0);
     float halfLambert = ndl * 0.5 + 0.5;

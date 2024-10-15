@@ -117,7 +117,7 @@ typedef struct GraphicEngineStruct
     GraphicImage normalGraphicImage;
     RenderPass deferredRenderPass;
     uint32_t fullScreenTriangleModelIndex;
-
+    
     vec3 cameraPosition;
     vec3 targetPosition;
 } GraphicEngine;

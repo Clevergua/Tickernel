@@ -291,14 +291,14 @@ end
 
 local cameraPosition = { 0, 0, 100 }
 local targetPosition = { 0, 0, 0 }
-local a = 0;
+local t = 0;
 
 function gameState.Update()
     print("Lua Update")
-    a = a + 0.001
-    local distance = gameMath.PingPong(100, 150, a)
-    cameraPosition[1] = -distance * math.sin(a)
-    cameraPosition[2] = distance * math.cos(a)
+    t = t + 0.001
+    local distance = gameMath.PingPong(100, 150, t)
+    cameraPosition[1] = -distance * math.sin(t)
+    cameraPosition[2] = distance * math.cos(t)
     gameState.SetCamera(cameraPosition, targetPosition)
 end
 
