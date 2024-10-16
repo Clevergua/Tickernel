@@ -72,39 +72,41 @@ void DeserializePLYModel(const char *filename, PLYModel *pPLYModel, PLYMalloc pl
             // continue;
         }
     }
+
     pPLYModel->propertyCount = 0;
     uint32_t maxPropertyCount = 32;
     uint32_t maxTypeName = 64;
     uint32_t maxPropertyName = 64;
-    char types[maxPropertyCount][maxTypeName];
-    char names[maxPropertyCount][maxPropertyName];
+    char **types = (char **)plyMalloc(maxPropertyCount * sizeof(char *));
+    char **names = (char **)plyMalloc(maxPropertyCount * sizeof(char *));
     while (fgets(line, sizeof(line), file))
     {
         if (strncmp(line, "property", 8) == 0)
         {
-            sscanf(line, "property %s %s", types[pPLYModel->propertyCount], names[pPLYModel->propertyCount]);
+            char type[maxTypeName], name[maxPropertyName];
+            sscanf(line, "property %s %s", type, name);
+
+            types[pPLYModel->propertyCount] = (char *)plyMalloc((strlen(type) + 1) * sizeof(char));
+            names[pPLYModel->propertyCount] = (char *)plyMalloc((strlen(name) + 1) * sizeof(char));
+
+            strcpy(types[pPLYModel->propertyCount], type);
+            strcpy(names[pPLYModel->propertyCount], name);
+
             pPLYModel->propertyCount++;
         }
-        else
+        else if (strncmp(line, "end_header", 10) == 0)
         {
-            if (strncmp(line, "end_header", 10) == 0)
-            {
-                break;
-            }
-            else
-            {
-                // continue;
-            }
+            break;
         }
     }
 
-    pPLYModel->names = (char **)plyMalloc(sizeof(char *) * pPLYModel->propertyCount);
-    pPLYModel->types = (char **)plyMalloc(sizeof(char *) * pPLYModel->propertyCount);
+    // Assign allocated arrays to the PLYModel structure
+    pPLYModel->types = types;
+    pPLYModel->names = names;
+
     pPLYModel->indexToProperties = (PLYProperty **)plyMalloc(sizeof(PLYProperty *) * pPLYModel->propertyCount);
     for (uint32_t i = 0; i < pPLYModel->propertyCount; i++)
     {
-        pPLYModel->names[i] = names[i];
-        pPLYModel->types[i] = types[i];
         pPLYModel->indexToProperties[i] = (PLYProperty *)plyMalloc(sizeof(PLYProperty) * pPLYModel->vertexCount);
     }
 
@@ -135,6 +137,8 @@ void DestroyPLYModel(PLYModel *pPLYModel, PLYFree plyFree)
     for (uint32_t i = 0; i < pPLYModel->propertyCount; i++)
     {
         plyFree(pPLYModel->indexToProperties[i]);
+        plyFree(pPLYModel->types[i]);
+        plyFree(pPLYModel->names[i]);
     }
 
     plyFree(pPLYModel->indexToProperties);

@@ -60,6 +60,7 @@ function gameState.DrawModel(px, py, pz, model)
             normals[i] = { 0, 0, 0 }
             if propertyName == "x" then
                 vertices[i][1] = model.indexToProperties[j][i]
+                print(vertices[i][1])
             elseif propertyName == "y" then
                 vertices[i][2] = model.indexToProperties[j][i]
             elseif propertyName == "z" then
@@ -313,7 +314,7 @@ function gameState.DrawModel(px, py, pz, model)
 
     local index = gameState.AddModel(vertices, colors, normals)
     -- local scale = 0.015625
-    -- local scale = 0.015625
+    -- local scale = 1
     local scale = 0.03125
     local model = {
         { scale, 0,     0,     px },
