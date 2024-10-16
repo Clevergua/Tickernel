@@ -115,7 +115,6 @@ void DeserializePLYModel(const char *filename, PLYModel *pPLYModel, PLYMalloc pl
             char *typeName = pPLYModel->types[j];
             if (strcmp(typeName, "int32") == 0)
             {
-                int v;
                 fscanf(file, "%d", &pPLYModel->indexToProperties[j][i].int32Value);
             }
             else if (strcmp(typeName, "uchar") == 0)

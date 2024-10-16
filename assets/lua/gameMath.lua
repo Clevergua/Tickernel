@@ -67,6 +67,11 @@ local DotGridGradient2D = function(ix, iy, x, y, seed)
     return dx * gx + dy * gy
 end
 
+---comment
+---@param seed integer
+---@param x number
+---@param y number
+---@return number
 function gameMath.PerlinNoise2D(seed, x, y)
     -- Determine grid cell coordinates
     local x0 = math.floor(x)

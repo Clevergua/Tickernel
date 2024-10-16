@@ -45,13 +45,11 @@ function gameState.LoadModel(path)
     return model
 end
 
-function gameState.DrawModel(px, py, pz, modelName)
+function gameState.DrawModel(px, py, pz, model)
     local vertices = {}
     local colors = {}
     local normals = {}
     local indexMap = {}
-    local model = gameState.LoadModel(gameState.assetsPath ..
-        gameState.pathSeparator .. "models" .. gameState.pathSeparator .. modelName)
     for i = 1, model.vertexCount do
         vertices[i] = {}
         colors[i] = {}
@@ -314,11 +312,14 @@ function gameState.DrawModel(px, py, pz, modelName)
     end
 
     local index = gameState.AddModel(vertices, colors, normals)
+    -- local scale = 0.015625
+    -- local scale = 0.015625
+    local scale = 0.03125
     local model = {
-        { 1, 0, 0, px },
-        { 0, 1, 0, py },
-        { 0, 0, 1, pz },
-        { 0, 0, 0, 1 },
+        { scale, 0,     0,     px },
+        { 0,     scale, 0,     py },
+        { 0,     0,     scale, pz },
+        { 0,     0,     0,     1 },
     }
     gameState.UpdateModel(index, model)
 end
