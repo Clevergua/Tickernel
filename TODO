@@ -1,7 +1,5 @@
-// Lua object matrix error;
 // Camera wrapper;
 // Profiler performance
-
 // Lighting shader add lights;
 // Shader cache;
 // Remove GLFW;
