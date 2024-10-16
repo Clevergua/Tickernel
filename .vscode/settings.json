@@ -125,6 +125,7 @@
         "lualib.h": "c",
         "lauxlib.h": "c",
         "plane.h": "c",
-        "lua.h": "c"
+        "lua.h": "c",
+        "png.h": "c"
     }
 }

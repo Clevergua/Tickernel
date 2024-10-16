@@ -38,6 +38,16 @@ typedef void (*PLYFree)(void *);
 
 void DeserializePLYModel(const char *filename, PLYModel *pPLYModel, PLYMalloc plyMalloc)
 {
+    if (NULL == pPLYModel)
+    {
+        printf("pPLYModel cant be null!\n");
+        abort();
+    }
+    else
+    {
+        // continue;
+    }
+
     FILE *file = fopen(filename, "r");
     if (!file)
     {
@@ -119,4 +129,16 @@ void DeserializePLYModel(const char *filename, PLYModel *pPLYModel, PLYMalloc pl
         }
     }
     fclose(file);
+}
+
+void DestroyPLYModel(PLYModel *pPLYModel, PLYFree plyFree)
+{
+    for (uint32_t i = 0; i < pPLYModel->propertyCount; i++)
+    {
+        plyFree(pPLYModel->indexToProperties[i]);
+    }
+
+    plyFree(pPLYModel->indexToProperties);
+    plyFree(pPLYModel->types);
+    plyFree(pPLYModel->names);
 }

@@ -131,16 +131,16 @@ static int UpdateModel(lua_State *pLuaState)
 {
     //  index modelMatrix
     GeometrySubpassModelUniformBuffer buffer;
-    for (uint32_t column = 0; column < 4; column++)
+    for (uint32_t row = 0; row < 4; row++)
     {
-        int columnValueType = lua_geti(pLuaState, -1, column + 1);
+        int rowValueType = lua_geti(pLuaState, -1, row + 1);
         //  index modelMatrix column
-        AssertLuaType(columnValueType, LUA_TTABLE);
-        for (uint32_t row = 0; row < 4; row++)
+        AssertLuaType(rowValueType, LUA_TTABLE);
+        for (uint32_t column = 0; column < 4; column++)
         {
             //  index modelMatrix column value
-            int rowValueType = lua_geti(pLuaState, -1, row + 1);
-            AssertLuaType(rowValueType, LUA_TNUMBER);
+            int columnValueType = lua_geti(pLuaState, -1, column + 1);
+            AssertLuaType(columnValueType, LUA_TNUMBER);
             buffer.model[column][row] = luaL_checknumber(pLuaState, -1);
             lua_pop(pLuaState, 1);
             //  index modelMatrix column
@@ -254,6 +254,9 @@ static int LoadModel(lua_State *pLuaState)
         lua_settable(pLuaState, -3);
     }
     lua_settable(pLuaState, -3);
+    
+    DestroyPLYModel(pPLYModel, TickernelFree);
+    TickernelFree(pPLYModel);
     return 1;
 }
 
