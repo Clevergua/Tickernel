@@ -15,7 +15,7 @@ typedef union PLYPropertyUnion
     float floatValue;
     double doubleValue;
     int8_t int8Value;
-    uint8_t uint8Value;
+    uint8_t uint8Value; 
     int16_t int16Value;
     uint16_t uint16Value;
     int32_t int32Value;
