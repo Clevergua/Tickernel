@@ -5,20 +5,20 @@ function gameState.Start()
     print("Lua Start")
     local modelsPath = gameState.assetsPath ..
         gameState.pathSeparator .. "models" .. gameState.pathSeparator;
-    -- local model = gameState.LoadModel(modelsPath .. "LargeBuilding01.ply");
-    -- gameState.DrawModel(-3, -3, 0, model)
-    -- gameState.DrawModel(3, 3, 0, model)
-    local model2 = gameState.LoadModel(modelsPath .. "TallBuilding01.ply");
-    gameState.DrawModel(-0, -0, 0, model2)
-    local model3 = gameState.LoadModel(modelsPath .. "SmallBuilding02.ply");
-    gameState.DrawModel(-0, -0, 0, model3)
+    local model = gameState.LoadModel(modelsPath .. "LargeBuilding01.ply");
+    gameState.DrawModel(-1, -1, 0, model)
+    gameState.DrawModel(1, 1, 0, model)
+    -- local model2 = gameState.LoadModel(modelsPath .. "TallBuilding01.ply");
+    -- gameState.DrawModel(-0, -0, 0, model2)
+    -- local model3 = gameState.LoadModel(modelsPath .. "SmallBuilding02.ply");
+    -- gameState.DrawModel(-0, -0, 0, model3)
 end
 
 function gameState.End()
     print("Lua Start")
 end
 
-local cameraPosition = { 0, 0, 5 }
+local cameraPosition = { 0, 0, 3 }
 local targetPosition = { 0, 0, 0 }
 local t = 0;
 

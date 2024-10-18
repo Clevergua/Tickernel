@@ -60,7 +60,6 @@ function gameState.DrawModel(px, py, pz, model)
             normals[i] = { 0, 0, 0 }
             if propertyName == "x" then
                 vertices[i][1] = model.indexToProperties[j][i]
-                print(vertices[i][1])
             elseif propertyName == "y" then
                 vertices[i][2] = model.indexToProperties[j][i]
             elseif propertyName == "z" then
