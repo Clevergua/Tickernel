@@ -5,33 +5,33 @@
 #include <string.h>
 typedef enum
 {
-    INT8,
-    UINT8,
-    INT16,
-    UINT16,
-    INT32,
-    UINT32,
-    FLOAT32,
+    TICKERNEL_VOXEL_INT8,
+    TICKERNEL_VOXEL_UINT8,
+    TICKERNEL_VOXEL_INT16,
+    TICKERNEL_VOXEL_UINT16,
+    TICKERNEL_VOXEL_INT32,
+    TICKERNEL_VOXEL_UINT32,
+    TICKERNEL_VOXEL_FLOAT32,
 } TickernelVoxelPropertyType;
 
-typedef union
-{
-    int8_t int8Value;
-    uint8_t uint8Value;
-    int16_t int16Value;
-    uint16_t uint16Value;
-    int32_t int32Value;
-    uint32_t uint32Value;
-    float float32Value;
-} TickernelVoxelProperty;
+static size_t tickernelVoxelPropertyTypeToBytes[] =
+    {
+        1,
+        1,
+        2,
+        2,
+        4,
+        4,
+        4,
+};
 
 typedef struct
 {
     uint32_t propertyCount;
     char **names;
-    TickernelVoxelPropertyType **types;
+    TickernelVoxelPropertyType *types;
     uint32_t vertexCount;
-    TickernelVoxelProperty **indexToProperties;
+    void **indexToProperties;
 } TickernelVoxel;
 
 typedef void *(*TickernelVoxelMalloc)(size_t);
@@ -55,16 +55,16 @@ void SerializeTickernelVoxel(const char *filename, TickernelVoxel tickernelVoxel
     {
         size_t length = strlen(tickernelVoxel.names[i]) + 1;
         result = fwrite(&length, sizeof(size_t), 1, file);
-        result = fwrite(tickernelVoxel.names[i], sizeof(char), length, file);
+        result = fwrite(&tickernelVoxel.names[i], sizeof(char), length, file);
     }
     for (size_t i = 0; i < tickernelVoxel.propertyCount; i++)
     {
-        result = fwrite(tickernelVoxel.types[i], sizeof(int32_t), 1, file);
+        result = fwrite(&tickernelVoxel.types[i], sizeof(int32_t), 1, file);
     }
     result = fwrite(&tickernelVoxel.vertexCount, sizeof(uint32_t), 1, file);
     for (size_t i = 0; i < tickernelVoxel.propertyCount; i++)
     {
-        result = fwrite(tickernelVoxel.types[i], sizeof(TickernelVoxelProperty), tickernelVoxel.vertexCount, file);
+        result = fwrite(&tickernelVoxel.types[i], tickernelVoxelPropertyTypeToBytes[i], tickernelVoxel.vertexCount, file);
     }
     fclose(file);
 }
@@ -77,44 +77,82 @@ void DeserializeTickernelVoxel(const char *filename, TickernelVoxel *pTickernelV
         perror("Failed to open file for reading");
         return;
     }
-    fread(&pTickernelVoxel->propertyCount, sizeof(uint32_t), 1, file);
+    size_t freadResult;
+    freadResult = fread(&pTickernelVoxel->propertyCount, sizeof(uint32_t), 1, file);
     pTickernelVoxel->names = (char **)tickernelVoxelMalloc(pTickernelVoxel->propertyCount * sizeof(char *));
-    for (size_t i = 0; i < pTickernelVoxel->propertyCount; i++)
+    for (uint32_t i = 0; i < pTickernelVoxel->propertyCount; i++)
     {
-        size_t length;
-        fread(&length, sizeof(size_t), 1, file);
+        uint32_t length;
+        freadResult = fread(&length, sizeof(uint32_t), 1, file);
         pTickernelVoxel->names[i] = (char *)tickernelVoxelMalloc(length * sizeof(char));
-        fread(pTickernelVoxel->names[i], sizeof(char), length, file);
+        freadResult = fread(pTickernelVoxel->names[i], sizeof(char), length, file);
     }
-    pTickernelVoxel->types = (TickernelVoxelPropertyType **)tickernelVoxelMalloc(pTickernelVoxel->propertyCount * sizeof(TickernelVoxelPropertyType *));
-    for (size_t i = 0; i < pTickernelVoxel->propertyCount; i++)
+    pTickernelVoxel->types = (TickernelVoxelPropertyType *)tickernelVoxelMalloc(pTickernelVoxel->propertyCount * sizeof(TickernelVoxelPropertyType));
+    for (uint32_t i = 0; i < pTickernelVoxel->propertyCount; i++)
     {
-        fread(pTickernelVoxel->types[i], sizeof(int32_t), 1, file);
+        freadResult = fread(&pTickernelVoxel->types[i], sizeof(int32_t), 1, file);
     }
-    fread(&pTickernelVoxel->vertexCount, sizeof(uint32_t), 1, file);
-    pTickernelVoxel->indexToProperties = (TickernelVoxelProperty **)tickernelVoxelMalloc(pTickernelVoxel->propertyCount * sizeof(TickernelVoxelProperty *));
-    for (size_t i = 0; i < pTickernelVoxel->propertyCount; i++)
+    freadResult = fread(&pTickernelVoxel->vertexCount, sizeof(uint32_t), 1, file);
+    pTickernelVoxel->indexToProperties = (void **)tickernelVoxelMalloc(pTickernelVoxel->propertyCount * sizeof(void *));
+    for (uint32_t i = 0; i < pTickernelVoxel->propertyCount; i++)
     {
-        pTickernelVoxel->indexToProperties[i] = (TickernelVoxelProperty *)tickernelVoxelMalloc(pTickernelVoxel->vertexCount * sizeof(TickernelVoxelProperty));
-        for (size_t j = 0; j < pTickernelVoxel->vertexCount; j++)
+        size_t btyes = tickernelVoxelPropertyTypeToBytes[pTickernelVoxel->types[i]];
+        pTickernelVoxel->indexToProperties[i] = tickernelVoxelMalloc(pTickernelVoxel->vertexCount * btyes);
+        long position = ftell(file);
+        if (pTickernelVoxel->types[i] == TICKERNEL_VOXEL_INT8)
         {
-            fread(&pTickernelVoxel->indexToProperties[i][j], sizeof(TickernelVoxelProperty), 1, file);
+            freadResult = fread((int8_t *)pTickernelVoxel->indexToProperties[i], btyes, pTickernelVoxel->vertexCount, file);
         }
+        else if (pTickernelVoxel->types[i] == TICKERNEL_VOXEL_UINT8)
+        {
+            freadResult = fread((uint8_t *)pTickernelVoxel->indexToProperties[i], btyes, pTickernelVoxel->vertexCount, file);
+            position = ftell(file);
+        }
+        else if (pTickernelVoxel->types[i] == TICKERNEL_VOXEL_INT16)
+        {
+            freadResult = fread((int16_t *)pTickernelVoxel->indexToProperties[i], btyes, pTickernelVoxel->vertexCount, file);
+        }
+        else if (pTickernelVoxel->types[i] == TICKERNEL_VOXEL_UINT16)
+        {
+            freadResult = fread((uint16_t *)pTickernelVoxel->indexToProperties[i], btyes, pTickernelVoxel->vertexCount, file);
+        }
+        else if (pTickernelVoxel->types[i] == TICKERNEL_VOXEL_INT32)
+        {
+            freadResult = fread((int32_t *)pTickernelVoxel->indexToProperties[i], btyes, pTickernelVoxel->vertexCount, file);
+        }
+        else if (pTickernelVoxel->types[i] == TICKERNEL_VOXEL_UINT32)
+        {
+            freadResult = fread((uint32_t *)pTickernelVoxel->indexToProperties[i], btyes, pTickernelVoxel->vertexCount, file);
+        }
+        else if (pTickernelVoxel->types[i] == TICKERNEL_VOXEL_FLOAT32)
+        {
+            freadResult = fread((float *)pTickernelVoxel->indexToProperties[i], btyes, pTickernelVoxel->vertexCount, file);
+        }
+        else
+        {
+            printf("Unknown type: %d\n", pTickernelVoxel->types[i]);
+            abort();
+        }
+        // if (freadResult != pTickernelVoxel->vertexCount)
+        // {
+        //     printf("Error reading file of property index %d: expected %zu elements, got %zu elements\n", i, (size_t)pTickernelVoxel->vertexCount, freadResult);
+        //     abort();
+        // }
     }
     fclose(file);
 }
 
-void ReleaseTickernelVoxel(TickernelVoxel *pTickernelVoxel)
+void ReleaseTickernelVoxel(TickernelVoxel *pTickernelVoxel, TickernelVoxelFree tickernelFree)
 {
     for (size_t i = 0; i < pTickernelVoxel->propertyCount; i++)
     {
-        TickernelVoxelFree(pTickernelVoxel->indexToProperties[i]);
+        tickernelFree(pTickernelVoxel->indexToProperties[i]);
     }
-    TickernelVoxelFree(pTickernelVoxel->indexToProperties);
-    TickernelVoxelFree(pTickernelVoxel->types);
+    tickernelFree(pTickernelVoxel->indexToProperties);
+    tickernelFree(pTickernelVoxel->types);
     for (size_t i = 0; i < pTickernelVoxel->propertyCount; i++)
     {
-        TickernelVoxelFree(pTickernelVoxel->names[i]);
+        tickernelFree(pTickernelVoxel->names[i]);
     }
-    TickernelVoxelFree(pTickernelVoxel->names);
+    tickernelFree(pTickernelVoxel->names);
 }

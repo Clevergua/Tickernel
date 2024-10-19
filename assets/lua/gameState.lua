@@ -64,16 +64,20 @@ function gameState.DrawModel(px, py, pz, model)
                 vertices[i][2] = model.indexToProperties[j][i]
             elseif propertyName == "z" then
                 vertices[i][3] = model.indexToProperties[j][i]
-            elseif propertyName == "red" then
+            elseif propertyName == "r" then
                 colors[i][1] = model.indexToProperties[j][i] / 255.0
-            elseif propertyName == "green" then
+            elseif propertyName == "g" then
                 colors[i][2] = model.indexToProperties[j][i] / 255.0
-            elseif propertyName == "blue" then
+            elseif propertyName == "b" then
                 colors[i][3] = model.indexToProperties[j][i] / 255.0
             else
                 -- do nothing
             end
         end
+        -- print("r:" ..
+        -- model.indexToProperties[3][i] ..
+        -- "g:" ..
+        -- model.indexToProperties[4][i] .. "b:" .. model.indexToProperties[5][i] .. "a:" .. model.indexToProperties[6][i])
     end
 
     for i = 1, model.vertexCount do

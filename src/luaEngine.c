@@ -1,5 +1,5 @@
 #include <luaEngine.h>
-#include <plySerializer.h>
+#include <tickernelVoxel.h>
 static int top;
 #define LUA_PEEK_TOP(L)      \
     {                        \
@@ -194,69 +194,83 @@ static int LoadModel(lua_State *pLuaState)
 {
     const char *path = luaL_checkstring(pLuaState, -1);
     lua_pop(pLuaState, 1);
-
-    PLYModel *pPLYModel = TickernelMalloc(sizeof(PLYModel));
-    DeserializePLYModel(path, pPLYModel, TickernelMalloc);
+    TickernelVoxel *pTickernelVoxel = TickernelMalloc(sizeof(TickernelVoxel));
+    DeserializeTickernelVoxel(path, pTickernelVoxel, TickernelMalloc);
 
     lua_newtable(pLuaState);
     lua_pushstring(pLuaState, "vertexCount");
-    lua_pushinteger(pLuaState, pPLYModel->vertexCount);
+    lua_pushinteger(pLuaState, pTickernelVoxel->vertexCount);
     lua_settable(pLuaState, -3);
 
     lua_pushstring(pLuaState, "propertyCount");
-    lua_pushinteger(pLuaState, pPLYModel->propertyCount);
+    lua_pushinteger(pLuaState, pTickernelVoxel->propertyCount);
     lua_settable(pLuaState, -3);
 
     lua_pushstring(pLuaState, "names");
     lua_newtable(pLuaState);
-    for (uint32_t i = 0; i < pPLYModel->propertyCount; i++)
+    for (uint32_t i = 0; i < pTickernelVoxel->propertyCount; i++)
     {
         lua_pushinteger(pLuaState, i + 1);
-        lua_pushstring(pLuaState, pPLYModel->names[i]);
+        lua_pushstring(pLuaState, pTickernelVoxel->names[i]);
         lua_settable(pLuaState, -3);
     }
     lua_settable(pLuaState, -3);
 
     lua_pushstring(pLuaState, "types");
     lua_newtable(pLuaState);
-    for (uint32_t i = 0; i < pPLYModel->propertyCount; i++)
+    for (uint32_t i = 0; i < pTickernelVoxel->propertyCount; i++)
     {
         lua_pushinteger(pLuaState, i + 1);
-        lua_pushstring(pLuaState, pPLYModel->types[i]);
+        lua_pushinteger(pLuaState, pTickernelVoxel->types[i]);
         lua_settable(pLuaState, -3);
     }
     lua_settable(pLuaState, -3);
 
     lua_pushstring(pLuaState, "indexToProperties");
     lua_newtable(pLuaState);
-    for (uint32_t i = 0; i < pPLYModel->propertyCount; i++)
+    for (uint32_t i = 0; i < pTickernelVoxel->propertyCount; i++)
     {
         lua_pushinteger(pLuaState, i + 1);
         lua_newtable(pLuaState);
-        for (uint32_t j = 0; j < pPLYModel->vertexCount; j++)
+        for (uint32_t j = 0; j < pTickernelVoxel->vertexCount; j++)
         {
-            char *typeName = pPLYModel->types[i];
             lua_pushinteger(pLuaState, j + 1);
-            if (0 == strcmp(typeName, "int32"))
+
+            switch (pTickernelVoxel->types[i])
             {
-                lua_pushnumber(pLuaState, pPLYModel->indexToProperties[i][j].int32Value);
-            }
-            else if (0 == strcmp(typeName, "uchar"))
-            {
-                lua_pushnumber(pLuaState, pPLYModel->indexToProperties[i][j].ucharValue);
-            }
-            else
-            {
+            case TICKERNEL_VOXEL_INT8:
+                lua_pushinteger(pLuaState, ((int8_t *)pTickernelVoxel->indexToProperties[i])[j]);
+                break;
+            case TICKERNEL_VOXEL_UINT8:
+                lua_pushinteger(pLuaState, ((uint8_t *)pTickernelVoxel->indexToProperties[i])[j]);
+                break;
+            case TICKERNEL_VOXEL_INT16:
+                lua_pushinteger(pLuaState, ((int16_t *)pTickernelVoxel->indexToProperties[i])[j]);
+                break;
+            case TICKERNEL_VOXEL_UINT16:
+                lua_pushinteger(pLuaState, ((uint16_t *)pTickernelVoxel->indexToProperties[i])[j]);
+                break;
+            case TICKERNEL_VOXEL_INT32:
+                lua_pushinteger(pLuaState, ((int32_t *)pTickernelVoxel->indexToProperties[i])[j]);
+                break;
+            case TICKERNEL_VOXEL_UINT32:
+                lua_pushinteger(pLuaState, ((uint32_t *)pTickernelVoxel->indexToProperties[i])[j]);
+                break;
+            case TICKERNEL_VOXEL_FLOAT32:
+                lua_pushnumber(pLuaState, ((float *)pTickernelVoxel->indexToProperties[i])[j]);
+                break;
+            default:
                 abort();
+                break;
             }
+
             lua_settable(pLuaState, -3);
         }
         lua_settable(pLuaState, -3);
     }
     lua_settable(pLuaState, -3);
-    
-    DestroyPLYModel(pPLYModel, TickernelFree);
-    TickernelFree(pPLYModel);
+    ReleaseTickernelVoxel(pTickernelVoxel, TickernelFree);
+    TickernelFree(pTickernelVoxel);
     return 1;
 }
 
