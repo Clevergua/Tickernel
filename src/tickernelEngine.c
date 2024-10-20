@@ -17,6 +17,7 @@ static void TickernelStart(TickernelEngine *pTickernelEngine)
     pGraphicEngine->targetSwapchainImageCount = 2;
     pGraphicEngine->assetsPath = TickernelMalloc(sizeof(char) * FILENAME_MAX);
     strcpy(pGraphicEngine->assetsPath, pTickernelEngine->assetsPath);
+    
     StartGraphicEngine(pGraphicEngine);
 
     pTickernelEngine->pLuaEngine = TickernelMalloc(sizeof(char) * sizeof(LuaEngine));

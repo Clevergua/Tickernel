@@ -126,6 +126,8 @@
         "lauxlib.h": "c",
         "plane.h": "c",
         "lua.h": "c",
-        "png.h": "c"
+        "png.h": "c",
+        "*.rh": "c",
+        "tickernelwindow.h": "c"
     }
 }

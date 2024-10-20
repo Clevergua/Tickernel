@@ -3,12 +3,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <vulkan/vulkan.h>
-#define GLFW_INCLUDE_VULKAN
-#include <glfw3.h>
-#include <tickernelCore.h>
 #include <cglm.h>
-
+#include <tickernelWindow.h>
 #define INVALID_VKFRAMEBUFFER 0
 #define MAX_VK_DESCRIPTOR_TPYE 11
 
@@ -80,9 +76,9 @@ typedef struct GraphicEngineStruct
     char *assetsPath;
 
     // Runtime
-    int height;
-    int width;
-    GLFWwindow *pGLFWWindow;
+    uint32_t height;
+    uint32_t width;
+    TickernelWindow tickernelWindow;
     VkInstance vkInstance;
     VkSurfaceKHR vkSurface;
     VkPhysicalDevice vkPhysicalDevice;
@@ -117,7 +113,7 @@ typedef struct GraphicEngineStruct
     GraphicImage normalGraphicImage;
     RenderPass deferredRenderPass;
     uint32_t fullScreenTriangleModelIndex;
-    
+
     vec3 cameraPosition;
     vec3 targetPosition;
 } GraphicEngine;
@@ -140,3 +136,5 @@ void DestroyVertexBuffer(GraphicEngine *pGraphicEngine, VkBuffer vertexBuffer, V
 
 void AddModelToSubpass(GraphicEngine *pGraphicEngine, Subpass *pSubpass, uint32_t *pModelIndex);
 void RemoveModelFromSubpass(GraphicEngine *pGraphicEngine, uint32_t modelIndex, Subpass *pSubpass);
+
+

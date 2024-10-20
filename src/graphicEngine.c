@@ -83,13 +83,16 @@ static void CreateVkInstance(GraphicEngine *pGraphicEngine)
 
     uint32_t extensionCount = 0;
     extensionCount += engineExtensionCount;
-    uint32_t glfwExtensionCount = 0;
-    const char **glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
-    extensionCount += glfwExtensionCount;
 
-    char **extensionNames = TickernelMalloc(extensionCount * sizeof(char *));
+    uint32_t windowExtensionCount;
+    TickernelGetWindowExtensionCount(&windowExtensionCount);
+    char **windowExtensionNames = TickernelMalloc(sizeof(char *) * windowExtensionCount);
+    TickernelGetWindowExtensions(windowExtensionNames);
+    extensionCount += windowExtensionCount;
+
+    char **extensionNames = TickernelMalloc(sizeof(char *) * extensionCount);
     memcpy(extensionNames, engineExtensionNames, engineExtensionCount * sizeof(char *));
-    memcpy(extensionNames + engineExtensionCount, glfwExtensions, glfwExtensionCount * sizeof(char *));
+    memcpy(extensionNames + engineExtensionCount, windowExtensionNames, windowExtensionCount * sizeof(char *));
     for (int i = 0; i < extensionCount; i++)
     {
         printf("Add extension: %s\n", extensionNames[i]);
@@ -122,6 +125,7 @@ static void CreateVkInstance(GraphicEngine *pGraphicEngine)
             .ppEnabledExtensionNames = (const char *const *)extensionNames,
         };
     VkResult result = vkCreateInstance(&vkInstanceCreateInfo, NULL, &pGraphicEngine->vkInstance);
+    TickernelFree(windowExtensionNames);
     TickernelFree(extensionNames);
 }
 static void DestroyVKInstance(GraphicEngine *pGraphicEngine)
@@ -129,33 +133,9 @@ static void DestroyVKInstance(GraphicEngine *pGraphicEngine)
     vkDestroyInstance(pGraphicEngine->vkInstance, NULL);
 }
 
-static void CreateGLFWWindow(GraphicEngine *pGraphicEngine)
-{
-    int result = glfwInit();
-    if (result == GLFW_TRUE)
-    {
-        // continue;
-    }
-    else
-    {
-        printf("glfwInit Failed!");
-    }
-    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    glfwInitHint(GLFW_RESIZABLE, GLFW_FALSE);
-    pGraphicEngine->pGLFWWindow = glfwCreateWindow(pGraphicEngine->windowWidth, pGraphicEngine->windowHeight, pGraphicEngine->name, NULL, NULL);
-    // glfwSetWindowUserPointer(pGraphicEngine->pGLFWWindow, NULL);
-    // glfwSetFramebufferSizeCallback(pGraphicEngine->pGLFWWindow, OnFrameBufferResized);
-}
-
-static void DestroyGLFWWindow(GraphicEngine *pGraphicEngine)
-{
-    glfwDestroyWindow(pGraphicEngine->pGLFWWindow);
-    glfwTerminate();
-}
-
 static void CreateVKSurface(GraphicEngine *pGraphicEngine)
 {
-    VkResult result = glfwCreateWindowSurface(pGraphicEngine->vkInstance, pGraphicEngine->pGLFWWindow, NULL, &pGraphicEngine->vkSurface);
+    VkResult result = CreateWindowVkSurface(&pGraphicEngine->tickernelWindow, pGraphicEngine->vkInstance, NULL, &pGraphicEngine->vkSurface);
     TryThrowVulkanError(result);
 }
 
@@ -546,7 +526,7 @@ static void CreateSwapchain(GraphicEngine *pGraphicEngine)
         // Do nothing.
     }
 
-    glfwGetFramebufferSize(pGraphicEngine->pGLFWWindow, &pGraphicEngine->width, &pGraphicEngine->height);
+    TickernelGetWindowFramebufferSize(&pGraphicEngine->tickernelWindow, &pGraphicEngine->width, &pGraphicEngine->height);
     VkExtent2D swapchainExtent;
     if (pGraphicEngine->width > vkSurfaceCapabilities.maxImageExtent.width)
     {
@@ -703,12 +683,12 @@ static void RecreateSwapchain(GraphicEngine *pGraphicEngine)
 {
     VkResult result = VK_SUCCESS;
 
-    int width, height;
-    glfwGetFramebufferSize(pGraphicEngine->pGLFWWindow, &width, &height);
+    uint32_t width, height;
+    TickernelGetWindowFramebufferSize(&pGraphicEngine->tickernelWindow, &width, &height);
     while (0 == width || 0 == height)
     {
-        glfwGetFramebufferSize(pGraphicEngine->pGLFWWindow, &width, &height);
-        glfwWaitEvents();
+        TickernelGetWindowFramebufferSize(&pGraphicEngine->tickernelWindow, &width, &height);
+        TickernelWaitWindowEvent();
     }
     if (width != pGraphicEngine->width || height != pGraphicEngine->height)
     {
@@ -887,8 +867,7 @@ static void RecordCommandBuffer(GraphicEngine *pGraphicEngine)
 void StartGraphicEngine(GraphicEngine *pGraphicEngine)
 {
     pGraphicEngine->frameCount = 0;
-
-    CreateGLFWWindow(pGraphicEngine);
+    TickernelCreateWindow(pGraphicEngine->windowWidth, pGraphicEngine->windowHeight, "Tickernel Engine", &pGraphicEngine->tickernelWindow);
     CreateVkInstance(pGraphicEngine);
     CreateVKSurface(pGraphicEngine);
     PickPhysicalDevice(pGraphicEngine);
@@ -904,7 +883,7 @@ void StartGraphicEngine(GraphicEngine *pGraphicEngine)
 
 void UpdateGraphicEngine(GraphicEngine *pGraphicEngine, bool *pCanUpdate)
 {
-    if (glfwWindowShouldClose(pGraphicEngine->pGLFWWindow))
+    if (TickernelWindowShouldClose(&pGraphicEngine->tickernelWindow))
     {
         VkResult vkResult = vkDeviceWaitIdle(pGraphicEngine->vkDevice);
         TryThrowVulkanError(vkResult);
@@ -913,7 +892,7 @@ void UpdateGraphicEngine(GraphicEngine *pGraphicEngine, bool *pCanUpdate)
     else
     {
         pGraphicEngine->frameIndex = pGraphicEngine->frameCount % pGraphicEngine->swapchainImageCount;
-        glfwPollEvents();
+        TickernelPollWindowEvents();
         WaitForGPU(pGraphicEngine);
         VkResult result = VK_SUCCESS;
         VkDevice vkDevice = pGraphicEngine->vkDevice;
@@ -960,5 +939,5 @@ void EndGraphicEngine(GraphicEngine *pGraphicEngine)
     // Destroy vkPhysicsDevice
     DestroyVKSurface(pGraphicEngine);
     DestroyVKInstance(pGraphicEngine);
-    DestroyGLFWWindow(pGraphicEngine);
+    TickernelDestroyWindow(&pGraphicEngine->tickernelWindow);
 }
