@@ -64,7 +64,7 @@ void SerializeTickernelVoxel(const char *filename, TickernelVoxel tickernelVoxel
     result = fwrite(&tickernelVoxel.vertexCount, sizeof(uint32_t), 1, file);
     for (size_t i = 0; i < tickernelVoxel.propertyCount; i++)
     {
-        result = fwrite(&tickernelVoxel.types[i], tickernelVoxelPropertyTypeToBytes[i], tickernelVoxel.vertexCount, file);
+        result = fwrite(&tickernelVoxel.indexToProperties[i], tickernelVoxelPropertyTypeToBytes[i], tickernelVoxel.vertexCount, file);
     }
     fclose(file);
 }
@@ -133,11 +133,6 @@ void DeserializeTickernelVoxel(const char *filename, TickernelVoxel *pTickernelV
             printf("Unknown type: %d\n", pTickernelVoxel->types[i]);
             abort();
         }
-        // if (freadResult != pTickernelVoxel->vertexCount)
-        // {
-        //     printf("Error reading file of property index %d: expected %zu elements, got %zu elements\n", i, (size_t)pTickernelVoxel->vertexCount, freadResult);
-        //     abort();
-        // }
     }
     fclose(file);
 }
