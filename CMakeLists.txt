@@ -33,13 +33,20 @@ if(WIN32)
 elseif(APPLE)
     # Apple paltform
     # Collect library
-    # list(APPEND LIBRARYS  "-framework Cocoa" "-framework IOKit")
+    enable_language(OBJC)
+    find_library(COCOA_LIBRARY Cocoa)
+    find_library(QUARTZCORE_LIBRARY QuartzCore)
+    list(APPEND LIBRARYS ${COCOA_LIBRARY})
+    list(APPEND LIBRARYS ${QUARTZCORE_LIBRARY})
+    file(GLOB_RECURSE OCSOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/*.m)
+    list(APPEND SOURCES ${OCSOURCES})
+
 else()
 # Ohter platform
     message("Unknown platform!")
 endif()
 
-
+message("   SOURCES:${SOURCES}")
 add_executable(${PROJECT_NAME} ${SOURCES})
 message("   HEADER_DIRS:${HEADER_DIRS}")
 target_include_directories(${PROJECT_NAME} PUBLIC ${HEADER_DIRS})

@@ -1,8 +1,16 @@
-#include <tickernelWindow.h>
 
 #if PLATFORM_WINDOWS
+#include <tickernelWindow.h>
 #include <windows.h>
 #include <vulkan/vulkan_win32.h>
+
+struct TickernelWindowStruct
+{
+    bool shouldClose;
+    HWND hwnd;
+    HINSTANCE hInstance;
+
+} TickernelWindow;
 
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -120,5 +128,5 @@ bool TickernelWindowShouldClose(TickernelWindow *pTickernelWindow)
 {
     return pTickernelWindow->shouldClose;
 }
-
+#elif PLATFORM_OSX
 #endif

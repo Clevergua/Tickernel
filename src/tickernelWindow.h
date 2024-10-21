@@ -2,16 +2,9 @@
 #include <vulkan/vulkan.h>
 #include <tickernelCore.h>
 
-typedef struct
-{
-    bool shouldClose;
-#if PLATFORM_WINDOWS
-    HWND hwnd;
-    HINSTANCE hInstance;
-#endif
-} TickernelWindow;
+typedef struct TickernelWindowStruct TickernelWindow;
 
-void TickernelCreateWindow(uint32_t windowWidth, uint32_t windowHeight, const char *name, TickernelWindow *pTickernelWindow);
+void TickernelCreateWindow(uint32_t windowWidth, uint32_t windowHeight, const char *name, TickernelWindow **ppTickernelWindow);
 void TickernelDestroyWindow(TickernelWindow *pTickernelWindow);
 void TickernelGetWindowExtensionCount(uint32_t *pWindowExtensionCount);
 void TickernelGetWindowExtensions(char **windowExtensions);

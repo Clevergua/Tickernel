@@ -128,6 +128,7 @@
         "lua.h": "c",
         "png.h": "c",
         "*.rh": "c",
-        "tickernelwindow.h": "c"
+        "tickernelwindow.h": "c",
+        "vulkan_win32.h": "c"
     }
 }

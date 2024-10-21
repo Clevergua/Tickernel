@@ -135,7 +135,7 @@ static void DestroyVKInstance(GraphicEngine *pGraphicEngine)
 
 static void CreateVKSurface(GraphicEngine *pGraphicEngine)
 {
-    VkResult result = CreateWindowVkSurface(&pGraphicEngine->tickernelWindow, pGraphicEngine->vkInstance, NULL, &pGraphicEngine->vkSurface);
+    VkResult result = CreateWindowVkSurface(pGraphicEngine->pTickernelWindow, pGraphicEngine->vkInstance, NULL, &pGraphicEngine->vkSurface);
     TryThrowVulkanError(result);
 }
 
@@ -526,7 +526,7 @@ static void CreateSwapchain(GraphicEngine *pGraphicEngine)
         // Do nothing.
     }
 
-    TickernelGetWindowFramebufferSize(&pGraphicEngine->tickernelWindow, &pGraphicEngine->width, &pGraphicEngine->height);
+    TickernelGetWindowFramebufferSize(pGraphicEngine->pTickernelWindow, &pGraphicEngine->width, &pGraphicEngine->height);
     VkExtent2D swapchainExtent;
     if (pGraphicEngine->width > vkSurfaceCapabilities.maxImageExtent.width)
     {
@@ -684,10 +684,10 @@ static void RecreateSwapchain(GraphicEngine *pGraphicEngine)
     VkResult result = VK_SUCCESS;
 
     uint32_t width, height;
-    TickernelGetWindowFramebufferSize(&pGraphicEngine->tickernelWindow, &width, &height);
+    TickernelGetWindowFramebufferSize(pGraphicEngine->pTickernelWindow, &width, &height);
     while (0 == width || 0 == height)
     {
-        TickernelGetWindowFramebufferSize(&pGraphicEngine->tickernelWindow, &width, &height);
+        TickernelGetWindowFramebufferSize(pGraphicEngine->pTickernelWindow, &width, &height);
         TickernelWaitWindowEvent();
     }
     if (width != pGraphicEngine->width || height != pGraphicEngine->height)
@@ -867,7 +867,7 @@ static void RecordCommandBuffer(GraphicEngine *pGraphicEngine)
 void StartGraphicEngine(GraphicEngine *pGraphicEngine)
 {
     pGraphicEngine->frameCount = 0;
-    TickernelCreateWindow(pGraphicEngine->windowWidth, pGraphicEngine->windowHeight, "Tickernel Engine", &pGraphicEngine->tickernelWindow);
+    TickernelCreateWindow(pGraphicEngine->windowWidth, pGraphicEngine->windowHeight, "Tickernel Engine", &pGraphicEngine->pTickernelWindow);
     CreateVkInstance(pGraphicEngine);
     CreateVKSurface(pGraphicEngine);
     PickPhysicalDevice(pGraphicEngine);
@@ -883,7 +883,7 @@ void StartGraphicEngine(GraphicEngine *pGraphicEngine)
 
 void UpdateGraphicEngine(GraphicEngine *pGraphicEngine, bool *pCanUpdate)
 {
-    if (TickernelWindowShouldClose(&pGraphicEngine->tickernelWindow))
+    if (TickernelWindowShouldClose(pGraphicEngine->pTickernelWindow))
     {
         VkResult vkResult = vkDeviceWaitIdle(pGraphicEngine->vkDevice);
         TryThrowVulkanError(vkResult);
@@ -939,5 +939,5 @@ void EndGraphicEngine(GraphicEngine *pGraphicEngine)
     // Destroy vkPhysicsDevice
     DestroyVKSurface(pGraphicEngine);
     DestroyVKInstance(pGraphicEngine);
-    TickernelDestroyWindow(&pGraphicEngine->tickernelWindow);
+    TickernelDestroyWindow(pGraphicEngine->pTickernelWindow);
 }

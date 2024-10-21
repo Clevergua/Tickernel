@@ -78,7 +78,7 @@ typedef struct GraphicEngineStruct
     // Runtime
     uint32_t height;
     uint32_t width;
-    TickernelWindow tickernelWindow;
+    TickernelWindow *pTickernelWindow;
     VkInstance vkInstance;
     VkSurfaceKHR vkSurface;
     VkPhysicalDevice vkPhysicalDevice;
@@ -136,5 +136,3 @@ void DestroyVertexBuffer(GraphicEngine *pGraphicEngine, VkBuffer vertexBuffer, V
 
 void AddModelToSubpass(GraphicEngine *pGraphicEngine, Subpass *pSubpass, uint32_t *pModelIndex);
 void RemoveModelFromSubpass(GraphicEngine *pGraphicEngine, uint32_t modelIndex, Subpass *pSubpass);
-
-
