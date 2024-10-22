@@ -127,7 +127,7 @@ static int RemoveModel(lua_State *pLuaState)
     return 0;
 }
 
-static int UpdateModel(lua_State *pLuaState)
+static int UpdateModelUniformBuffer(lua_State *pLuaState)
 {
     //  index modelMatrix
     GeometrySubpassModelUniformBuffer buffer;
@@ -315,8 +315,8 @@ void StartLua(LuaEngine *pLuaEngine)
     lua_pushcfunction(pLuaState, RemoveModel);
     lua_setfield(pLuaState, -2, "RemoveModel");
 
-    lua_pushcfunction(pLuaState, UpdateModel);
-    lua_setfield(pLuaState, -2, "UpdateModel");
+    lua_pushcfunction(pLuaState, UpdateModelUniformBuffer);
+    lua_setfield(pLuaState, -2, "UpdateModelUniformBuffer");
 
     lua_pushcfunction(pLuaState, SetCamera);
     lua_setfield(pLuaState, -2, "SetCamera");

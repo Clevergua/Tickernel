@@ -23,7 +23,7 @@ end
 ---Update model unifrom buffer
 ---@param index integer
 ---@param modelMatrix table
-function gameState.UpdateModel(index, modelMatrix)
+function gameState.UpdateModelUniformBuffer(index, modelMatrix)
 end
 
 ---SetCamera
@@ -74,10 +74,6 @@ function gameState.DrawModel(px, py, pz, model)
                 -- do nothing
             end
         end
-        -- print("r:" ..
-        -- model.indexToProperties[3][i] ..
-        -- "g:" ..
-        -- model.indexToProperties[4][i] .. "b:" .. model.indexToProperties[5][i] .. "a:" .. model.indexToProperties[6][i])
     end
 
     for i = 1, model.vertexCount do
@@ -316,16 +312,14 @@ function gameState.DrawModel(px, py, pz, model)
     end
 
     local index = gameState.AddModel(vertices, colors, normals)
-    -- local scale = 0.015625
-    -- local scale = 1
-    local scale = 0.03125
+    local scale = 0.0625
     local model = {
         { scale, 0,     0,     px },
         { 0,     scale, 0,     py },
         { 0,     0,     scale, pz },
         { 0,     0,     0,     1 },
     }
-    gameState.UpdateModel(index, model)
+    gameState.UpdateModelUniformBuffer(index, model)
 end
 
 return gameState

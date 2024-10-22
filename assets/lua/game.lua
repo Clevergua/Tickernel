@@ -1,40 +1,26 @@
 local gameMath = require("gameMath")
 
-local game = {}
-
+local game = {
+    temperatureMap = {},
+    humidityMap = {}
+}
 
 function game.GenerateWorld(length, width)
     local length = length
     local width = width
-    local temperatureMap = {}
-    local humidityMap = {}
-    local terrainMap = {}
-    local manaMap = {}
-    for x = 1, length do
+    local temperatureMap = game.temperatureMap
+    local humidityMap = game.humidityMap
+    game.gridPixelLength = 4
+    for x = 1, length * game.gridPixelLength do
         temperatureMap[x] = {}
         humidityMap[x] = {}
-        terrainMap[x] = {}
-        manaMap[x] = {}
-        for y = 1, width do
-            local ns = 0.007
-            local t = gameMath.PerlinNoise2D(43214, x * ns, y * ns)
-            if t < -0.2 then
-                temperatureMap[x][y] = -1
-            elseif t < 0.2 then
-                temperatureMap[x][y] = 0
-            else
-                temperatureMap[x][y] = 1
-            end
-            local h = gameMath.PerlinNoise2D(3321, x * ns, y * ns)
-            if h < -0.2 then
-                humidityMap[x][y] = -1
-            elseif h < 0.2 then
-                humidityMap[x][y] = 0
-            else
-                humidityMap[x][y] = 1
-            end
-            -- manaMap[x][y] = gameMath.PerlinNoise2D(314, x * ns, y * ns)
-            -- terrainMap[x] = {}
+        for y = 1, width * game.gridPixelLength do
+            local ns = 0.017
+            temperatureMap[x][y] = gameMath.PerlinNoise2D(43214, x * ns, y * ns) +
+                gameMath.PerlinNoise2D(3123, x * ns * 0.5, y * ns * 0.5)
+
+            humidityMap[x][y] = gameMath.PerlinNoise2D(3321, x * ns, y * ns) +
+                gameMath.PerlinNoise2D(689, x * ns * 0.5, y * ns * 0.5)
         end
     end
 end

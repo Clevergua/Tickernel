@@ -867,7 +867,7 @@ static void RecordCommandBuffer(GraphicEngine *pGraphicEngine)
 void StartGraphicEngine(GraphicEngine *pGraphicEngine)
 {
     pGraphicEngine->frameCount = 0;
-    TickernelCreateWindow(pGraphicEngine->windowWidth, pGraphicEngine->windowHeight, "Tickernel Engine", &pGraphicEngine->pTickernelWindow);
+    pGraphicEngine->pTickernelWindow = TickernelCreateWindow(pGraphicEngine->windowWidth, pGraphicEngine->windowHeight, "Tickernel Engine");
     CreateVkInstance(pGraphicEngine);
     CreateVKSurface(pGraphicEngine);
     PickPhysicalDevice(pGraphicEngine);

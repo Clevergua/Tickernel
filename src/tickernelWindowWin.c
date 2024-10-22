@@ -1,16 +1,14 @@
+#include <tickernelWindow.h>
 
 #if PLATFORM_WINDOWS
-#include <tickernelWindow.h>
 #include <windows.h>
 #include <vulkan/vulkan_win32.h>
-
 struct TickernelWindowStruct
 {
     bool shouldClose;
     HWND hwnd;
     HINSTANCE hInstance;
-
-} TickernelWindow;
+};
 
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -29,8 +27,9 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     }
 }
 
-void TickernelCreateWindow(uint32_t windowWidth, uint32_t windowHeight, const char *name, TickernelWindow *pTickernelWindow)
+TickernelWindow *TickernelCreateWindow(uint32_t windowWidth, uint32_t windowHeight, const char *name)
 {
+    TickernelWindow *pTickernelWindow = TickernelMalloc(sizeof(TickernelWindow));
     pTickernelWindow->shouldClose = false;
     pTickernelWindow->hInstance = GetModuleHandle(NULL);
     const char className[] = "TickernelWindowClass";
@@ -68,6 +67,7 @@ void TickernelCreateWindow(uint32_t windowWidth, uint32_t windowHeight, const ch
     SetWindowLongPtr(pTickernelWindow->hwnd, GWLP_USERDATA, (LONG_PTR)pTickernelWindow);
 
     ShowWindow(pTickernelWindow->hwnd, SW_SHOWDEFAULT);
+    return pTickernelWindow;
 }
 
 void TickernelDestroyWindow(TickernelWindow *pTickernelWindow)

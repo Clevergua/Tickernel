@@ -4,7 +4,7 @@
 
 typedef struct TickernelWindowStruct TickernelWindow;
 
-void TickernelCreateWindow(uint32_t windowWidth, uint32_t windowHeight, const char *name, TickernelWindow **ppTickernelWindow);
+TickernelWindow * TickernelCreateWindow(uint32_t windowWidth, uint32_t windowHeight, const char *name);
 void TickernelDestroyWindow(TickernelWindow *pTickernelWindow);
 void TickernelGetWindowExtensionCount(uint32_t *pWindowExtensionCount);
 void TickernelGetWindowExtensions(char **windowExtensions);

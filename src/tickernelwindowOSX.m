@@ -1,12 +1,13 @@
+#include <tickernelPlatform.h>
+#if PLATFORM_OSX
 #include <Cocoa/Cocoa.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <vulkan/vulkan.h>
 #include <vulkan/vulkan_macos.h>
-#include <tickernelWindow.h>
 #include <QuartzCore/CAMetalLayer.h>
-
+#include <tickernelWindow.h>
 struct TickernelWindowStruct {
     NSView *nsView;
     bool shouldClose;
@@ -102,7 +103,7 @@ void TickernelDestroyWindow(TickernelWindow *pTickernelWindow) {
     free(pTickernelWindow);
 }
 
-void TickernelCreateWindow(uint32_t width, uint32_t height, const char *name,TickernelWindow **ppTickernelWindow) {
+TickernelWindow * TickernelCreateWindow(uint32_t width, uint32_t height, const char *name) {
     @autoreleasepool {
         [NSApplication sharedApplication];
         [NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
@@ -128,16 +129,17 @@ void TickernelCreateWindow(uint32_t width, uint32_t height, const char *name,Tic
         [window setTitle:@(name)];
         [window makeKeyAndOrderFront:nil];
 
-        *ppTickernelWindow = (TickernelWindow *)malloc(sizeof(TickernelWindow));
-        if(!(*ppTickernelWindow)){
+        TickernelWindow * pTickernelWindow = (TickernelWindow *)malloc(sizeof(TickernelWindow));
+        if(!(pTickernelWindow)){
             abort();
         }
-        (*ppTickernelWindow)->nsView = [window contentView];
-        (*ppTickernelWindow)->shouldClose = false;
+        (pTickernelWindow)->nsView = [window contentView];
+        (pTickernelWindow)->shouldClose = false;
         // Set the delegate to handle the window close event
-        TickernelWindowDelegate *delegate = [[TickernelWindowDelegate alloc] initWithTickernelWindow:*ppTickernelWindow];
+        TickernelWindowDelegate *delegate = [[TickernelWindowDelegate alloc] initWithTickernelWindow:pTickernelWindow];
         [window setDelegate:delegate];
 
         [NSApp activateIgnoringOtherApps:YES];
     }
 }
+#endif
