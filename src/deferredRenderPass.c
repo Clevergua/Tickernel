@@ -325,7 +325,6 @@ void RecordDeferredRenderPass(GraphicEngine *pGraphicEngine)
     Subpass *pLightingSubpass = &pDeferredRenderPass->subpasses[1];
     SubpassModel *pSubpassModel = &pLightingSubpass->subpassModels[0];
 
-
     vkCmdBindPipeline(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pLightingSubpass->vkPipeline);
     vkCmdSetViewport(vkCommandBuffer, 0, 1, &viewport);
     vkCmdSetScissor(vkCommandBuffer, 0, 1, &scissor);

@@ -3,26 +3,26 @@ local gameMath = require("gameMath")
 
 function gameState.Start()
     print("Lua Start")
-    local modelsPath = gameState.assetsPath ..
-        gameState.pathSeparator .. "models" .. gameState.pathSeparator;
-    local models = {
-        gameState.LoadModel(modelsPath .. "LargeBuilding01_0.tvoxel"),
-        gameState.LoadModel(modelsPath .. "SmallBuilding01_0.tvoxel"),
-        gameState.LoadModel(modelsPath .. "SmallBuilding02_0.tvoxel"),
-        gameState.LoadModel(modelsPath .. "SmallBuilding03_0.tvoxel"),
-        gameState.LoadModel(modelsPath .. "SmallBuilding04_0.tvoxel"),
-        gameState.LoadModel(modelsPath .. "TallBuilding01_0.tvoxel"),
-        gameState.LoadModel(modelsPath .. "TallBuilding02_0.tvoxel"),
-        gameState.LoadModel(modelsPath .. "TallBuilding03_0.tvoxel"),
-    }
-    for x = 1, 20 do
-        for y = 1, 20 do
-            if gameMath.LCGRandom(gameMath.CantorPair(x, y) + 32321) % 100 < 30 then
-                local buildingIndex = gameMath.LCGRandom(gameMath.CantorPair(x, y) + 13235) % #models + 1
-                gameState.DrawModel(x - 10, y - 10, 0, models[buildingIndex])
-            end
-        end
-    end
+    -- local modelsPath = gameState.assetsPath ..
+    --     gameState.pathSeparator .. "models" .. gameState.pathSeparator;
+    -- local models = {
+    --     gameState.LoadModel(modelsPath .. "LargeBuilding01_0.tvoxel"),
+    --     gameState.LoadModel(modelsPath .. "SmallBuilding01_0.tvoxel"),
+    --     gameState.LoadModel(modelsPath .. "SmallBuilding02_0.tvoxel"),
+    --     gameState.LoadModel(modelsPath .. "SmallBuilding03_0.tvoxel"),
+    --     gameState.LoadModel(modelsPath .. "SmallBuilding04_0.tvoxel"),
+    --     gameState.LoadModel(modelsPath .. "TallBuilding01_0.tvoxel"),
+    --     gameState.LoadModel(modelsPath .. "TallBuilding02_0.tvoxel"),
+    --     gameState.LoadModel(modelsPath .. "TallBuilding03_0.tvoxel"),
+    -- }
+    -- for x = 1, 20 do
+    --     for y = 1, 20 do
+    --         if gameMath.LCGRandom(gameMath.CantorPair(x, y) + 32321) % 100 < 30 then
+    --             local buildingIndex = gameMath.LCGRandom(gameMath.CantorPair(x, y) + 13235) % #models + 1
+    --             gameState.DrawModel(x - 10, y - 10, 0, models[buildingIndex])
+    --         end
+    --     end
+    -- end
 
     -- local model2 = gameState.LoadModel(modelsPath .. "TallBuilding01.ply");
     -- gameState.DrawModel(-0, -0, 0, model2)

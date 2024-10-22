@@ -20,7 +20,7 @@ function gameMath.CantorPair(a, b)
 end
 
 function gameMath.LCGRandom(v)
-    return (1140671485 * v + 12820163) % 16777216
+    return 1140671485 * v + 728201631
 end
 
 function gameMath.PingPong(a, b, t)
@@ -160,4 +160,23 @@ function gameMath.PerlinNoise3D(seed, x, y, z)
 
     return SmoothLerp(y0, y1, sz);
 end
+
+
+-- local ns = 0.0099
+-- local min = 0
+-- local max = 0
+-- for x = 1, 1000000 do
+--     for y = 1, 1000000 do
+--         local n = gameMath.PerlinNoise2D(43214, x * ns, y * ns)
+--         if n < min then
+--             min = n
+--         end
+--         if n > max then
+--             max = n
+--         end
+--     end
+-- end
+-- print(min)
+-- print(max)
+
 return gameMath
