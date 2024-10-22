@@ -12,6 +12,28 @@ struct TickernelWindowStruct {
     bool shouldClose;
 };
 
+@interface TickernelWindowDelegate : NSObject <NSWindowDelegate>
+@property (assign) TickernelWindow *pTickernelWindow;
+@end
+
+@implementation TickernelWindowDelegate
+
+- (instancetype)initWithTickernelWindow:(TickernelWindow *)pTickernelWindow {
+    self = [super init];
+    if (self) {
+        self.pTickernelWindow = pTickernelWindow;
+    }
+    return self;
+}
+
+- (BOOL)windowShouldClose:(id)sender {
+    self.pTickernelWindow->shouldClose = true;
+    return YES;
+}
+
+@end
+
+
 void TickernelGetWindowExtensionCount(uint32_t * pCount) {
     *pCount = 2;
 }
@@ -42,6 +64,7 @@ VkResult CreateWindowVkSurface(TickernelWindow *pTickernelWindow, VkInstance vkI
         return VK_ERROR_SURFACE_LOST_KHR;
     }
 
+    
     return result;
 }
 
@@ -111,8 +134,10 @@ void TickernelCreateWindow(uint32_t width, uint32_t height, const char *name,Tic
         }
         (*ppTickernelWindow)->nsView = [window contentView];
         (*ppTickernelWindow)->shouldClose = false;
+        // Set the delegate to handle the window close event
+        TickernelWindowDelegate *delegate = [[TickernelWindowDelegate alloc] initWithTickernelWindow:*ppTickernelWindow];
+        [window setDelegate:delegate];
 
         [NSApp activateIgnoringOtherApps:YES];
-
     }
 }

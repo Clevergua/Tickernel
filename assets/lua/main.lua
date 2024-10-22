@@ -11,7 +11,6 @@ function gameState.Start()
         gameState.LoadModel(modelsPath .. "SmallBuilding02_0.tvoxel"),
         gameState.LoadModel(modelsPath .. "SmallBuilding03_0.tvoxel"),
         gameState.LoadModel(modelsPath .. "SmallBuilding04_0.tvoxel"),
-        gameState.LoadModel(modelsPath .. "SmallBuilding04_1.tvoxel"),
         gameState.LoadModel(modelsPath .. "TallBuilding01_0.tvoxel"),
         gameState.LoadModel(modelsPath .. "TallBuilding02_0.tvoxel"),
         gameState.LoadModel(modelsPath .. "TallBuilding03_0.tvoxel"),
@@ -24,7 +23,6 @@ function gameState.Start()
             end
         end
     end
-
 
     -- local model2 = gameState.LoadModel(modelsPath .. "TallBuilding01.ply");
     -- gameState.DrawModel(-0, -0, 0, model2)
@@ -42,7 +40,7 @@ local t = 0;
 
 function gameState.Update()
     print("Lua Update")
-    t = t + 0.01
+    t = t + 0.001
     local distance = gameMath.PingPong(10, 15, t)
     cameraPosition[1] = -distance * math.sin(t)
     cameraPosition[2] = distance * math.cos(t)
