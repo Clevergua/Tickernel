@@ -140,6 +140,7 @@ TickernelWindow * TickernelCreateWindow(uint32_t width, uint32_t height, const c
         [window setDelegate:delegate];
 
         [NSApp activateIgnoringOtherApps:YES];
+        return pTickernelWindow;
     }
 }
 #endif

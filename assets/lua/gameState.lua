@@ -45,38 +45,10 @@ function gameState.LoadModel(path)
     return model
 end
 
-function gameState.DrawModel(px, py, pz, model)
-    local vertices = {}
-    local colors = {}
-    local normals = {}
+function gameState.SetNormals(vertices, normals)
     local indexMap = {}
-    for i = 1, model.vertexCount do
-        vertices[i] = {}
-        colors[i] = {}
-        normals[i] = {}
-        for j = 1, model.propertyCount do
-            local propertyName = model.names[j]
-            colors[i][4] = 0
-            normals[i] = { 0, 0, 0 }
-            if propertyName == "x" then
-                vertices[i][1] = model.indexToProperties[j][i]
-            elseif propertyName == "y" then
-                vertices[i][2] = model.indexToProperties[j][i]
-            elseif propertyName == "z" then
-                vertices[i][3] = model.indexToProperties[j][i]
-            elseif propertyName == "r" then
-                colors[i][1] = model.indexToProperties[j][i] / 255.0
-            elseif propertyName == "g" then
-                colors[i][2] = model.indexToProperties[j][i] / 255.0
-            elseif propertyName == "b" then
-                colors[i][3] = model.indexToProperties[j][i] / 255.0
-            else
-                -- do nothing
-            end
-        end
-    end
-
-    for i = 1, model.vertexCount do
+    local vertexCount = #vertices
+    for i = 1, vertexCount do
         local x = vertices[i][1]
         local y = vertices[i][2]
         local z = vertices[i][3]
@@ -89,7 +61,7 @@ function gameState.DrawModel(px, py, pz, model)
         indexMap[x][y][z] = i
     end
 
-    for i = 1, model.vertexCount do
+    for i = 1, vertexCount do
         local x = vertices[i][1]
         local y = vertices[i][2]
         local z = vertices[i][3]
@@ -310,6 +282,39 @@ function gameState.DrawModel(px, py, pz, model)
             end
         end
     end
+end
+
+function gameState.DrawModel(px, py, pz, model)
+    local vertices = {}
+    local colors = {}
+    local normals = {}
+    for i = 1, model.vertexCount do
+        vertices[i] = {}
+        colors[i] = {}
+        normals[i] = {}
+        for j = 1, model.propertyCount do
+            local propertyName = model.names[j]
+            colors[i][4] = 0
+            normals[i] = { 0, 0, 0 }
+            if propertyName == "x" then
+                vertices[i][1] = model.indexToProperties[j][i]
+            elseif propertyName == "y" then
+                vertices[i][2] = model.indexToProperties[j][i]
+            elseif propertyName == "z" then
+                vertices[i][3] = model.indexToProperties[j][i]
+            elseif propertyName == "r" then
+                colors[i][1] = model.indexToProperties[j][i] / 255.0
+            elseif propertyName == "g" then
+                colors[i][2] = model.indexToProperties[j][i] / 255.0
+            elseif propertyName == "b" then
+                colors[i][3] = model.indexToProperties[j][i] / 255.0
+            else
+                -- do nothing
+            end
+        end
+    end
+
+    gameState.SetNormals(vertices, normals)
 
     local index = gameState.AddModel(vertices, colors, normals)
     local scale = 0.0625

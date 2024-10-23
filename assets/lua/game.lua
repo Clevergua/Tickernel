@@ -10,11 +10,10 @@ function game.GenerateWorld(length, width)
     local width = width
     local temperatureMap = game.temperatureMap
     local humidityMap = game.humidityMap
-    game.gridPixelLength = 4
-    for x = 1, length * game.gridPixelLength do
+    for x = 1, length do
         temperatureMap[x] = {}
         humidityMap[x] = {}
-        for y = 1, width * game.gridPixelLength do
+        for y = 1, width do
             local ns = 0.017
             temperatureMap[x][y] = gameMath.PerlinNoise2D(43214, x * ns, y * ns) +
                 gameMath.PerlinNoise2D(3123, x * ns * 0.5, y * ns * 0.5)
