@@ -15,8 +15,7 @@ static void TryThrowLuaError(lua_State *pLuaState, int luaResult)
     {
         const char *msg = lua_tostring(pLuaState, -1);
         lua_pop(pLuaState, 1);
-        printf("Lua error code: %d!\n   Error msg: %s\n", luaResult, msg);
-        abort();
+        TickernelError("Lua error code: %d!\n   Error msg: %s\n", luaResult, msg);
     }
 }
 
@@ -28,8 +27,7 @@ static void AssertLuaType(int type, int targetType)
     }
     else
     {
-        printf("Lua type error: type:%d ,target:%d!\n", type, targetType);
-        abort();
+        TickernelError("Lua type error: type:%d ,target:%d!\n", type, targetType);
     }
 }
 
@@ -260,7 +258,7 @@ static int LoadModel(lua_State *pLuaState)
                 lua_pushnumber(pLuaState, ((float *)pTickernelVoxel->indexToProperties[i])[j]);
                 break;
             default:
-                abort();
+                TickernelError("Unknown property type %d", pTickernelVoxel->types[i]);
                 break;
             }
 

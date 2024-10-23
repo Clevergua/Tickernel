@@ -441,7 +441,6 @@ void UpdateModelUniformToGeometrySubpass(GraphicEngine *pGraphicEngine, uint32_t
     }
     else
     {
-        printf("Geometry subpass model index: %d reference a invaild model!", index);
-        abort();
+        TickernelError("Geometry subpass model index: %d reference a invaild model!", index);
     }
 }

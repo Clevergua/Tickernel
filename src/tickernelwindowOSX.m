@@ -130,9 +130,6 @@ TickernelWindow * TickernelCreateWindow(uint32_t width, uint32_t height, const c
         [window makeKeyAndOrderFront:nil];
 
         TickernelWindow * pTickernelWindow = (TickernelWindow *)malloc(sizeof(TickernelWindow));
-        if(!(pTickernelWindow)){
-            abort();
-        }
         (pTickernelWindow)->nsView = [window contentView];
         (pTickernelWindow)->shouldClose = false;
         // Set the delegate to handle the window close event

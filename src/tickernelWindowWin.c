@@ -42,8 +42,7 @@ TickernelWindow *TickernelCreateWindow(uint32_t windowWidth, uint32_t windowHeig
     if (!RegisterClass(&windowClass))
     {
         DWORD error = GetLastError();
-        printf("Failed to register window class. Error code: %lu\n", error);
-        abort();
+        TickernelError("Failed to register window class. Error code: %lu\n", error);
     }
 
     pTickernelWindow->hwnd = CreateWindowEx(
@@ -60,13 +59,18 @@ TickernelWindow *TickernelCreateWindow(uint32_t windowWidth, uint32_t windowHeig
     if (pTickernelWindow->hwnd == NULL)
     {
         DWORD error = GetLastError();
-        printf("Failed to create window. Error code: %lu\n", error);
-        abort();
+        TickernelError("Failed to create window. Error code: %lu\n", error);
     }
 
     SetWindowLongPtr(pTickernelWindow->hwnd, GWLP_USERDATA, (LONG_PTR)pTickernelWindow);
 
     ShowWindow(pTickernelWindow->hwnd, SW_SHOWDEFAULT);
+    MSG msg;
+    while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+    {
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
+    }
     return pTickernelWindow;
 }
 

@@ -20,8 +20,8 @@ typedef struct Uint32NodeStruct
     uint32_t data;
 } Uint32Node;
 
+void TickernelError(char const *const _Format, ...);
 void TickernelSleep(uint32_t milliseconds);
-void TickernelLog(char const *const _Format, ...);
 void *TickernelMalloc(size_t size);
 void TickernelFree(void *block);
 void TickernelCombinePaths(char *dstPath, size_t size, const char *srcPath);

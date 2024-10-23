@@ -42,8 +42,7 @@ void SerializeTickernelVoxel(const char *filename, TickernelVoxel tickernelVoxel
     FILE *file = fopen(filename, "wb");
     if (file == NULL)
     {
-        printf("Failed to open file with name :%s for writing!\n", filename);
-        abort();
+        TickernelError("Failed to open file with name :%s for writing!\n", filename);
     }
     else
     {
@@ -130,8 +129,7 @@ void DeserializeTickernelVoxel(const char *filename, TickernelVoxel *pTickernelV
         }
         else
         {
-            printf("Unknown type: %d\n", pTickernelVoxel->types[i]);
-            abort();
+            TickernelError("Unknown type: %d\n", pTickernelVoxel->types[i]);
         }
     }
     fclose(file);

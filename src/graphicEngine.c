@@ -5,8 +5,7 @@ void TryThrowVulkanError(VkResult vkResult)
 {
     if (vkResult != VK_SUCCESS)
     {
-        printf("Vulkan error code: %d\n", vkResult);
-        abort();
+        TickernelError("Vulkan error code: %d\n", vkResult);
     }
 }
 
@@ -796,14 +795,13 @@ static void Present(GraphicEngine *pGraphicEngine)
     }
     else
     {
-        printf("Vulkan error code when Present: %d\n", result);
         if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
         {
             RecreateSwapchain(pGraphicEngine);
         }
         else
         {
-            abort();
+            TickernelError("Vulkan error code when Present: %d\n", result);
         }
     }
 }

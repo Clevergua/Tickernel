@@ -1,4 +1,63 @@
 #include <tickernelCore.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdarg.h>
+#if PLATFORM_POSIX
+#include <execinfo.h>
+#elif PLATFORM_WINDOWS
+#include <dbghelp.h>
+#include <windows.h>
+#include <windows.h>
+#include <dbghelp.h>
+#pragma comment(lib, "dbghelp.lib")
+#endif
+
+void TickernelError(char const *const _Format, ...)
+{
+    va_list args;
+    va_start(args, _Format);
+    vfprintf(stderr, _Format, args);
+    va_end(args);
+
+#if PLATFORM_POSIX
+    void *buffer[100];
+    int nptrs = backtrace(buffer, 100);
+    char **symbols = backtrace_symbols(buffer, nptrs);
+
+    if (symbols == NULL)
+    {
+        perror("backtrace_symbols");
+        exit(EXIT_FAILURE);
+    }
+
+    for (int i = 0; i < nptrs; i++)
+    {
+        printf("%s\n", symbols[i]);
+    }
+
+    free(symbols);
+#elif PLATFORM_WINDOWS
+    void *stack[100];
+    HANDLE process = GetCurrentProcess();
+    SymInitialize(process, NULL, TRUE);
+    WORD frames = CaptureStackBackTrace(0, 100, stack, NULL);
+    SYMBOL_INFO *symbol = (SYMBOL_INFO *)malloc(sizeof(SYMBOL_INFO) + 256 * sizeof(char));
+    symbol->MaxNameLen = 255;
+    symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
+
+    for (int i = 0; i < frames; i++)
+    {
+        SymFromAddr(process, (DWORD64)(stack[i]), 0, symbol);
+        printf("%i: %s - 0x%0llX\n", frames - i - 1, symbol->Name, symbol->Address);
+    }
+
+    free(symbol);
+    SymCleanup(process);
+#else
+#error "Unknown platform"
+#endif
+    abort();
+}
 
 void TickernelSleep(uint32_t milliseconds)
 {
