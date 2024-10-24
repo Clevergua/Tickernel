@@ -64,7 +64,7 @@ static int AddModel(lua_State *pLuaState)
             {
                 int colorValueType = lua_geti(pLuaState, -1, j + 1);
                 AssertLuaType(colorValueType, LUA_TNUMBER);
-                geometrySubpassVertices[i].color[j] = luaL_checknumber(pLuaState, -1);
+                geometrySubpassVertices[i].color[j] = luaL_checknumber(pLuaState, -1) / 255.0f;
                 lua_pop(pLuaState, 1);
             }
             lua_pop(pLuaState, 1);

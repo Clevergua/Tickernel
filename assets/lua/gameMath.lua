@@ -20,7 +20,7 @@ function gameMath.CantorPair(a, b)
 end
 
 function gameMath.LCGRandom(v)
-    return 1140671485 * v + 728201631
+    return 114067148579 * v + 728201631
 end
 
 function gameMath.PingPong(a, b, t)

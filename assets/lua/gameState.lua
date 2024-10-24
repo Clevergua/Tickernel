@@ -284,7 +284,7 @@ function gameState.SetNormals(vertices, normals)
     end
 end
 
-function gameState.DrawModel(px, py, pz, model)
+function gameState.DrawModel(px, py, pz, scale, model)
     local vertices = {}
     local colors = {}
     local normals = {}
@@ -303,11 +303,11 @@ function gameState.DrawModel(px, py, pz, model)
             elseif propertyName == "z" then
                 vertices[i][3] = model.indexToProperties[j][i]
             elseif propertyName == "r" then
-                colors[i][1] = model.indexToProperties[j][i] / 255.0
+                colors[i][1] = model.indexToProperties[j][i]
             elseif propertyName == "g" then
-                colors[i][2] = model.indexToProperties[j][i] / 255.0
+                colors[i][2] = model.indexToProperties[j][i]
             elseif propertyName == "b" then
-                colors[i][3] = model.indexToProperties[j][i] / 255.0
+                colors[i][3] = model.indexToProperties[j][i]
             else
                 -- do nothing
             end
@@ -317,7 +317,6 @@ function gameState.DrawModel(px, py, pz, model)
     gameState.SetNormals(vertices, normals)
 
     local index = gameState.AddModel(vertices, colors, normals)
-    local scale = 0.0625
     local model = {
         { scale, 0,     0,     px },
         { 0,     scale, 0,     py },

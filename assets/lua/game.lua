@@ -14,7 +14,7 @@ function game.GenerateWorld(length, width)
         temperatureMap[x] = {}
         humidityMap[x] = {}
         for y = 1, width do
-            local ns = 0.017
+            local ns = 0.27
             temperatureMap[x][y] = gameMath.PerlinNoise2D(43214, x * ns, y * ns) +
                 gameMath.PerlinNoise2D(3123, x * ns * 0.5, y * ns * 0.5)
 
