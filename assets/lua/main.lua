@@ -182,11 +182,11 @@ function gameState.Start()
                     temperature = gameMath.Lerp(targetTemperature, temperature, t)
                     humidity = gameMath.Lerp(targetHumidity, humidity, t)
 
-                    local holeNoiseScale = 0.47
-                    local holeNoise = gameMath.PerlinNoise2D(2134124, holeNoiseScale * ((x - 1) * pixel + px),
+                    local holeNoiseScale = 0.37
+                    local holeNoise = gameMath.PerlinNoise2D(2134, holeNoiseScale * ((x - 1) * pixel + px),
                         holeNoiseScale * ((y - 1) * pixel + py));
                     holeNoise = holeNoise + t
-                    if holeNoise < 1.2 then
+                    if holeNoise < 0.8 then
                         local b = GetBlock(temperature, humidity)
                         if b == block.water or b == block.ice or b == block.lava or b == block.swamp then
                             pixelMap[(x - 1) * pixel + px][(y - 1) * pixel + py][2] = block.none
@@ -194,6 +194,9 @@ function gameState.Start()
                             pixelMap[(x - 1) * pixel + px][(y - 1) * pixel + py][4] = block.none
                         else
                             pixelMap[(x - 1) * pixel + px][(y - 1) * pixel + py][5] = b
+                            if holeNoise < 0.1 then
+                                pixelMap[(x - 1) * pixel + px][(y - 1) * pixel + py][6] = b
+                            end
                         end
                     else
                         -- skip
@@ -215,7 +218,7 @@ function gameState.Start()
                         blockToColors[pixelMap[x][y][z]] = {}
                         blockToNormals[pixelMap[x][y][z]] = {}
                     end
-                    table.insert(blockToVertices[pixelMap[x][y][z]], { x, y, z })
+                    table.insert(blockToVertices[pixelMap[x][y][z]], { x, y, z - 4 })
                     table.insert(blockToColors[pixelMap[x][y][z]], blockToColor[pixelMap[x][y][z]])
                     table.insert(blockToNormals[pixelMap[x][y][z]], { 0, 0, 0 })
                 end
@@ -243,16 +246,17 @@ function gameState.End()
     print("Lua Start")
 end
 
-local cameraPosition = { 18, 32, 15 }
-local targetPosition = { 20, 32, 0 }
+local cameraPosition = { 18, 32, 20 }
+local targetPosition = { 18, 40, 0 }
 local t = 0
 
 function gameState.Update()
     print("Lua Update")
-    t = t + 0.005
-    local distance = gameMath.PingPong(2, 8, t)
-    cameraPosition[1] = 18 - distance * math.sin(t)
-    cameraPosition[2] = 32 + distance * math.cos(t)
+    t = t + 0.003
+    local distance = gameMath.PingPong(2, 32, t)
+    cameraPosition[1] = 18 + distance
+    targetPosition[1] = 18 + distance
+    
     gameState.SetCamera(cameraPosition, targetPosition)
 end
 

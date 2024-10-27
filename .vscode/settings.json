@@ -130,6 +130,7 @@
         "*.rh": "c",
         "tickernelwindow.h": "c",
         "vulkan_win32.h": "c",
-        "dbghelp.h": "c"
+        "dbghelp.h": "c",
+        "liquidgeometrysubpass.h": "c"
     }
 }

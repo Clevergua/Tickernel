@@ -319,6 +319,7 @@ void RecordDeferredRenderPass(GraphicEngine *pGraphicEngine)
             vkCmdDraw(vkCommandBuffer, vertexCount, 1, 0, 0);
         }
     }
+    
     vkCmdNextSubpass(vkCommandBuffer, VK_SUBPASS_CONTENTS_INLINE);
 
     // lighting subpass
