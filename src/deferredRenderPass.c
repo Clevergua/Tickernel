@@ -1,36 +1,34 @@
 #include <deferredRenderPass.h>
-
-static void PrepareCurrentFrambuffer(GraphicEngine *pGraphicEngine)
-{
-    RenderPass *pDeferredRenderPass = &pGraphicEngine->deferredRenderPass;
-    if (INVALID_VKFRAMEBUFFER == pDeferredRenderPass->vkFramebuffers[pGraphicEngine->frameIndex])
-    {
-        VkImageView attachments[] = {pGraphicEngine->swapchainImageViews[pGraphicEngine->frameIndex], pGraphicEngine->depthGraphicImage.vkImageView, pGraphicEngine->albedoGraphicImage.vkImageView, pGraphicEngine->normalGraphicImage.vkImageView};
-        VkFramebufferCreateInfo vkFramebufferCreateInfo = {
-            .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
-            .pNext = NULL,
-            .flags = 0,
-            .renderPass = pDeferredRenderPass->vkRenderPass,
-            .attachmentCount = 4,
-            .pAttachments = attachments,
-            .width = pGraphicEngine->width,
-            .height = pGraphicEngine->height,
-            .layers = 1,
-        };
-        VkResult result = vkCreateFramebuffer(pGraphicEngine->vkDevice, &vkFramebufferCreateInfo, NULL, &pDeferredRenderPass->vkFramebuffers[pGraphicEngine->frameIndex]);
-        TryThrowVulkanError(result);
-    }
-    else
-    {
-        // continue;
-    }
-}
-
-static void CreateVkRenderPass(GraphicEngine *pGraphicEngine)
+// static void PrepareCurrentFrambuffer(GraphicEngine *pGraphicEngine)
+// {
+//     RenderPass *pDeferredRenderPass = &pGraphicEngine->deferredRenderPass;
+//     if (INVALID_VKFRAMEBUFFER == pDeferredRenderPass->vkFramebuffers[pGraphicEngine->frameIndex])
+//     {
+//         VkImageView attachments[] = {pGraphicEngine->swapchainImageViews[pGraphicEngine->frameIndex], pGraphicEngine->depthGraphicImage.vkImageView, pGraphicEngine->albedoGraphicImage.vkImageView, pGraphicEngine->normalGraphicImage.vkImageView};
+//         VkFramebufferCreateInfo vkFramebufferCreateInfo = {
+//             .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
+//             .pNext = NULL,
+//             .flags = 0,
+//             .renderPass = pDeferredRenderPass->vkRenderPass,
+//             .attachmentCount = 4,
+//             .pAttachments = attachments,
+//             .width = pGraphicEngine->width,
+//             .height = pGraphicEngine->height,
+//             .layers = 1,
+//         };
+//         VkResult result = vkCreateFramebuffer(pGraphicEngine->vkDevice, &vkFramebufferCreateInfo, NULL, &pDeferredRenderPass->vkFramebuffers[pGraphicEngine->frameIndex]);
+//         TryThrowVulkanError(result);
+//     }
+//     else
+//     {
+//         // continue;
+//     }
+// }
+static void CreateVkRenderPass(RenderPass *pDeferredRenderPass)
 {
     VkAttachmentDescription colorAttachmentDescription = {
         .flags = 0,
-        .format = pGraphicEngine->surfaceFormat.format,
+        .format = pDeferredRenderPass->surfaceFormat.format,
         .samples = VK_SAMPLE_COUNT_1_BIT,
         .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
         .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
@@ -41,7 +39,7 @@ static void CreateVkRenderPass(GraphicEngine *pGraphicEngine)
     };
     VkAttachmentDescription depthAttachmentDescription = {
         .flags = 0,
-        .format = pGraphicEngine->depthGraphicImage.vkFormat,
+        .format = pDeferredRenderPass->depthGraphicImage.vkFormat,
         .samples = VK_SAMPLE_COUNT_1_BIT,
         .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
         .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
@@ -52,7 +50,7 @@ static void CreateVkRenderPass(GraphicEngine *pGraphicEngine)
     };
     VkAttachmentDescription albedoAttachmentDescription = {
         .flags = 0,
-        .format = pGraphicEngine->albedoGraphicImage.vkFormat,
+        .format = pDeferredRenderPass->albedoGraphicImage.vkFormat,
         .samples = VK_SAMPLE_COUNT_1_BIT,
         .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
         .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
@@ -63,7 +61,7 @@ static void CreateVkRenderPass(GraphicEngine *pGraphicEngine)
     };
     VkAttachmentDescription normalAttachmentDescription = {
         .flags = 0,
-        .format = pGraphicEngine->normalGraphicImage.vkFormat,
+        .format = pDeferredRenderPass->normalGraphicImage.vkFormat,
         .samples = VK_SAMPLE_COUNT_1_BIT,
         .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
         .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
@@ -164,33 +162,31 @@ static void CreateVkRenderPass(GraphicEngine *pGraphicEngine)
         .pDependencies = subpassDependencies,
     };
     VkResult result = VK_SUCCESS;
-    result = vkCreateRenderPass(pGraphicEngine->vkDevice, &vkRenderPassCreateInfo, NULL, &pGraphicEngine->deferredRenderPass.vkRenderPass);
+    result = vkCreateRenderPass(pDeferredRenderPass->vkDevice, &vkRenderPassCreateInfo, NULL, &pDeferredRenderPass->vkRenderPass);
     TryThrowVulkanError(result);
 
-    pGraphicEngine->deferredRenderPass.subpassCount = 2;
-    pGraphicEngine->deferredRenderPass.subpasses = TickernelMalloc(sizeof(Subpass) * pGraphicEngine->deferredRenderPass.subpassCount);
+    pDeferredRenderPass->subpassCount = 2;
+    pDeferredRenderPass->subpasses = TickernelMalloc(sizeof(Subpass) * pDeferredRenderPass->subpassCount);
 }
 
-static void DestroyVkRenderPass(GraphicEngine *pGraphicEngine)
+static void DestroyVkRenderPass(RenderPass *pDeferredRenderPass)
 {
-    vkDestroyRenderPass(pGraphicEngine->vkDevice, pGraphicEngine->deferredRenderPass.vkRenderPass, NULL);
-    TickernelFree(pGraphicEngine->deferredRenderPass.subpasses);
+    vkDestroyRenderPass(pDeferredRenderPass->vkDevice, pDeferredRenderPass->vkRenderPass, NULL);
+    TickernelFree(pDeferredRenderPass->subpasses);
 }
 
-static void CreateVkFramebuffers(GraphicEngine *pGraphicEngine)
+static void CreateVkFramebuffers(RenderPass *pDeferredRenderPass)
 {
-    RenderPass *pDeferredRenderPass = &pGraphicEngine->deferredRenderPass;
-    pDeferredRenderPass->vkFramebuffers = TickernelMalloc(sizeof(VkFramebuffer) * pGraphicEngine->swapchainImageCount);
-    pDeferredRenderPass->vkFramebufferCount = pGraphicEngine->swapchainImageCount;
-    for (int32_t i = 0; i < pGraphicEngine->deferredRenderPass.vkFramebufferCount; i++)
+    pDeferredRenderPass->vkFramebuffers = TickernelMalloc(sizeof(VkFramebuffer) * pDeferredRenderPass->swapchainImageCount);
+    pDeferredRenderPass->vkFramebufferCount = pDeferredRenderPass->swapchainImageCount;
+    for (int32_t i = 0; i < pDeferredRenderPass->vkFramebufferCount; i++)
     {
         pDeferredRenderPass->vkFramebuffers[i] = INVALID_VKFRAMEBUFFER;
     }
 }
 
-static void DestroyVkFramebuffers(GraphicEngine *pGraphicEngine)
+static void DestroyVkFramebuffers(RenderPass *pDeferredRenderPass)
 {
-    RenderPass *pDeferredRenderPass = &pGraphicEngine->deferredRenderPass;
     for (int32_t i = 0; i < pDeferredRenderPass->vkFramebufferCount; i++)
     {
         if (INVALID_VKFRAMEBUFFER == pDeferredRenderPass->vkFramebuffers[i])
@@ -199,34 +195,33 @@ static void DestroyVkFramebuffers(GraphicEngine *pGraphicEngine)
         }
         else
         {
-            vkDestroyFramebuffer(pGraphicEngine->vkDevice, pDeferredRenderPass->vkFramebuffers[i], NULL);
+            vkDestroyFramebuffer(pDeferredRenderPass->vkDevice, pDeferredRenderPass->vkFramebuffers[i], NULL);
         }
     }
     TickernelFree(pDeferredRenderPass->vkFramebuffers);
 }
 
-void CreateDeferredRenderPass(GraphicEngine *pGraphicEngine)
+void CreateDeferredRenderPass(RenderPass *pDeferredRenderPass)
 {
-    CreateVkRenderPass(pGraphicEngine);
-    CreateVkFramebuffers(pGraphicEngine);
-
-    CreateGeometrySubpass(pGraphicEngine);
-    CreateLightingSubpass(pGraphicEngine);
+    CreateVkRenderPass(pDeferredRenderPass);
+    CreateVkFramebuffers(pDeferredRenderPass);
+    uint32_t geometrySubpassIndex = 0;
+    Subpass *pGeometrySubpass = &pDeferredRenderPass->subpasses[geometrySubpassIndex];
+    CreateGeometrySubpass(pDeferredRenderPass);
+    CreateLightingSubpass(pDeferredRenderPass);
 }
 
-void DestroyDeferredRenderPass(GraphicEngine *pGraphicEngine)
+void DestroyDeferredRenderPass(RenderPass *pDeferredRenderPass)
 {
-    DestroyGeometrySubpass(pGraphicEngine);
-    DestroyLightingSubpass(pGraphicEngine);
-    DestroyVkFramebuffers(pGraphicEngine);
-    DestroyVkRenderPass(pGraphicEngine);
+    DestroyGeometrySubpass(pDeferredRenderPass);
+    DestroyLightingSubpass(pDeferredRenderPass);
+    DestroyVkFramebuffers(pDeferredRenderPass);
+    DestroyVkRenderPass(pDeferredRenderPass);
 }
 
-void RecordDeferredRenderPass(GraphicEngine *pGraphicEngine)
+void RecordDeferredRenderPass(RenderPass *pDeferredRenderPass, VkCommandBuffer vkCommandBuffer)
 {
-    PrepareCurrentFrambuffer(pGraphicEngine);
-
-    VkCommandBuffer vkCommandBuffer = pGraphicEngine->graphicVkCommandBuffers[pGraphicEngine->frameIndex];
+    // VkCommandBuffer vkCommandBuffer = pDeferredRenderPass->graphicVkCommandBuffers[pDeferredRenderPass->frameIndex];
     VkCommandBufferBeginInfo vkCommandBufferBeginInfo =
         {
             .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
@@ -237,31 +232,7 @@ void RecordDeferredRenderPass(GraphicEngine *pGraphicEngine)
     VkResult result = vkBeginCommandBuffer(vkCommandBuffer, &vkCommandBufferBeginInfo);
     TryThrowVulkanError(result);
 
-    VkViewport viewport =
-        {
-            .x = 0.0f,
-            .y = 0.0f,
-            .width = pGraphicEngine->width,
-            .height = pGraphicEngine->height,
-            .minDepth = 0.0f,
-            .maxDepth = 1.0f,
-        };
-    vkCmdSetViewport(vkCommandBuffer, 0, 1, &viewport);
-    VkOffset2D scissorOffset =
-        {
-            .x = 0,
-            .y = 0,
-        };
-    VkExtent2D extent = {
-        .width = pGraphicEngine->width,
-        .height = pGraphicEngine->height,
-
-    };
-    VkRect2D scissor = {
-        .offset = scissorOffset,
-        .extent = extent,
-    };
-    vkCmdSetScissor(vkCommandBuffer, 0, 1, &scissor);
+    vkCmdSetScissor(vkCommandBuffer, 0, 1, &pDeferredRenderPass->scissor);
     VkOffset2D offset =
         {
             .x = 0,
@@ -270,7 +241,7 @@ void RecordDeferredRenderPass(GraphicEngine *pGraphicEngine)
     VkRect2D renderArea =
         {
             .offset = offset,
-            .extent = extent,
+            .extent = pDeferredRenderPass->scissor.extent,
         };
     uint32_t clearValueCount = 4;
     VkClearValue *clearValues = (VkClearValue[]){
@@ -287,13 +258,12 @@ void RecordDeferredRenderPass(GraphicEngine *pGraphicEngine)
             .color = {0.0f, 0.0f, 0.0f, 0.0f},
         },
     };
-    RenderPass *pDeferredRenderPass = &pGraphicEngine->deferredRenderPass;
     VkRenderPassBeginInfo renderPassBeginInfo =
         {
             .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
             .pNext = NULL,
             .renderPass = pDeferredRenderPass->vkRenderPass,
-            .framebuffer = pDeferredRenderPass->vkFramebuffers[pGraphicEngine->frameIndex],
+            .framebuffer = pDeferredRenderPass->vkFramebuffers[pDeferredRenderPass->frameIndex],
             .renderArea = renderArea,
             .clearValueCount = clearValueCount,
             .pClearValues = clearValues,
@@ -307,8 +277,8 @@ void RecordDeferredRenderPass(GraphicEngine *pGraphicEngine)
         SubpassModel *pSubpassModel = &pGeometrySubpass->subpassModels[modelIndex];
         if (pSubpassModel->isValid)
         {
-            vkCmdSetViewport(vkCommandBuffer, 0, 1, &viewport);
-            vkCmdSetScissor(vkCommandBuffer, 0, 1, &scissor);
+            vkCmdSetViewport(vkCommandBuffer, 0, 1, &pDeferredRenderPass->viewport);
+            vkCmdSetScissor(vkCommandBuffer, 0, 1, &pDeferredRenderPass->scissor);
 
             vkCmdBindDescriptorSets(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pGeometrySubpass->vkPipelineLayout, 0, 1, &pSubpassModel->vkDescriptorSet, 0, NULL);
 
@@ -319,7 +289,7 @@ void RecordDeferredRenderPass(GraphicEngine *pGraphicEngine)
             vkCmdDraw(vkCommandBuffer, vertexCount, 1, 0, 0);
         }
     }
-    
+
     vkCmdNextSubpass(vkCommandBuffer, VK_SUBPASS_CONTENTS_INLINE);
 
     // lighting subpass
@@ -327,8 +297,8 @@ void RecordDeferredRenderPass(GraphicEngine *pGraphicEngine)
     SubpassModel *pSubpassModel = &pLightingSubpass->subpassModels[0];
 
     vkCmdBindPipeline(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pLightingSubpass->vkPipeline);
-    vkCmdSetViewport(vkCommandBuffer, 0, 1, &viewport);
-    vkCmdSetScissor(vkCommandBuffer, 0, 1, &scissor);
+    vkCmdSetViewport(vkCommandBuffer, 0, 1, &pDeferredRenderPass->viewport);
+    vkCmdSetScissor(vkCommandBuffer, 0, 1, &pDeferredRenderPass->scissor);
     vkCmdBindDescriptorSets(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pLightingSubpass->vkPipelineLayout, 0, 1, &pSubpassModel->vkDescriptorSet, 0, NULL);
     vkCmdDraw(vkCommandBuffer, pSubpassModel->vertexCount, 1, 0, 0);
 

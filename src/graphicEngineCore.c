@@ -1,10 +1,8 @@
 #include <graphicEngineCore.h>
 
-static void CreateImage(GraphicEngine *pGraphicEngine, VkExtent3D vkExtent3D, VkFormat vkFormat, VkImageTiling vkImageTiling, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImage *pVkImage, VkDeviceMemory *pVkDeviceMemory)
+static void CreateImage(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkExtent3D vkExtent3D, VkFormat vkFormat, VkImageTiling vkImageTiling, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImage *pVkImage, VkDeviceMemory *pVkDeviceMemory)
 {
     VkResult result = VK_SUCCESS;
-
-    VkDevice vkDevice = pGraphicEngine->vkDevice;
 
     VkImageCreateInfo imageCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
@@ -28,7 +26,7 @@ static void CreateImage(GraphicEngine *pGraphicEngine, VkExtent3D vkExtent3D, Vk
     VkMemoryRequirements memoryRequirements;
     vkGetImageMemoryRequirements(vkDevice, *pVkImage, &memoryRequirements);
     uint32_t memoryTypeIndex;
-    FindMemoryType(pGraphicEngine, memoryRequirements.memoryTypeBits, vkMemoryPropertyFlags, &memoryTypeIndex);
+    FindMemoryType(vkPhysicalDevice, memoryRequirements.memoryTypeBits, vkMemoryPropertyFlags, &memoryTypeIndex);
 
     VkMemoryAllocateInfo memoryAllocateInfo = {
         .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
@@ -43,10 +41,9 @@ static void CreateImage(GraphicEngine *pGraphicEngine, VkExtent3D vkExtent3D, Vk
     TryThrowVulkanError(result);
 }
 
-static void FindSupportedFormat(GraphicEngine *pGraphicEngine, VkFormat *candidates, uint32_t candidatesCount, VkImageTiling tiling, VkFormatFeatureFlags features, VkFormat *vkFormat)
+static void FindSupportedFormat(VkPhysicalDevice vkPhysicalDevice, VkFormat *candidates, uint32_t candidatesCount, VkImageTiling tiling, VkFormatFeatureFlags features, VkFormat *vkFormat)
 {
     VkResult result = VK_SUCCESS;
-    VkPhysicalDevice vkPhysicalDevice = pGraphicEngine->vkPhysicalDevice;
 
     for (uint32_t i = 0; i < candidatesCount; i++)
     {
@@ -69,17 +66,17 @@ static void FindSupportedFormat(GraphicEngine *pGraphicEngine, VkFormat *candida
     printf("Target format not found!");
 }
 
-static void CopyVkBuffer(GraphicEngine *pGraphicEngine, VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
+static void CopyVkBuffer(VkCommandPool graphicVkCommandPool, VkDevice vkDevice, VkQueue vkGraphicQueue, VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
 {
     VkCommandBuffer vkCommandBuffer;
     VkCommandBufferAllocateInfo vkCommandBufferAllocateInfo = {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
         .pNext = NULL,
-        .commandPool = pGraphicEngine->graphicVkCommandPool,
+        .commandPool = graphicVkCommandPool,
         .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
         .commandBufferCount = 1,
     };
-    VkResult result = vkAllocateCommandBuffers(pGraphicEngine->vkDevice, &vkCommandBufferAllocateInfo, &vkCommandBuffer);
+    VkResult result = vkAllocateCommandBuffers(vkDevice, &vkCommandBufferAllocateInfo, &vkCommandBuffer);
     TryThrowVulkanError(result);
 
     VkCommandBufferBeginInfo vkCommandBufferBeginInfo =
@@ -111,12 +108,12 @@ static void CopyVkBuffer(GraphicEngine *pGraphicEngine, VkBuffer srcBuffer, VkBu
         .signalSemaphoreCount = 0,
         .pSignalSemaphores = NULL,
     };
-    vkQueueSubmit(pGraphicEngine->vkGraphicQueue, 1, &submitInfo, VK_NULL_HANDLE);
-    vkQueueWaitIdle(pGraphicEngine->vkGraphicQueue);
-    vkFreeCommandBuffers(pGraphicEngine->vkDevice, pGraphicEngine->graphicVkCommandPool, 1, &vkCommandBuffer);
+    vkQueueSubmit(vkGraphicQueue, 1, &submitInfo, VK_NULL_HANDLE);
+    vkQueueWaitIdle(vkGraphicQueue);
+    vkFreeCommandBuffers(vkDevice, graphicVkCommandPool, 1, &vkCommandBuffer);
 }
 
-void CreateBuffer(GraphicEngine *pGraphicEngine, VkDeviceSize bufferSize, VkBufferUsageFlags bufferUsageFlags, VkMemoryPropertyFlags msemoryPropertyFlags, VkBuffer *pBuffer, VkDeviceMemory *pDeviceMemory)
+void CreateBuffer(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkDeviceSize bufferSize, VkBufferUsageFlags bufferUsageFlags, VkMemoryPropertyFlags msemoryPropertyFlags, VkBuffer *pBuffer, VkDeviceMemory *pDeviceMemory)
 {
     VkResult result = VK_SUCCESS;
     VkBufferCreateInfo bufferCreateInfo = {
@@ -129,21 +126,21 @@ void CreateBuffer(GraphicEngine *pGraphicEngine, VkDeviceSize bufferSize, VkBuff
         .queueFamilyIndexCount = 0,
         .pQueueFamilyIndices = 0,
     };
-    result = vkCreateBuffer(pGraphicEngine->vkDevice, &bufferCreateInfo, NULL, pBuffer);
+    result = vkCreateBuffer(vkDevice, &bufferCreateInfo, NULL, pBuffer);
     TryThrowVulkanError(result);
     VkMemoryRequirements memoryRequirements;
-    vkGetBufferMemoryRequirements(pGraphicEngine->vkDevice, *pBuffer, &memoryRequirements);
+    vkGetBufferMemoryRequirements(vkDevice, *pBuffer, &memoryRequirements);
     uint32_t memoryTypeIndex;
-    FindMemoryType(pGraphicEngine, memoryRequirements.memoryTypeBits, msemoryPropertyFlags, &memoryTypeIndex);
+    FindMemoryType(vkPhysicalDevice, memoryRequirements.memoryTypeBits, msemoryPropertyFlags, &memoryTypeIndex);
     VkMemoryAllocateInfo memoryAllocateInfo = {
         .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
         .pNext = NULL,
         .allocationSize = memoryRequirements.size,
         .memoryTypeIndex = memoryTypeIndex,
     };
-    result = vkAllocateMemory(pGraphicEngine->vkDevice, &memoryAllocateInfo, NULL, pDeviceMemory);
+    result = vkAllocateMemory(vkDevice, &memoryAllocateInfo, NULL, pDeviceMemory);
     TryThrowVulkanError(result);
-    result = vkBindBufferMemory(pGraphicEngine->vkDevice, *pBuffer, *pDeviceMemory, 0);
+    result = vkBindBufferMemory(vkDevice, *pBuffer, *pDeviceMemory, 0);
     TryThrowVulkanError(result);
 }
 void DestroyBuffer(VkDevice vkDevice, VkBuffer vkBuffer, VkDeviceMemory deviceMemory)
@@ -152,34 +149,34 @@ void DestroyBuffer(VkDevice vkDevice, VkBuffer vkBuffer, VkDeviceMemory deviceMe
     vkDestroyBuffer(vkDevice, vkBuffer, NULL);
 }
 
-void CreateVertexBuffer(GraphicEngine *pGraphicEngine, VkDeviceSize vertexBufferSize, void *vertices, VkBuffer *pVertexBuffer, VkDeviceMemory *pVertexBufferMemory)
+void CreateVertexBuffer(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkCommandPool graphicVkCommandPool, VkQueue vkGraphicQueue, VkDeviceSize vertexBufferSize, void *vertices, VkBuffer *pVertexBuffer, VkDeviceMemory *pVertexBufferMemory)
 {
     VkBuffer stagingBuffer;
     VkDeviceMemory stagingBufferMemory;
-    CreateBuffer(pGraphicEngine, vertexBufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingBuffer, &stagingBufferMemory);
+    CreateBuffer(vkDevice, vkPhysicalDevice, vertexBufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingBuffer, &stagingBufferMemory);
 
     void *pData;
-    VkResult result = vkMapMemory(pGraphicEngine->vkDevice, stagingBufferMemory, 0, vertexBufferSize, 0, &pData);
+    VkResult result = vkMapMemory(vkDevice, stagingBufferMemory, 0, vertexBufferSize, 0, &pData);
     TryThrowVulkanError(result);
     memcpy(pData, vertices, vertexBufferSize);
-    vkUnmapMemory(pGraphicEngine->vkDevice, stagingBufferMemory);
-    CreateBuffer(pGraphicEngine, vertexBufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, pVertexBuffer, pVertexBufferMemory);
+    vkUnmapMemory(vkDevice, stagingBufferMemory);
+    CreateBuffer(vkDevice, vkPhysicalDevice, vertexBufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, pVertexBuffer, pVertexBufferMemory);
     TryThrowVulkanError(result);
-    CopyVkBuffer(pGraphicEngine, stagingBuffer, *pVertexBuffer, vertexBufferSize);
+    CopyVkBuffer(graphicVkCommandPool, vkDevice, vkGraphicQueue, stagingBuffer, *pVertexBuffer, vertexBufferSize);
 
-    vkDestroyBuffer(pGraphicEngine->vkDevice, stagingBuffer, NULL);
-    vkFreeMemory(pGraphicEngine->vkDevice, stagingBufferMemory, NULL);
+    vkDestroyBuffer(vkDevice, stagingBuffer, NULL);
+    vkFreeMemory(vkDevice, stagingBufferMemory, NULL);
 }
-void DestroyVertexBuffer(GraphicEngine *pGraphicEngine, VkBuffer vertexBuffer, VkDeviceMemory vertexBufferMemory)
+void DestroyVertexBuffer(VkDevice vkDevice, VkBuffer vertexBuffer, VkDeviceMemory vertexBufferMemory)
 {
-    vkDestroyBuffer(pGraphicEngine->vkDevice, vertexBuffer, NULL);
-    vkFreeMemory(pGraphicEngine->vkDevice, vertexBufferMemory, NULL);
+    vkDestroyBuffer(vkDevice, vertexBuffer, NULL);
+    vkFreeMemory(vkDevice, vertexBufferMemory, NULL);
 }
 
-void FindMemoryType(GraphicEngine *pGraphicEngine, uint32_t typeFilter, VkMemoryPropertyFlags memoryPropertyFlags, uint32_t *memoryTypeIndex)
+void FindMemoryType(VkPhysicalDevice vkPhysicalDevice, uint32_t typeFilter, VkMemoryPropertyFlags memoryPropertyFlags, uint32_t *memoryTypeIndex)
 {
     VkPhysicalDeviceMemoryProperties physicalDeviceMemoryProperties;
-    vkGetPhysicalDeviceMemoryProperties(pGraphicEngine->vkPhysicalDevice, &physicalDeviceMemoryProperties);
+    vkGetPhysicalDeviceMemoryProperties(vkPhysicalDevice, &physicalDeviceMemoryProperties);
     for (uint32_t i = 0; i < physicalDeviceMemoryProperties.memoryTypeCount; i++)
     {
         if ((typeFilter & (1 << i)) && (physicalDeviceMemoryProperties.memoryTypes[i].propertyFlags & memoryPropertyFlags) == memoryPropertyFlags)
@@ -191,16 +188,15 @@ void FindMemoryType(GraphicEngine *pGraphicEngine, uint32_t typeFilter, VkMemory
     printf("Failed to find suitable memory type!");
 }
 
-void FindDepthFormat(GraphicEngine *pGraphicEngine, VkFormat *pDepthFormat)
+void FindDepthFormat(VkPhysicalDevice vkPhysicalDevice, VkFormat *pDepthFormat)
 {
     uint32_t candidatesCount = 3;
     VkFormat *candidates = (VkFormat[]){VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT};
-    FindSupportedFormat(pGraphicEngine, candidates, candidatesCount, VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT, pDepthFormat);
+    FindSupportedFormat(vkPhysicalDevice , candidates, candidatesCount, VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT, pDepthFormat);
 }
 
-void CreateImageView(GraphicEngine *pGraphicEngine, VkImage image, VkFormat format, VkImageAspectFlags imageAspectFlags, VkImageView *pImageView)
+void CreateImageView(VkDevice vkDevice, VkImage image, VkFormat format, VkImageAspectFlags imageAspectFlags, VkImageView *pImageView)
 {
-    VkDevice vkDevice = pGraphicEngine->vkDevice;
     VkComponentMapping components = {
         .r = VK_COMPONENT_SWIZZLE_IDENTITY,
         .g = VK_COMPONENT_SWIZZLE_IDENTITY,
@@ -228,16 +224,15 @@ void CreateImageView(GraphicEngine *pGraphicEngine, VkImage image, VkFormat form
     TryThrowVulkanError(result);
 }
 
-void CreateGraphicImage(GraphicEngine *pGraphicEngine, VkExtent3D vkExtent3D, VkFormat vkFormat, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags, GraphicImage *pGraphicImage)
+void CreateGraphicImage(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkExtent3D vkExtent3D, VkFormat vkFormat, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags, GraphicImage *pGraphicImage)
 {
     pGraphicImage->vkFormat = vkFormat;
-    CreateImage(pGraphicEngine, vkExtent3D, vkFormat, VK_IMAGE_TILING_OPTIMAL, vkImageUsageFlags, vkMemoryPropertyFlags, &pGraphicImage->vkImage, &pGraphicImage->vkDeviceMemory);
-    CreateImageView(pGraphicEngine, pGraphicImage->vkImage, pGraphicImage->vkFormat, vkImageAspectFlags, &pGraphicImage->vkImageView);
+    CreateImage(vkDevice, vkPhysicalDevice, vkExtent3D, vkFormat, VK_IMAGE_TILING_OPTIMAL, vkImageUsageFlags, vkMemoryPropertyFlags, &pGraphicImage->vkImage, &pGraphicImage->vkDeviceMemory);
+    CreateImageView(vkDevice, pGraphicImage->vkImage, pGraphicImage->vkFormat, vkImageAspectFlags, &pGraphicImage->vkImageView);
 }
 
-void DestroyGraphicImage(GraphicEngine *pGraphicEngine, GraphicImage graphicImage)
+void DestroyGraphicImage(VkDevice vkDevice, GraphicImage graphicImage)
 {
-    VkDevice vkDevice = pGraphicEngine->vkDevice;
     vkDestroyImageView(vkDevice, graphicImage.vkImageView, NULL);
     vkDestroyImage(vkDevice, graphicImage.vkImage, NULL);
     vkFreeMemory(vkDevice, graphicImage.vkDeviceMemory, NULL);

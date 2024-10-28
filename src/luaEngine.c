@@ -92,7 +92,7 @@ static int AddModel(lua_State *pLuaState)
         GraphicEngine *pGraphicEngine = lua_touserdata(pLuaState, -1);
         lua_pop(pLuaState, 2);
 
-        AddModelToGeometrySubpass(pGraphicEngine, vertexCount, geometrySubpassVertices, &outputIndex);
+        AddModelToGeometrySubpass(&pGraphicEngine->deferredRenderPass, vertexCount, geometrySubpassVertices, &outputIndex);
 
         TickernelFree(geometrySubpassVertices);
 
@@ -121,7 +121,7 @@ static int RemoveModel(lua_State *pLuaState)
     GraphicEngine *pGraphicEngine = lua_touserdata(pLuaState, -1);
     lua_pop(pLuaState, 2);
 
-    RemoveModelFromGeometrySubpass(pGraphicEngine, index);
+    RemoveModelFromGeometrySubpass(&pGraphicEngine->deferredRenderPass, index);
     return 0;
 }
 
@@ -158,7 +158,7 @@ static int UpdateModelUniformBuffer(lua_State *pLuaState)
     AssertLuaType(pGraphicEngineTpye, LUA_TLIGHTUSERDATA);
     GraphicEngine *pGraphicEngine = lua_touserdata(pLuaState, -1);
     lua_pop(pLuaState, 2);
-    UpdateModelUniformToGeometrySubpass(pGraphicEngine, index, buffer);
+    UpdateModelUniformToGeometrySubpass(&pGraphicEngine->deferredRenderPass, index, buffer);
     return 0;
 }
 

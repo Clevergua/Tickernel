@@ -1,6 +1,6 @@
 #pragma once
 #include <graphicEngineCore.h>
 
-void CreateLightingSubpass(GraphicEngine *pGraphicEngine);
-void DestroyLightingSubpass(GraphicEngine *pGraphicEngine);
-void RecreateLightingSubpassModel(GraphicEngine *pGraphicEngine);
+void CreateLightingSubpass(RenderPass *pDeferredRenderPass);
+void DestroyLightingSubpass(RenderPass *pDeferredRenderPass);
+void RecreateLightingSubpassModel(RenderPass *pDeferredRenderPass);

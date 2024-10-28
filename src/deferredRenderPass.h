@@ -2,6 +2,6 @@
 #include <geometrySubpass.h>
 #include <lightingSubpass.h>
 
-void CreateDeferredRenderPass(GraphicEngine *pGraphicEngine);
-void DestroyDeferredRenderPass(GraphicEngine *pGraphicEngine);
-void RecordDeferredRenderPass(GraphicEngine *pGraphicEngine);
+void CreateDeferredRenderPass(RenderPass *pDeferredRenderPass);
+void DestroyDeferredRenderPass(RenderPass *pDeferredRenderPass);
+void RecordDeferredRenderPass(RenderPass *pDeferredRenderPass, VkCommandBuffer vkCommandBuffer);

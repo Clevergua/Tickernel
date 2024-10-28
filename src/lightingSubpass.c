@@ -1,17 +1,15 @@
 #include <lightingSubpass.h>
 
-static void CreateVkPipeline(GraphicEngine *pGraphicEngine)
+static void CreateVkPipeline(RenderPass *pDeferredRenderPass)
 {
-    RenderPass *pDeferredRenderPass = &pGraphicEngine->deferredRenderPass;
     uint32_t lightingSubpassIndex = 1;
     Subpass *pLightingSubpass = &pDeferredRenderPass->subpasses[lightingSubpassIndex];
 
     VkShaderModule lightingVertShaderModule;
     char lightingVertShaderPath[FILENAME_MAX];
-    strcpy(lightingVertShaderPath, pGraphicEngine->assetsPath);
-    TickernelCombinePaths(lightingVertShaderPath, FILENAME_MAX, "shaders");
+    strcpy(lightingVertShaderPath, pDeferredRenderPass->shadersPath);
     TickernelCombinePaths(lightingVertShaderPath, FILENAME_MAX, "lighting.vert.spv");
-    CreateVkShaderModule(pGraphicEngine->vkDevice, lightingVertShaderPath, &lightingVertShaderModule);
+    CreateVkShaderModule(pDeferredRenderPass->vkDevice, lightingVertShaderPath, &lightingVertShaderModule);
     VkPipelineShaderStageCreateInfo vertShaderStageCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
         .pNext = NULL,
@@ -24,10 +22,9 @@ static void CreateVkPipeline(GraphicEngine *pGraphicEngine)
 
     VkShaderModule lightingFragShaderModule;
     char lightingFragShaderPath[FILENAME_MAX];
-    strcpy(lightingFragShaderPath, pGraphicEngine->assetsPath);
-    TickernelCombinePaths(lightingFragShaderPath, FILENAME_MAX, "shaders");
+    strcpy(lightingFragShaderPath, pDeferredRenderPass->shadersPath);
     TickernelCombinePaths(lightingFragShaderPath, FILENAME_MAX, "lighting.frag.spv");
-    CreateVkShaderModule(pGraphicEngine->vkDevice, lightingFragShaderPath, &lightingFragShaderModule);
+    CreateVkShaderModule(pDeferredRenderPass->vkDevice, lightingFragShaderPath, &lightingFragShaderModule);
     VkPipelineShaderStageCreateInfo fragShaderStageCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
         .pNext = NULL,
@@ -56,33 +53,15 @@ static void CreateVkPipeline(GraphicEngine *pGraphicEngine)
         .topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
         .primitiveRestartEnable = VK_FALSE,
     };
-    VkViewport viewport = {
-        .x = 0.0f,
-        .y = 0.0f,
-        .width = pGraphicEngine->width,
-        .height = pGraphicEngine->height,
-        .minDepth = 0.0f,
-        .maxDepth = 1.0f,
-    };
-    VkOffset2D offset = {
-        .x = 0,
-        .y = 0,
-    };
-    VkExtent2D extent;
-    extent.width = pGraphicEngine->width;
-    extent.height = pGraphicEngine->height;
-    VkRect2D scissor = {
-        .offset = offset,
-        .extent = extent,
-    };
+
     VkPipelineViewportStateCreateInfo pipelineViewportStateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
         .pNext = NULL,
         .flags = 0,
         .viewportCount = 1,
-        .pViewports = &viewport,
+        .pViewports = &pDeferredRenderPass->viewport,
         .scissorCount = 1,
-        .pScissors = &scissor,
+        .pScissors = &pDeferredRenderPass->scissor,
     };
     VkPipelineRasterizationStateCreateInfo pipelineRasterizationStateCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
@@ -196,7 +175,7 @@ static void CreateVkPipeline(GraphicEngine *pGraphicEngine)
         .pBindings = bindings,
     };
 
-    VkResult result = vkCreateDescriptorSetLayout(pGraphicEngine->vkDevice, &descriptorSetLayoutCreateInfo, NULL, &pLightingSubpass->descriptorSetLayout);
+    VkResult result = vkCreateDescriptorSetLayout(pDeferredRenderPass->vkDevice, &descriptorSetLayoutCreateInfo, NULL, &pLightingSubpass->descriptorSetLayout);
     VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
         .pNext = NULL,
@@ -207,7 +186,7 @@ static void CreateVkPipeline(GraphicEngine *pGraphicEngine)
         .pPushConstantRanges = NULL,
     };
 
-    result = vkCreatePipelineLayout(pGraphicEngine->vkDevice, &pipelineLayoutCreateInfo, NULL, &pLightingSubpass->vkPipelineLayout);
+    result = vkCreatePipelineLayout(pDeferredRenderPass->vkDevice, &pipelineLayoutCreateInfo, NULL, &pLightingSubpass->vkPipelineLayout);
     TryThrowVulkanError(result);
     VkGraphicsPipelineCreateInfo lightingPipelineCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
@@ -232,24 +211,23 @@ static void CreateVkPipeline(GraphicEngine *pGraphicEngine)
     };
 
     VkPipelineCache pipelineCache = NULL;
-    result = vkCreateGraphicsPipelines(pGraphicEngine->vkDevice, pipelineCache, 1, &lightingPipelineCreateInfo, NULL, &pLightingSubpass->vkPipeline);
+    result = vkCreateGraphicsPipelines(pDeferredRenderPass->vkDevice, pipelineCache, 1, &lightingPipelineCreateInfo, NULL, &pLightingSubpass->vkPipeline);
     TryThrowVulkanError(result);
-    DestroyVkShaderModule(pGraphicEngine->vkDevice, lightingVertShaderModule);
-    DestroyVkShaderModule(pGraphicEngine->vkDevice, lightingFragShaderModule);
+    DestroyVkShaderModule(pDeferredRenderPass->vkDevice, lightingVertShaderModule);
+    DestroyVkShaderModule(pDeferredRenderPass->vkDevice, lightingFragShaderModule);
 }
-static void DestroyVkPipeline(GraphicEngine *pGraphicEngine)
+static void DestroyVkPipeline(RenderPass *pDeferredRenderPass)
 {
-    RenderPass *pDeferredRenderPass = &pGraphicEngine->deferredRenderPass;
     uint32_t lightingSubpassIndex = 1;
     Subpass *pLightingSubpass = &pDeferredRenderPass->subpasses[lightingSubpassIndex];
-    vkDestroyDescriptorSetLayout(pGraphicEngine->vkDevice, pLightingSubpass->descriptorSetLayout, NULL);
-    vkDestroyPipelineLayout(pGraphicEngine->vkDevice, pLightingSubpass->vkPipelineLayout, NULL);
-    vkDestroyPipeline(pGraphicEngine->vkDevice, pLightingSubpass->vkPipeline, NULL);
+    vkDestroyDescriptorSetLayout(pDeferredRenderPass->vkDevice, pLightingSubpass->descriptorSetLayout, NULL);
+    vkDestroyPipelineLayout(pDeferredRenderPass->vkDevice, pLightingSubpass->vkPipelineLayout, NULL);
+    vkDestroyPipeline(pDeferredRenderPass->vkDevice, pLightingSubpass->vkPipeline, NULL);
 }
 
-static void CreateLightingSubpassModel(GraphicEngine *pGraphicEngine, uint32_t index)
+static void CreateLightingSubpassModel(RenderPass *pDeferredRenderPass, uint32_t index)
 {
-    RenderPass *pDeferredRenderPass = &pGraphicEngine->deferredRenderPass;
+
     uint32_t lightingSubpassIndex = 1;
     Subpass *pLightingSubpass = &pDeferredRenderPass->subpasses[lightingSubpassIndex];
 
@@ -271,26 +249,26 @@ static void CreateLightingSubpassModel(GraphicEngine *pGraphicEngine, uint32_t i
         .descriptorSetCount = 1,
         .pSetLayouts = &pLightingSubpass->descriptorSetLayout,
     };
-    VkResult result = vkAllocateDescriptorSets(pGraphicEngine->vkDevice, &descriptorSetAllocateInfo, &pSubpassModel->vkDescriptorSet);
+    VkResult result = vkAllocateDescriptorSets(pDeferredRenderPass->vkDevice, &descriptorSetAllocateInfo, &pSubpassModel->vkDescriptorSet);
     TryThrowVulkanError(result);
     VkDescriptorBufferInfo globalDescriptorBufferInfo = {
-        .buffer = pGraphicEngine->globalUniformBuffer,
+        .buffer = pDeferredRenderPass->globalUniformBuffer,
         .offset = 0,
         .range = sizeof(GlobalUniformBuffer),
     };
     VkDescriptorImageInfo depthVkDescriptorImageInfo = {
         .sampler = NULL,
-        .imageView = pGraphicEngine->depthGraphicImage.vkImageView,
+        .imageView = pDeferredRenderPass->depthGraphicImage.vkImageView,
         .imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL,
     };
     VkDescriptorImageInfo albedoVkDescriptorImageInfo = {
         .sampler = NULL,
-        .imageView = pGraphicEngine->albedoGraphicImage.vkImageView,
+        .imageView = pDeferredRenderPass->albedoGraphicImage.vkImageView,
         .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
     };
     VkDescriptorImageInfo normalVkDescriptorImageInfo = {
         .sampler = NULL,
-        .imageView = pGraphicEngine->normalGraphicImage.vkImageView,
+        .imageView = pDeferredRenderPass->normalGraphicImage.vkImageView,
         .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
     };
     VkWriteDescriptorSet descriptorWrites[] = {
@@ -343,30 +321,28 @@ static void CreateLightingSubpassModel(GraphicEngine *pGraphicEngine, uint32_t i
             .pTexelBufferView = NULL,
         },
     };
-    vkUpdateDescriptorSets(pGraphicEngine->vkDevice, 4, descriptorWrites, 0, NULL);
+    vkUpdateDescriptorSets(pDeferredRenderPass->vkDevice, 4, descriptorWrites, 0, NULL);
     pSubpassModel->isValid = true;
 }
-static void DestroyLightingSubpassModel(GraphicEngine *pGraphicEngine, uint32_t index)
+static void DestroyLightingSubpassModel(RenderPass *pDeferredRenderPass, uint32_t index)
 {
-    RenderPass *pDeferredRenderPass = &pGraphicEngine->deferredRenderPass;
     uint32_t lightingSubpassIndex = 1;
     Subpass *pLightingSubpass = &pDeferredRenderPass->subpasses[lightingSubpassIndex];
     SubpassModel *pSubpassModel = &pLightingSubpass->subpassModels[index];
     pSubpassModel->isValid = false;
 
     uint32_t poolIndex = index / pLightingSubpass->modelCountPerDescriptorPool;
-    VkResult result = vkFreeDescriptorSets(pGraphicEngine->vkDevice, pLightingSubpass->vkDescriptorPools[poolIndex], 1, &pSubpassModel->vkDescriptorSet);
+    VkResult result = vkFreeDescriptorSets(pDeferredRenderPass->vkDevice, pLightingSubpass->vkDescriptorPools[poolIndex], 1, &pSubpassModel->vkDescriptorSet);
     TryThrowVulkanError(result);
 
-    DestroyVertexBuffer(pGraphicEngine, pSubpassModel->vertexBuffer, pSubpassModel->vertexBufferMemory);
+    DestroyVertexBuffer(pDeferredRenderPass->vkDevice, pSubpassModel->vertexBuffer, pSubpassModel->vertexBufferMemory);
 }
 
-void CreateLightingSubpass(GraphicEngine *pGraphicEngine)
+void CreateLightingSubpass(RenderPass *pDeferredRenderPass)
 {
-    RenderPass *pDeferredRenderPass = &pGraphicEngine->deferredRenderPass;
     uint32_t lightingSubpassIndex = 1;
     Subpass *pLightingSubpass = &pDeferredRenderPass->subpasses[lightingSubpassIndex];
-    CreateVkPipeline(pGraphicEngine);
+    CreateVkPipeline(pDeferredRenderPass);
 
     pLightingSubpass->modelCountPerDescriptorPool = 1;
     pLightingSubpass->vkDescriptorPoolCount = 0;
@@ -388,24 +364,24 @@ void CreateLightingSubpass(GraphicEngine *pGraphicEngine)
     pLightingSubpass->pRemovedIndexLinkedList = NULL;
 
     uint32_t index;
-    AddModelToSubpass(pGraphicEngine->vkDevice, pLightingSubpass, &index);
-    CreateLightingSubpassModel(pGraphicEngine, index);
+    AddModelToSubpass(pDeferredRenderPass->vkDevice, pLightingSubpass, &index);
+    CreateLightingSubpassModel(pDeferredRenderPass, index);
 }
 
-void DestroyLightingSubpass(GraphicEngine *pGraphicEngine)
+void DestroyLightingSubpass(RenderPass *pDeferredRenderPass)
 {
-    RenderPass *pDeferredRenderPass = &pGraphicEngine->deferredRenderPass;
+
     uint32_t lightingSubpassIndex = 1;
     Subpass *pLightingSubpass = &pDeferredRenderPass->subpasses[lightingSubpassIndex];
 
-    DestroyLightingSubpassModel(pGraphicEngine, 0);
+    DestroyLightingSubpassModel(pDeferredRenderPass, 0);
     RemoveModelFromSubpass(0, pLightingSubpass);
 
     for (uint32_t i = 0; i < pLightingSubpass->modelCountPerDescriptorPool; i++)
     {
         if (pLightingSubpass->subpassModels[i].isValid)
         {
-            DestroyLightingSubpassModel(pGraphicEngine, i);
+            DestroyLightingSubpassModel(pDeferredRenderPass, i);
         }
         else
         {
@@ -416,7 +392,7 @@ void DestroyLightingSubpass(GraphicEngine *pGraphicEngine)
 
     for (uint32_t i = 0; i < pLightingSubpass->vkDescriptorPoolCount; i++)
     {
-        vkDestroyDescriptorPool(pGraphicEngine->vkDevice, pLightingSubpass->vkDescriptorPools[i], NULL);
+        vkDestroyDescriptorPool(pDeferredRenderPass->vkDevice, pLightingSubpass->vkDescriptorPools[i], NULL);
     }
     TickernelFree(pLightingSubpass->vkDescriptorPools);
 
@@ -427,10 +403,10 @@ void DestroyLightingSubpass(GraphicEngine *pGraphicEngine)
         pLightingSubpass->pRemovedIndexLinkedList = pLightingSubpass->pRemovedIndexLinkedList->pNext;
         TickernelFree(pNode);
     }
-    DestroyVkPipeline(pGraphicEngine);
+    DestroyVkPipeline(pDeferredRenderPass);
 }
-void RecreateLightingSubpassModel(GraphicEngine *pGraphicEngine)
+void RecreateLightingSubpassModel(RenderPass *pDeferredRenderPass)
 {
-    DestroyLightingSubpassModel(pGraphicEngine, 0);
-    CreateLightingSubpassModel(pGraphicEngine, 0);
+    DestroyLightingSubpassModel(pDeferredRenderPass, 0);
+    CreateLightingSubpassModel(pDeferredRenderPass, 0);
 }

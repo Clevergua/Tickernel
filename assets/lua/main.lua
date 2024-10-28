@@ -252,7 +252,7 @@ local t = 0
 
 function gameState.Update()
     print("Lua Update")
-    t = t + 0.003
+    t = t + 0.0005
     local distance = gameMath.PingPong(2, 32, t)
     cameraPosition[1] = 18 + distance
     targetPosition[1] = 18 + distance

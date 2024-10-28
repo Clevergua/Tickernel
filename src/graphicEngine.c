@@ -610,7 +610,7 @@ static void CreateSwapchain(GraphicEngine *pGraphicEngine)
     pGraphicEngine->swapchainImageViews = TickernelMalloc(swapchainImageCount * sizeof(VkImageView));
     for (uint32_t i = 0; i < swapchainImageCount; i++)
     {
-        CreateImageView(pGraphicEngine, pGraphicEngine->swapchainImages[i], pGraphicEngine->surfaceFormat.format, VK_IMAGE_ASPECT_COLOR_BIT, &pGraphicEngine->swapchainImageViews[i]);
+        CreateImageView(pGraphicEngine->vkDevice, pGraphicEngine->swapchainImages[i], pGraphicEngine->surfaceFormat.format, VK_IMAGE_ASPECT_COLOR_BIT, &pGraphicEngine->swapchainImageViews[i]);
     }
 }
 static void DestroySwapchain(GraphicEngine *pGraphicEngine)
@@ -665,17 +665,17 @@ static void CreateGraphicImages(GraphicEngine *pGraphicEngine)
         .depth = 1,
     };
     VkFormat depthVkFormat;
-    FindDepthFormat(pGraphicEngine, &depthVkFormat);
-    CreateGraphicImage(pGraphicEngine, vkExtent3D, depthVkFormat, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_IMAGE_ASPECT_DEPTH_BIT, &pGraphicEngine->depthGraphicImage);
-    CreateGraphicImage(pGraphicEngine, vkExtent3D, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_IMAGE_ASPECT_COLOR_BIT, &pGraphicEngine->albedoGraphicImage);
-    CreateGraphicImage(pGraphicEngine, vkExtent3D, VK_FORMAT_A2R10G10B10_UNORM_PACK32, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_IMAGE_ASPECT_COLOR_BIT, &pGraphicEngine->normalGraphicImage);
+    FindDepthFormat(pGraphicEngine->vkPhysicalDevice, &depthVkFormat);
+    CreateGraphicImage(pGraphicEngine->vkDevice, pGraphicEngine->vkPhysicalDevice, vkExtent3D, depthVkFormat, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_IMAGE_ASPECT_DEPTH_BIT, &pGraphicEngine->depthGraphicImage);
+    CreateGraphicImage(pGraphicEngine->vkDevice, pGraphicEngine->vkPhysicalDevice, vkExtent3D, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_IMAGE_ASPECT_COLOR_BIT, &pGraphicEngine->albedoGraphicImage);
+    CreateGraphicImage(pGraphicEngine->vkDevice, pGraphicEngine->vkPhysicalDevice, vkExtent3D, VK_FORMAT_A2R10G10B10_UNORM_PACK32, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_IMAGE_ASPECT_COLOR_BIT, &pGraphicEngine->normalGraphicImage);
 }
 
 static void DestroyGraphicImages(GraphicEngine *pGraphicEngine)
 {
-    DestroyGraphicImage(pGraphicEngine, pGraphicEngine->normalGraphicImage);
-    DestroyGraphicImage(pGraphicEngine, pGraphicEngine->albedoGraphicImage);
-    DestroyGraphicImage(pGraphicEngine, pGraphicEngine->depthGraphicImage);
+    DestroyGraphicImage(pGraphicEngine->vkDevice, pGraphicEngine->normalGraphicImage);
+    DestroyGraphicImage(pGraphicEngine->vkDevice, pGraphicEngine->albedoGraphicImage);
+    DestroyGraphicImage(pGraphicEngine->vkDevice, pGraphicEngine->depthGraphicImage);
 }
 
 static void RecreateSwapchain(GraphicEngine *pGraphicEngine)
@@ -709,7 +709,7 @@ static void RecreateSwapchain(GraphicEngine *pGraphicEngine)
     CreateGraphicImages(pGraphicEngine);
 
     RenderPass *pDeferredRenderPass = &pGraphicEngine->deferredRenderPass;
-    RecreateLightingSubpassModel(pGraphicEngine);
+    RecreateLightingSubpassModel(&pGraphicEngine->deferredRenderPass);
     for (uint32_t i = 0; i < pDeferredRenderPass->vkFramebufferCount; i++)
     {
         if (pDeferredRenderPass->vkFramebuffers[i] == INVALID_VKFRAMEBUFFER)
@@ -825,7 +825,7 @@ static void CreateGlobalUniformBuffers(GraphicEngine *pGraphicEngine)
 {
     size_t bufferSize = sizeof(GlobalUniformBuffer);
     VkResult result = VK_SUCCESS;
-    CreateBuffer(pGraphicEngine, bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &pGraphicEngine->globalUniformBuffer, &pGraphicEngine->globalUniformBufferMemory);
+    CreateBuffer(pGraphicEngine->vkDevice, pGraphicEngine->vkPhysicalDevice, bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &pGraphicEngine->globalUniformBuffer, &pGraphicEngine->globalUniformBufferMemory);
     result = vkMapMemory(pGraphicEngine->vkDevice, pGraphicEngine->globalUniformBufferMemory, 0, bufferSize, 0, &pGraphicEngine->globalUniformBufferMapped);
     TryThrowVulkanError(result);
 }
@@ -859,13 +859,41 @@ static void DestroyVkCommandBuffers(GraphicEngine *pGraphicEngine)
 
 static void RecordCommandBuffer(GraphicEngine *pGraphicEngine)
 {
-    RecordDeferredRenderPass(pGraphicEngine);
+    VkCommandBuffer vkCommandBuffer = pGraphicEngine->graphicVkCommandBuffers[pGraphicEngine->frameIndex];
+    RecordDeferredRenderPass(&pGraphicEngine->deferredRenderPass, vkCommandBuffer);
+}
+
+static void InitializeGraphicEngine(GraphicEngine *pGraphicEngine)
+{
+    pGraphicEngine->frameCount = 0;
+    pGraphicEngine->pTickernelWindow = TickernelCreateWindow(pGraphicEngine->windowWidth, pGraphicEngine->windowHeight, "Tickernel Engine");
+    VkViewport viewport = {
+        .x = 0.0f,
+        .y = 0.0f,
+        .width = pGraphicEngine->width,
+        .height = pGraphicEngine->height,
+        .minDepth = 0.0f,
+        .maxDepth = 1.0f,
+    };
+    pGraphicEngine->viewport = viewport;
+    VkOffset2D offset = {
+        .x = 0,
+        .y = 0,
+    };
+    VkExtent2D extent = {
+        .width = pGraphicEngine->width,
+        .height = pGraphicEngine->height,
+    };
+    VkRect2D scissor = {
+        .offset = offset,
+        .extent = extent,
+    };
+    pGraphicEngine->scissor = scissor;
 }
 
 void StartGraphicEngine(GraphicEngine *pGraphicEngine)
 {
-    pGraphicEngine->frameCount = 0;
-    pGraphicEngine->pTickernelWindow = TickernelCreateWindow(pGraphicEngine->windowWidth, pGraphicEngine->windowHeight, "Tickernel Engine");
+    InitializeGraphicEngine(pGraphicEngine);
     CreateVkInstance(pGraphicEngine);
     CreateVKSurface(pGraphicEngine);
     PickPhysicalDevice(pGraphicEngine);
@@ -876,7 +904,7 @@ void StartGraphicEngine(GraphicEngine *pGraphicEngine)
     CreateVkCommandBuffers(pGraphicEngine);
     CreateGlobalUniformBuffers(pGraphicEngine);
     CreateGraphicImages(pGraphicEngine);
-    CreateDeferredRenderPass(pGraphicEngine);
+    CreateDeferredRenderPass(&pGraphicEngine->deferredRenderPass);
 }
 
 void UpdateGraphicEngine(GraphicEngine *pGraphicEngine, bool *pCanUpdate)
@@ -925,7 +953,7 @@ void EndGraphicEngine(GraphicEngine *pGraphicEngine)
     VkResult result = vkDeviceWaitIdle(pGraphicEngine->vkDevice);
     TryThrowVulkanError(result);
 
-    DestroyDeferredRenderPass(pGraphicEngine);
+    DestroyDeferredRenderPass(&pGraphicEngine->deferredRenderPass);
     DestroyGraphicImages(pGraphicEngine);
     DestroyGlobalUniformBuffers(pGraphicEngine);
     DestroyVkCommandBuffers(pGraphicEngine);

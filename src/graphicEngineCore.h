@@ -46,18 +46,6 @@ typedef struct SubpassStruct
     VkDescriptorPoolSize *vkDescriptorPoolSizes;
 } Subpass;
 
-typedef struct RenderPassStruct
-{
-    VkRenderPass vkRenderPass;
-    uint32_t vkFramebufferCount;
-    VkFramebuffer *vkFramebuffers;
-    VkDevice vkDevice;
-    char *shadersPath;
-
-    uint32_t subpassCount;
-    Subpass *subpasses;
-} RenderPass;
-
 typedef struct GraphicImageStruct
 {
     VkImage vkImage;
@@ -66,75 +54,47 @@ typedef struct GraphicImageStruct
     VkDeviceMemory vkDeviceMemory;
 } GraphicImage;
 
-typedef struct GraphicEngineStruct
+typedef struct RenderPassStruct
 {
-    // Config
-    bool enableValidationLayers;
-    char *name;
-    int windowHeight;
-    int windowWidth;
-    int targetSwapchainImageCount;
-    VkPresentModeKHR targetPresentMode;
-    char *assetsPath;
-
-    // Runtime
-    uint32_t height;
-    uint32_t width;
-    TickernelWindow *pTickernelWindow;
-    VkInstance vkInstance;
-    VkSurfaceKHR vkSurface;
-    VkPhysicalDevice vkPhysicalDevice;
-    uint32_t queueFamilyPropertyCount;
-    uint32_t graphicQueueFamilyIndex;
-    uint32_t presentQueueFamilyIndex;
     VkDevice vkDevice;
-    VkQueue vkGraphicQueue;
-    VkQueue vkPresentQueue;
-    VkSwapchainKHR vkSwapchain;
-    VkSurfaceFormatKHR surfaceFormat;
-    // VkExtent2D swapchainExtent;
-    uint32_t swapchainImageCount;
-    VkImage *swapchainImages;
-    VkImageView *swapchainImageViews;
-
+    VkPhysicalDevice vkPhysicalDevice;
+    char *shadersPath;
+    VkViewport viewport;
+    VkRect2D scissor;
     VkCommandPool graphicVkCommandPool;
-    VkCommandBuffer *graphicVkCommandBuffers;
-    uint32_t acquiredImageIndex;
-    VkSemaphore imageAvailableSemaphore;
-    VkSemaphore renderFinishedSemaphore;
-    VkFence renderFinishedFence;
-    uint32_t frameCount;
-    uint32_t frameIndex;
-
+    VkQueue vkGraphicQueue;
     VkBuffer globalUniformBuffer;
-    VkDeviceMemory globalUniformBufferMemory;
-    void *globalUniformBufferMapped;
-
     GraphicImage depthGraphicImage;
     GraphicImage albedoGraphicImage;
     GraphicImage normalGraphicImage;
-    RenderPass deferredRenderPass;
-    uint32_t fullScreenTriangleModelIndex;
+    VkSurfaceFormatKHR surfaceFormat;
+    uint32_t swapchainImageCount;
+    VkImage *swapchainImages;
+    VkImageView *swapchainImageViews;
+    uint32_t frameIndex;
+    VkRenderPass vkRenderPass;
+    uint32_t vkFramebufferCount;
+    VkFramebuffer *vkFramebuffers;
 
-    vec3 cameraPosition;
-    vec3 targetPosition;
-} GraphicEngine;
+    uint32_t subpassCount;
+    Subpass *subpasses;
+} RenderPass;
 
 void TryThrowVulkanError(VkResult vkResult);
-void FindMemoryType(GraphicEngine *pGraphicEngine, uint32_t typeFilter, VkMemoryPropertyFlags memoryPropertyFlags, uint32_t *memoryTypeIndex);
-void FindDepthFormat(GraphicEngine *pGraphicEngine, VkFormat *pDepthFormat);
+void FindMemoryType(VkPhysicalDevice vkPhysicalDevice, uint32_t typeFilter, VkMemoryPropertyFlags memoryPropertyFlags, uint32_t *memoryTypeIndex);
+void FindDepthFormat(VkPhysicalDevice vkPhysicalDevice, VkFormat *pDepthFormat);
 
-void CreateImageView(GraphicEngine *pGraphicEngine, VkImage image, VkFormat format, VkImageAspectFlags imageAspectFlags, VkImageView *pImageView);
-void CreateGraphicImage(GraphicEngine *pGraphicEngine, VkExtent3D vkExtent3D, VkFormat vkFormat, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags, GraphicImage *pGraphicImage);
-void DestroyGraphicImage(GraphicEngine *pGraphicEngine, GraphicImage graphicImage);
+void CreateImageView(VkDevice vkDevice, VkImage image, VkFormat format, VkImageAspectFlags imageAspectFlags, VkImageView *pImageView);
+void CreateGraphicImage(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkExtent3D vkExtent3D, VkFormat vkFormat, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags, GraphicImage *pGraphicImage);
+void DestroyGraphicImage(VkDevice vkDevice, GraphicImage graphicImage);
 void CreateVkShaderModule(VkDevice vkDevice, const char *filePath, VkShaderModule *pVkShaderModule);
 void DestroyVkShaderModule(VkDevice vkDevice, VkShaderModule vkShaderModule);
 
-void CreateBuffer(GraphicEngine *pGraphicEngine, VkDeviceSize bufferSize, VkBufferUsageFlags bufferUsageFlags, VkMemoryPropertyFlags msemoryPropertyFlags, VkBuffer *pBuffer, VkDeviceMemory *pDeviceMemory);
+void CreateBuffer(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkDeviceSize bufferSize, VkBufferUsageFlags bufferUsageFlags, VkMemoryPropertyFlags msemoryPropertyFlags, VkBuffer *pBuffer, VkDeviceMemory *pDeviceMemory);
 void DestroyBuffer(VkDevice vkDevice, VkBuffer vkBuffer, VkDeviceMemory deviceMemory);
 
-void CreateVertexBuffer(GraphicEngine *pGraphicEngine, VkDeviceSize vertexBufferSize, void *vertices, VkBuffer *pVertexBuffer, VkDeviceMemory *pVertexBufferMemory);
-void DestroyVertexBuffer(GraphicEngine *pGraphicEngine, VkBuffer vertexBuffer, VkDeviceMemory vertexBufferMemory);
+void CreateVertexBuffer(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkCommandPool graphicVkCommandPool, VkQueue vkGraphicQueue, VkDeviceSize vertexBufferSize, void *vertices, VkBuffer *pVertexBuffer, VkDeviceMemory *pVertexBufferMemory);
+void DestroyVertexBuffer(VkDevice vkDevice, VkBuffer vertexBuffer, VkDeviceMemory vertexBufferMemory);
 
 void AddModelToSubpass(VkDevice vkDevice, Subpass *pSubpass, uint32_t *pModelIndex);
 void RemoveModelFromSubpass(uint32_t modelIndex, Subpass *pSubpass);
