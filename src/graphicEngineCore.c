@@ -243,7 +243,7 @@ void DestroyGraphicImage(GraphicEngine *pGraphicEngine, GraphicImage graphicImag
     vkFreeMemory(vkDevice, graphicImage.vkDeviceMemory, NULL);
 }
 
-void CreateVkShaderModule(GraphicEngine *pGraphicEngine, const char *filePath, VkShaderModule *pVkShaderModule)
+void CreateVkShaderModule(VkDevice vkDevice, const char *filePath, VkShaderModule *pVkShaderModule)
 {
     FILE *pFile = fopen(filePath, "rb");
     if (NULL == pFile)
@@ -271,7 +271,7 @@ void CreateVkShaderModule(GraphicEngine *pGraphicEngine, const char *filePath, V
                 .pCode = pCode,
             };
             VkShaderModule shaderModule;
-            vkCreateShaderModule(pGraphicEngine->vkDevice, &shaderModuleCreateInfo, NULL, pVkShaderModule);
+            vkCreateShaderModule(vkDevice, &shaderModuleCreateInfo, NULL, pVkShaderModule);
             free(pCode);
         }
         else
@@ -281,12 +281,12 @@ void CreateVkShaderModule(GraphicEngine *pGraphicEngine, const char *filePath, V
     }
 }
 
-void DestroyVkShaderModule(GraphicEngine *pGraphicEngine, VkShaderModule vkShaderModule)
+void DestroyVkShaderModule(VkDevice vkDevice, VkShaderModule vkShaderModule)
 {
-    vkDestroyShaderModule(pGraphicEngine->vkDevice, vkShaderModule, NULL);
+    vkDestroyShaderModule(vkDevice, vkShaderModule, NULL);
 }
 
-void AddModelToSubpass(GraphicEngine *pGraphicEngine, Subpass *pSubpass, uint32_t *pIndex)
+void AddModelToSubpass(VkDevice vkDevice, Subpass *pSubpass, uint32_t *pIndex)
 {
     if (NULL != pSubpass->pRemovedIndexLinkedList)
     {
@@ -317,7 +317,7 @@ void AddModelToSubpass(GraphicEngine *pGraphicEngine, Subpass *pSubpass, uint32_
             .poolSizeCount = pSubpass->vkDescriptorPoolSizeCount,
             .pPoolSizes = pSubpass->vkDescriptorPoolSizes,
         };
-        VkResult result = vkCreateDescriptorPool(pGraphicEngine->vkDevice, &descriptorPoolCreateInfo, NULL, &newVkDescriptorPools[pSubpass->vkDescriptorPoolCount]);
+        VkResult result = vkCreateDescriptorPool(vkDevice, &descriptorPoolCreateInfo, NULL, &newVkDescriptorPools[pSubpass->vkDescriptorPoolCount]);
         TryThrowVulkanError(result);
         pSubpass->vkDescriptorPoolCount = newVkDescriptorPoolCount;
         pSubpass->vkDescriptorPools = newVkDescriptorPools;
@@ -332,7 +332,7 @@ void AddModelToSubpass(GraphicEngine *pGraphicEngine, Subpass *pSubpass, uint32_
         return;
     }
 }
-void RemoveModelFromSubpass(GraphicEngine *pGraphicEngine, uint32_t index, Subpass *pSubpass)
+void RemoveModelFromSubpass(uint32_t index, Subpass *pSubpass)
 {
     if (index == (pSubpass->subpassModelCount - 1))
     {

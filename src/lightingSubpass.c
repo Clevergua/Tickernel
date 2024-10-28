@@ -11,7 +11,7 @@ static void CreateVkPipeline(GraphicEngine *pGraphicEngine)
     strcpy(lightingVertShaderPath, pGraphicEngine->assetsPath);
     TickernelCombinePaths(lightingVertShaderPath, FILENAME_MAX, "shaders");
     TickernelCombinePaths(lightingVertShaderPath, FILENAME_MAX, "lighting.vert.spv");
-    CreateVkShaderModule(pGraphicEngine, lightingVertShaderPath, &lightingVertShaderModule);
+    CreateVkShaderModule(pGraphicEngine->vkDevice, lightingVertShaderPath, &lightingVertShaderModule);
     VkPipelineShaderStageCreateInfo vertShaderStageCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
         .pNext = NULL,
@@ -27,7 +27,7 @@ static void CreateVkPipeline(GraphicEngine *pGraphicEngine)
     strcpy(lightingFragShaderPath, pGraphicEngine->assetsPath);
     TickernelCombinePaths(lightingFragShaderPath, FILENAME_MAX, "shaders");
     TickernelCombinePaths(lightingFragShaderPath, FILENAME_MAX, "lighting.frag.spv");
-    CreateVkShaderModule(pGraphicEngine, lightingFragShaderPath, &lightingFragShaderModule);
+    CreateVkShaderModule(pGraphicEngine->vkDevice, lightingFragShaderPath, &lightingFragShaderModule);
     VkPipelineShaderStageCreateInfo fragShaderStageCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
         .pNext = NULL,
@@ -234,8 +234,8 @@ static void CreateVkPipeline(GraphicEngine *pGraphicEngine)
     VkPipelineCache pipelineCache = NULL;
     result = vkCreateGraphicsPipelines(pGraphicEngine->vkDevice, pipelineCache, 1, &lightingPipelineCreateInfo, NULL, &pLightingSubpass->vkPipeline);
     TryThrowVulkanError(result);
-    DestroyVkShaderModule(pGraphicEngine, lightingVertShaderModule);
-    DestroyVkShaderModule(pGraphicEngine, lightingFragShaderModule);
+    DestroyVkShaderModule(pGraphicEngine->vkDevice, lightingVertShaderModule);
+    DestroyVkShaderModule(pGraphicEngine->vkDevice, lightingFragShaderModule);
 }
 static void DestroyVkPipeline(GraphicEngine *pGraphicEngine)
 {
@@ -388,7 +388,7 @@ void CreateLightingSubpass(GraphicEngine *pGraphicEngine)
     pLightingSubpass->pRemovedIndexLinkedList = NULL;
 
     uint32_t index;
-    AddModelToSubpass(pGraphicEngine, pLightingSubpass, &index);
+    AddModelToSubpass(pGraphicEngine->vkDevice, pLightingSubpass, &index);
     CreateLightingSubpassModel(pGraphicEngine, index);
 }
 
@@ -399,7 +399,7 @@ void DestroyLightingSubpass(GraphicEngine *pGraphicEngine)
     Subpass *pLightingSubpass = &pDeferredRenderPass->subpasses[lightingSubpassIndex];
 
     DestroyLightingSubpassModel(pGraphicEngine, 0);
-    RemoveModelFromSubpass(pGraphicEngine, 0, pLightingSubpass);
+    RemoveModelFromSubpass(0, pLightingSubpass);
 
     for (uint32_t i = 0; i < pLightingSubpass->modelCountPerDescriptorPool; i++)
     {

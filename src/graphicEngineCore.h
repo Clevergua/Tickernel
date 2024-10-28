@@ -51,6 +51,8 @@ typedef struct RenderPassStruct
     VkRenderPass vkRenderPass;
     uint32_t vkFramebufferCount;
     VkFramebuffer *vkFramebuffers;
+    VkDevice vkDevice;
+    char *shadersPath;
 
     uint32_t subpassCount;
     Subpass *subpasses;
@@ -125,8 +127,8 @@ void FindDepthFormat(GraphicEngine *pGraphicEngine, VkFormat *pDepthFormat);
 void CreateImageView(GraphicEngine *pGraphicEngine, VkImage image, VkFormat format, VkImageAspectFlags imageAspectFlags, VkImageView *pImageView);
 void CreateGraphicImage(GraphicEngine *pGraphicEngine, VkExtent3D vkExtent3D, VkFormat vkFormat, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags, GraphicImage *pGraphicImage);
 void DestroyGraphicImage(GraphicEngine *pGraphicEngine, GraphicImage graphicImage);
-void CreateVkShaderModule(GraphicEngine *pGraphicEngine, const char *filePath, VkShaderModule *pVkShaderModule);
-void DestroyVkShaderModule(GraphicEngine *pGraphicEngine, VkShaderModule vkShaderModule);
+void CreateVkShaderModule(VkDevice vkDevice, const char *filePath, VkShaderModule *pVkShaderModule);
+void DestroyVkShaderModule(VkDevice vkDevice, VkShaderModule vkShaderModule);
 
 void CreateBuffer(GraphicEngine *pGraphicEngine, VkDeviceSize bufferSize, VkBufferUsageFlags bufferUsageFlags, VkMemoryPropertyFlags msemoryPropertyFlags, VkBuffer *pBuffer, VkDeviceMemory *pDeviceMemory);
 void DestroyBuffer(VkDevice vkDevice, VkBuffer vkBuffer, VkDeviceMemory deviceMemory);
@@ -134,5 +136,5 @@ void DestroyBuffer(VkDevice vkDevice, VkBuffer vkBuffer, VkDeviceMemory deviceMe
 void CreateVertexBuffer(GraphicEngine *pGraphicEngine, VkDeviceSize vertexBufferSize, void *vertices, VkBuffer *pVertexBuffer, VkDeviceMemory *pVertexBufferMemory);
 void DestroyVertexBuffer(GraphicEngine *pGraphicEngine, VkBuffer vertexBuffer, VkDeviceMemory vertexBufferMemory);
 
-void AddModelToSubpass(GraphicEngine *pGraphicEngine, Subpass *pSubpass, uint32_t *pModelIndex);
-void RemoveModelFromSubpass(GraphicEngine *pGraphicEngine, uint32_t modelIndex, Subpass *pSubpass);
+void AddModelToSubpass(VkDevice vkDevice, Subpass *pSubpass, uint32_t *pModelIndex);
+void RemoveModelFromSubpass(uint32_t modelIndex, Subpass *pSubpass);

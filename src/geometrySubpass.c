@@ -10,7 +10,7 @@ static void CreateVkPipeline(GraphicEngine *pGraphicEngine)
     strcpy(geometryVertShaderPath, pGraphicEngine->assetsPath);
     TickernelCombinePaths(geometryVertShaderPath, FILENAME_MAX, "shaders");
     TickernelCombinePaths(geometryVertShaderPath, FILENAME_MAX, "geometry.vert.spv");
-    CreateVkShaderModule(pGraphicEngine, geometryVertShaderPath, &geometryVertShaderModule);
+    CreateVkShaderModule(pGraphicEngine->vkDevice, geometryVertShaderPath, &geometryVertShaderModule);
     VkPipelineShaderStageCreateInfo vertShaderStageCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
         .pNext = NULL,
@@ -27,7 +27,7 @@ static void CreateVkPipeline(GraphicEngine *pGraphicEngine)
     strcpy(geometryFragShaderPath, pGraphicEngine->assetsPath);
     TickernelCombinePaths(geometryFragShaderPath, FILENAME_MAX, "shaders");
     TickernelCombinePaths(geometryFragShaderPath, FILENAME_MAX, "geometry.frag.spv");
-    CreateVkShaderModule(pGraphicEngine, geometryFragShaderPath, &geometryFragShaderModule);
+    CreateVkShaderModule(pGraphicEngine->vkDevice, geometryFragShaderPath, &geometryFragShaderModule);
     VkPipelineShaderStageCreateInfo fragShaderStageCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
         .pNext = NULL,
@@ -173,8 +173,7 @@ static void CreateVkPipeline(GraphicEngine *pGraphicEngine)
             .dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
             .alphaBlendOp = VK_BLEND_OP_ADD,
             .colorWriteMask = VK_COLOR_COMPONENT_A_BIT | VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT,
-        }
-    };
+        }};
 
     VkPipelineColorBlendStateCreateInfo colorBlendStateCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
@@ -263,8 +262,8 @@ static void CreateVkPipeline(GraphicEngine *pGraphicEngine)
     VkPipelineCache pipelineCache = NULL;
     result = vkCreateGraphicsPipelines(pGraphicEngine->vkDevice, pipelineCache, 1, &geometryPipelineCreateInfo, NULL, &pGeometrySubpass->vkPipeline);
     TryThrowVulkanError(result);
-    DestroyVkShaderModule(pGraphicEngine, geometryVertShaderModule);
-    DestroyVkShaderModule(pGraphicEngine, geometryFragShaderModule);
+    DestroyVkShaderModule(pGraphicEngine->vkDevice, geometryVertShaderModule);
+    DestroyVkShaderModule(pGraphicEngine->vkDevice, geometryFragShaderModule);
 }
 static void DestroyVkPipeline(GraphicEngine *pGraphicEngine)
 {
@@ -418,7 +417,7 @@ void AddModelToGeometrySubpass(GraphicEngine *pGraphicEngine, uint32_t vertexCou
     RenderPass *pDeferredRenderPass = &pGraphicEngine->deferredRenderPass;
     uint32_t geometrySubpassIndex = 0;
     Subpass *pGeometrySubpass = &pDeferredRenderPass->subpasses[geometrySubpassIndex];
-    AddModelToSubpass(pGraphicEngine, pGeometrySubpass, pIndex);
+    AddModelToSubpass(pGraphicEngine->vkDevice, pGeometrySubpass, pIndex);
     CreateGeometrySubpassModel(pGraphicEngine, vertexCount, geometrySubpassVertices, *pIndex);
 }
 void RemoveModelFromGeometrySubpass(GraphicEngine *pGraphicEngine, uint32_t index)
@@ -427,7 +426,7 @@ void RemoveModelFromGeometrySubpass(GraphicEngine *pGraphicEngine, uint32_t inde
     uint32_t geometrySubpassIndex = 0;
     Subpass *pGeometrySubpass = &pDeferredRenderPass->subpasses[geometrySubpassIndex];
     DestroyGeometrySubpassModel(pGraphicEngine, index);
-    RemoveModelFromSubpass(pGraphicEngine, index, pGeometrySubpass);
+    RemoveModelFromSubpass(index, pGeometrySubpass);
 }
 void UpdateModelUniformToGeometrySubpass(GraphicEngine *pGraphicEngine, uint32_t index, GeometrySubpassModelUniformBuffer geometrySubpassModelUniformBuffer)
 {
