@@ -526,6 +526,29 @@ static void CreateSwapchain(GraphicEngine *pGraphicEngine)
     }
 
     TickernelGetWindowFramebufferSize(pGraphicEngine->pTickernelWindow, &pGraphicEngine->width, &pGraphicEngine->height);
+    VkViewport viewport = {
+        .x = 0.0f,
+        .y = 0.0f,
+        .width = pGraphicEngine->width,
+        .height = pGraphicEngine->height,
+        .minDepth = 0.0f,
+        .maxDepth = 1.0f,
+    };
+    pGraphicEngine->viewport = viewport;
+    VkOffset2D offset = {
+        .x = 0,
+        .y = 0,
+    };
+    VkExtent2D extent = {
+        .width = pGraphicEngine->width,
+        .height = pGraphicEngine->height,
+    };
+    VkRect2D scissor = {
+        .offset = offset,
+        .extent = extent,
+    };
+    pGraphicEngine->scissor = scissor;
+    
     VkExtent2D swapchainExtent;
     if (pGraphicEngine->width > vkSurfaceCapabilities.maxImageExtent.width)
     {
@@ -694,6 +717,29 @@ static void RecreateSwapchain(GraphicEngine *pGraphicEngine)
         printf("Swapchain's width and height have changed! (%d, %d) to (%d, %d)", pGraphicEngine->width, pGraphicEngine->height, width, height);
         pGraphicEngine->width = width;
         pGraphicEngine->height = height;
+
+        VkViewport viewport = {
+            .x = 0.0f,
+            .y = 0.0f,
+            .width = pGraphicEngine->width,
+            .height = pGraphicEngine->height,
+            .minDepth = 0.0f,
+            .maxDepth = 1.0f,
+        };
+        pGraphicEngine->viewport = viewport;
+        VkOffset2D offset = {
+            .x = 0,
+            .y = 0,
+        };
+        VkExtent2D extent = {
+            .width = pGraphicEngine->width,
+            .height = pGraphicEngine->height,
+        };
+        VkRect2D scissor = {
+            .offset = offset,
+            .extent = extent,
+        };
+        pGraphicEngine->scissor = scissor;
     }
     else
     {
@@ -709,7 +755,7 @@ static void RecreateSwapchain(GraphicEngine *pGraphicEngine)
     CreateGraphicImages(pGraphicEngine);
 
     RenderPass *pDeferredRenderPass = &pGraphicEngine->deferredRenderPass;
-    RecreateLightingSubpassModel(&pGraphicEngine->deferredRenderPass);
+    RecreateLightingSubpassModel(&pGraphicEngine->deferredRenderPass, pGraphicEngine->vkDevice, pGraphicEngine->globalUniformBuffer, pGraphicEngine->depthGraphicImage.vkImageView, pGraphicEngine->albedoGraphicImage.vkImageView, pGraphicEngine->normalGraphicImage.vkImageView);
     for (uint32_t i = 0; i < pDeferredRenderPass->vkFramebufferCount; i++)
     {
         if (pDeferredRenderPass->vkFramebuffers[i] == INVALID_VKFRAMEBUFFER)
@@ -860,40 +906,22 @@ static void DestroyVkCommandBuffers(GraphicEngine *pGraphicEngine)
 static void RecordCommandBuffer(GraphicEngine *pGraphicEngine)
 {
     VkCommandBuffer vkCommandBuffer = pGraphicEngine->graphicVkCommandBuffers[pGraphicEngine->frameIndex];
-    RecordDeferredRenderPass(&pGraphicEngine->deferredRenderPass, vkCommandBuffer);
+    RecordDeferredRenderPass(&pGraphicEngine->deferredRenderPass, vkCommandBuffer, pGraphicEngine->viewport, pGraphicEngine->scissor, pGraphicEngine->frameIndex, pGraphicEngine->swapchainImageViews, pGraphicEngine->depthGraphicImage.vkImageView, pGraphicEngine->albedoGraphicImage.vkImageView, pGraphicEngine->normalGraphicImage.vkImageView, pGraphicEngine->vkDevice);
 }
 
-static void InitializeGraphicEngine(GraphicEngine *pGraphicEngine)
+static void SetUpGraphicEngine(GraphicEngine *pGraphicEngine)
 {
     pGraphicEngine->frameCount = 0;
     pGraphicEngine->pTickernelWindow = TickernelCreateWindow(pGraphicEngine->windowWidth, pGraphicEngine->windowHeight, "Tickernel Engine");
-    VkViewport viewport = {
-        .x = 0.0f,
-        .y = 0.0f,
-        .width = pGraphicEngine->width,
-        .height = pGraphicEngine->height,
-        .minDepth = 0.0f,
-        .maxDepth = 1.0f,
-    };
-    pGraphicEngine->viewport = viewport;
-    VkOffset2D offset = {
-        .x = 0,
-        .y = 0,
-    };
-    VkExtent2D extent = {
-        .width = pGraphicEngine->width,
-        .height = pGraphicEngine->height,
-    };
-    VkRect2D scissor = {
-        .offset = offset,
-        .extent = extent,
-    };
-    pGraphicEngine->scissor = scissor;
+
+    pGraphicEngine->deferredRenderPass.shadersPath = TickernelMalloc(sizeof(char) * FILENAME_MAX);
+    strcpy(pGraphicEngine->deferredRenderPass.shadersPath, pGraphicEngine->assetsPath);
+    TickernelCombinePaths(pGraphicEngine->deferredRenderPass.shadersPath, FILENAME_MAX, "shaders");
 }
 
 void StartGraphicEngine(GraphicEngine *pGraphicEngine)
 {
-    InitializeGraphicEngine(pGraphicEngine);
+    SetUpGraphicEngine(pGraphicEngine);
     CreateVkInstance(pGraphicEngine);
     CreateVKSurface(pGraphicEngine);
     PickPhysicalDevice(pGraphicEngine);
@@ -904,7 +932,7 @@ void StartGraphicEngine(GraphicEngine *pGraphicEngine)
     CreateVkCommandBuffers(pGraphicEngine);
     CreateGlobalUniformBuffers(pGraphicEngine);
     CreateGraphicImages(pGraphicEngine);
-    CreateDeferredRenderPass(&pGraphicEngine->deferredRenderPass);
+    CreateDeferredRenderPass(&pGraphicEngine->deferredRenderPass, pGraphicEngine->vkDevice, pGraphicEngine->surfaceFormat.format, pGraphicEngine->depthGraphicImage, pGraphicEngine->albedoGraphicImage, pGraphicEngine->normalGraphicImage, pGraphicEngine->swapchainImageCount, pGraphicEngine->viewport, pGraphicEngine->scissor, pGraphicEngine->globalUniformBuffer);
 }
 
 void UpdateGraphicEngine(GraphicEngine *pGraphicEngine, bool *pCanUpdate)
@@ -953,7 +981,7 @@ void EndGraphicEngine(GraphicEngine *pGraphicEngine)
     VkResult result = vkDeviceWaitIdle(pGraphicEngine->vkDevice);
     TryThrowVulkanError(result);
 
-    DestroyDeferredRenderPass(&pGraphicEngine->deferredRenderPass);
+    DestroyDeferredRenderPass(&pGraphicEngine->deferredRenderPass, pGraphicEngine->vkDevice);
     DestroyGraphicImages(pGraphicEngine);
     DestroyGlobalUniformBuffers(pGraphicEngine);
     DestroyVkCommandBuffers(pGraphicEngine);

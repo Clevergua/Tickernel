@@ -56,22 +56,8 @@ typedef struct GraphicImageStruct
 
 typedef struct RenderPassStruct
 {
-    VkDevice vkDevice;
-    VkPhysicalDevice vkPhysicalDevice;
     char *shadersPath;
-    VkViewport viewport;
-    VkRect2D scissor;
-    VkCommandPool graphicVkCommandPool;
-    VkQueue vkGraphicQueue;
-    VkBuffer globalUniformBuffer;
-    GraphicImage depthGraphicImage;
-    GraphicImage albedoGraphicImage;
-    GraphicImage normalGraphicImage;
-    VkSurfaceFormatKHR surfaceFormat;
-    uint32_t swapchainImageCount;
-    VkImage *swapchainImages;
-    VkImageView *swapchainImageViews;
-    uint32_t frameIndex;
+
     VkRenderPass vkRenderPass;
     uint32_t vkFramebufferCount;
     VkFramebuffer *vkFramebuffers;
