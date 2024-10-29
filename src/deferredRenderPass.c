@@ -204,16 +204,15 @@ void CreateDeferredRenderPass(RenderPass *pDeferredRenderPass, VkDevice vkDevice
 {
     CreateVkRenderPass(pDeferredRenderPass, vkDevice, swapchainVkFormat, depthGraphicImage.vkFormat, albedoGraphicImage.vkFormat, normalGraphicImage.vkFormat);
     CreateVkFramebuffers(pDeferredRenderPass, vkFramebufferCount);
-    uint32_t geometrySubpassIndex = 0;
-    Subpass *pGeometrySubpass = &pDeferredRenderPass->subpasses[geometrySubpassIndex];
-    CreateGeometrySubpass(pDeferredRenderPass, vkDevice, viewport, scissor);
-    CreateLightingSubpass(pDeferredRenderPass, vkDevice, viewport, scissor, globalUniformBuffer, depthGraphicImage.vkImageView, albedoGraphicImage.vkImageView, normalGraphicImage.vkImageView);
+
+    CreateGeometrySubpass(&pDeferredRenderPass->subpasses[0], pDeferredRenderPass->shadersPath, pDeferredRenderPass->vkRenderPass, 0, vkDevice, viewport, scissor);
+    CreateLightingSubpass(&pDeferredRenderPass->subpasses[1], pDeferredRenderPass->shadersPath, pDeferredRenderPass->vkRenderPass, 1, vkDevice, viewport, scissor, globalUniformBuffer, depthGraphicImage.vkImageView, albedoGraphicImage.vkImageView, normalGraphicImage.vkImageView);
 }
 
 void DestroyDeferredRenderPass(RenderPass *pDeferredRenderPass, VkDevice vkDevice)
 {
-    DestroyGeometrySubpass(pDeferredRenderPass, vkDevice);
-    DestroyLightingSubpass(pDeferredRenderPass, vkDevice);
+    DestroyGeometrySubpass(&pDeferredRenderPass->subpasses[0], vkDevice);
+    DestroyLightingSubpass(&pDeferredRenderPass->subpasses[1], vkDevice);
     DestroyVkFramebuffers(pDeferredRenderPass, vkDevice);
     DestroyVkRenderPass(pDeferredRenderPass, vkDevice);
 }
@@ -221,7 +220,6 @@ void DestroyDeferredRenderPass(RenderPass *pDeferredRenderPass, VkDevice vkDevic
 void RecordDeferredRenderPass(RenderPass *pDeferredRenderPass, VkCommandBuffer vkCommandBuffer, VkViewport viewport, VkRect2D scissor, uint32_t frameIndex, VkImageView *swapchainVkImageViews, VkImageView depthVkImageView, VkImageView albedoVkImageView, VkImageView normalVkImageView, VkDevice vkDevice)
 {
     PrepareCurrentFrambuffer(pDeferredRenderPass, frameIndex, swapchainVkImageViews, depthVkImageView, albedoVkImageView, normalVkImageView, viewport.width, viewport.height, vkDevice);
-    // VkCommandBuffer vkCommandBuffer = pDeferredRenderPass->graphicVkCommandBuffers[pDeferredRenderPass->frameIndex];
     VkCommandBufferBeginInfo vkCommandBufferBeginInfo =
         {
             .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,

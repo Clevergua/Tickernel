@@ -1,13 +1,10 @@
 #include <lightingSubpass.h>
 
-static void CreateVkPipeline(RenderPass *pDeferredRenderPass, VkDevice vkDevice, VkViewport viewport, VkRect2D scissor)
+static void CreateVkPipeline(Subpass *pLightingSubpass, const char *shadersPath, VkRenderPass vkRenderPass, uint32_t lightingSubpassIndex, VkDevice vkDevice, VkViewport viewport, VkRect2D scissor)
 {
-    uint32_t lightingSubpassIndex = 1;
-    Subpass *pLightingSubpass = &pDeferredRenderPass->subpasses[lightingSubpassIndex];
-
     VkShaderModule lightingVertShaderModule;
     char lightingVertShaderPath[FILENAME_MAX];
-    strcpy(lightingVertShaderPath, pDeferredRenderPass->shadersPath);
+    strcpy(lightingVertShaderPath, shadersPath);
     TickernelCombinePaths(lightingVertShaderPath, FILENAME_MAX, "lighting.vert.spv");
     CreateVkShaderModule(vkDevice, lightingVertShaderPath, &lightingVertShaderModule);
     VkPipelineShaderStageCreateInfo vertShaderStageCreateInfo = {
@@ -22,7 +19,7 @@ static void CreateVkPipeline(RenderPass *pDeferredRenderPass, VkDevice vkDevice,
 
     VkShaderModule lightingFragShaderModule;
     char lightingFragShaderPath[FILENAME_MAX];
-    strcpy(lightingFragShaderPath, pDeferredRenderPass->shadersPath);
+    strcpy(lightingFragShaderPath, shadersPath);
     TickernelCombinePaths(lightingFragShaderPath, FILENAME_MAX, "lighting.frag.spv");
     CreateVkShaderModule(vkDevice, lightingFragShaderPath, &lightingFragShaderModule);
     VkPipelineShaderStageCreateInfo fragShaderStageCreateInfo = {
@@ -204,7 +201,7 @@ static void CreateVkPipeline(RenderPass *pDeferredRenderPass, VkDevice vkDevice,
         .pColorBlendState = &colorBlendStateCreateInfo,
         .pDynamicState = &dynamicState,
         .layout = pLightingSubpass->vkPipelineLayout,
-        .renderPass = pDeferredRenderPass->vkRenderPass,
+        .renderPass = vkRenderPass,
         .subpass = lightingSubpassIndex,
         .basePipelineHandle = VK_NULL_HANDLE,
         .basePipelineIndex = -1,
@@ -216,21 +213,15 @@ static void CreateVkPipeline(RenderPass *pDeferredRenderPass, VkDevice vkDevice,
     DestroyVkShaderModule(vkDevice, lightingVertShaderModule);
     DestroyVkShaderModule(vkDevice, lightingFragShaderModule);
 }
-static void DestroyVkPipeline(RenderPass *pDeferredRenderPass, VkDevice vkDevice)
+static void DestroyVkPipeline(Subpass *pLightingSubpass, VkDevice vkDevice)
 {
-    uint32_t lightingSubpassIndex = 1;
-    Subpass *pLightingSubpass = &pDeferredRenderPass->subpasses[lightingSubpassIndex];
     vkDestroyDescriptorSetLayout(vkDevice, pLightingSubpass->descriptorSetLayout, NULL);
     vkDestroyPipelineLayout(vkDevice, pLightingSubpass->vkPipelineLayout, NULL);
     vkDestroyPipeline(vkDevice, pLightingSubpass->vkPipeline, NULL);
 }
 
-static void CreateLightingSubpassModel(RenderPass *pDeferredRenderPass, VkDevice vkDevice, VkBuffer globalUniformBuffer, VkImageView depthVkImageView, VkImageView albedoVkImageView, VkImageView normalVkImageView, uint32_t index)
+static void CreateLightingSubpassModel(Subpass *pLightingSubpass, VkDevice vkDevice, VkBuffer globalUniformBuffer, VkImageView depthVkImageView, VkImageView albedoVkImageView, VkImageView normalVkImageView, uint32_t index)
 {
-
-    uint32_t lightingSubpassIndex = 1;
-    Subpass *pLightingSubpass = &pDeferredRenderPass->subpasses[lightingSubpassIndex];
-
     SubpassModel *pSubpassModel = &pLightingSubpass->subpassModels[index];
     pSubpassModel->vertexCount = 3;
     pSubpassModel->vertexBuffer = NULL;
@@ -324,10 +315,8 @@ static void CreateLightingSubpassModel(RenderPass *pDeferredRenderPass, VkDevice
     vkUpdateDescriptorSets(vkDevice, 4, descriptorWrites, 0, NULL);
     pSubpassModel->isValid = true;
 }
-static void DestroyLightingSubpassModel(RenderPass *pDeferredRenderPass, VkDevice vkDevice, uint32_t index)
+static void DestroyLightingSubpassModel(Subpass *pLightingSubpass, VkDevice vkDevice, uint32_t index)
 {
-    uint32_t lightingSubpassIndex = 1;
-    Subpass *pLightingSubpass = &pDeferredRenderPass->subpasses[lightingSubpassIndex];
     SubpassModel *pSubpassModel = &pLightingSubpass->subpassModels[index];
     pSubpassModel->isValid = false;
 
@@ -338,11 +327,9 @@ static void DestroyLightingSubpassModel(RenderPass *pDeferredRenderPass, VkDevic
     DestroyVertexBuffer(vkDevice, pSubpassModel->vertexBuffer, pSubpassModel->vertexBufferMemory);
 }
 
-void CreateLightingSubpass(RenderPass *pDeferredRenderPass, VkDevice vkDevice, VkViewport viewport, VkRect2D scissor, VkBuffer globalUniformBuffer, VkImageView depthVkImageView, VkImageView albedoVkImageView, VkImageView normalVkImageView)
+void CreateLightingSubpass(Subpass *pLightingSubpass, const char *shadersPath, VkRenderPass vkRenderPass, uint32_t lightingSubpassIndex, VkDevice vkDevice, VkViewport viewport, VkRect2D scissor, VkBuffer globalUniformBuffer, VkImageView depthVkImageView, VkImageView albedoVkImageView, VkImageView normalVkImageView)
 {
-    uint32_t lightingSubpassIndex = 1;
-    Subpass *pLightingSubpass = &pDeferredRenderPass->subpasses[lightingSubpassIndex];
-    CreateVkPipeline(pDeferredRenderPass, vkDevice, viewport, scissor);
+    CreateVkPipeline(pLightingSubpass, shadersPath, vkRenderPass, lightingSubpassIndex, vkDevice, viewport, scissor);
 
     pLightingSubpass->modelCountPerDescriptorPool = 1;
     pLightingSubpass->vkDescriptorPoolCount = 0;
@@ -365,23 +352,19 @@ void CreateLightingSubpass(RenderPass *pDeferredRenderPass, VkDevice vkDevice, V
 
     uint32_t index;
     AddModelToSubpass(vkDevice, pLightingSubpass, &index);
-    CreateLightingSubpassModel(pDeferredRenderPass, vkDevice, globalUniformBuffer, depthVkImageView, albedoVkImageView, normalVkImageView, index);
+    CreateLightingSubpassModel(pLightingSubpass, vkDevice, globalUniformBuffer, depthVkImageView, albedoVkImageView, normalVkImageView, index);
 }
 
-void DestroyLightingSubpass(RenderPass *pDeferredRenderPass, VkDevice vkDevice)
+void DestroyLightingSubpass(Subpass *pLightingSubpass, VkDevice vkDevice)
 {
-
-    uint32_t lightingSubpassIndex = 1;
-    Subpass *pLightingSubpass = &pDeferredRenderPass->subpasses[lightingSubpassIndex];
-
-    DestroyLightingSubpassModel(pDeferredRenderPass, vkDevice, 0);
+    DestroyLightingSubpassModel(pLightingSubpass, vkDevice, 0);
     RemoveModelFromSubpass(0, pLightingSubpass);
 
     for (uint32_t i = 0; i < pLightingSubpass->modelCountPerDescriptorPool; i++)
     {
         if (pLightingSubpass->subpassModels[i].isValid)
         {
-            DestroyLightingSubpassModel(pDeferredRenderPass, vkDevice, i);
+            DestroyLightingSubpassModel(pLightingSubpass, vkDevice, i);
         }
         else
         {
@@ -403,10 +386,10 @@ void DestroyLightingSubpass(RenderPass *pDeferredRenderPass, VkDevice vkDevice)
         pLightingSubpass->pRemovedIndexLinkedList = pLightingSubpass->pRemovedIndexLinkedList->pNext;
         TickernelFree(pNode);
     }
-    DestroyVkPipeline(pDeferredRenderPass, vkDevice);
+    DestroyVkPipeline(pLightingSubpass, vkDevice);
 }
-void RecreateLightingSubpassModel(RenderPass *pDeferredRenderPass, VkDevice vkDevice, VkBuffer globalUniformBuffer, VkImageView depthVkImageView, VkImageView albedoVkImageView, VkImageView normalVkImageView)
+void RecreateLightingSubpassModel(Subpass *pLightingSubpass, VkDevice vkDevice, VkBuffer globalUniformBuffer, VkImageView depthVkImageView, VkImageView albedoVkImageView, VkImageView normalVkImageView)
 {
-    DestroyLightingSubpassModel(pDeferredRenderPass, vkDevice, 0);
-    CreateLightingSubpassModel(pDeferredRenderPass, vkDevice, globalUniformBuffer, depthVkImageView, albedoVkImageView, normalVkImageView, 0);
+    DestroyLightingSubpassModel(pLightingSubpass, vkDevice, 0);
+    CreateLightingSubpassModel(pLightingSubpass, vkDevice, globalUniformBuffer, depthVkImageView, albedoVkImageView, normalVkImageView, 0);
 }

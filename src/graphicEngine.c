@@ -932,7 +932,9 @@ void StartGraphicEngine(GraphicEngine *pGraphicEngine)
     CreateVkCommandBuffers(pGraphicEngine);
     CreateGlobalUniformBuffers(pGraphicEngine);
     CreateGraphicImages(pGraphicEngine);
+
     CreateDeferredRenderPass(&pGraphicEngine->deferredRenderPass, pGraphicEngine->vkDevice, pGraphicEngine->surfaceFormat.format, pGraphicEngine->depthGraphicImage, pGraphicEngine->albedoGraphicImage, pGraphicEngine->normalGraphicImage, pGraphicEngine->swapchainImageCount, pGraphicEngine->viewport, pGraphicEngine->scissor, pGraphicEngine->globalUniformBuffer);
+    
 }
 
 void UpdateGraphicEngine(GraphicEngine *pGraphicEngine, bool *pCanUpdate)

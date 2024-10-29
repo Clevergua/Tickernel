@@ -54,17 +54,7 @@ typedef struct GraphicImageStruct
     VkDeviceMemory vkDeviceMemory;
 } GraphicImage;
 
-typedef struct RenderPassStruct
-{
-    char *shadersPath;
 
-    VkRenderPass vkRenderPass;
-    uint32_t vkFramebufferCount;
-    VkFramebuffer *vkFramebuffers;
-
-    uint32_t subpassCount;
-    Subpass *subpasses;
-} RenderPass;
 
 void TryThrowVulkanError(VkResult vkResult);
 void FindMemoryType(VkPhysicalDevice vkPhysicalDevice, uint32_t typeFilter, VkMemoryPropertyFlags memoryPropertyFlags, uint32_t *memoryTypeIndex);

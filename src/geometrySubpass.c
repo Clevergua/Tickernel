@@ -1,12 +1,9 @@
 #include <geometrySubpass.h>
-static void CreateVkPipeline(RenderPass *pDeferredRenderPass, VkDevice vkDevice, VkViewport viewport, VkRect2D scissor)
+static void CreateVkPipeline(Subpass *pGeometrySubpass, const char *shadersPath, VkRenderPass vkRenderPass, uint32_t geometrySubpassIndex, VkDevice vkDevice, VkViewport viewport, VkRect2D scissor)
 {
-    uint32_t geometrySubpassIndex = 0;
-    Subpass *pGeometrySubpass = &pDeferredRenderPass->subpasses[geometrySubpassIndex];
-
     VkShaderModule geometryVertShaderModule;
     char geometryVertShaderPath[FILENAME_MAX];
-    strcpy(geometryVertShaderPath, pDeferredRenderPass->shadersPath);
+    strcpy(geometryVertShaderPath, shadersPath);
     TickernelCombinePaths(geometryVertShaderPath, FILENAME_MAX, "geometry.vert.spv");
     CreateVkShaderModule(vkDevice, geometryVertShaderPath, &geometryVertShaderModule);
     VkPipelineShaderStageCreateInfo vertShaderStageCreateInfo = {
@@ -22,7 +19,7 @@ static void CreateVkPipeline(RenderPass *pDeferredRenderPass, VkDevice vkDevice,
     VkShaderModule geometryFragShaderModule;
 
     char geometryFragShaderPath[FILENAME_MAX];
-    strcpy(geometryFragShaderPath, pDeferredRenderPass->shadersPath);
+    strcpy(geometryFragShaderPath, shadersPath);
     TickernelCombinePaths(geometryFragShaderPath, FILENAME_MAX, "geometry.frag.spv");
     CreateVkShaderModule(vkDevice, geometryFragShaderPath, &geometryFragShaderModule);
     VkPipelineShaderStageCreateInfo fragShaderStageCreateInfo = {
@@ -231,7 +228,7 @@ static void CreateVkPipeline(RenderPass *pDeferredRenderPass, VkDevice vkDevice,
         .pColorBlendState = &colorBlendStateCreateInfo,
         .pDynamicState = &dynamicState,
         .layout = pGeometrySubpass->vkPipelineLayout,
-        .renderPass = pDeferredRenderPass->vkRenderPass,
+        .renderPass = vkRenderPass,
         .subpass = geometrySubpassIndex,
         .basePipelineHandle = VK_NULL_HANDLE,
         .basePipelineIndex = 0,
@@ -243,19 +240,15 @@ static void CreateVkPipeline(RenderPass *pDeferredRenderPass, VkDevice vkDevice,
     DestroyVkShaderModule(vkDevice, geometryVertShaderModule);
     DestroyVkShaderModule(vkDevice, geometryFragShaderModule);
 }
-static void DestroyVkPipeline(RenderPass *pDeferredRenderPass, VkDevice vkDevice)
+static void DestroyVkPipeline(Subpass *pGeometrySubpass, VkDevice vkDevice)
 {
-    uint32_t geometrySubpassIndex = 0;
-    Subpass *pGeometrySubpass = &pDeferredRenderPass->subpasses[geometrySubpassIndex];
     vkDestroyDescriptorSetLayout(vkDevice, pGeometrySubpass->descriptorSetLayout, NULL);
     vkDestroyPipelineLayout(vkDevice, pGeometrySubpass->vkPipelineLayout, NULL);
     vkDestroyPipeline(vkDevice, pGeometrySubpass->vkPipeline, NULL);
 }
 
-static void CreateGeometrySubpassModel(RenderPass *pDeferredRenderPass, VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkCommandPool graphicVkCommandPool, VkQueue vkGraphicQueue, VkBuffer globalUniformBuffer, uint32_t vertexCount, GeometrySubpassVertex *geometrySubpassVertices, uint32_t index)
+static void CreateGeometrySubpassModel(Subpass *pGeometrySubpass, VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkCommandPool graphicVkCommandPool, VkQueue vkGraphicQueue, VkBuffer globalUniformBuffer, uint32_t vertexCount, GeometrySubpassVertex *geometrySubpassVertices, uint32_t index)
 {
-    uint32_t geometrySubpassIndex = 0;
-    Subpass *pGeometrySubpass = &pDeferredRenderPass->subpasses[geometrySubpassIndex];
     SubpassModel *pSubpassModel = &pGeometrySubpass->subpassModels[index];
     pSubpassModel->vertexCount = vertexCount;
     VkDeviceSize vertexBufferSize = sizeof(GeometrySubpassVertex) * vertexCount;
@@ -316,10 +309,8 @@ static void CreateGeometrySubpassModel(RenderPass *pDeferredRenderPass, VkDevice
     vkUpdateDescriptorSets(vkDevice, 2, descriptorWrites, 0, NULL);
     pSubpassModel->isValid = true;
 }
-static void DestroyGeometrySubpassModel(RenderPass *pDeferredRenderPass, VkDevice vkDevice, uint32_t index)
+static void DestroyGeometrySubpassModel(Subpass *pGeometrySubpass, VkDevice vkDevice, uint32_t index)
 {
-    uint32_t geometrySubpassIndex = 0;
-    Subpass *pGeometrySubpass = &pDeferredRenderPass->subpasses[geometrySubpassIndex];
     SubpassModel *pSubpassModel = &pGeometrySubpass->subpassModels[index];
     pSubpassModel->isValid = false;
 
@@ -331,11 +322,9 @@ static void DestroyGeometrySubpassModel(RenderPass *pDeferredRenderPass, VkDevic
     DestroyVertexBuffer(vkDevice, pSubpassModel->vertexBuffer, pSubpassModel->vertexBufferMemory);
 }
 
-void CreateGeometrySubpass(RenderPass *pDeferredRenderPass, VkDevice vkDevice, VkViewport viewport, VkRect2D scissor)
+void CreateGeometrySubpass(Subpass *pGeometrySubpass, const char *shadersPath, VkRenderPass vkRenderPass, uint32_t geometrySubpassIndex, VkDevice vkDevice, VkViewport viewport, VkRect2D scissor)
 {
-    uint32_t geometrySubpassIndex = 0;
-    Subpass *pGeometrySubpass = &pDeferredRenderPass->subpasses[geometrySubpassIndex];
-    CreateVkPipeline(pDeferredRenderPass, vkDevice, viewport, scissor);
+    CreateVkPipeline(pGeometrySubpass, shadersPath, vkRenderPass, geometrySubpassIndex, vkDevice, viewport, scissor);
 
     pGeometrySubpass->modelCountPerDescriptorPool = 256;
     pGeometrySubpass->vkDescriptorPoolCount = 0;
@@ -352,15 +341,13 @@ void CreateGeometrySubpass(RenderPass *pDeferredRenderPass, VkDevice vkDevice, V
     pGeometrySubpass->subpassModels = NULL;
     pGeometrySubpass->pRemovedIndexLinkedList = NULL;
 }
-void DestroyGeometrySubpass(RenderPass *pDeferredRenderPass, VkDevice vkDevice)
+void DestroyGeometrySubpass(Subpass *pGeometrySubpass, VkDevice vkDevice)
 {
-    uint32_t geometrySubpassIndex = 0;
-    Subpass *pGeometrySubpass = &pDeferredRenderPass->subpasses[geometrySubpassIndex];
     for (uint32_t i = 0; i < pGeometrySubpass->subpassModelCount; i++)
     {
         if (pGeometrySubpass->subpassModels[i].isValid)
         {
-            DestroyGeometrySubpassModel(pDeferredRenderPass, vkDevice, i);
+            DestroyGeometrySubpassModel(pGeometrySubpass, vkDevice, i);
         }
         else
         {
@@ -382,31 +369,25 @@ void DestroyGeometrySubpass(RenderPass *pDeferredRenderPass, VkDevice vkDevice)
         pGeometrySubpass->pRemovedIndexLinkedList = pGeometrySubpass->pRemovedIndexLinkedList->pNext;
         TickernelFree(pNode);
     }
-    DestroyVkPipeline(pDeferredRenderPass, vkDevice);
+    DestroyVkPipeline(pGeometrySubpass, vkDevice);
 }
 
-void AddModelToGeometrySubpass(RenderPass *pDeferredRenderPass, VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkCommandPool graphicVkCommandPool, VkQueue vkGraphicQueue, VkBuffer globalUniformBuffer, uint32_t vertexCount, GeometrySubpassVertex *geometrySubpassVertices, uint32_t *pIndex)
+void AddModelToGeometrySubpass(Subpass *pGeometrySubpass, VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkCommandPool graphicVkCommandPool, VkQueue vkGraphicQueue, VkBuffer globalUniformBuffer, uint32_t vertexCount, GeometrySubpassVertex *geometrySubpassVertices, uint32_t *pIndex)
 {
-    uint32_t geometrySubpassIndex = 0;
-    Subpass *pGeometrySubpass = &pDeferredRenderPass->subpasses[geometrySubpassIndex];
     AddModelToSubpass(vkDevice, pGeometrySubpass, pIndex);
-    CreateGeometrySubpassModel(pDeferredRenderPass, vkDevice, vkPhysicalDevice, graphicVkCommandPool, vkGraphicQueue, globalUniformBuffer, vertexCount, geometrySubpassVertices, *pIndex);
+    CreateGeometrySubpassModel(pGeometrySubpass, vkDevice, vkPhysicalDevice, graphicVkCommandPool, vkGraphicQueue, globalUniformBuffer, vertexCount, geometrySubpassVertices, *pIndex);
 }
-void RemoveModelFromGeometrySubpass(RenderPass *pDeferredRenderPass, VkDevice vkDevice, uint32_t index)
+void RemoveModelFromGeometrySubpass(Subpass *pGeometrySubpass, VkDevice vkDevice, uint32_t index)
 {
-    uint32_t geometrySubpassIndex = 0;
-    Subpass *pGeometrySubpass = &pDeferredRenderPass->subpasses[geometrySubpassIndex];
-    DestroyGeometrySubpassModel(pDeferredRenderPass, vkDevice, index);
+    DestroyGeometrySubpassModel(pGeometrySubpass, vkDevice, index);
     RemoveModelFromSubpass(index, pGeometrySubpass);
 }
-void UpdateModelUniformToGeometrySubpass(RenderPass *pDeferredRenderPass, uint32_t index, GeometrySubpassModelUniformBuffer geometrySubpassModelUniformBuffer)
+void UpdateModelUniformToGeometrySubpass(Subpass *pGeometrySubpass, uint32_t index, GeometrySubpassModelUniformBuffer geometrySubpassModelUniformBuffer)
 {
-    uint32_t geometrySubpassIndex = 0;
-    Subpass *pGeometrySubpass = &pDeferredRenderPass->subpasses[geometrySubpassIndex];
     SubpassModel *pSubpassModel = &pGeometrySubpass->subpassModels[index];
     if (pSubpassModel->isValid)
     {
-        memcpy(pDeferredRenderPass->subpasses[geometrySubpassIndex].subpassModels[index].modelUniformBufferMapped, &geometrySubpassModelUniformBuffer, sizeof(geometrySubpassModelUniformBuffer));
+        memcpy(pGeometrySubpass->subpassModels[index].modelUniformBufferMapped, &geometrySubpassModelUniformBuffer, sizeof(geometrySubpassModelUniformBuffer));
     }
     else
     {

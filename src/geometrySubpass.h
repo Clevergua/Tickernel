@@ -20,9 +20,8 @@ typedef struct GeometrySubpassModelUniformBufferStruct
     mat4 model;
 } GeometrySubpassModelUniformBuffer;
 
-void CreateGeometrySubpass(RenderPass *pDeferredRenderPass, VkDevice vkDevice, VkViewport viewport, VkRect2D scissor);
-void DestroyGeometrySubpass(RenderPass *pDeferredRenderPass, VkDevice vkDevice);
-
-void AddModelToGeometrySubpass(RenderPass *pDeferredRenderPass, VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkCommandPool graphicVkCommandPool, VkQueue vkGraphicQueue, VkBuffer globalUniformBuffer, uint32_t vertexCount, GeometrySubpassVertex *geometrySubpassVertices, uint32_t *pIndex);
-void RemoveModelFromGeometrySubpass(RenderPass *pDeferredRenderPass, VkDevice vkDevice, uint32_t index);
-void UpdateModelUniformToGeometrySubpass(RenderPass *pDeferredRenderPass, uint32_t index, GeometrySubpassModelUniformBuffer geometrySubpassModelUniformBuffer);
+void CreateGeometrySubpass(Subpass *pGeometrySubpass, const char *shadersPath, VkRenderPass vkRenderPass, uint32_t geometrySubpassIndex, VkDevice vkDevice, VkViewport viewport, VkRect2D scissor);
+void DestroyGeometrySubpass(Subpass *pGeometrySubpass, VkDevice vkDevice);
+void AddModelToGeometrySubpass(Subpass *pGeometrySubpass, VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkCommandPool graphicVkCommandPool, VkQueue vkGraphicQueue, VkBuffer globalUniformBuffer, uint32_t vertexCount, GeometrySubpassVertex *geometrySubpassVertices, uint32_t *pIndex);
+void RemoveModelFromGeometrySubpass(Subpass *pGeometrySubpass, VkDevice vkDevice, uint32_t index);
+void UpdateModelUniformToGeometrySubpass(Subpass *pGeometrySubpass, uint32_t index, GeometrySubpassModelUniformBuffer geometrySubpassModelUniformBuffer);
