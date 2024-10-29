@@ -35,13 +35,13 @@ void TickernelError(char const *const _Format, ...)
         printf("%s\n", symbols[i]);
     }
 
-    free(symbols);
+    TickernelFree(symbols);
 #elif PLATFORM_WINDOWS
     void *stack[100];
     HANDLE process = GetCurrentProcess();
     SymInitialize(process, NULL, TRUE);
     WORD frames = CaptureStackBackTrace(0, 100, stack, NULL);
-    SYMBOL_INFO *symbol = (SYMBOL_INFO *)malloc(sizeof(SYMBOL_INFO) + 256 * sizeof(char));
+    SYMBOL_INFO *symbol = (SYMBOL_INFO *)TickernelMalloc(sizeof(SYMBOL_INFO) + 256 * sizeof(char));
     symbol->MaxNameLen = 255;
     symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
 
@@ -51,7 +51,7 @@ void TickernelError(char const *const _Format, ...)
         printf("%i: %s - 0x%0llX\n", frames - i - 1, symbol->Name, symbol->Address);
     }
 
-    free(symbol);
+    TickernelFree(symbol);
     SymCleanup(process);
 #else
 #error "Unknown platform"

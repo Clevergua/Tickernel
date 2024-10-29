@@ -192,7 +192,7 @@ void FindDepthFormat(VkPhysicalDevice vkPhysicalDevice, VkFormat *pDepthFormat)
 {
     uint32_t candidatesCount = 3;
     VkFormat *candidates = (VkFormat[]){VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT};
-    FindSupportedFormat(vkPhysicalDevice , candidates, candidatesCount, VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT, pDepthFormat);
+    FindSupportedFormat(vkPhysicalDevice, candidates, candidatesCount, VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT, pDepthFormat);
 }
 
 void CreateImageView(VkDevice vkDevice, VkImage image, VkFormat format, VkImageAspectFlags imageAspectFlags, VkImageView *pImageView)
@@ -251,7 +251,7 @@ void CreateVkShaderModule(VkDevice vkDevice, const char *filePath, VkShaderModul
         size_t fileLength = ftell(pFile);
         rewind(pFile);
 
-        uint32_t *pCode = calloc(fileLength, 1);
+        uint32_t *pCode = TickernelMalloc(fileLength);
         size_t codeSize = fread(pCode, 1, fileLength, pFile);
 
         fclose(pFile);
@@ -267,7 +267,7 @@ void CreateVkShaderModule(VkDevice vkDevice, const char *filePath, VkShaderModul
             };
             VkShaderModule shaderModule;
             vkCreateShaderModule(vkDevice, &shaderModuleCreateInfo, NULL, pVkShaderModule);
-            free(pCode);
+            TickernelFree(pCode);
         }
         else
         {
@@ -292,10 +292,10 @@ void AddModelToSubpass(VkDevice vkDevice, Subpass *pSubpass, uint32_t *pIndex)
         *pIndex = modelIndex;
         return;
     }
-    else if (pSubpass->subpassModelCount < pSubpass->vkDescriptorPoolCount * pSubpass->modelCountPerDescriptorPool)
+    else if (pSubpass->modelCount < pSubpass->vkDescriptorPoolCount * pSubpass->modelCountPerDescriptorPool)
     {
-        *pIndex = pSubpass->subpassModelCount;
-        pSubpass->subpassModelCount++;
+        *pIndex = pSubpass->modelCount;
+        pSubpass->modelCount++;
         return;
     }
     else
@@ -318,20 +318,20 @@ void AddModelToSubpass(VkDevice vkDevice, Subpass *pSubpass, uint32_t *pIndex)
         pSubpass->vkDescriptorPools = newVkDescriptorPools;
 
         SubpassModel *newModels = TickernelMalloc(sizeof(SubpassModel) * pSubpass->modelCountPerDescriptorPool * newVkDescriptorPoolCount);
-        memcpy(newModels, pSubpass->subpassModels, sizeof(SubpassModel) * pSubpass->subpassModelCount);
-        TickernelFree(pSubpass->subpassModels);
-        pSubpass->subpassModels = newModels;
+        memcpy(newModels, pSubpass->models, sizeof(SubpassModel) * pSubpass->modelCount);
+        TickernelFree(pSubpass->models);
+        pSubpass->models = newModels;
 
-        *pIndex = pSubpass->subpassModelCount;
-        pSubpass->subpassModelCount++;
+        *pIndex = pSubpass->modelCount;
+        pSubpass->modelCount++;
         return;
     }
 }
 void RemoveModelFromSubpass(uint32_t index, Subpass *pSubpass)
 {
-    if (index == (pSubpass->subpassModelCount - 1))
+    if (index == (pSubpass->modelCount - 1))
     {
-        pSubpass->subpassModelCount--;
+        pSubpass->modelCount--;
     }
     else
     {

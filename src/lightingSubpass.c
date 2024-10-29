@@ -222,7 +222,7 @@ static void DestroyVkPipeline(Subpass *pLightingSubpass, VkDevice vkDevice)
 
 static void CreateLightingSubpassModel(Subpass *pLightingSubpass, VkDevice vkDevice, VkBuffer globalUniformBuffer, VkImageView depthVkImageView, VkImageView albedoVkImageView, VkImageView normalVkImageView, uint32_t index)
 {
-    SubpassModel *pSubpassModel = &pLightingSubpass->subpassModels[index];
+    SubpassModel *pSubpassModel = &pLightingSubpass->models[index];
     pSubpassModel->vertexCount = 3;
     pSubpassModel->vertexBuffer = NULL;
     pSubpassModel->vertexBufferMemory = NULL;
@@ -317,7 +317,7 @@ static void CreateLightingSubpassModel(Subpass *pLightingSubpass, VkDevice vkDev
 }
 static void DestroyLightingSubpassModel(Subpass *pLightingSubpass, VkDevice vkDevice, uint32_t index)
 {
-    SubpassModel *pSubpassModel = &pLightingSubpass->subpassModels[index];
+    SubpassModel *pSubpassModel = &pLightingSubpass->models[index];
     pSubpassModel->isValid = false;
 
     uint32_t poolIndex = index / pLightingSubpass->modelCountPerDescriptorPool;
@@ -346,8 +346,8 @@ void CreateLightingSubpass(Subpass *pLightingSubpass, const char *shadersPath, V
         .descriptorCount = pLightingSubpass->modelCountPerDescriptorPool * 3,
     };
 
-    pLightingSubpass->subpassModelCount = 0;
-    pLightingSubpass->subpassModels = NULL;
+    pLightingSubpass->modelCount = 0;
+    pLightingSubpass->models = NULL;
     pLightingSubpass->pRemovedIndexLinkedList = NULL;
 
     uint32_t index;
@@ -362,7 +362,7 @@ void DestroyLightingSubpass(Subpass *pLightingSubpass, VkDevice vkDevice)
 
     for (uint32_t i = 0; i < pLightingSubpass->modelCountPerDescriptorPool; i++)
     {
-        if (pLightingSubpass->subpassModels[i].isValid)
+        if (pLightingSubpass->models[i].isValid)
         {
             DestroyLightingSubpassModel(pLightingSubpass, vkDevice, i);
         }
@@ -371,7 +371,7 @@ void DestroyLightingSubpass(Subpass *pLightingSubpass, VkDevice vkDevice)
             // Skip deleted
         }
     }
-    TickernelFree(pLightingSubpass->subpassModels);
+    TickernelFree(pLightingSubpass->models);
 
     for (uint32_t i = 0; i < pLightingSubpass->vkDescriptorPoolCount; i++)
     {

@@ -317,13 +317,14 @@ function gameState.DrawModel(px, py, pz, scale, model)
     gameState.SetNormals(vertices, normals)
 
     local index = gameState.AddModel(vertices, colors, normals)
-    local model = {
+    local modelMatrix = {
         { scale, 0,     0,     px },
         { 0,     scale, 0,     py },
         { 0,     0,     scale, pz },
         { 0,     0,     0,     1 },
     }
-    gameState.UpdateModelUniformBuffer(index, model)
+    gameState.UpdateModelUniformBuffer(index, modelMatrix)
+    return index
 end
 
 return gameState

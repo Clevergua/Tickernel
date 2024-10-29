@@ -525,60 +525,38 @@ static void CreateSwapchain(GraphicEngine *pGraphicEngine)
         // Do nothing.
     }
 
-    TickernelGetWindowFramebufferSize(pGraphicEngine->pTickernelWindow, &pGraphicEngine->width, &pGraphicEngine->height);
-    VkViewport viewport = {
-        .x = 0.0f,
-        .y = 0.0f,
-        .width = pGraphicEngine->width,
-        .height = pGraphicEngine->height,
-        .minDepth = 0.0f,
-        .maxDepth = 1.0f,
-    };
-    pGraphicEngine->viewport = viewport;
-    VkOffset2D offset = {
-        .x = 0,
-        .y = 0,
-    };
-    VkExtent2D extent = {
-        .width = pGraphicEngine->width,
-        .height = pGraphicEngine->height,
-    };
-    VkRect2D scissor = {
-        .offset = offset,
-        .extent = extent,
-    };
-    pGraphicEngine->scissor = scissor;
-    
+    TickernelGetWindowFramebufferSize(pGraphicEngine->pTickernelWindow, &pGraphicEngine->swapchainWidth, &pGraphicEngine->swapchainHeight);
+
     VkExtent2D swapchainExtent;
-    if (pGraphicEngine->width > vkSurfaceCapabilities.maxImageExtent.width)
+    if (pGraphicEngine->swapchainWidth > vkSurfaceCapabilities.maxImageExtent.width)
     {
         swapchainExtent.width = vkSurfaceCapabilities.maxImageExtent.width;
     }
     else
     {
-        if (pGraphicEngine->width < vkSurfaceCapabilities.minImageExtent.width)
+        if (pGraphicEngine->swapchainWidth < vkSurfaceCapabilities.minImageExtent.width)
         {
             swapchainExtent.width = vkSurfaceCapabilities.minImageExtent.width;
         }
         else
         {
-            swapchainExtent.width = pGraphicEngine->width;
+            swapchainExtent.width = pGraphicEngine->swapchainWidth;
         }
     }
 
-    if (pGraphicEngine->height > vkSurfaceCapabilities.maxImageExtent.height)
+    if (pGraphicEngine->swapchainHeight > vkSurfaceCapabilities.maxImageExtent.height)
     {
         swapchainExtent.height = vkSurfaceCapabilities.maxImageExtent.height;
     }
     else
     {
-        if (pGraphicEngine->height < vkSurfaceCapabilities.minImageExtent.height)
+        if (pGraphicEngine->swapchainHeight < vkSurfaceCapabilities.minImageExtent.height)
         {
             swapchainExtent.height = vkSurfaceCapabilities.minImageExtent.height;
         }
         else
         {
-            swapchainExtent.height = pGraphicEngine->height;
+            swapchainExtent.height = pGraphicEngine->swapchainHeight;
         }
     }
     VkSharingMode imageSharingMode;
@@ -683,8 +661,8 @@ static void DestroySignals(GraphicEngine *pGraphicEngine)
 static void CreateGraphicImages(GraphicEngine *pGraphicEngine)
 {
     VkExtent3D vkExtent3D = {
-        .width = pGraphicEngine->width,
-        .height = pGraphicEngine->height,
+        .width = pGraphicEngine->swapchainWidth,
+        .height = pGraphicEngine->swapchainHeight,
         .depth = 1,
     };
     VkFormat depthVkFormat;
@@ -712,34 +690,11 @@ static void RecreateSwapchain(GraphicEngine *pGraphicEngine)
         TickernelGetWindowFramebufferSize(pGraphicEngine->pTickernelWindow, &width, &height);
         TickernelWaitWindowEvent();
     }
-    if (width != pGraphicEngine->width || height != pGraphicEngine->height)
+    if (width != pGraphicEngine->swapchainWidth || height != pGraphicEngine->swapchainHeight)
     {
-        printf("Swapchain's width and height have changed! (%d, %d) to (%d, %d)", pGraphicEngine->width, pGraphicEngine->height, width, height);
-        pGraphicEngine->width = width;
-        pGraphicEngine->height = height;
-
-        VkViewport viewport = {
-            .x = 0.0f,
-            .y = 0.0f,
-            .width = pGraphicEngine->width,
-            .height = pGraphicEngine->height,
-            .minDepth = 0.0f,
-            .maxDepth = 1.0f,
-        };
-        pGraphicEngine->viewport = viewport;
-        VkOffset2D offset = {
-            .x = 0,
-            .y = 0,
-        };
-        VkExtent2D extent = {
-            .width = pGraphicEngine->width,
-            .height = pGraphicEngine->height,
-        };
-        VkRect2D scissor = {
-            .offset = offset,
-            .extent = extent,
-        };
-        pGraphicEngine->scissor = scissor;
+        printf("Swapchain's width and height have changed! (%d, %d) to (%d, %d)", pGraphicEngine->swapchainWidth, pGraphicEngine->swapchainHeight, width, height);
+        pGraphicEngine->swapchainWidth = width;
+        pGraphicEngine->swapchainHeight = height;
     }
     else
     {
@@ -754,8 +709,8 @@ static void RecreateSwapchain(GraphicEngine *pGraphicEngine)
     DestroyGraphicImages(pGraphicEngine);
     CreateGraphicImages(pGraphicEngine);
 
-    RenderPass *pDeferredRenderPass = &pGraphicEngine->deferredRenderPass;
-    RecreateLightingSubpassModel(&pGraphicEngine->deferredRenderPass, pGraphicEngine->vkDevice, pGraphicEngine->globalUniformBuffer, pGraphicEngine->depthGraphicImage.vkImageView, pGraphicEngine->albedoGraphicImage.vkImageView, pGraphicEngine->normalGraphicImage.vkImageView);
+    DeferredRenderPass *pDeferredRenderPass = &pGraphicEngine->deferredRenderPass;
+    RecreateLightingSubpassModel(&pGraphicEngine->deferredRenderPass.lightingSubpass, pGraphicEngine->vkDevice, pGraphicEngine->globalUniformBuffer, pGraphicEngine->depthGraphicImage.vkImageView, pGraphicEngine->albedoGraphicImage.vkImageView, pGraphicEngine->normalGraphicImage.vkImageView);
     for (uint32_t i = 0; i < pDeferredRenderPass->vkFramebufferCount; i++)
     {
         if (pDeferredRenderPass->vkFramebuffers[i] == INVALID_VKFRAMEBUFFER)
@@ -888,8 +843,8 @@ static void UpdateGlobalUniformBuffer(GraphicEngine *pGraphicEngine)
     glm_lookat(pGraphicEngine->cameraPosition, pGraphicEngine->targetPosition, (vec3){0.0f, 0.0f, 1.0f}, ubo.view);
     float deg = 45.0f;
     // ubo.pointSizeFactor = 0.3f * pGraphicEngine->height / tanf(glm_rad(deg / 2));
-    ubo.pointSizeFactor = 0.7 * pGraphicEngine->height / tanf(glm_rad(deg / 2));
-    glm_perspective(glm_rad(deg), pGraphicEngine->width / (float)pGraphicEngine->height, 1.0f, 2048.0f, ubo.proj);
+    ubo.pointSizeFactor = 0.7 * pGraphicEngine->swapchainHeight / tanf(glm_rad(deg / 2));
+    glm_perspective(glm_rad(deg), pGraphicEngine->swapchainWidth / (float)pGraphicEngine->swapchainHeight, 1.0f, 2048.0f, ubo.proj);
     ubo.proj[1][1] *= -1;
     mat4 view_proj;
     glm_mat4_mul(ubo.proj, ubo.proj, view_proj);
@@ -906,7 +861,28 @@ static void DestroyVkCommandBuffers(GraphicEngine *pGraphicEngine)
 static void RecordCommandBuffer(GraphicEngine *pGraphicEngine)
 {
     VkCommandBuffer vkCommandBuffer = pGraphicEngine->graphicVkCommandBuffers[pGraphicEngine->frameIndex];
-    RecordDeferredRenderPass(&pGraphicEngine->deferredRenderPass, vkCommandBuffer, pGraphicEngine->viewport, pGraphicEngine->scissor, pGraphicEngine->frameIndex, pGraphicEngine->swapchainImageViews, pGraphicEngine->depthGraphicImage.vkImageView, pGraphicEngine->albedoGraphicImage.vkImageView, pGraphicEngine->normalGraphicImage.vkImageView, pGraphicEngine->vkDevice);
+
+    VkViewport viewport = {
+        .x = 0.0f,
+        .y = 0.0f,
+        .width = pGraphicEngine->swapchainWidth,
+        .height = pGraphicEngine->swapchainHeight,
+        .minDepth = 0.0f,
+        .maxDepth = 1.0f,
+    };
+    VkOffset2D offset = {
+        .x = 0,
+        .y = 0,
+    };
+    VkExtent2D extent = {
+        .width = pGraphicEngine->swapchainWidth,
+        .height = pGraphicEngine->swapchainHeight,
+    };
+    VkRect2D scissor = {
+        .offset = offset,
+        .extent = extent,
+    };
+    RecordDeferredRenderPass(&pGraphicEngine->deferredRenderPass, vkCommandBuffer, viewport, scissor, pGraphicEngine->frameIndex, pGraphicEngine->swapchainImageViews, pGraphicEngine->depthGraphicImage.vkImageView, pGraphicEngine->albedoGraphicImage.vkImageView, pGraphicEngine->normalGraphicImage.vkImageView, pGraphicEngine->vkDevice);
 }
 
 static void SetUpGraphicEngine(GraphicEngine *pGraphicEngine)
@@ -933,8 +909,27 @@ void StartGraphicEngine(GraphicEngine *pGraphicEngine)
     CreateGlobalUniformBuffers(pGraphicEngine);
     CreateGraphicImages(pGraphicEngine);
 
-    CreateDeferredRenderPass(&pGraphicEngine->deferredRenderPass, pGraphicEngine->vkDevice, pGraphicEngine->surfaceFormat.format, pGraphicEngine->depthGraphicImage, pGraphicEngine->albedoGraphicImage, pGraphicEngine->normalGraphicImage, pGraphicEngine->swapchainImageCount, pGraphicEngine->viewport, pGraphicEngine->scissor, pGraphicEngine->globalUniformBuffer);
-    
+    VkViewport viewport = {
+        .x = 0.0f,
+        .y = 0.0f,
+        .width = pGraphicEngine->swapchainWidth,
+        .height = pGraphicEngine->swapchainHeight,
+        .minDepth = 0.0f,
+        .maxDepth = 1.0f,
+    };
+    VkOffset2D offset = {
+        .x = 0,
+        .y = 0,
+    };
+    VkExtent2D extent = {
+        .width = pGraphicEngine->swapchainWidth,
+        .height = pGraphicEngine->swapchainHeight,
+    };
+    VkRect2D scissor = {
+        .offset = offset,
+        .extent = extent,
+    };
+    CreateDeferredRenderPass(&pGraphicEngine->deferredRenderPass, pGraphicEngine->vkDevice, pGraphicEngine->surfaceFormat.format, pGraphicEngine->depthGraphicImage, pGraphicEngine->albedoGraphicImage, pGraphicEngine->normalGraphicImage, pGraphicEngine->swapchainImageCount, viewport, scissor, pGraphicEngine->globalUniformBuffer);
 }
 
 void UpdateGraphicEngine(GraphicEngine *pGraphicEngine, bool *pCanUpdate)

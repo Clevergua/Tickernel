@@ -12,10 +12,8 @@ typedef struct GraphicEngineStruct
     char *assetsPath;
 
     // Runtime
-    VkViewport viewport;
-    VkRect2D scissor;
-    uint32_t height;
-    uint32_t width;
+    uint32_t swapchainHeight;
+    uint32_t swapchainWidth;
     TickernelWindow *pTickernelWindow;
     VkInstance vkInstance;
     VkSurfaceKHR vkSurface;
@@ -26,9 +24,9 @@ typedef struct GraphicEngineStruct
     VkDevice vkDevice;
     VkQueue vkGraphicQueue;
     VkQueue vkPresentQueue;
+    
     VkSwapchainKHR vkSwapchain;
     VkSurfaceFormatKHR surfaceFormat;
-    // VkExtent2D swapchainExtent;
     uint32_t swapchainImageCount;
     VkImage *swapchainImages;
     VkImageView *swapchainImageViews;
@@ -49,7 +47,7 @@ typedef struct GraphicEngineStruct
     GraphicImage depthGraphicImage;
     GraphicImage albedoGraphicImage;
     GraphicImage normalGraphicImage;
-    RenderPass deferredRenderPass;
+    DeferredRenderPass deferredRenderPass;
     uint32_t fullScreenTriangleModelIndex;
 
     vec3 cameraPosition;

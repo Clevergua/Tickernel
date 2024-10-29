@@ -39,8 +39,8 @@ typedef struct SubpassStruct
     uint32_t modelCountPerDescriptorPool;
     uint32_t vkDescriptorPoolCount;
     VkDescriptorPool *vkDescriptorPools;
-    uint32_t subpassModelCount;
-    SubpassModel *subpassModels;
+    uint32_t modelCount;
+    SubpassModel *models;
     Uint32Node *pRemovedIndexLinkedList;
     uint32_t vkDescriptorPoolSizeCount;
     VkDescriptorPoolSize *vkDescriptorPoolSizes;
@@ -53,8 +53,6 @@ typedef struct GraphicImageStruct
     VkImageView vkImageView;
     VkDeviceMemory vkDeviceMemory;
 } GraphicImage;
-
-
 
 void TryThrowVulkanError(VkResult vkResult);
 void FindMemoryType(VkPhysicalDevice vkPhysicalDevice, uint32_t typeFilter, VkMemoryPropertyFlags memoryPropertyFlags, uint32_t *memoryTypeIndex);

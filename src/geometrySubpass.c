@@ -249,7 +249,7 @@ static void DestroyVkPipeline(Subpass *pGeometrySubpass, VkDevice vkDevice)
 
 static void CreateGeometrySubpassModel(Subpass *pGeometrySubpass, VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkCommandPool graphicVkCommandPool, VkQueue vkGraphicQueue, VkBuffer globalUniformBuffer, uint32_t vertexCount, GeometrySubpassVertex *geometrySubpassVertices, uint32_t index)
 {
-    SubpassModel *pSubpassModel = &pGeometrySubpass->subpassModels[index];
+    SubpassModel *pSubpassModel = &pGeometrySubpass->models[index];
     pSubpassModel->vertexCount = vertexCount;
     VkDeviceSize vertexBufferSize = sizeof(GeometrySubpassVertex) * vertexCount;
     CreateVertexBuffer(vkDevice, vkPhysicalDevice, graphicVkCommandPool, vkGraphicQueue, vertexBufferSize, geometrySubpassVertices, &pSubpassModel->vertexBuffer, &pSubpassModel->vertexBufferMemory);
@@ -311,7 +311,7 @@ static void CreateGeometrySubpassModel(Subpass *pGeometrySubpass, VkDevice vkDev
 }
 static void DestroyGeometrySubpassModel(Subpass *pGeometrySubpass, VkDevice vkDevice, uint32_t index)
 {
-    SubpassModel *pSubpassModel = &pGeometrySubpass->subpassModels[index];
+    SubpassModel *pSubpassModel = &pGeometrySubpass->models[index];
     pSubpassModel->isValid = false;
 
     uint32_t poolIndex = index / pGeometrySubpass->modelCountPerDescriptorPool;
@@ -337,15 +337,15 @@ void CreateGeometrySubpass(Subpass *pGeometrySubpass, const char *shadersPath, V
         .descriptorCount = pGeometrySubpass->modelCountPerDescriptorPool * 2,
     };
 
-    pGeometrySubpass->subpassModelCount = 0;
-    pGeometrySubpass->subpassModels = NULL;
+    pGeometrySubpass->modelCount = 0;
+    pGeometrySubpass->models = NULL;
     pGeometrySubpass->pRemovedIndexLinkedList = NULL;
 }
 void DestroyGeometrySubpass(Subpass *pGeometrySubpass, VkDevice vkDevice)
 {
-    for (uint32_t i = 0; i < pGeometrySubpass->subpassModelCount; i++)
+    for (uint32_t i = 0; i < pGeometrySubpass->modelCount; i++)
     {
-        if (pGeometrySubpass->subpassModels[i].isValid)
+        if (pGeometrySubpass->models[i].isValid)
         {
             DestroyGeometrySubpassModel(pGeometrySubpass, vkDevice, i);
         }
@@ -354,7 +354,7 @@ void DestroyGeometrySubpass(Subpass *pGeometrySubpass, VkDevice vkDevice)
             // Skip deleted
         }
     }
-    TickernelFree(pGeometrySubpass->subpassModels);
+    TickernelFree(pGeometrySubpass->models);
 
     for (uint32_t i = 0; i < pGeometrySubpass->vkDescriptorPoolCount; i++)
     {
@@ -384,10 +384,10 @@ void RemoveModelFromGeometrySubpass(Subpass *pGeometrySubpass, VkDevice vkDevice
 }
 void UpdateModelUniformToGeometrySubpass(Subpass *pGeometrySubpass, uint32_t index, GeometrySubpassModelUniformBuffer geometrySubpassModelUniformBuffer)
 {
-    SubpassModel *pSubpassModel = &pGeometrySubpass->subpassModels[index];
+    SubpassModel *pSubpassModel = &pGeometrySubpass->models[index];
     if (pSubpassModel->isValid)
     {
-        memcpy(pGeometrySubpass->subpassModels[index].modelUniformBufferMapped, &geometrySubpassModelUniformBuffer, sizeof(geometrySubpassModelUniformBuffer));
+        memcpy(pGeometrySubpass->models[index].modelUniformBufferMapped, &geometrySubpassModelUniformBuffer, sizeof(geometrySubpassModelUniformBuffer));
     }
     else
     {

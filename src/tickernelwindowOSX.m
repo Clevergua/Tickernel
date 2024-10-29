@@ -100,7 +100,7 @@ void TickernelDestroyWindow(TickernelWindow *pTickernelWindow) {
         [window close];
         pTickernelWindow->nsView = nil;
     }
-    free(pTickernelWindow);
+    TickernelFree(pTickernelWindow);
 }
 
 TickernelWindow * TickernelCreateWindow(uint32_t width, uint32_t height, const char *name) {
@@ -129,7 +129,7 @@ TickernelWindow * TickernelCreateWindow(uint32_t width, uint32_t height, const c
         [window setTitle:@(name)];
         [window makeKeyAndOrderFront:nil];
 
-        TickernelWindow * pTickernelWindow = (TickernelWindow *)malloc(sizeof(TickernelWindow));
+        TickernelWindow * pTickernelWindow = (TickernelWindow *)TickernelMalloc(sizeof(TickernelWindow));
         (pTickernelWindow)->nsView = [window contentView];
         (pTickernelWindow)->shouldClose = false;
         // Set the delegate to handle the window close event

@@ -1,5 +1,5 @@
 #include <deferredRenderPass.h>
-static void PrepareCurrentFrambuffer(RenderPass *pDeferredRenderPass, uint32_t frameIndex, VkImageView *swapchainVkImageViews, VkImageView depthVkImageView, VkImageView albedoVkImageView, VkImageView normalVkImageView, uint32_t width, uint32_t height, VkDevice vkDevice)
+static void PrepareCurrentFrambuffer(DeferredRenderPass *pDeferredRenderPass, uint32_t frameIndex, VkImageView *swapchainVkImageViews, VkImageView depthVkImageView, VkImageView albedoVkImageView, VkImageView normalVkImageView, uint32_t width, uint32_t height, VkDevice vkDevice)
 {
     if (INVALID_VKFRAMEBUFFER == pDeferredRenderPass->vkFramebuffers[frameIndex])
     {
@@ -23,7 +23,8 @@ static void PrepareCurrentFrambuffer(RenderPass *pDeferredRenderPass, uint32_t f
         // continue;
     }
 }
-static void CreateVkRenderPass(RenderPass *pDeferredRenderPass, VkDevice vkDevice, VkFormat swapchainVkFormat, VkFormat depthVkFormat, VkFormat albedoVkFormat, VkFormat normalVkFormat)
+
+static void CreateVkRenderPass(DeferredRenderPass *pDeferredRenderPass, VkDevice vkDevice, VkFormat swapchainVkFormat, VkFormat depthVkFormat, VkFormat albedoVkFormat, VkFormat normalVkFormat)
 {
     VkAttachmentDescription colorAttachmentDescription = {
         .flags = 0,
@@ -163,18 +164,13 @@ static void CreateVkRenderPass(RenderPass *pDeferredRenderPass, VkDevice vkDevic
     VkResult result = VK_SUCCESS;
     result = vkCreateRenderPass(vkDevice, &vkRenderPassCreateInfo, NULL, &pDeferredRenderPass->vkRenderPass);
     TryThrowVulkanError(result);
-
-    pDeferredRenderPass->subpassCount = 2;
-    pDeferredRenderPass->subpasses = TickernelMalloc(sizeof(Subpass) * pDeferredRenderPass->subpassCount);
 }
-
-static void DestroyVkRenderPass(RenderPass *pDeferredRenderPass, VkDevice vkDevice)
+static void DestroyVkRenderPass(DeferredRenderPass *pDeferredRenderPass, VkDevice vkDevice)
 {
     vkDestroyRenderPass(vkDevice, pDeferredRenderPass->vkRenderPass, NULL);
-    TickernelFree(pDeferredRenderPass->subpasses);
 }
 
-static void CreateVkFramebuffers(RenderPass *pDeferredRenderPass, uint32_t vkFramebufferCount)
+static void CreateVkFramebuffers(DeferredRenderPass *pDeferredRenderPass, uint32_t vkFramebufferCount)
 {
     pDeferredRenderPass->vkFramebufferCount = vkFramebufferCount;
     pDeferredRenderPass->vkFramebuffers = TickernelMalloc(sizeof(VkFramebuffer) * vkFramebufferCount);
@@ -183,8 +179,7 @@ static void CreateVkFramebuffers(RenderPass *pDeferredRenderPass, uint32_t vkFra
         pDeferredRenderPass->vkFramebuffers[i] = INVALID_VKFRAMEBUFFER;
     }
 }
-
-static void DestroyVkFramebuffers(RenderPass *pDeferredRenderPass, VkDevice vkDevice)
+static void DestroyVkFramebuffers(DeferredRenderPass *pDeferredRenderPass, VkDevice vkDevice)
 {
     for (int32_t i = 0; i < pDeferredRenderPass->vkFramebufferCount; i++)
     {
@@ -200,24 +195,25 @@ static void DestroyVkFramebuffers(RenderPass *pDeferredRenderPass, VkDevice vkDe
     TickernelFree(pDeferredRenderPass->vkFramebuffers);
 }
 
-void CreateDeferredRenderPass(RenderPass *pDeferredRenderPass, VkDevice vkDevice, VkFormat swapchainVkFormat, GraphicImage depthGraphicImage, GraphicImage albedoGraphicImage, GraphicImage normalGraphicImage, uint32_t vkFramebufferCount, VkViewport viewport, VkRect2D scissor, VkBuffer globalUniformBuffer)
+void CreateDeferredRenderPass(DeferredRenderPass *pDeferredRenderPass, VkDevice vkDevice, VkFormat swapchainVkFormat, GraphicImage depthGraphicImage, GraphicImage albedoGraphicImage, GraphicImage normalGraphicImage, uint32_t vkFramebufferCount, VkViewport viewport, VkRect2D scissor, VkBuffer globalUniformBuffer)
 {
     CreateVkRenderPass(pDeferredRenderPass, vkDevice, swapchainVkFormat, depthGraphicImage.vkFormat, albedoGraphicImage.vkFormat, normalGraphicImage.vkFormat);
     CreateVkFramebuffers(pDeferredRenderPass, vkFramebufferCount);
 
-    CreateGeometrySubpass(&pDeferredRenderPass->subpasses[0], pDeferredRenderPass->shadersPath, pDeferredRenderPass->vkRenderPass, 0, vkDevice, viewport, scissor);
-    CreateLightingSubpass(&pDeferredRenderPass->subpasses[1], pDeferredRenderPass->shadersPath, pDeferredRenderPass->vkRenderPass, 1, vkDevice, viewport, scissor, globalUniformBuffer, depthGraphicImage.vkImageView, albedoGraphicImage.vkImageView, normalGraphicImage.vkImageView);
+    uint32_t subpassIndex = 0;
+    CreateGeometrySubpass(&pDeferredRenderPass->geometrySubpass, pDeferredRenderPass->shadersPath, pDeferredRenderPass->vkRenderPass, subpassIndex, vkDevice, viewport, scissor);
+    subpassIndex++;
+    CreateLightingSubpass(&pDeferredRenderPass->lightingSubpass, pDeferredRenderPass->shadersPath, pDeferredRenderPass->vkRenderPass, subpassIndex, vkDevice, viewport, scissor, globalUniformBuffer, depthGraphicImage.vkImageView, albedoGraphicImage.vkImageView, normalGraphicImage.vkImageView);
 }
-
-void DestroyDeferredRenderPass(RenderPass *pDeferredRenderPass, VkDevice vkDevice)
+void DestroyDeferredRenderPass(DeferredRenderPass *pDeferredRenderPass, VkDevice vkDevice)
 {
-    DestroyGeometrySubpass(&pDeferredRenderPass->subpasses[0], vkDevice);
-    DestroyLightingSubpass(&pDeferredRenderPass->subpasses[1], vkDevice);
+    DestroyGeometrySubpass(&pDeferredRenderPass->geometrySubpass, vkDevice);
+    DestroyLightingSubpass(&pDeferredRenderPass->lightingSubpass, vkDevice);
     DestroyVkFramebuffers(pDeferredRenderPass, vkDevice);
     DestroyVkRenderPass(pDeferredRenderPass, vkDevice);
 }
 
-void RecordDeferredRenderPass(RenderPass *pDeferredRenderPass, VkCommandBuffer vkCommandBuffer, VkViewport viewport, VkRect2D scissor, uint32_t frameIndex, VkImageView *swapchainVkImageViews, VkImageView depthVkImageView, VkImageView albedoVkImageView, VkImageView normalVkImageView, VkDevice vkDevice)
+void RecordDeferredRenderPass(DeferredRenderPass *pDeferredRenderPass, VkCommandBuffer vkCommandBuffer, VkViewport viewport, VkRect2D scissor, uint32_t frameIndex, VkImageView *swapchainVkImageViews, VkImageView depthVkImageView, VkImageView albedoVkImageView, VkImageView normalVkImageView, VkDevice vkDevice)
 {
     PrepareCurrentFrambuffer(pDeferredRenderPass, frameIndex, swapchainVkImageViews, depthVkImageView, albedoVkImageView, normalVkImageView, viewport.width, viewport.height, vkDevice);
     VkCommandBufferBeginInfo vkCommandBufferBeginInfo =
@@ -268,11 +264,11 @@ void RecordDeferredRenderPass(RenderPass *pDeferredRenderPass, VkCommandBuffer v
         };
     vkCmdBeginRenderPass(vkCommandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-    Subpass *pGeometrySubpass = &pDeferredRenderPass->subpasses[0];
+    Subpass *pGeometrySubpass = &pDeferredRenderPass->geometrySubpass;
     vkCmdBindPipeline(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pGeometrySubpass->vkPipeline);
-    for (uint32_t modelIndex = 0; modelIndex < pGeometrySubpass->subpassModelCount; modelIndex++)
+    for (uint32_t modelIndex = 0; modelIndex < pGeometrySubpass->modelCount; modelIndex++)
     {
-        SubpassModel *pSubpassModel = &pGeometrySubpass->subpassModels[modelIndex];
+        SubpassModel *pSubpassModel = &pGeometrySubpass->models[modelIndex];
         if (pSubpassModel->isValid)
         {
             vkCmdSetViewport(vkCommandBuffer, 0, 1, &viewport);
@@ -291,8 +287,8 @@ void RecordDeferredRenderPass(RenderPass *pDeferredRenderPass, VkCommandBuffer v
     vkCmdNextSubpass(vkCommandBuffer, VK_SUBPASS_CONTENTS_INLINE);
 
     // lighting subpass
-    Subpass *pLightingSubpass = &pDeferredRenderPass->subpasses[1];
-    SubpassModel *pSubpassModel = &pLightingSubpass->subpassModels[0];
+    Subpass *pLightingSubpass = &pDeferredRenderPass->lightingSubpass;
+    SubpassModel *pSubpassModel = &pLightingSubpass->models[0];
 
     vkCmdBindPipeline(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pLightingSubpass->vkPipeline);
     vkCmdSetViewport(vkCommandBuffer, 0, 1, &viewport);
