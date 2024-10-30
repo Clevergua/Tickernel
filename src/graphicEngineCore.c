@@ -286,7 +286,7 @@ void AddModelToSubpass(VkDevice vkDevice, Subpass *pSubpass, uint32_t *pIndex)
     if (NULL != pSubpass->removedIndexLinkedList.pHead)
     {
         uint32_t modelIndex = *(uint32_t *)pSubpass->removedIndexLinkedList.pHead->pData;
-        TickernelRemoveNode(&pSubpass->removedIndexLinkedList);
+        TickernelRemoveFromLinkedList(&pSubpass->removedIndexLinkedList);
         *pIndex = modelIndex;
         return;
     }
@@ -333,6 +333,6 @@ void RemoveModelFromSubpass(uint32_t index, Subpass *pSubpass)
     }
     else
     {
-        TickernelAddNode(&pSubpass->removedIndexLinkedList, &index);
+        TickernelAddToLinkedList(&pSubpass->removedIndexLinkedList, &index);
     }
 }

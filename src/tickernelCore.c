@@ -156,16 +156,16 @@ const char *TickernelGetPathSeparator()
 #endif
 }
 
-void TickernelAddNode(TickernelLinkedList *pList, void *pData)
+void TickernelAddToLinkedList(TickernelLinkedList *pList, void *pData)
 {
-    TickernelNode *newNode = (TickernelNode *)TickernelMalloc(sizeof(TickernelNode));
-    newNode->pData = TickernelMalloc(pList->dataSize);
-    newNode->pNext = pList->pHead;
-    memcpy(newNode->pData, pData, pList->dataSize);
-    pList->pHead = newNode;
+    TickernelNode *pNewNode = (TickernelNode *)TickernelMalloc(sizeof(TickernelNode));
+    pNewNode->pData = TickernelMalloc(pList->dataSize);
+    pNewNode->pNext = pList->pHead;
+    memcpy(pNewNode->pData, pData, pList->dataSize);
+    pList->pHead = pNewNode;
 }
 
-void TickernelRemoveNode(TickernelLinkedList *pList)
+void TickernelRemoveFromLinkedList(TickernelLinkedList *pList)
 {
     TickernelNode *current = pList->pHead;
     pList->pHead = pList->pHead->pNext;
@@ -177,6 +177,38 @@ void TickernelClearLinkedList(TickernelLinkedList *pList)
 {
     while (NULL != pList->pHead)
     {
-        TickernelRemoveNode(pList);
+        TickernelRemoveFromLinkedList(pList);
+    }
+}
+
+void TickernelAddToDynamicArray(TickernelDynamicArray *pArray, void *pData)
+{
+    if (NULL != pArray->removedIndexLinkedList.pHead)
+    {
+        uint32_t index = *(uint32_t *)pArray->removedIndexLinkedList.pHead->pData;
+        TickernelRemoveFromLinkedList(&pArray->removedIndexLinkedList);
+        void *pNewData = TickernelMalloc(pArray->dataSize);
+        memcpy(pNewData, pData, pArray->dataSize);
+        pArray->array[index] = pNewData;
+    }
+    else if (pArray->arrayLength < pArray->maxArrayLength)
+    {
+        void *pNewData = TickernelMalloc(pArray->dataSize);
+        memcpy(pNewData, pData, pArray->dataSize);
+        pArray->array[pArray->arrayLength] = pNewData;
+        pArray->arrayLength++;
+    }
+    else
+    {
+        pArray->maxArrayLength *= 2;
+        void ** newArray = TickernelMalloc(pArray->dataSize * pArray->maxArrayLength);
+        memcpy(newArray, pArray->array, pArray->dataSize * pArray->arrayLength);
+        TickernelFree(pArray->array);
+        pArray->array = newArray;
+        
+        void *pNewData = TickernelMalloc(pArray->dataSize);
+        memcpy(pNewData, pData, pArray->dataSize);
+        pArray->array[pArray->arrayLength] = pNewData;
+        pArray->arrayLength++;
     }
 }

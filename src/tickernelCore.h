@@ -45,6 +45,6 @@ void TickernelCombinePaths(char *dstPath, size_t size, const char *srcPath);
 bool TickernelStartsWith(const char *str, const char *prefix);
 bool TickernelEndsWith(const char *str, const char *suffix);
 const char *TickernelGetPathSeparator();
-void TickernelAddNode(TickernelLinkedList *pList, void *pData);
-void TickernelRemoveNode(TickernelLinkedList *pList);
+void TickernelAddToLinkedList(TickernelLinkedList *pList, void *pData);
+void TickernelRemoveFromLinkedList(TickernelLinkedList *pList);
 void TickernelClearLinkedList(TickernelLinkedList *pList);
