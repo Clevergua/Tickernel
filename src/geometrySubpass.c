@@ -339,7 +339,8 @@ void CreateGeometrySubpass(Subpass *pGeometrySubpass, const char *shadersPath, V
 
     pGeometrySubpass->modelCount = 0;
     pGeometrySubpass->models = NULL;
-    pGeometrySubpass->pRemovedIndexLinkedList = NULL;
+    pGeometrySubpass->removedIndexLinkedList.pHead = NULL;
+    pGeometrySubpass->removedIndexLinkedList.dataSize = sizeof(uint32_t);
 }
 void DestroyGeometrySubpass(Subpass *pGeometrySubpass, VkDevice vkDevice)
 {
@@ -363,12 +364,8 @@ void DestroyGeometrySubpass(Subpass *pGeometrySubpass, VkDevice vkDevice)
     TickernelFree(pGeometrySubpass->vkDescriptorPools);
 
     TickernelFree(pGeometrySubpass->vkDescriptorPoolSizes);
-    while (NULL != pGeometrySubpass->pRemovedIndexLinkedList)
-    {
-        Uint32Node *pNode = pGeometrySubpass->pRemovedIndexLinkedList;
-        pGeometrySubpass->pRemovedIndexLinkedList = pGeometrySubpass->pRemovedIndexLinkedList->pNext;
-        TickernelFree(pNode);
-    }
+    TickernelClearLinkedList(&pGeometrySubpass->removedIndexLinkedList);
+
     DestroyVkPipeline(pGeometrySubpass, vkDevice);
 }
 

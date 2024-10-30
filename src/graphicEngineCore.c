@@ -283,12 +283,10 @@ void DestroyVkShaderModule(VkDevice vkDevice, VkShaderModule vkShaderModule)
 
 void AddModelToSubpass(VkDevice vkDevice, Subpass *pSubpass, uint32_t *pIndex)
 {
-    if (NULL != pSubpass->pRemovedIndexLinkedList)
+    if (NULL != pSubpass->removedIndexLinkedList.pHead)
     {
-        uint32_t modelIndex = pSubpass->pRemovedIndexLinkedList->data;
-        Uint32Node *pNode = pSubpass->pRemovedIndexLinkedList;
-        pSubpass->pRemovedIndexLinkedList = pSubpass->pRemovedIndexLinkedList->pNext;
-        TickernelFree(pNode);
+        uint32_t modelIndex = *(uint32_t *)pSubpass->removedIndexLinkedList.pHead->pData;
+        TickernelRemoveNode(&pSubpass->removedIndexLinkedList);
         *pIndex = modelIndex;
         return;
     }
@@ -335,9 +333,6 @@ void RemoveModelFromSubpass(uint32_t index, Subpass *pSubpass)
     }
     else
     {
-        Uint32Node *newNode = TickernelMalloc(sizeof(Uint32Node));
-        newNode->data = index;
-        newNode->pNext = pSubpass->pRemovedIndexLinkedList;
-        pSubpass->pRemovedIndexLinkedList = newNode;
+        TickernelAddNode(&pSubpass->removedIndexLinkedList, &index);
     }
 }

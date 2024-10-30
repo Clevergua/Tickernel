@@ -348,7 +348,8 @@ void CreateLightingSubpass(Subpass *pLightingSubpass, const char *shadersPath, V
 
     pLightingSubpass->modelCount = 0;
     pLightingSubpass->models = NULL;
-    pLightingSubpass->pRemovedIndexLinkedList = NULL;
+    pLightingSubpass->removedIndexLinkedList.pHead = NULL;
+    pLightingSubpass->removedIndexLinkedList.dataSize = sizeof(uint32_t);
 
     uint32_t index;
     AddModelToSubpass(vkDevice, pLightingSubpass, &index);
@@ -380,12 +381,8 @@ void DestroyLightingSubpass(Subpass *pLightingSubpass, VkDevice vkDevice)
     TickernelFree(pLightingSubpass->vkDescriptorPools);
 
     TickernelFree(pLightingSubpass->vkDescriptorPoolSizes);
-    while (NULL != pLightingSubpass->pRemovedIndexLinkedList)
-    {
-        Uint32Node *pNode = pLightingSubpass->pRemovedIndexLinkedList;
-        pLightingSubpass->pRemovedIndexLinkedList = pLightingSubpass->pRemovedIndexLinkedList->pNext;
-        TickernelFree(pNode);
-    }
+    TickernelClearLinkedList(&pLightingSubpass->removedIndexLinkedList);
+   
     DestroyVkPipeline(pLightingSubpass, vkDevice);
 }
 void RecreateLightingSubpassModel(Subpass *pLightingSubpass, VkDevice vkDevice, VkBuffer globalUniformBuffer, VkImageView depthVkImageView, VkImageView albedoVkImageView, VkImageView normalVkImageView)

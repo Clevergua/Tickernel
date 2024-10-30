@@ -100,12 +100,13 @@ function gameState.Start()
         gameState.LoadModel(modelsPath .. "TallBuilding01_0.tvoxel"),
         gameState.LoadModel(modelsPath .. "TallBuilding02_0.tvoxel"),
         gameState.LoadModel(modelsPath .. "TallBuilding03_0.tvoxel"),
+        gameState.LoadModel(modelsPath .. "treeAndRabbit_0.tvoxel"),
     }
     local buildingIndex = 1
     for x = 0, 50 do
         for y = 0, 50 do
             if gameMath.LCGRandom(gameMath.CantorPair(x, y) + 32321) % 100 < 3 then
-                buildingIndex = (buildingIndex + 1) % 8
+                buildingIndex = (buildingIndex + 1) % #models
                 gameState.DrawModel(x, y, 0, 1 / pixel, models[buildingIndex + 1])
             end
         end
@@ -244,7 +245,7 @@ function gameState.End()
     print("Lua Start")
 end
 
-local cameraPosition = { 18, 32, 20 }
+local cameraPosition = { 18, 32, 5 }
 local targetPosition = { 18, 40, 0 }
 local t = 0
 

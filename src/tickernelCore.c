@@ -155,3 +155,28 @@ const char *TickernelGetPathSeparator()
 #error "Unknown platform"
 #endif
 }
+
+void TickernelAddNode(TickernelLinkedList *pList, void *pData)
+{
+    TickernelNode *newNode = (TickernelNode *)TickernelMalloc(sizeof(TickernelNode));
+    newNode->pData = TickernelMalloc(pList->dataSize);
+    newNode->pNext = pList->pHead;
+    memcpy(newNode->pData, pData, pList->dataSize);
+    pList->pHead = newNode;
+}
+
+void TickernelRemoveNode(TickernelLinkedList *pList)
+{
+    TickernelNode *current = pList->pHead;
+    pList->pHead = pList->pHead->pNext;
+    TickernelFree(current->pData);
+    TickernelFree(current);
+}
+
+void TickernelClearLinkedList(TickernelLinkedList *pList)
+{
+    while (NULL != pList->pHead)
+    {
+        TickernelRemoveNode(pList);
+    }
+}
