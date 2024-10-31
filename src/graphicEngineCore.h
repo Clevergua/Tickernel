@@ -42,6 +42,8 @@ typedef struct SubpassStruct
     uint32_t modelCount;
     SubpassModel *models;
     TickernelLinkedList removedIndexLinkedList;
+    // TickernelCollection modelCollection;
+
     uint32_t vkDescriptorPoolSizeCount;
     VkDescriptorPoolSize *vkDescriptorPoolSizes;
 } Subpass;

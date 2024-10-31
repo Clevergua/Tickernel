@@ -276,3 +276,76 @@ void TickernelClearCollection(TickernelCollection *pCollection)
     TickernelClearLinkedList(&pCollection->removedIndexLinkedList);
     pCollection->length = 0;
 }
+
+void TickernelCreateDynamicArray(TickernelDynamicArray *pDynamicArray, size_t dataSize, uint32_t maxLength)
+{
+    pDynamicArray->dataSize = dataSize;
+    pDynamicArray->maxLength = maxLength;
+    pDynamicArray->length = 0;
+    pDynamicArray->array = (void **)TickernelMalloc(dataSize * maxLength);
+    for (uint32_t i = 0; i < maxLength; i++)
+    {
+        pDynamicArray->array[i] = NULL;
+    }
+}
+void TickernelDestroyDynamicArray(TickernelDynamicArray *pDynamicArray)
+{
+    TickernelClearDynamicArray(pDynamicArray);
+    TickernelFree(pDynamicArray->array);
+}
+
+void TickernelAddToDynamicArray(TickernelDynamicArray *pDynamicArray, void *pData)
+{
+    if (pDynamicArray->length >= pDynamicArray->maxLength)
+    {
+        pDynamicArray->maxLength *= 2;
+        void **newArray = (void **)TickernelMalloc(pDynamicArray->dataSize * pDynamicArray->maxLength);
+        memcpy(newArray, pDynamicArray->array, pDynamicArray->dataSize * pDynamicArray->length);
+        TickernelFree(pDynamicArray->array);
+        pDynamicArray->array = newArray;
+    }
+    else
+    {
+        // Do nothing.
+    }
+    pDynamicArray->array[pDynamicArray->length] = TickernelMalloc(pDynamicArray->dataSize);
+    memcpy(pDynamicArray->array[pDynamicArray->length], pData, pDynamicArray->dataSize);
+    pDynamicArray->length++;
+}
+
+void TickernelRemoveFromDynamicArray(TickernelDynamicArray *pDynamicArray, uint32_t index)
+{
+    if (index >= pDynamicArray->length)
+    {
+        TickernelError("Index out of bounds!\n");
+    }
+
+    if (NULL == pDynamicArray->array[index])
+    {
+        TickernelError("Try to remove NULL!\n");
+    }
+
+    TickernelFree(pDynamicArray->array[index]);
+    if (index < pDynamicArray->length - 1)
+    {
+        memmove(&pDynamicArray->array[index], &pDynamicArray->array[index + 1], (pDynamicArray->length - index - 1) * sizeof(void *));
+    }
+    else
+    {
+        pDynamicArray->length--;
+    }
+    pDynamicArray->array[pDynamicArray->length] = NULL;
+}
+
+void TickernelClearDynamicArray(TickernelDynamicArray *pDynamicArray)
+{
+    for (uint32_t i = 0; i < pDynamicArray->length; i++)
+    {
+        if (pDynamicArray->array[i] != NULL)
+        {
+            TickernelFree(pDynamicArray->array[i]);
+            pDynamicArray->array[i] = NULL;
+        }
+    }
+    pDynamicArray->length = 0;
+}

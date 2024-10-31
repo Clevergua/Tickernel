@@ -37,7 +37,16 @@ typedef struct
     TickernelLinkedList removedIndexLinkedList;
 } TickernelCollection;
 
+typedef struct
+{
+    size_t dataSize;
+    uint32_t maxLength;
+    uint32_t length;
+    void **array;
+} TickernelDynamicArray;
+
 void TickernelError(char const *const _Format, ...);
+void TickernelAssert(bool content, char const *const _Format, ...);
 void TickernelSleep(uint32_t milliseconds);
 void *TickernelMalloc(size_t size);
 void TickernelFree(void *block);
@@ -57,3 +66,9 @@ void TickernelDestroyCollection(TickernelCollection *pCollection);
 void TickernelAddToCollection(TickernelCollection *pCollection, void *pData, uint32_t *pOutputIndex);
 void TickernelRemoveFromCollection(TickernelCollection *pCollection, uint32_t index);
 void TickernelClearCollection(TickernelCollection *pCollection);
+
+void TickernelCreateDynamicArray(TickernelDynamicArray *pDynamicArray, size_t dataSize, uint32_t maxLength);
+void TickernelDestroyDynamicArray(TickernelDynamicArray *pDynamicArray);
+void TickernelAddToDynamicArray(TickernelDynamicArray *pDynamicArray, void *pData);
+void TickernelRemoveFromDynamicArray(TickernelDynamicArray *pDynamicArray, uint32_t index);
+void TickernelClearDynamicArray(TickernelDynamicArray *pDynamicArray);
