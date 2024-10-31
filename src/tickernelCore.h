@@ -61,12 +61,6 @@ void TickernelAddToLinkedList(TickernelLinkedList *pLinkedList, void *pData);
 void TickernelRemoveFromLinkedList(TickernelLinkedList *pLinkedList);
 void TickernelClearLinkedList(TickernelLinkedList *pLinkedList);
 
-void TickernelCreateCollection(TickernelCollection *pCollection, size_t dataSize, uint32_t maxLength);
-void TickernelDestroyCollection(TickernelCollection *pCollection);
-void TickernelAddToCollection(TickernelCollection *pCollection, void *pData, uint32_t *pOutputIndex);
-void TickernelRemoveFromCollection(TickernelCollection *pCollection, uint32_t index);
-void TickernelClearCollection(TickernelCollection *pCollection);
-
 void TickernelCreateDynamicArray(TickernelDynamicArray *pDynamicArray, size_t dataSize, uint32_t maxLength);
 void TickernelDestroyDynamicArray(TickernelDynamicArray *pDynamicArray);
 void TickernelAddToDynamicArray(TickernelDynamicArray *pDynamicArray, void *pData);
