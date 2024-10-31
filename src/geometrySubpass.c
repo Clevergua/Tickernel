@@ -339,6 +339,7 @@ void CreateGeometrySubpass(Subpass *pGeometrySubpass, const char *shadersPath, V
 
     pGeometrySubpass->modelCount = 0;
     pGeometrySubpass->models = NULL;
+
     pGeometrySubpass->removedIndexLinkedList.pHead = NULL;
     pGeometrySubpass->removedIndexLinkedList.dataSize = sizeof(uint32_t);
 }

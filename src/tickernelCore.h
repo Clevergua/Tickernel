@@ -31,11 +31,11 @@ typedef struct
 typedef struct
 {
     size_t dataSize;
-    uint32_t maxArrayLength;
-    uint32_t arrayLength;
+    uint32_t maxLength;
+    uint32_t length;
     void **array;
     TickernelLinkedList removedIndexLinkedList;
-} TickernelDynamicArray;
+} TickernelCollection;
 
 void TickernelError(char const *const _Format, ...);
 void TickernelSleep(uint32_t milliseconds);
@@ -45,6 +45,15 @@ void TickernelCombinePaths(char *dstPath, size_t size, const char *srcPath);
 bool TickernelStartsWith(const char *str, const char *prefix);
 bool TickernelEndsWith(const char *str, const char *suffix);
 const char *TickernelGetPathSeparator();
-void TickernelAddToLinkedList(TickernelLinkedList *pList, void *pData);
-void TickernelRemoveFromLinkedList(TickernelLinkedList *pList);
-void TickernelClearLinkedList(TickernelLinkedList *pList);
+
+void TickernelCreateLinkedList(TickernelLinkedList *pLinkedList, size_t dataSize);
+void TickernelDestroyLinkedList(TickernelLinkedList *pLinkedList);
+void TickernelAddToLinkedList(TickernelLinkedList *pLinkedList, void *pData);
+void TickernelRemoveFromLinkedList(TickernelLinkedList *pLinkedList);
+void TickernelClearLinkedList(TickernelLinkedList *pLinkedList);
+
+void TickernelCreateCollection(TickernelCollection *pCollection, size_t dataSize, uint32_t maxLength);
+void TickernelDestroyCollection(TickernelCollection *pCollection);
+void TickernelAddToCollection(TickernelCollection *pCollection, void *pData, uint32_t *pOutputIndex);
+void TickernelRemoveFromCollection(TickernelCollection *pCollection, uint32_t index);
+void TickernelClearCollection(TickernelCollection *pCollection);
