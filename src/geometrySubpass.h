@@ -1,23 +1,24 @@
 #pragma once
 #include <graphicEngineCore.h>
 
-typedef struct
+typedef struct GeometrySubpassVertexStruct
 {
     vec3 position;
     vec4 color;
     vec3 normal;
 } GeometrySubpassVertex;
 
-typedef struct
+typedef struct GeometrySubpassModelStruct
 {
     uint32_t count;
     GeometrySubpassVertex *geometrySubpassVertices;
+
 } GeometrySubpassModel;
 
-typedef struct
+typedef struct GeometrySubpassModelUniformBufferStruct
 {
     mat4 model;
-} GeometrySubpassInstance;
+} GeometrySubpassModelUniformBuffer;
 
 // For graphic engine
 void CreateGeometrySubpass(Subpass *pGeometrySubpass, const char *shadersPath, VkRenderPass vkRenderPass, uint32_t geometrySubpassIndex, VkDevice vkDevice, VkViewport viewport, VkRect2D scissor);
@@ -26,4 +27,4 @@ void DestroyGeometrySubpass(Subpass *pGeometrySubpass, VkDevice vkDevice);
 // For user
 void AddModelToGeometrySubpass(Subpass *pGeometrySubpass, VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkCommandPool graphicVkCommandPool, VkQueue vkGraphicQueue, VkBuffer globalUniformBuffer, uint32_t vertexCount, GeometrySubpassVertex *geometrySubpassVertices, uint32_t *pIndex);
 void RemoveModelFromGeometrySubpass(Subpass *pGeometrySubpass, VkDevice vkDevice, uint32_t index);
-void UpdateModelUniformToGeometrySubpass(Subpass *pGeometrySubpass, uint32_t index, GeometrySubpassInstance geometrySubpassInstance);
+void UpdateModelUniformToGeometrySubpass(Subpass *pGeometrySubpass, uint32_t index, GeometrySubpassModelUniformBuffer geometrySubpassModelUniformBuffer);

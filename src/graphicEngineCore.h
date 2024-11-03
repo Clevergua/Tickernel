@@ -25,12 +25,9 @@ typedef struct SubpassModelStruct
     VkBuffer modelUniformBuffer;
     VkDeviceMemory modelUniformBufferMemory;
     void *modelUniformBufferMapped;
-    VkDescriptorSet vkDescriptorSet;
 
-    // uint32_t modelCountPerDescriptorPool;
-    // uint32_t vkDescriptorPoolCount;
-    // VkDescriptorPool *vkDescriptorPools;
-    TickernelCollection vkDescriptorPools;
+    VkDescriptorSet vkDescriptorSet;
+    bool isValid;
 } SubpassModel;
 
 typedef struct SubpassStruct
@@ -39,10 +36,12 @@ typedef struct SubpassStruct
     VkPipelineLayout vkPipelineLayout;
     VkDescriptorSetLayout descriptorSetLayout;
 
-    TickernelCollection models;
-    // uint32_t modelCount;
-    // SubpassModel *models;
-    // TickernelLinkedList removedIndexLinkedList;
+    uint32_t modelCountPerDescriptorPool;
+    uint32_t vkDescriptorPoolCount;
+    VkDescriptorPool *vkDescriptorPools;
+    uint32_t modelCount;
+    SubpassModel *models;
+    TickernelLinkedList removedIndexLinkedList;
     // TickernelCollection modelCollection;
 
     uint32_t vkDescriptorPoolSizeCount;
@@ -73,5 +72,5 @@ void DestroyBuffer(VkDevice vkDevice, VkBuffer vkBuffer, VkDeviceMemory deviceMe
 void CreateVertexBuffer(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkCommandPool graphicVkCommandPool, VkQueue vkGraphicQueue, VkDeviceSize vertexBufferSize, void *vertices, VkBuffer *pVertexBuffer, VkDeviceMemory *pVertexBufferMemory);
 void DestroyVertexBuffer(VkDevice vkDevice, VkBuffer vertexBuffer, VkDeviceMemory vertexBufferMemory);
 
-// void AddModelToSubpass(VkDevice vkDevice, Subpass *pSubpass, uint32_t *pModelIndex);
-// void RemoveModelFromSubpass(uint32_t modelIndex, Subpass *pSubpass);
+void AddModelToSubpass(VkDevice vkDevice, Subpass *pSubpass, uint32_t *pModelIndex);
+void RemoveModelFromSubpass(uint32_t modelIndex, Subpass *pSubpass);

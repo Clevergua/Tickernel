@@ -281,59 +281,58 @@ void DestroyVkShaderModule(VkDevice vkDevice, VkShaderModule vkShaderModule)
     vkDestroyShaderModule(vkDevice, vkShaderModule, NULL);
 }
 
-// void AddModelToSubpass(VkDevice vkDevice, Subpass *pSubpass, uint32_t *pIndex)
-// {
-//     TickernelAddToCollection(pSubpass->models, ,pIndex)
-//     if (NULL != pSubpass->removedIndexLinkedList.pHead)
-//     {
-//         uint32_t modelIndex = *(uint32_t *)pSubpass->removedIndexLinkedList.pHead->pData;
-//         TickernelRemoveFromLinkedList(&pSubpass->removedIndexLinkedList);
-//         *pIndex = modelIndex;
-//         return;
-//     }
-//     else if (pSubpass->modelCount < pSubpass->vkDescriptorPoolCount * pSubpass->modelCountPerDescriptorPool)
-//     {
-//         *pIndex = pSubpass->modelCount;
-//         pSubpass->modelCount++;
-//         return;
-//     }
-//     else
-//     {
-//         uint32_t newVkDescriptorPoolCount = pSubpass->vkDescriptorPoolCount + 1;
-//         VkDescriptorPool *newVkDescriptorPools = TickernelMalloc(sizeof(VkDescriptorPool) * newVkDescriptorPoolCount);
-//         memcpy(newVkDescriptorPools, pSubpass->vkDescriptorPools, sizeof(VkDescriptorPool) * pSubpass->vkDescriptorPoolCount);
-//         TickernelFree(pSubpass->vkDescriptorPools);
-//         VkDescriptorPoolCreateInfo descriptorPoolCreateInfo = {
-//             .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
-//             .pNext = NULL,
-//             .flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
-//             .maxSets = pSubpass->modelCountPerDescriptorPool,
-//             .poolSizeCount = pSubpass->vkDescriptorPoolSizeCount,
-//             .pPoolSizes = pSubpass->vkDescriptorPoolSizes,
-//         };
-//         VkResult result = vkCreateDescriptorPool(vkDevice, &descriptorPoolCreateInfo, NULL, &newVkDescriptorPools[pSubpass->vkDescriptorPoolCount]);
-//         TryThrowVulkanError(result);
-//         pSubpass->vkDescriptorPoolCount = newVkDescriptorPoolCount;
-//         pSubpass->vkDescriptorPools = newVkDescriptorPools;
+void AddModelToSubpass(VkDevice vkDevice, Subpass *pSubpass, uint32_t *pIndex)
+{
+    if (NULL != pSubpass->removedIndexLinkedList.pHead)
+    {
+        uint32_t modelIndex = *(uint32_t *)pSubpass->removedIndexLinkedList.pHead->pData;
+        TickernelRemoveFromLinkedList(&pSubpass->removedIndexLinkedList);
+        *pIndex = modelIndex;
+        return;
+    }
+    else if (pSubpass->modelCount < pSubpass->vkDescriptorPoolCount * pSubpass->modelCountPerDescriptorPool)
+    {
+        *pIndex = pSubpass->modelCount;
+        pSubpass->modelCount++;
+        return;
+    }
+    else
+    {
+        uint32_t newVkDescriptorPoolCount = pSubpass->vkDescriptorPoolCount + 1;
+        VkDescriptorPool *newVkDescriptorPools = TickernelMalloc(sizeof(VkDescriptorPool) * newVkDescriptorPoolCount);
+        memcpy(newVkDescriptorPools, pSubpass->vkDescriptorPools, sizeof(VkDescriptorPool) * pSubpass->vkDescriptorPoolCount);
+        TickernelFree(pSubpass->vkDescriptorPools);
+        VkDescriptorPoolCreateInfo descriptorPoolCreateInfo = {
+            .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+            .pNext = NULL,
+            .flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
+            .maxSets = pSubpass->modelCountPerDescriptorPool,
+            .poolSizeCount = pSubpass->vkDescriptorPoolSizeCount,
+            .pPoolSizes = pSubpass->vkDescriptorPoolSizes,
+        };
+        VkResult result = vkCreateDescriptorPool(vkDevice, &descriptorPoolCreateInfo, NULL, &newVkDescriptorPools[pSubpass->vkDescriptorPoolCount]);
+        TryThrowVulkanError(result);
+        pSubpass->vkDescriptorPoolCount = newVkDescriptorPoolCount;
+        pSubpass->vkDescriptorPools = newVkDescriptorPools;
 
-//         SubpassModel *newModels = TickernelMalloc(sizeof(SubpassModel) * pSubpass->modelCountPerDescriptorPool * newVkDescriptorPoolCount);
-//         memcpy(newModels, pSubpass->models, sizeof(SubpassModel) * pSubpass->modelCount);
-//         TickernelFree(pSubpass->models);
-//         pSubpass->models = newModels;
+        SubpassModel *newModels = TickernelMalloc(sizeof(SubpassModel) * pSubpass->modelCountPerDescriptorPool * newVkDescriptorPoolCount);
+        memcpy(newModels, pSubpass->models, sizeof(SubpassModel) * pSubpass->modelCount);
+        TickernelFree(pSubpass->models);
+        pSubpass->models = newModels;
 
-//         *pIndex = pSubpass->modelCount;
-//         pSubpass->modelCount++;
-//         return;
-//     }
-// }
-// void RemoveModelFromSubpass(uint32_t index, Subpass *pSubpass)
-// {
-//     if (index == (pSubpass->modelCount - 1))
-//     {
-//         pSubpass->modelCount--;
-//     }
-//     else
-//     {
-//         TickernelAddToLinkedList(&pSubpass->removedIndexLinkedList, &index);
-//     }
-// }
+        *pIndex = pSubpass->modelCount;
+        pSubpass->modelCount++;
+        return;
+    }
+}
+void RemoveModelFromSubpass(uint32_t index, Subpass *pSubpass)
+{
+    if (index == (pSubpass->modelCount - 1))
+    {
+        pSubpass->modelCount--;
+    }
+    else
+    {
+        TickernelAddToLinkedList(&pSubpass->removedIndexLinkedList, &index);
+    }
+}

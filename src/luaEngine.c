@@ -128,7 +128,7 @@ static int RemoveModel(lua_State *pLuaState)
 static int UpdateModelUniformBuffer(lua_State *pLuaState)
 {
     //  index modelMatrix
-    GeometrySubpassInstance buffer;
+    GeometrySubpassModelUniformBuffer buffer;
     for (uint32_t row = 0; row < 4; row++)
     {
         int rowValueType = lua_geti(pLuaState, -1, row + 1);
