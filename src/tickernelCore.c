@@ -210,7 +210,7 @@ void TickernelDestroyCollection(TickernelCollection *pCollection)
     TickernelDestroyLinkedList(&pCollection->removedIndexLinkedList);
     TickernelFree(pCollection->array);
 }
-void TickernelAddToCollection(TickernelCollection *pCollection, void *pData, uint32_t *pOutputIndex)
+void TickernelAddToCollection(TickernelCollection *pCollection, void *pData, uint32_t *pIndex)
 {
     if (NULL != pCollection->removedIndexLinkedList.pHead)
     {
@@ -218,13 +218,13 @@ void TickernelAddToCollection(TickernelCollection *pCollection, void *pData, uin
         TickernelRemoveFromLinkedList(&pCollection->removedIndexLinkedList);
         pCollection->array[index] = TickernelMalloc(pCollection->dataSize);
         memcpy(pCollection->array[index], pData, pCollection->dataSize);
-        *pOutputIndex = index;
+        *pIndex = index;
     }
     else if (pCollection->length < pCollection->maxLength)
     {
         pCollection->array[pCollection->length] = TickernelMalloc(pCollection->dataSize);
         memcpy(pCollection->array[pCollection->length], pData, pCollection->dataSize);
-        *pOutputIndex = pCollection->length;
+        *pIndex = pCollection->length;
         pCollection->length++;
     }
     else
@@ -241,7 +241,7 @@ void TickernelAddToCollection(TickernelCollection *pCollection, void *pData, uin
 
         pCollection->array[pCollection->length] = TickernelMalloc(pCollection->dataSize);
         memcpy(pCollection->array[pCollection->length], pData, pCollection->dataSize);
-        *pOutputIndex = pCollection->length;
+        *pIndex = pCollection->length;
         pCollection->length++;
     }
 }

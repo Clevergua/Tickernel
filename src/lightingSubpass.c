@@ -222,7 +222,7 @@ static void DestroyVkPipeline(Subpass *pLightingSubpass, VkDevice vkDevice)
 
 static void CreateLightingSubpassModel(Subpass *pLightingSubpass, VkDevice vkDevice, VkBuffer globalUniformBuffer, VkImageView depthVkImageView, VkImageView albedoVkImageView, VkImageView normalVkImageView, uint32_t index)
 {
-    SubpassModel *pSubpassModel = &pLightingSubpass->models[index];
+    SubpassModel *pSubpassModel = &pLightingSubpass->modelCollection.array[index];
     pSubpassModel->vertexCount = 3;
     pSubpassModel->vertexBuffer = NULL;
     pSubpassModel->vertexBufferMemory = NULL;

@@ -7,7 +7,6 @@
 #include <tickernelWindow.h>
 #define INVALID_VKFRAMEBUFFER 0
 #define MAX_VK_DESCRIPTOR_TPYE 11
-
 typedef struct GlobalUniformBufferStruct
 {
     mat4 view;
@@ -16,6 +15,9 @@ typedef struct GlobalUniformBufferStruct
     float pointSizeFactor;
 } GlobalUniformBuffer;
 
+// GlobalBuffer 世界场景中的数据
+// ModelBuffer 每种建筑的数据
+// InstanceBuffer 每个建筑实例的数据
 typedef struct SubpassModelStruct
 {
     uint32_t vertexCount;
@@ -26,8 +28,8 @@ typedef struct SubpassModelStruct
     VkDeviceMemory modelUniformBufferMemory;
     void *modelUniformBufferMapped;
 
+    VkDescriptorPool vkDescriptorPool;
     VkDescriptorSet vkDescriptorSet;
-    bool isValid;
 } SubpassModel;
 
 typedef struct SubpassStruct
@@ -36,14 +38,7 @@ typedef struct SubpassStruct
     VkPipelineLayout vkPipelineLayout;
     VkDescriptorSetLayout descriptorSetLayout;
 
-    uint32_t modelCountPerDescriptorPool;
-    uint32_t vkDescriptorPoolCount;
-    VkDescriptorPool *vkDescriptorPools;
-    uint32_t modelCount;
-    SubpassModel *models;
-    TickernelLinkedList removedIndexLinkedList;
-    // TickernelCollection modelCollection;
-
+    TickernelCollection modelCollection;
     uint32_t vkDescriptorPoolSizeCount;
     VkDescriptorPoolSize *vkDescriptorPoolSizes;
 } Subpass;
@@ -71,6 +66,3 @@ void DestroyBuffer(VkDevice vkDevice, VkBuffer vkBuffer, VkDeviceMemory deviceMe
 
 void CreateVertexBuffer(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkCommandPool graphicVkCommandPool, VkQueue vkGraphicQueue, VkDeviceSize vertexBufferSize, void *vertices, VkBuffer *pVertexBuffer, VkDeviceMemory *pVertexBufferMemory);
 void DestroyVertexBuffer(VkDevice vkDevice, VkBuffer vertexBuffer, VkDeviceMemory vertexBufferMemory);
-
-void AddModelToSubpass(VkDevice vkDevice, Subpass *pSubpass, uint32_t *pModelIndex);
-void RemoveModelFromSubpass(uint32_t modelIndex, Subpass *pSubpass);

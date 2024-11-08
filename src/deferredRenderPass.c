@@ -266,10 +266,10 @@ void RecordDeferredRenderPass(DeferredRenderPass *pDeferredRenderPass, VkCommand
 
     Subpass *pGeometrySubpass = &pDeferredRenderPass->geometrySubpass;
     vkCmdBindPipeline(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pGeometrySubpass->vkPipeline);
-    for (uint32_t modelIndex = 0; modelIndex < pGeometrySubpass->modelCount; modelIndex++)
+    for (uint32_t modelIndex = 0; modelIndex < pGeometrySubpass->modelCollection.length; modelIndex++)
     {
-        SubpassModel *pSubpassModel = &pGeometrySubpass->models[modelIndex];
-        if (pSubpassModel->isValid)
+        SubpassModel *pSubpassModel = pGeometrySubpass->modelCollection.array[modelIndex];
+        if (NULL != pSubpassModel)
         {
             vkCmdSetViewport(vkCommandBuffer, 0, 1, &viewport);
             vkCmdSetScissor(vkCommandBuffer, 0, 1, &scissor);
@@ -288,7 +288,7 @@ void RecordDeferredRenderPass(DeferredRenderPass *pDeferredRenderPass, VkCommand
 
     // lighting subpass
     Subpass *pLightingSubpass = &pDeferredRenderPass->lightingSubpass;
-    SubpassModel *pSubpassModel = &pLightingSubpass->models[0];
+    SubpassModel *pSubpassModel = pLightingSubpass->modelCollection.array[0];
 
     vkCmdBindPipeline(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pLightingSubpass->vkPipeline);
     vkCmdSetViewport(vkCommandBuffer, 0, 1, &viewport);
