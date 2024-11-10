@@ -24,6 +24,11 @@ typedef struct SubpassModelStruct
     VkBuffer vertexBuffer;
     VkDeviceMemory vertexBufferMemory;
 
+    uint32_t maxInstanceCount;
+    uint32_t instanceCount;
+    VkBuffer instanceBuffer;
+    VkDeviceMemory instanceBufferMemory;
+
     VkBuffer modelUniformBuffer;
     VkDeviceMemory modelUniformBufferMemory;
     void *modelUniformBufferMapped;
@@ -61,8 +66,8 @@ void DestroyGraphicImage(VkDevice vkDevice, GraphicImage graphicImage);
 void CreateVkShaderModule(VkDevice vkDevice, const char *filePath, VkShaderModule *pVkShaderModule);
 void DestroyVkShaderModule(VkDevice vkDevice, VkShaderModule vkShaderModule);
 
+void CopyVkBuffer(VkCommandPool graphicVkCommandPool, VkDevice vkDevice, VkQueue vkGraphicQueue, VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize offset, VkDeviceSize size);
 void CreateBuffer(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkDeviceSize bufferSize, VkBufferUsageFlags bufferUsageFlags, VkMemoryPropertyFlags msemoryPropertyFlags, VkBuffer *pBuffer, VkDeviceMemory *pDeviceMemory);
 void DestroyBuffer(VkDevice vkDevice, VkBuffer vkBuffer, VkDeviceMemory deviceMemory);
-
-void CreateVertexBuffer(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkCommandPool graphicVkCommandPool, VkQueue vkGraphicQueue, VkDeviceSize vertexBufferSize, void *vertices, VkBuffer *pVertexBuffer, VkDeviceMemory *pVertexBufferMemory);
-void DestroyVertexBuffer(VkDevice vkDevice, VkBuffer vertexBuffer, VkDeviceMemory vertexBufferMemory);
+void UpdateBufferWithStagingBuffer(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkDeviceSize offset, VkDeviceSize bufferSize, void *bufferData, VkCommandPool graphicVkCommandPool, VkQueue vkGraphicQueue, VkBuffer vkBuffer);
+void UpdateBuffer(VkDevice vkDevice, VkDeviceMemory bufferMemory, VkDeviceSize offset, VkDeviceSize bufferSize, void *bufferData);

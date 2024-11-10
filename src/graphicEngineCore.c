@@ -66,7 +66,7 @@ static void FindSupportedFormat(VkPhysicalDevice vkPhysicalDevice, VkFormat *can
     printf("Target format not found!");
 }
 
-static void CopyVkBuffer(VkCommandPool graphicVkCommandPool, VkDevice vkDevice, VkQueue vkGraphicQueue, VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
+void CopyVkBuffer(VkCommandPool graphicVkCommandPool, VkDevice vkDevice, VkQueue vkGraphicQueue, VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize offset, VkDeviceSize size)
 {
     VkCommandBuffer vkCommandBuffer;
     VkCommandBufferAllocateInfo vkCommandBufferAllocateInfo = {
@@ -91,7 +91,7 @@ static void CopyVkBuffer(VkCommandPool graphicVkCommandPool, VkDevice vkDevice, 
 
     VkBufferCopy copyRegion = {
         .srcOffset = 0,
-        .dstOffset = 0,
+        .dstOffset = offset,
         .size = size,
     };
     vkCmdCopyBuffer(vkCommandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
@@ -149,28 +149,29 @@ void DestroyBuffer(VkDevice vkDevice, VkBuffer vkBuffer, VkDeviceMemory deviceMe
     vkDestroyBuffer(vkDevice, vkBuffer, NULL);
 }
 
-void CreateVertexBuffer(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkCommandPool graphicVkCommandPool, VkQueue vkGraphicQueue, VkDeviceSize vertexBufferSize, void *vertices, VkBuffer *pVertexBuffer, VkDeviceMemory *pVertexBufferMemory)
+void UpdateBufferWithStagingBuffer(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkDeviceSize offset, VkDeviceSize bufferSize, void *bufferData, VkCommandPool graphicVkCommandPool, VkQueue vkGraphicQueue, VkBuffer vkBuffer)
 {
     VkBuffer stagingBuffer;
     VkDeviceMemory stagingBufferMemory;
-    CreateBuffer(vkDevice, vkPhysicalDevice, vertexBufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingBuffer, &stagingBufferMemory);
+    CreateBuffer(vkDevice, vkPhysicalDevice, bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingBuffer, &stagingBufferMemory);
 
     void *pData;
-    VkResult result = vkMapMemory(vkDevice, stagingBufferMemory, 0, vertexBufferSize, 0, &pData);
+    VkResult result = vkMapMemory(vkDevice, stagingBufferMemory, offset, bufferSize, 0, &pData);
     TryThrowVulkanError(result);
-    memcpy(pData, vertices, vertexBufferSize);
+    memcpy(pData, bufferData, bufferSize);
     vkUnmapMemory(vkDevice, stagingBufferMemory);
-    CreateBuffer(vkDevice, vkPhysicalDevice, vertexBufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, pVertexBuffer, pVertexBufferMemory);
-    TryThrowVulkanError(result);
-    CopyVkBuffer(graphicVkCommandPool, vkDevice, vkGraphicQueue, stagingBuffer, *pVertexBuffer, vertexBufferSize);
+
+    CopyVkBuffer(graphicVkCommandPool, vkDevice, vkGraphicQueue, stagingBuffer, vkBuffer, 0, bufferSize);
 
     vkDestroyBuffer(vkDevice, stagingBuffer, NULL);
     vkFreeMemory(vkDevice, stagingBufferMemory, NULL);
 }
-void DestroyVertexBuffer(VkDevice vkDevice, VkBuffer vertexBuffer, VkDeviceMemory vertexBufferMemory)
+void UpdateBuffer(VkDevice vkDevice, VkDeviceMemory bufferMemory, VkDeviceSize offset, VkDeviceSize bufferSize, void *bufferData)
 {
-    vkDestroyBuffer(vkDevice, vertexBuffer, NULL);
-    vkFreeMemory(vkDevice, vertexBufferMemory, NULL);
+    void *data;
+    vkMapMemory(vkDevice, bufferMemory, offset, bufferSize, 0, &data);
+    memcpy(data, bufferData, bufferSize);
+    vkUnmapMemory(vkDevice, bufferMemory);
 }
 
 void FindMemoryType(VkPhysicalDevice vkPhysicalDevice, uint32_t typeFilter, VkMemoryPropertyFlags memoryPropertyFlags, uint32_t *memoryTypeIndex)
