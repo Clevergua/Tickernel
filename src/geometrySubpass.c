@@ -379,83 +379,103 @@ void RemoveModelFromGeometrySubpass(Subpass *pGeometrySubpass, VkDevice vkDevice
     // Remove model
     TickernelRemoveFromCollection(&pGeometrySubpass->modelCollection, index);
 }
-
-void AddInstanceToGeometrySubpass(Subpass *pGeometrySubpass, uint32_t modelIndex, VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkCommandPool graphicVkCommandPool, VkQueue vkGraphicQueue, VkBuffer globalUniformBuffer, GeometrySubpassInstance geometrySubpassInstance)
+void AddInstanceToGeometrySubpass(Subpass *pGeometrySubpass, uint32_t modelIndex, VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkCommandPool graphicVkCommandPool, VkQueue vkGraphicQueue, VkBuffer globalUniformBuffer, VkDeviceSize offset, GeometrySubpassInstance *geometrySubpassInstances, uint32_t instanceCount)
 {
     SubpassModel *pSubpassModel = pGeometrySubpass->modelCollection.array[modelIndex];
     if (0 == pSubpassModel->maxInstanceCount)
     {
-        pSubpassModel->maxInstanceCount = 1;
+        pSubpassModel->maxInstanceCount = instanceCount;
+        pSubpassModel->instanceCount = instanceCount;
         VkDeviceSize instanceBufferSize = sizeof(GeometrySubpassInstance) * pSubpassModel->instanceCount;
         CreateBuffer(vkDevice, vkPhysicalDevice, instanceBufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &pSubpassModel->instanceBuffer, &pSubpassModel->instanceBufferMemory);
-        UpdateBuffer(vkDevice, pSubpassModel->instanceBufferMemory, 0, sizeof(geometrySubpassInstance), &geometrySubpassInstance);
-        pSubpassModel->instanceCount = 1;
+        UpdateBuffer(vkDevice, pSubpassModel->instanceBufferMemory, 0, sizeof(GeometrySubpassInstance) * instanceCount, geometrySubpassInstances);
+    }
+    else if (instanceCount < pSubpassModel->maxInstanceCount)
+    {
+        = sizeof(GeometrySubpassInstance) * pSubpassModel->instanceCount;
+        UpdateBuffer(vkDevice, pSubpassModel->instanceBufferMemory, offset, sizeof(geometrySubpassInstance), &geometrySubpassInstance);
+        pSubpassModel->instanceCount++;
     }
     else
     {
-        if (pSubpassModel->instanceCount < pSubpassModel->maxInstanceCount)
-        {
-            VkDeviceSize offset = sizeof(GeometrySubpassInstance) * pSubpassModel->instanceCount;
-            UpdateBuffer(vkDevice, pSubpassModel->instanceBufferMemory, offset, sizeof(geometrySubpassInstance), &geometrySubpassInstance);
-            pSubpassModel->instanceCount++;
-        }
-        else
-        {
-            pSubpassModel->maxInstanceCount *= 2;
-            VkDeviceSize newSize = sizeof(GeometrySubpassInstance) * pSubpassModel->maxInstanceCount;
-            VkBuffer newBuffer;
-            VkDeviceMemory newBufferMemory;
-            CreateBuffer(vkDevice, vkPhysicalDevice, newSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &newBuffer, &newBufferMemory);
-
-            CopyVkBuffer(graphicVkCommandPool, vkDevice, vkGraphicQueue, pSubpassModel->instanceBuffer, newBuffer, 0, sizeof(GeometrySubpassInstance) * pSubpassModel->instanceCount);
-
-            DestroyBuffer(vkDevice, pSubpassModel->instanceBuffer, pSubpassModel->instanceBufferMemory);
-
-            pSubpassModel->instanceBuffer = newBuffer;
-            pSubpassModel->instanceBufferMemory = newBufferMemory;
-
-            VkDeviceSize offset = sizeof(GeometrySubpassInstance) * pSubpassModel->instanceCount;
-            UpdateBuffer(vkDevice, pSubpassModel->instanceBufferMemory, offset, sizeof(geometrySubpassInstance), &geometrySubpassInstance);
-            pSubpassModel->instanceCount++;
-        }
     }
 }
-void RemoveInstanceFromGeometrySubpass(Subpass *pGeometrySubpass, uint32_t modelIndex, uint32_t instanceIndex, VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkCommandPool graphicVkCommandPool, VkQueue vkGraphicQueue)
-{
-    SubpassModel *pSubpassModel = pGeometrySubpass->modelCollection.array[modelIndex];
-    VkDeviceSize instanceSize = sizeof(GeometrySubpassInstance);
-    VkDeviceSize moveSize = instanceSize * (pSubpassModel->instanceCount - instanceIndex - 1);
-    if (moveSize > 0)
-    {
-        void *data;
-        void *src;
-        void *dst;
+// void AddInstanceToGeometrySubpass(Subpass *pGeometrySubpass, uint32_t modelIndex, VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkCommandPool graphicVkCommandPool, VkQueue vkGraphicQueue, VkBuffer globalUniformBuffer, GeometrySubpassInstance geometrySubpassInstance)
+// {
+//     SubpassModel *pSubpassModel = pGeometrySubpass->modelCollection.array[modelIndex];
+//     if (0 == pSubpassModel->maxInstanceCount)
+//     {
+//         pSubpassModel->maxInstanceCount = 1;
+//         VkDeviceSize instanceBufferSize = sizeof(GeometrySubpassInstance) * pSubpassModel->instanceCount;
+//         CreateBuffer(vkDevice, vkPhysicalDevice, instanceBufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &pSubpassModel->instanceBuffer, &pSubpassModel->instanceBufferMemory);
+//         UpdateBuffer(vkDevice, pSubpassModel->instanceBufferMemory, 0, sizeof(geometrySubpassInstance), &geometrySubpassInstance);
+//         pSubpassModel->instanceCount = 1;
+//     }
+//     else
+//     {
+//         if (pSubpassModel->instanceCount < pSubpassModel->maxInstanceCount)
+//         {
+//             VkDeviceSize offset = sizeof(GeometrySubpassInstance) * pSubpassModel->instanceCount;
+//             UpdateBuffer(vkDevice, pSubpassModel->instanceBufferMemory, offset, sizeof(geometrySubpassInstance), &geometrySubpassInstance);
+//             pSubpassModel->instanceCount++;
+//         }
+//         else
+//         {
+//             pSubpassModel->maxInstanceCount *= 2;
+//             VkDeviceSize newSize = sizeof(GeometrySubpassInstance) * pSubpassModel->maxInstanceCount;
+//             VkBuffer newBuffer;
+//             VkDeviceMemory newBufferMemory;
+//             CreateBuffer(vkDevice, vkPhysicalDevice, newSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &newBuffer, &newBufferMemory);
 
-        vkMapMemory(vkDevice, pSubpassModel->instanceBufferMemory, 0, VK_WHOLE_SIZE, 0, &data);
-        src = (char *)data + (instanceIndex + 1) * instanceSize;
-        dst = (char *)data + instanceIndex * instanceSize;
+//             CopyVkBuffer(graphicVkCommandPool, vkDevice, vkGraphicQueue, pSubpassModel->instanceBuffer, newBuffer, 0, sizeof(GeometrySubpassInstance) * pSubpassModel->instanceCount);
 
-        memmove(dst, src, moveSize);
+//             DestroyBuffer(vkDevice, pSubpassModel->instanceBuffer, pSubpassModel->instanceBufferMemory);
 
-        vkUnmapMemory(vkDevice, pSubpassModel->instanceBufferMemory);
-    }
+//             pSubpassModel->instanceBuffer = newBuffer;
+//             pSubpassModel->instanceBufferMemory = newBufferMemory;
 
-    pSubpassModel->instanceCount--;
+//             VkDeviceSize offset = sizeof(GeometrySubpassInstance) * pSubpassModel->instanceCount;
+//             UpdateBuffer(vkDevice, pSubpassModel->instanceBufferMemory, offset, sizeof(geometrySubpassInstance), &geometrySubpassInstance);
+//             pSubpassModel->instanceCount++;
+//         }
+//     }
+// }
+// void RemoveInstanceFromGeometrySubpass(Subpass *pGeometrySubpass, uint32_t modelIndex, uint32_t instanceIndex, VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkCommandPool graphicVkCommandPool, VkQueue vkGraphicQueue)
+// {
+//     SubpassModel *pSubpassModel = pGeometrySubpass->modelCollection.array[modelIndex];
+//     VkDeviceSize instanceSize = sizeof(GeometrySubpassInstance);
+//     VkDeviceSize moveSize = instanceSize * (pSubpassModel->instanceCount - instanceIndex - 1);
+//     if (moveSize > 0)
+//     {
+//         void *data;
+//         void *src;
+//         void *dst;
 
-    if (pSubpassModel->instanceCount <= pSubpassModel->maxInstanceCount / 4 && pSubpassModel->maxInstanceCount > 1)
-    {
-        pSubpassModel->maxInstanceCount /= 2;
-        VkDeviceSize newSize = instanceSize * pSubpassModel->maxInstanceCount;
+//         vkMapMemory(vkDevice, pSubpassModel->instanceBufferMemory, 0, VK_WHOLE_SIZE, 0, &data);
+//         src = (char *)data + (instanceIndex + 1) * instanceSize;
+//         dst = (char *)data + instanceIndex * instanceSize;
 
-        VkBuffer newBuffer;
-        VkDeviceMemory newBufferMemory;
-        CreateBuffer(vkDevice, vkPhysicalDevice, newSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &newBuffer, &newBufferMemory);
+//         memmove(dst, src, moveSize);
 
-        UpdateBuffer(vkDevice, newBufferMemory, 0, instanceSize * pSubpassModel->instanceCount, &pSubpassModel->instanceCollection);
+//         vkUnmapMemory(vkDevice, pSubpassModel->instanceBufferMemory);
+//     }
 
-        DestroyBuffer(vkDevice, pSubpassModel->instanceBuffer, pSubpassModel->instanceBufferMemory);
+//     pSubpassModel->instanceCount--;
 
-        pSubpassModel->instanceBuffer = newBuffer;
-        pSubpassModel->instanceBufferMemory = newBufferMemory;
-    }
-}
+//     if (pSubpassModel->instanceCount <= pSubpassModel->maxInstanceCount / 4 && pSubpassModel->maxInstanceCount > 1)
+//     {
+//         pSubpassModel->maxInstanceCount /= 2;
+//         VkDeviceSize newSize = instanceSize * pSubpassModel->maxInstanceCount;
+
+//         VkBuffer newBuffer;
+//         VkDeviceMemory newBufferMemory;
+//         CreateBuffer(vkDevice, vkPhysicalDevice, newSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &newBuffer, &newBufferMemory);
+
+//         UpdateBuffer(vkDevice, newBufferMemory, 0, instanceSize * pSubpassModel->instanceCount, &pSubpassModel->instanceCollection);
+
+//         DestroyBuffer(vkDevice, pSubpassModel->instanceBuffer, pSubpassModel->instanceBufferMemory);
+
+//         pSubpassModel->instanceBuffer = newBuffer;
+//         pSubpassModel->instanceBufferMemory = newBufferMemory;
+//     }
+// }
