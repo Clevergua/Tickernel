@@ -21,9 +21,9 @@ function gameState.RemoveModel(index)
 end
 
 ---Update model unifrom buffer
----@param index integer
----@param modelMatrix table
-function gameState.UpdateModelUniformBuffer(index, modelMatrix)
+---@param modelIndex integer
+---@param instances table
+function gameState.UpdateInstances(modelIndex, instances)
 end
 
 ---SetCamera
@@ -316,15 +316,17 @@ function gameState.DrawModel(px, py, pz, scale, model)
 
     gameState.SetNormals(vertices, normals)
 
-    local index = gameState.AddModel(vertices, colors, normals)
-    local modelMatrix = {
-        { scale, 0,     0,     px },
-        { 0,     scale, 0,     py },
-        { 0,     0,     scale, pz },
-        { 0,     0,     0,     1 },
+    local modelIndex = gameState.AddModel(vertices, colors, normals)
+    local instances = {
+        {
+            { scale, 0,     0,     px },
+            { 0,     scale, 0,     py },
+            { 0,     0,     scale, pz },
+            { 0,     0,     0,     1 },
+        },
     }
-    gameState.UpdateModelUniformBuffer(index, modelMatrix)
-    return index
+    gameState.UpdateInstances(modelIndex, instances)
+    return modelIndex
 end
 
 return gameState

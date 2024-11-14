@@ -289,12 +289,11 @@ void RecordDeferredRenderPass(DeferredRenderPass *pDeferredRenderPass, VkCommand
     // lighting subpass
     Subpass *pLightingSubpass = &pDeferredRenderPass->lightingSubpass;
     SubpassModel *pSubpassModel = pLightingSubpass->modelCollection.array[0];
-
     vkCmdBindPipeline(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pLightingSubpass->vkPipeline);
     vkCmdSetViewport(vkCommandBuffer, 0, 1, &viewport);
     vkCmdSetScissor(vkCommandBuffer, 0, 1, &scissor);
     vkCmdBindDescriptorSets(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pLightingSubpass->vkPipelineLayout, 0, 1, &pSubpassModel->vkDescriptorSet, 0, NULL);
-    vkCmdDraw(vkCommandBuffer, pSubpassModel->vertexCount, 1, 0, 0);
+    vkCmdDraw(vkCommandBuffer, 3, 1, 0, 0);
 
     vkCmdEndRenderPass(vkCommandBuffer);
     result = vkEndCommandBuffer(vkCommandBuffer);

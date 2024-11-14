@@ -125,31 +125,37 @@ static int RemoveModel(lua_State *pLuaState)
     return 0;
 }
 
-static int UpdateModelUniformBuffer(lua_State *pLuaState)
+static int UpdateInstances(lua_State *pLuaState)
 {
     //  index modelMatrix
-    GeometrySubpassModelUniformBuffer buffer;
-    for (uint32_t row = 0; row < 4; row++)
+
+    lua_len(pLuaState, -1);
+    uint32_t instanceCount = luaL_checkinteger(pLuaState, -1);
+    lua_pop(pLuaState, 1);
+    GeometrySubpassInstance instances[instanceCount];
+    for (uint32_t i = 0; i < instanceCount; i++)
     {
-        int rowValueType = lua_geti(pLuaState, -1, row + 1);
-        //  index modelMatrix column
-        AssertLuaType(rowValueType, LUA_TTABLE);
-        for (uint32_t column = 0; column < 4; column++)
+        int instanceType = lua_geti(pLuaState, -1, i + 1);
+        AssertLuaType(instanceType, LUA_TTABLE);
+        for (uint32_t row = 0; row < 4; row++)
         {
-            //  index modelMatrix column value
-            int columnValueType = lua_geti(pLuaState, -1, column + 1);
-            AssertLuaType(columnValueType, LUA_TNUMBER);
-            buffer.model[column][row] = luaL_checknumber(pLuaState, -1);
+            int rowValueType = lua_geti(pLuaState, -1, row + 1);
+            AssertLuaType(rowValueType, LUA_TTABLE);
+            for (uint32_t column = 0; column < 4; column++)
+            {
+                int columnValueType = lua_geti(pLuaState, -1, column + 1);
+                AssertLuaType(columnValueType, LUA_TNUMBER);
+                instances[i].model[column][row] = luaL_checknumber(pLuaState, -1);
+                lua_pop(pLuaState, 1);
+            }
             lua_pop(pLuaState, 1);
-            //  index modelMatrix column
         }
         lua_pop(pLuaState, 1);
-        //  index modelMatrix
     }
-
     lua_pop(pLuaState, 1);
+
     // index
-    uint32_t index = luaL_checkinteger(pLuaState, -1);
+    uint32_t modelIndex = luaL_checkinteger(pLuaState, -1);
     lua_pop(pLuaState, 1);
 
     int gameStateTpye = lua_getglobal(pLuaState, "gameState");
@@ -158,7 +164,7 @@ static int UpdateModelUniformBuffer(lua_State *pLuaState)
     AssertLuaType(pGraphicEngineTpye, LUA_TLIGHTUSERDATA);
     GraphicEngine *pGraphicEngine = lua_touserdata(pLuaState, -1);
     lua_pop(pLuaState, 2);
-    UpdateModelUniformToGeometrySubpass(&pGraphicEngine->deferredRenderPass.geometrySubpass, index, buffer);
+    UpdateInstancesToGeometrySubpass(&pGraphicEngine->deferredRenderPass.geometrySubpass, modelIndex, pGraphicEngine->vkDevice, pGraphicEngine->vkPhysicalDevice, pGraphicEngine->graphicVkCommandPool, pGraphicEngine->vkGraphicQueue, pGraphicEngine->globalUniformBuffer, instances, instanceCount);
     return 0;
 }
 
@@ -313,8 +319,8 @@ void StartLua(LuaEngine *pLuaEngine)
     lua_pushcfunction(pLuaState, RemoveModel);
     lua_setfield(pLuaState, -2, "RemoveModel");
 
-    lua_pushcfunction(pLuaState, UpdateModelUniformBuffer);
-    lua_setfield(pLuaState, -2, "UpdateModelUniformBuffer");
+    lua_pushcfunction(pLuaState, UpdateInstances);
+    lua_setfield(pLuaState, -2, "UpdateInstances");
 
     lua_pushcfunction(pLuaState, SetCamera);
     lua_setfield(pLuaState, -2, "SetCamera");

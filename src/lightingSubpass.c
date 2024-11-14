@@ -66,7 +66,7 @@ static void CreateVkPipeline(Subpass *pLightingSubpass, const char *shadersPath,
         .flags = 0,
         .rasterizerDiscardEnable = VK_FALSE,
         .polygonMode = VK_POLYGON_MODE_FILL,
-        .cullMode = VK_CULL_MODE_NONE,
+        .cullMode = VK_CULL_MODE_BACK_BIT,
         .frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE,
         .depthBiasEnable = VK_FALSE,
         .depthBiasConstantFactor = 0,
@@ -220,27 +220,50 @@ static void DestroyVkPipeline(Subpass *pLightingSubpass, VkDevice vkDevice)
     vkDestroyPipeline(vkDevice, pLightingSubpass->vkPipeline, NULL);
 }
 
-static void CreateLightingSubpassModel(Subpass *pLightingSubpass, VkDevice vkDevice, VkBuffer globalUniformBuffer, VkImageView depthVkImageView, VkImageView albedoVkImageView, VkImageView normalVkImageView, uint32_t index)
+static void CreateLightingSubpassModel(Subpass *pLightingSubpass, VkDevice vkDevice, VkBuffer globalUniformBuffer, VkImageView depthVkImageView, VkImageView albedoVkImageView, VkImageView normalVkImageView)
 {
-    SubpassModel *pSubpassModel = &pLightingSubpass->modelCollection.array[index];
-    pSubpassModel->vertexCount = 3;
-    pSubpassModel->vertexBuffer = NULL;
-    pSubpassModel->vertexBufferMemory = NULL;
+    assert(pLightingSubpass != NULL);
+    assert(pLightingSubpass->vkDescriptorPoolSizes != NULL);
+    assert(pLightingSubpass->vkDescriptorPoolSizeCount > 0);
+    assert(pLightingSubpass->descriptorSetLayout != VK_NULL_HANDLE);
+    assert(vkDevice != VK_NULL_HANDLE);
+    SubpassModel subpassModel = {
+        .vertexCount = 0,
+        .vertexBuffer = NULL,
+        .vertexBufferMemory = NULL,
 
-    pSubpassModel->modelUniformBuffer = NULL;
-    pSubpassModel->modelUniformBufferMemory = NULL;
-    pSubpassModel->modelUniformBufferMapped = NULL;
+        .maxInstanceCount = 0,
+        .instanceCount = 0,
+        .instanceBuffer = NULL,
+        .instanceBufferMemory = NULL,
 
+        .modelUniformBuffer = NULL,
+        .modelUniformBufferMemory = NULL,
+        .modelUniformBufferMapped = NULL,
+
+        .vkDescriptorPool = NULL,
+        .vkDescriptorSet = NULL,
+    };
     // Create vkDescriptorSet
-    uint32_t poolIndex = index / pLightingSubpass->modelCountPerDescriptorPool;
+    VkDescriptorPoolCreateInfo descriptorPoolCreateInfo = {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+        .pNext = NULL,
+        .flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
+        .maxSets = 1,
+        .poolSizeCount = pLightingSubpass->vkDescriptorPoolSizeCount,
+        .pPoolSizes = pLightingSubpass->vkDescriptorPoolSizes,
+    };
+    VkResult result = vkCreateDescriptorPool(vkDevice, &descriptorPoolCreateInfo, NULL, &subpassModel.vkDescriptorPool);
+    TryThrowVulkanError(result);
     VkDescriptorSetAllocateInfo descriptorSetAllocateInfo = {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
         .pNext = NULL,
-        .descriptorPool = pLightingSubpass->vkDescriptorPools[poolIndex],
+        .descriptorPool = subpassModel.vkDescriptorPool,
         .descriptorSetCount = 1,
         .pSetLayouts = &pLightingSubpass->descriptorSetLayout,
     };
-    VkResult result = vkAllocateDescriptorSets(vkDevice, &descriptorSetAllocateInfo, &pSubpassModel->vkDescriptorSet);
+
+    result = vkAllocateDescriptorSets(vkDevice, &descriptorSetAllocateInfo, &subpassModel.vkDescriptorSet);
     TryThrowVulkanError(result);
     VkDescriptorBufferInfo globalDescriptorBufferInfo = {
         .buffer = globalUniformBuffer,
@@ -266,7 +289,7 @@ static void CreateLightingSubpassModel(Subpass *pLightingSubpass, VkDevice vkDev
         {
             .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
             .pNext = NULL,
-            .dstSet = pSubpassModel->vkDescriptorSet,
+            .dstSet = subpassModel.vkDescriptorSet,
             .dstBinding = 0,
             .dstArrayElement = 0,
             .descriptorCount = 1,
@@ -278,7 +301,7 @@ static void CreateLightingSubpassModel(Subpass *pLightingSubpass, VkDevice vkDev
         {
             .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
             .pNext = NULL,
-            .dstSet = pSubpassModel->vkDescriptorSet,
+            .dstSet = subpassModel.vkDescriptorSet,
             .dstBinding = 1,
             .dstArrayElement = 0,
             .descriptorCount = 1,
@@ -290,7 +313,7 @@ static void CreateLightingSubpassModel(Subpass *pLightingSubpass, VkDevice vkDev
         {
             .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
             .pNext = NULL,
-            .dstSet = pSubpassModel->vkDescriptorSet,
+            .dstSet = subpassModel.vkDescriptorSet,
             .dstBinding = 2,
             .dstArrayElement = 0,
             .descriptorCount = 1,
@@ -302,7 +325,7 @@ static void CreateLightingSubpassModel(Subpass *pLightingSubpass, VkDevice vkDev
         {
             .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
             .pNext = NULL,
-            .dstSet = pSubpassModel->vkDescriptorSet,
+            .dstSet = subpassModel.vkDescriptorSet,
             .dstBinding = 3,
             .dstArrayElement = 0,
             .descriptorCount = 1,
@@ -313,80 +336,47 @@ static void CreateLightingSubpassModel(Subpass *pLightingSubpass, VkDevice vkDev
         },
     };
     vkUpdateDescriptorSets(vkDevice, 4, descriptorWrites, 0, NULL);
-    pSubpassModel->isValid = true;
+    uint32_t index;
+    TickernelAddToCollection(&pLightingSubpass->modelCollection, &subpassModel, &index);
 }
 static void DestroyLightingSubpassModel(Subpass *pLightingSubpass, VkDevice vkDevice, uint32_t index)
 {
-    SubpassModel *pSubpassModel = &pLightingSubpass->models[index];
-    pSubpassModel->isValid = false;
-
-    uint32_t poolIndex = index / pLightingSubpass->modelCountPerDescriptorPool;
-    VkResult result = vkFreeDescriptorSets(vkDevice, pLightingSubpass->vkDescriptorPools[poolIndex], 1, &pSubpassModel->vkDescriptorSet);
+    SubpassModel *pSubpassModel = pLightingSubpass->modelCollection.array[index];
+    VkResult result = vkFreeDescriptorSets(vkDevice, pSubpassModel->vkDescriptorPool, 1, &pSubpassModel->vkDescriptorSet);
     TryThrowVulkanError(result);
-
-    DestroyVertexBuffer(vkDevice, pSubpassModel->vertexBuffer, pSubpassModel->vertexBufferMemory);
+    vkDestroyDescriptorPool(vkDevice, pSubpassModel->vkDescriptorPool, NULL);
+    TickernelRemoveFromCollection(&pLightingSubpass->modelCollection, index);
 }
 
 void CreateLightingSubpass(Subpass *pLightingSubpass, const char *shadersPath, VkRenderPass vkRenderPass, uint32_t lightingSubpassIndex, VkDevice vkDevice, VkViewport viewport, VkRect2D scissor, VkBuffer globalUniformBuffer, VkImageView depthVkImageView, VkImageView albedoVkImageView, VkImageView normalVkImageView)
 {
     CreateVkPipeline(pLightingSubpass, shadersPath, vkRenderPass, lightingSubpassIndex, vkDevice, viewport, scissor);
 
-    pLightingSubpass->modelCountPerDescriptorPool = 1;
-    pLightingSubpass->vkDescriptorPoolCount = 0;
-    pLightingSubpass->vkDescriptorPools = NULL;
-
     pLightingSubpass->vkDescriptorPoolSizeCount = 2;
     pLightingSubpass->vkDescriptorPoolSizes = TickernelMalloc(sizeof(VkDescriptorPoolSize) * pLightingSubpass->vkDescriptorPoolSizeCount);
     pLightingSubpass->vkDescriptorPoolSizes[0] = (VkDescriptorPoolSize){
         .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-        .descriptorCount = pLightingSubpass->modelCountPerDescriptorPool,
+        .descriptorCount = 1,
     };
     pLightingSubpass->vkDescriptorPoolSizes[1] = (VkDescriptorPoolSize){
         .type = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT,
-        .descriptorCount = pLightingSubpass->modelCountPerDescriptorPool * 3,
+        .descriptorCount = 3,
     };
 
-    pLightingSubpass->modelCount = 0;
-    pLightingSubpass->models = NULL;
-    pLightingSubpass->removedIndexLinkedList.pHead = NULL;
-    pLightingSubpass->removedIndexLinkedList.dataSize = sizeof(uint32_t);
-
-    uint32_t index;
-    AddModelToSubpass(vkDevice, pLightingSubpass, &index);
-    CreateLightingSubpassModel(pLightingSubpass, vkDevice, globalUniformBuffer, depthVkImageView, albedoVkImageView, normalVkImageView, index);
+    TickernelCreateCollection(&pLightingSubpass->modelCollection, sizeof(SubpassModel), 1);
+    CreateLightingSubpassModel(pLightingSubpass, vkDevice, globalUniformBuffer, depthVkImageView, albedoVkImageView, normalVkImageView);
 }
 
 void DestroyLightingSubpass(Subpass *pLightingSubpass, VkDevice vkDevice)
 {
     DestroyLightingSubpassModel(pLightingSubpass, vkDevice, 0);
-    RemoveModelFromSubpass(0, pLightingSubpass);
-
-    for (uint32_t i = 0; i < pLightingSubpass->modelCountPerDescriptorPool; i++)
-    {
-        if (pLightingSubpass->models[i].isValid)
-        {
-            DestroyLightingSubpassModel(pLightingSubpass, vkDevice, i);
-        }
-        else
-        {
-            // Skip deleted
-        }
-    }
-    TickernelFree(pLightingSubpass->models);
-
-    for (uint32_t i = 0; i < pLightingSubpass->vkDescriptorPoolCount; i++)
-    {
-        vkDestroyDescriptorPool(vkDevice, pLightingSubpass->vkDescriptorPools[i], NULL);
-    }
-    TickernelFree(pLightingSubpass->vkDescriptorPools);
-
+    TickernelDestroyCollection(&pLightingSubpass->modelCollection);
     TickernelFree(pLightingSubpass->vkDescriptorPoolSizes);
-    TickernelClearLinkedList(&pLightingSubpass->removedIndexLinkedList);
-   
+
     DestroyVkPipeline(pLightingSubpass, vkDevice);
 }
 void RecreateLightingSubpassModel(Subpass *pLightingSubpass, VkDevice vkDevice, VkBuffer globalUniformBuffer, VkImageView depthVkImageView, VkImageView albedoVkImageView, VkImageView normalVkImageView)
 {
     DestroyLightingSubpassModel(pLightingSubpass, vkDevice, 0);
-    CreateLightingSubpassModel(pLightingSubpass, vkDevice, globalUniformBuffer, depthVkImageView, albedoVkImageView, normalVkImageView, 0);
+    CreateLightingSubpassModel(pLightingSubpass, vkDevice, globalUniformBuffer, depthVkImageView, albedoVkImageView, normalVkImageView);
 }
