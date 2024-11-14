@@ -286,10 +286,15 @@ void CreateGeometrySubpass(Subpass *pGeometrySubpass, const char *shadersPath, V
 }
 void DestroyGeometrySubpass(Subpass *pGeometrySubpass, VkDevice vkDevice)
 {
+
     for (uint32_t i = pGeometrySubpass->modelCollection.length - 1; i >= 0; i--)
     {
-        RemoveModelFromGeometrySubpass(pGeometrySubpass, vkDevice, i);
+        if (i >= 0)
+        {
+            RemoveModelFromGeometrySubpass(pGeometrySubpass, vkDevice, i);
+        }
     }
+
     TickernelDestroyCollection(&pGeometrySubpass->modelCollection);
 
     TickernelFree(pGeometrySubpass->vkDescriptorPoolSizes);
@@ -361,27 +366,20 @@ void AddModelToGeometrySubpass(Subpass *pGeometrySubpass, VkDevice vkDevice, VkP
         },
     };
     vkUpdateDescriptorSets(vkDevice, 1, descriptorWrites, 0, NULL);
-    // Add model
     TickernelAddToCollection(&pGeometrySubpass->modelCollection, &subpassModel, pIndex);
 }
 void RemoveModelFromGeometrySubpass(Subpass *pGeometrySubpass, VkDevice vkDevice, uint32_t index)
 {
     SubpassModel *pSubpassModel = pGeometrySubpass->modelCollection.array[index];
-    // Destroy instanceBuffer
     if (pSubpassModel->maxInstanceCount > 0)
     {
         DestroyBuffer(vkDevice, pSubpassModel->instanceBuffer, pSubpassModel->instanceBufferMemory);
     }
-    // Destroy modelUniformBuffer
     DestroyBuffer(vkDevice, pSubpassModel->modelUniformBuffer, pSubpassModel->modelUniformBufferMemory);
-    // Destroy vertexBuffer
     DestroyBuffer(vkDevice, pSubpassModel->vertexBuffer, pSubpassModel->vertexBufferMemory);
-    // Free descriptorSet
     VkResult result = vkFreeDescriptorSets(vkDevice, pSubpassModel->vkDescriptorPool, 1, &pSubpassModel->vkDescriptorSet);
     TryThrowVulkanError(result);
-    // Destroy pool
     vkDestroyDescriptorPool(vkDevice, pSubpassModel->vkDescriptorPool, NULL);
-    // Remove model
     TickernelRemoveFromCollection(&pGeometrySubpass->modelCollection, index);
 }
 void UpdateInstancesToGeometrySubpass(Subpass *pGeometrySubpass, uint32_t modelIndex, VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkCommandPool graphicVkCommandPool, VkQueue vkGraphicQueue, VkBuffer globalUniformBuffer, GeometrySubpassInstance *geometrySubpassInstances, uint32_t instanceCount)

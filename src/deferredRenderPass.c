@@ -275,17 +275,13 @@ void RecordDeferredRenderPass(DeferredRenderPass *pDeferredRenderPass, VkCommand
             vkCmdSetScissor(vkCommandBuffer, 0, 1, &scissor);
 
             vkCmdBindDescriptorSets(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pGeometrySubpass->vkPipelineLayout, 0, 1, &pSubpassModel->vkDescriptorSet, 0, NULL);
-
-            VkBuffer vertexBuffers[] = {pSubpassModel->vertexBuffer};
-            VkDeviceSize offsets[] = {0};
-            vkCmdBindVertexBuffers(vkCommandBuffer, 0, 1, vertexBuffers, offsets);
-            uint32_t vertexCount = pSubpassModel->vertexCount;
-            vkCmdDraw(vkCommandBuffer, vertexCount, 1, 0, 0);
+            VkBuffer vertexBuffers[] = {pSubpassModel->vertexBuffer, pSubpassModel->instanceBuffer};
+            VkDeviceSize offsets[] = {0, 0};
+            vkCmdBindVertexBuffers(vkCommandBuffer, 0, 2, vertexBuffers, offsets);
+            vkCmdDraw(vkCommandBuffer, pSubpassModel->vertexCount, pSubpassModel->instanceCount, 0, 0);
         }
     }
-
     vkCmdNextSubpass(vkCommandBuffer, VK_SUBPASS_CONTENTS_INLINE);
-
     // lighting subpass
     Subpass *pLightingSubpass = &pDeferredRenderPass->lightingSubpass;
     SubpassModel *pSubpassModel = pLightingSubpass->modelCollection.array[0];
