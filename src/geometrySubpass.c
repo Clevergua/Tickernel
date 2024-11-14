@@ -287,12 +287,9 @@ void CreateGeometrySubpass(Subpass *pGeometrySubpass, const char *shadersPath, V
 void DestroyGeometrySubpass(Subpass *pGeometrySubpass, VkDevice vkDevice)
 {
 
-    for (uint32_t i = pGeometrySubpass->modelCollection.length - 1; i >= 0; i--)
+    for (uint32_t i = pGeometrySubpass->modelCollection.length - 1; i > 0; i--)
     {
-        if (i >= 0)
-        {
-            RemoveModelFromGeometrySubpass(pGeometrySubpass, vkDevice, i);
-        }
+        RemoveModelFromGeometrySubpass(pGeometrySubpass, vkDevice, i);
     }
 
     TickernelDestroyCollection(&pGeometrySubpass->modelCollection);
