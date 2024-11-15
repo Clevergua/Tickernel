@@ -843,7 +843,7 @@ static void UpdateGlobalUniformBuffer(GraphicEngine *pGraphicEngine)
     glm_lookat(pGraphicEngine->cameraPosition, pGraphicEngine->targetPosition, (vec3){0.0f, 0.0f, 1.0f}, ubo.view);
     float deg = 45.0f;
     // ubo.pointSizeFactor = 0.3f * pGraphicEngine->height / tanf(glm_rad(deg / 2));
-    ubo.pointSizeFactor = 0.7 * pGraphicEngine->swapchainHeight / tanf(glm_rad(deg / 2));
+    ubo.pointSizeFactor = 0.618 * pGraphicEngine->swapchainHeight / tanf(glm_rad(deg / 2));
     glm_perspective(glm_rad(deg), pGraphicEngine->swapchainWidth / (float)pGraphicEngine->swapchainHeight, 1.0f, 2048.0f, ubo.proj);
     ubo.proj[1][1] *= -1;
     mat4 view_proj;

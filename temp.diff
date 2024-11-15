@@ -1,0 +1,2456 @@
+diff --git a/.DS_Store b/.DS_Store
+index 24a6568..5997e7b 100644
+Binary files a/.DS_Store and b/.DS_Store differ
+diff --git a/.vscode/c_cpp_properties.json b/.vscode/c_cpp_properties.json
+deleted file mode 100644
+index 5b2d3c5..0000000
+--- a/.vscode/c_cpp_properties.json
++++ /dev/null
+@@ -1,23 +0,0 @@
+-{
+-    "configurations": [
+-        {
+-            "name": "Win32",
+-            "includePath": [
+-                "${workspaceFolder}/**",
+-                "C:/VulkanSDK/1.3.231.1/Include"
+-            ],
+-            "defines": [
+-                "_DEBUG",
+-                "UNICODE",
+-                "_UNICODE"
+-            ],
+-            "windowsSdkVersion": "10.0.26100.0",
+-            "compilerPath": "cl.exe",
+-            "cStandard": "c17",
+-            "cppStandard": "c++17",
+-            "intelliSenseMode": "windows-msvc-x64",
+-            "configurationProvider": "ms-vscode.cmake-tools"
+-        }
+-    ],
+-    "version": 4
+-}
+\ No newline at end of file
+diff --git a/.vscode/launch.json b/.vscode/launch.json
+deleted file mode 100644
+index cbaa1ae..0000000
+--- a/.vscode/launch.json
++++ /dev/null
+@@ -1,14 +0,0 @@
+-{
+-    "configurations": [
+-        {
+-            "name": "Python Debugger: Current File with Arguments",
+-            "type": "debugpy",
+-            "request": "launch",
+-            "program": "${file}",
+-            "console": "integratedTerminal",
+-            "args": [
+-                "${command:pickArgs}"
+-            ]
+-        }
+-    ]
+-}
+\ No newline at end of file
+diff --git a/.vscode/settings.json b/.vscode/settings.json
+index d20e48e..b81220d 100644
+--- a/.vscode/settings.json
++++ b/.vscode/settings.json
+@@ -1,136 +1,7 @@
+ {
+     "files.associations": {
+-        "cstring": "c",
+-        "locale": "c",
+-        "tickernelcore.h": "c",
+-        "stdarg.h": "c",
+-        "tickernelplatform.h": "c",
+-        "__hash_table": "c",
+-        "__split_buffer": "c",
+-        "__tree": "c",
+-        "array": "c",
+-        "bitset": "c",
+-        "deque": "c",
+-        "initializer_list": "c",
+-        "queue": "c",
+-        "set": "c",
+-        "stack": "c",
+-        "string": "c",
+-        "string_view": "c",
+-        "unordered_map": "c",
+-        "vector": "c",
+-        "__config": "c",
+-        "istream": "cpp",
+-        "iosfwd": "cpp",
+-        "chrono": "c",
+-        "iterator": "c",
+-        "list": "c",
+-        "xhash": "c",
+-        "xtree": "c",
+-        "format": "c",
+-        "forward_list": "c",
+-        "xstring": "c",
+-        "xutility": "c",
+-        "xiosbase": "c",
+-        "stdexcept": "cpp",
+-        "algorithm": "cpp",
+-        "atomic": "cpp",
+-        "bit": "cpp",
+-        "cctype": "cpp",
+-        "charconv": "cpp",
+-        "clocale": "cpp",
+-        "cmath": "cpp",
+-        "compare": "cpp",
+-        "concepts": "cpp",
+-        "cstddef": "cpp",
+-        "cstdint": "cpp",
+-        "cstdio": "cpp",
+-        "cstdlib": "cpp",
+-        "ctime": "cpp",
+-        "cwchar": "cpp",
+-        "exception": "cpp",
+-        "map": "cpp",
+-        "unordered_set": "cpp",
+-        "fstream": "cpp",
+-        "functional": "cpp",
+-        "iomanip": "cpp",
+-        "ios": "cpp",
+-        "iostream": "cpp",
+-        "limits": "cpp",
+-        "memory": "cpp",
+-        "mutex": "cpp",
+-        "new": "cpp",
+-        "optional": "cpp",
+-        "ostream": "cpp",
+-        "ratio": "cpp",
+-        "sstream": "cpp",
+-        "stop_token": "cpp",
+-        "streambuf": "cpp",
+-        "system_error": "cpp",
+-        "thread": "cpp",
+-        "tuple": "cpp",
+-        "type_traits": "cpp",
+-        "typeinfo": "cpp",
+-        "utility": "cpp",
+-        "xfacet": "cpp",
+-        "xlocale": "cpp",
+-        "xlocbuf": "cpp",
+-        "xlocinfo": "cpp",
+-        "xlocmes": "cpp",
+-        "xlocmon": "cpp",
+-        "xlocnum": "cpp",
+-        "xloctime": "cpp",
+-        "xmemory": "cpp",
+-        "xstddef": "cpp",
+-        "xtr1common": "cpp",
+-        "vulkan.h": "c",
+-        "gfxengine.h": "c",
+-        "glfw3.h": "c",
+-        "__node_handle": "c",
+-        "__bit_reference": "c",
+-        "tickernelengine.h": "c",
+-        "deferredrenderpipeline.h": "c",
+-        "graphicengine.h": "c",
+-        "stdbool.h": "c",
+-        "stdio.h": "c",
+-        "__assert": "c",
+-        "__debug": "c",
+         "__locale": "c",
+-        "__mutex_base": "c",
+-        "__threading_support": "c",
+-        "complex": "c",
+-        "__memory": "c",
+-        "memory_resource": "c",
+-        "variant": "c",
+-        "execution": "c",
+-        "print": "c",
+-        "graphicenginecore.h": "c",
+-        "string.h": "c",
+-        "stdlib.h": "c",
+-        "__verbose_abort": "cpp",
+-        "deferredrenderpass.h": "c",
+-        "lightingsubpass.h": "c",
+-        "geometrysubpass.h": "c",
+-        "cglm.h": "c",
+-        "unistd.h": "c",
+-        "luaengine.h": "c",
+-        "cstdarg": "cpp",
+-        "cwctype": "cpp",
+-        "stdint.h": "c",
+-        "limits.h": "c",
+-        "time.h": "c",
+-        "windows.h": "c",
+-        "windef.h": "c",
+-        "minwindef.h": "c",
+-        "lualib.h": "c",
+-        "lauxlib.h": "c",
+-        "plane.h": "c",
+-        "lua.h": "c",
+-        "png.h": "c",
+-        "*.rh": "c",
+-        "tickernelwindow.h": "c",
+-        "vulkan_win32.h": "c",
+-        "dbghelp.h": "c",
+-        "liquidgeometrysubpass.h": "c"
++        "string": "c",
++        "string_view": "c"
+     }
+ }
+\ No newline at end of file
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index a846d35..5498666 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -1,5 +1,4 @@
+ cmake_minimum_required(VERSION 3.26)
+-# set(CMAKE_SYSROOT ON)
+ project(Tickernel VERSION 1.1 LANGUAGES C)
+ set(CMAKE_C_STANDARD_REQUIRED ON)
+ # Because of this use c99: https://stackoverflow.com/questions/40829032/how-to-install-c11-compiler-on-mac-os-with-optional-string-functions-included
+@@ -17,12 +16,10 @@ set(HEADER_DIRS
+  ${Vulkan_INCLUDE_DIRS}
+  ${CMAKE_CURRENT_SOURCE_DIR}/include/cglm
+  ${CMAKE_SOURCE_DIR}/include/lua
+-#  ${CMAKE_CURRENT_SOURCE_DIR}/include/glfw3
+  ${CMAKE_CURRENT_SOURCE_DIR}/src)
+ 
+ set(LIBRARYS 
+  ${Vulkan_LIBRARIES}
+-#  ${GLFW3_LIBRARY}
+  ${LUA_LIBRARY}
+  ${CGLM_LIBRARY}
+ )
+@@ -54,10 +51,10 @@ message("   LIBRARYS:${LIBRARYS}")
+ target_link_libraries(${PROJECT_NAME} ${LIBRARYS})
+ 
+ set(DLL_LIBS)
+-FILE(GLOB_RECURSE DLL_LIBS ${CMAKE_SOURCE_DIR}/lib/*.dylib ${CMAKE_SOURCE_DIR}/lib/*.dll)
++file(GLOB_RECURSE DLL_LIBS ${CMAKE_SOURCE_DIR}/lib/*.dylib ${CMAKE_SOURCE_DIR}/lib/*.dll)
+ message(DLL_LIBS: ${DLL_LIBS})
+ 
+ add_custom_target(CopyAssets COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_LIST_DIR}/assets ${CMAKE_BINARY_DIR}/assets)
+ add_dependencies(${PROJECT_NAME}  CopyAssets)
+ add_custom_target(CopyDLL COMMAND ${CMAKE_COMMAND} -E copy_if_different  ${DLL_LIBS}  ${CMAKE_BINARY_DIR}/${DLL_FILENAME})
+-add_dependencies(${PROJECT_NAME}  CopyDLL)
+\ No newline at end of file
++add_dependencies(${PROJECT_NAME}  CopyDLL)
+diff --git a/CMakePresets.json b/CMakePresets.json
+new file mode 100644
+index 0000000..58bb52d
+--- /dev/null
++++ b/CMakePresets.json
+@@ -0,0 +1,17 @@
++{
++    "version": 8,
++    "configurePresets": [
++        {
++            "name": "Clang 16.0.0 arm64-apple-darwin24.1.0",
++            "displayName": "Clang 16.0.0 arm64-apple-darwin24.1.0",
++            "description": "Using compilers: C = /usr/bin/clang, CXX = /usr/bin/clang++",
++            "binaryDir": "${sourceDir}/out/build/${presetName}",
++            "cacheVariables": {
++                "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
++                "CMAKE_C_COMPILER": "/usr/bin/clang",
++                "CMAKE_CXX_COMPILER": "/usr/bin/clang++",
++                "CMAKE_BUILD_TYPE": "Debug"
++            }
++        }
++    ]
++}
+\ No newline at end of file
+diff --git a/assets/.DS_Store b/assets/.DS_Store
+index dc728bd..a5a0299 100644
+Binary files a/assets/.DS_Store and b/assets/.DS_Store differ
+diff --git a/assets/lua/gameState.lua b/assets/lua/gameState.lua
+index f4f1839..f4c4ee5 100644
+--- a/assets/lua/gameState.lua
++++ b/assets/lua/gameState.lua
+@@ -21,9 +21,9 @@ function gameState.RemoveModel(index)
+ end
+ 
+ ---Update model unifrom buffer
+----@param index integer
+----@param modelMatrix table
+-function gameState.UpdateModelUniformBuffer(index, modelMatrix)
++---@param modelIndex integer
++---@param instances table
++function gameState.UpdateInstances(modelIndex, instances)
+ end
+ 
+ ---SetCamera
+@@ -316,15 +316,17 @@ function gameState.DrawModel(px, py, pz, scale, model)
+ 
+     gameState.SetNormals(vertices, normals)
+ 
+-    local index = gameState.AddModel(vertices, colors, normals)
+-    local modelMatrix = {
+-        { scale, 0,     0,     px },
+-        { 0,     scale, 0,     py },
+-        { 0,     0,     scale, pz },
+-        { 0,     0,     0,     1 },
++    local modelIndex = gameState.AddModel(vertices, colors, normals)
++    local instances = {
++        {
++            { scale, 0,     0,     px },
++            { 0,     scale, 0,     py },
++            { 0,     0,     scale, pz },
++            { 0,     0,     0,     1 },
++        },
+     }
+-    gameState.UpdateModelUniformBuffer(index, modelMatrix)
+-    return index
++    gameState.UpdateInstances(modelIndex, instances)
++    return modelIndex
+ end
+ 
+ return gameState
+diff --git a/assets/shaders/geometry.frag.spv b/assets/shaders/geometry.frag.spv
+index b8292bc..810f17d 100644
+Binary files a/assets/shaders/geometry.frag.spv and b/assets/shaders/geometry.frag.spv differ
+diff --git a/assets/shaders/geometry.vert.spv b/assets/shaders/geometry.vert.spv
+index eab14e6..fe30589 100644
+Binary files a/assets/shaders/geometry.vert.spv and b/assets/shaders/geometry.vert.spv differ
+diff --git a/assets/shaders/lighting.frag.spv b/assets/shaders/lighting.frag.spv
+index 10005e6..f0ee199 100644
+Binary files a/assets/shaders/lighting.frag.spv and b/assets/shaders/lighting.frag.spv differ
+diff --git a/assets/shaders/lighting.vert.spv b/assets/shaders/lighting.vert.spv
+index e171ebe..fa25fe9 100644
+Binary files a/assets/shaders/lighting.vert.spv and b/assets/shaders/lighting.vert.spv differ
+diff --git a/include/.DS_Store b/include/.DS_Store
+index b9aeabf..0b6af9b 100644
+Binary files a/include/.DS_Store and b/include/.DS_Store differ
+diff --git a/lib/.DS_Store b/lib/.DS_Store
+index c8cbfca..30fb924 100644
+Binary files a/lib/.DS_Store and b/lib/.DS_Store differ
+diff --git a/lib/lua/.DS_Store b/lib/lua/.DS_Store
+new file mode 100644
+index 0000000..5008ddf
+Binary files /dev/null and b/lib/lua/.DS_Store differ
+diff --git a/resources/.DS_Store b/resources/.DS_Store
+index ceb7b5d..01dd8e2 100644
+Binary files a/resources/.DS_Store and b/resources/.DS_Store differ
+diff --git a/resources/glsl/geometry.vert b/resources/glsl/geometry.vert
+index b579e10..a7ae0b8 100644
+--- a/resources/glsl/geometry.vert
++++ b/resources/glsl/geometry.vert
+@@ -4,6 +4,7 @@ precision highp float;
+ layout(location = 0) in vec3 i_position;
+ layout(location = 1) in vec4 i_color;
+ layout(location = 2) in vec3 i_normal;
++layout(location = 3) in mat4 i_model;
+ 
+ layout(location = 0) out vec4 o_albedo;
+ layout(location = 1) out vec3 o_normal;
+@@ -17,19 +18,14 @@ layout(binding = 0) uniform GlobalUniform
+ }
+ globalUniform;
+ 
+-layout(binding = 1) uniform ObjectUniform
+-{
+-    mat4 model;
+-}
+-objectUniform;
+-
+ void main(void)
+ {
+-    vec4 worldPosition = objectUniform.model * vec4(i_position, 1);
++    vec4 worldPosition = vec4(0,0,0, 1);
++    // vec4 worldPosition = i_model * vec4(i_position, 1);
+     vec4 viewPosition = globalUniform.view * worldPosition;
+     gl_Position = globalUniform.proj * viewPosition;
+     o_albedo = i_color;
+     o_normal = i_normal;
+-    float scale =  (objectUniform.model[0][0] + objectUniform.model[1][1] + objectUniform.model[2][2]) / 3.0;
++    float scale =  (i_model[0][0] + i_model[1][1] + i_model[2][2]) / 3.0;
+     gl_PointSize = scale * globalUniform.pointSizeFactor / -viewPosition.z;
+ }
+\ No newline at end of file
+diff --git a/src/deferredRenderPass.c b/src/deferredRenderPass.c
+index ab39cd4..116c570 100644
+--- a/src/deferredRenderPass.c
++++ b/src/deferredRenderPass.c
+@@ -266,35 +266,30 @@ void RecordDeferredRenderPass(DeferredRenderPass *pDeferredRenderPass, VkCommand
+ 
+     Subpass *pGeometrySubpass = &pDeferredRenderPass->geometrySubpass;
+     vkCmdBindPipeline(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pGeometrySubpass->vkPipeline);
+-    for (uint32_t modelIndex = 0; modelIndex < pGeometrySubpass->modelCount; modelIndex++)
++    for (uint32_t modelIndex = 0; modelIndex < pGeometrySubpass->modelCollection.length; modelIndex++)
+     {
+-        SubpassModel *pSubpassModel = &pGeometrySubpass->models[modelIndex];
+-        if (pSubpassModel->isValid)
++        SubpassModel *pSubpassModel = pGeometrySubpass->modelCollection.array[modelIndex];
++        if (NULL != pSubpassModel)
+         {
+             vkCmdSetViewport(vkCommandBuffer, 0, 1, &viewport);
+             vkCmdSetScissor(vkCommandBuffer, 0, 1, &scissor);
+ 
+             vkCmdBindDescriptorSets(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pGeometrySubpass->vkPipelineLayout, 0, 1, &pSubpassModel->vkDescriptorSet, 0, NULL);
+-
+-            VkBuffer vertexBuffers[] = {pSubpassModel->vertexBuffer};
+-            VkDeviceSize offsets[] = {0};
+-            vkCmdBindVertexBuffers(vkCommandBuffer, 0, 1, vertexBuffers, offsets);
+-            uint32_t vertexCount = pSubpassModel->vertexCount;
+-            vkCmdDraw(vkCommandBuffer, vertexCount, 1, 0, 0);
++            VkBuffer vertexBuffers[] = {pSubpassModel->vertexBuffer, pSubpassModel->instanceBuffer};
++            VkDeviceSize offsets[] = {0, 0};
++            vkCmdBindVertexBuffers(vkCommandBuffer, 0, 2, vertexBuffers, offsets);
++            vkCmdDraw(vkCommandBuffer, pSubpassModel->vertexCount, pSubpassModel->instanceCount, 0, 0);
+         }
+     }
+-
+     vkCmdNextSubpass(vkCommandBuffer, VK_SUBPASS_CONTENTS_INLINE);
+-
+     // lighting subpass
+     Subpass *pLightingSubpass = &pDeferredRenderPass->lightingSubpass;
+-    SubpassModel *pSubpassModel = &pLightingSubpass->models[0];
+-
++    SubpassModel *pSubpassModel = pLightingSubpass->modelCollection.array[0];
+     vkCmdBindPipeline(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pLightingSubpass->vkPipeline);
+     vkCmdSetViewport(vkCommandBuffer, 0, 1, &viewport);
+     vkCmdSetScissor(vkCommandBuffer, 0, 1, &scissor);
+     vkCmdBindDescriptorSets(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pLightingSubpass->vkPipelineLayout, 0, 1, &pSubpassModel->vkDescriptorSet, 0, NULL);
+-    vkCmdDraw(vkCommandBuffer, pSubpassModel->vertexCount, 1, 0, 0);
++    vkCmdDraw(vkCommandBuffer, 3, 1, 0, 0);
+ 
+     vkCmdEndRenderPass(vkCommandBuffer);
+     result = vkEndCommandBuffer(vkCommandBuffer);
+diff --git a/src/geometrySubpass.c b/src/geometrySubpass.c
+index fb4803b..732abba 100644
+--- a/src/geometrySubpass.c
++++ b/src/geometrySubpass.c
+@@ -34,15 +34,20 @@ static void CreateVkPipeline(Subpass *pGeometrySubpass, const char *shadersPath,
+     uint32_t stageCount = 2;
+     VkPipelineShaderStageCreateInfo *pipelineShaderStageCreateInfos = (VkPipelineShaderStageCreateInfo[]){vertShaderStageCreateInfo, fragShaderStageCreateInfo};
+ 
+-    uint32_t vertexBindingDescriptionCount = 1;
++    uint32_t vertexBindingDescriptionCount = 2;
+     VkVertexInputBindingDescription *vertexBindingDescriptions = (VkVertexInputBindingDescription[]){
+         {
+             .binding = 0,
+             .stride = sizeof(GeometrySubpassVertex),
+             .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
+         },
++        {
++            .binding = 1,
++            .stride = sizeof(GeometrySubpassInstance),
++            .inputRate = VK_VERTEX_INPUT_RATE_INSTANCE,
++        },
+     };
+-    uint32_t vertexAttributeDescriptionCount = 3;
++    uint32_t vertexAttributeDescriptionCount = 7;
+     VkVertexInputAttributeDescription vertexAttributeDescriptions[] = {
+         {
+             .location = 0,
+@@ -61,7 +66,33 @@ static void CreateVkPipeline(Subpass *pGeometrySubpass, const char *shadersPath,
+             .binding = 0,
+             .format = VK_FORMAT_R32G32B32_SFLOAT,
+             .offset = offsetof(GeometrySubpassVertex, normal),
+-        }};
++        },
++        // Instance:
++        {
++            .location = 3,
++            .binding = 1,
++            .format = VK_FORMAT_R32G32B32A32_SFLOAT,
++            .offset = offsetof(GeometrySubpassInstance, model) + sizeof(vec4) * 0,
++        },
++        {
++            .location = 4,
++            .binding = 1,
++            .format = VK_FORMAT_R32G32B32A32_SFLOAT,
++            .offset = offsetof(GeometrySubpassInstance, model) + sizeof(vec4) * 1,
++        },
++        {
++            .location = 5,
++            .binding = 1,
++            .format = VK_FORMAT_R32G32B32A32_SFLOAT,
++            .offset = offsetof(GeometrySubpassInstance, model) + sizeof(vec4) * 2,
++        },
++        {
++            .location = 6,
++            .binding = 1,
++            .format = VK_FORMAT_R32G32B32A32_SFLOAT,
++            .offset = offsetof(GeometrySubpassInstance, model) + sizeof(vec4) * 3,
++        },
++    };
+     VkPipelineVertexInputStateCreateInfo vkPipelineVertexInputStateCreateInfo = {
+         .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
+         .pNext = NULL,
+@@ -183,20 +214,13 @@ static void CreateVkPipeline(Subpass *pGeometrySubpass, const char *shadersPath,
+         .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
+         .pImmutableSamplers = NULL,
+     };
+-    VkDescriptorSetLayoutBinding modelUniformLayoutBinding = {
+-        .binding = 1,
+-        .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+-        .descriptorCount = 1,
+-        .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
+-        .pImmutableSamplers = NULL,
+-    };
+ 
+-    VkDescriptorSetLayoutBinding *bindings = (VkDescriptorSetLayoutBinding[]){globalUniformLayoutBinding, modelUniformLayoutBinding};
++    VkDescriptorSetLayoutBinding *bindings = (VkDescriptorSetLayoutBinding[]){globalUniformLayoutBinding};
+     VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {
+         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+         .pNext = NULL,
+         .flags = 0,
+-        .bindingCount = 2,
++        .bindingCount = 1,
+         .pBindings = bindings,
+     };
+     VkResult result = vkCreateDescriptorSetLayout(vkDevice, &descriptorSetLayoutCreateInfo, NULL, &pGeometrySubpass->descriptorSetLayout);
+@@ -247,27 +271,76 @@ static void DestroyVkPipeline(Subpass *pGeometrySubpass, VkDevice vkDevice)
+     vkDestroyPipeline(vkDevice, pGeometrySubpass->vkPipeline, NULL);
+ }
+ 
+-static void CreateGeometrySubpassModel(Subpass *pGeometrySubpass, VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkCommandPool graphicVkCommandPool, VkQueue vkGraphicQueue, VkBuffer globalUniformBuffer, uint32_t vertexCount, GeometrySubpassVertex *geometrySubpassVertices, uint32_t index)
++void CreateGeometrySubpass(Subpass *pGeometrySubpass, const char *shadersPath, VkRenderPass vkRenderPass, uint32_t geometrySubpassIndex, VkDevice vkDevice, VkViewport viewport, VkRect2D scissor)
+ {
+-    SubpassModel *pSubpassModel = &pGeometrySubpass->models[index];
+-    pSubpassModel->vertexCount = vertexCount;
++    CreateVkPipeline(pGeometrySubpass, shadersPath, vkRenderPass, geometrySubpassIndex, vkDevice, viewport, scissor);
++
++    pGeometrySubpass->vkDescriptorPoolSizeCount = 1;
++    pGeometrySubpass->vkDescriptorPoolSizes = TickernelMalloc(sizeof(VkDescriptorPoolSize) * pGeometrySubpass->vkDescriptorPoolSizeCount);
++    pGeometrySubpass->vkDescriptorPoolSizes[0] = (VkDescriptorPoolSize){
++        .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
++        .descriptorCount = 1,
++    };
++
++    TickernelCreateCollection(&pGeometrySubpass->modelCollection, sizeof(SubpassModel), 1);
++}
++void DestroyGeometrySubpass(Subpass *pGeometrySubpass, VkDevice vkDevice)
++{
++
++    for (uint32_t i = pGeometrySubpass->modelCollection.length - 1; i > 0; i--)
++    {
++        RemoveModelFromGeometrySubpass(pGeometrySubpass, vkDevice, i);
++    }
++
++    TickernelDestroyCollection(&pGeometrySubpass->modelCollection);
++
++    TickernelFree(pGeometrySubpass->vkDescriptorPoolSizes);
++    DestroyVkPipeline(pGeometrySubpass, vkDevice);
++}
++
++void AddModelToGeometrySubpass(Subpass *pGeometrySubpass, VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkCommandPool graphicVkCommandPool, VkQueue vkGraphicQueue, VkBuffer globalUniformBuffer, uint32_t vertexCount, GeometrySubpassVertex *geometrySubpassVertices, uint32_t *pIndex)
++{
++    SubpassModel subpassModel = {
++        .vertexCount = vertexCount,
++        .vertexBuffer = NULL,
++        .vertexBufferMemory = NULL,
++
++        .maxInstanceCount = 0,
++        .instanceCount = 0,
++        .instanceBuffer = NULL,
++        .instanceBufferMemory = NULL,
++
++        .modelUniformBuffer = NULL,
++        .modelUniformBufferMemory = NULL,
++        .modelUniformBufferMapped = NULL,
++
++        .vkDescriptorPool = NULL,
++        .vkDescriptorSet = NULL,
++    };
+     VkDeviceSize vertexBufferSize = sizeof(GeometrySubpassVertex) * vertexCount;
+-    CreateVertexBuffer(vkDevice, vkPhysicalDevice, graphicVkCommandPool, vkGraphicQueue, vertexBufferSize, geometrySubpassVertices, &pSubpassModel->vertexBuffer, &pSubpassModel->vertexBufferMemory);
+-    // Create model uniform buffer
+-    VkDeviceSize uniformBufferSize = sizeof(GeometrySubpassModelUniformBuffer);
+-    CreateBuffer(vkDevice, vkPhysicalDevice, uniformBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &pSubpassModel->modelUniformBuffer, &pSubpassModel->modelUniformBufferMemory);
+-    VkResult result = vkMapMemory(vkDevice, *&pSubpassModel->modelUniformBufferMemory, 0, uniformBufferSize, 0, &pSubpassModel->modelUniformBufferMapped);
++    CreateBuffer(vkDevice, vkPhysicalDevice, vertexBufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &subpassModel.vertexBuffer, &subpassModel.vertexBufferMemory);
++    UpdateBufferWithStagingBuffer(vkDevice, vkPhysicalDevice, 0, vertexBufferSize, geometrySubpassVertices, graphicVkCommandPool, vkGraphicQueue, subpassModel.vertexBuffer);
++    // Create vkDescriptorPool
++    VkDescriptorPoolCreateInfo descriptorPoolCreateInfo = {
++        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
++        .pNext = NULL,
++        .flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
++        .maxSets = 1,
++        .poolSizeCount = pGeometrySubpass->vkDescriptorPoolSizeCount,
++        .pPoolSizes = pGeometrySubpass->vkDescriptorPoolSizes,
++    };
++    VkResult result = vkCreateDescriptorPool(vkDevice, &descriptorPoolCreateInfo, NULL, &subpassModel.vkDescriptorPool);
+     TryThrowVulkanError(result);
++
+     // Create vkDescriptorSet
+-    uint32_t poolIndex = index / pGeometrySubpass->modelCountPerDescriptorPool;
+     VkDescriptorSetAllocateInfo descriptorSetAllocateInfo = {
+         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+         .pNext = NULL,
+-        .descriptorPool = pGeometrySubpass->vkDescriptorPools[poolIndex],
++        .descriptorPool = subpassModel.vkDescriptorPool,
+         .descriptorSetCount = 1,
+         .pSetLayouts = &pGeometrySubpass->descriptorSetLayout,
+     };
+-    result = vkAllocateDescriptorSets(vkDevice, &descriptorSetAllocateInfo, &pSubpassModel->vkDescriptorSet);
++    result = vkAllocateDescriptorSets(vkDevice, &descriptorSetAllocateInfo, &subpassModel.vkDescriptorSet);
+     TryThrowVulkanError(result);
+ 
+     VkDescriptorBufferInfo globalDescriptorBufferInfo = {
+@@ -275,16 +348,11 @@ static void CreateGeometrySubpassModel(Subpass *pGeometrySubpass, VkDevice vkDev
+         .offset = 0,
+         .range = sizeof(GlobalUniformBuffer),
+     };
+-    VkDescriptorBufferInfo objectDescriptorBufferInfo = {
+-        .buffer = pSubpassModel->modelUniformBuffer,
+-        .offset = 0,
+-        .range = sizeof(GeometrySubpassModelUniformBuffer),
+-    };
+-    VkWriteDescriptorSet descriptorWrites[2] = {
++    VkWriteDescriptorSet descriptorWrites[1] = {
+         {
+             .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+             .pNext = NULL,
+-            .dstSet = pSubpassModel->vkDescriptorSet,
++            .dstSet = subpassModel.vkDescriptorSet,
+             .dstBinding = 0,
+             .dstArrayElement = 0,
+             .descriptorCount = 1,
+@@ -293,102 +361,48 @@ static void CreateGeometrySubpassModel(Subpass *pGeometrySubpass, VkDevice vkDev
+             .pBufferInfo = &globalDescriptorBufferInfo,
+             .pTexelBufferView = NULL,
+         },
+-        {
+-            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+-            .pNext = NULL,
+-            .dstSet = pSubpassModel->vkDescriptorSet,
+-            .dstBinding = 1,
+-            .dstArrayElement = 0,
+-            .descriptorCount = 1,
+-            .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+-            .pImageInfo = NULL,
+-            .pBufferInfo = &objectDescriptorBufferInfo,
+-            .pTexelBufferView = NULL,
+-        },
+     };
+-    vkUpdateDescriptorSets(vkDevice, 2, descriptorWrites, 0, NULL);
+-    pSubpassModel->isValid = true;
++    vkUpdateDescriptorSets(vkDevice, 1, descriptorWrites, 0, NULL);
++    TickernelAddToCollection(&pGeometrySubpass->modelCollection, &subpassModel, pIndex);
+ }
+-static void DestroyGeometrySubpassModel(Subpass *pGeometrySubpass, VkDevice vkDevice, uint32_t index)
++void RemoveModelFromGeometrySubpass(Subpass *pGeometrySubpass, VkDevice vkDevice, uint32_t index)
+ {
+-    SubpassModel *pSubpassModel = &pGeometrySubpass->models[index];
+-    pSubpassModel->isValid = false;
+-
+-    uint32_t poolIndex = index / pGeometrySubpass->modelCountPerDescriptorPool;
+-    VkResult result = vkFreeDescriptorSets(vkDevice, pGeometrySubpass->vkDescriptorPools[poolIndex], 1, &pSubpassModel->vkDescriptorSet);
+-    TryThrowVulkanError(result);
+-
++    SubpassModel *pSubpassModel = pGeometrySubpass->modelCollection.array[index];
++    if (pSubpassModel->maxInstanceCount > 0)
++    {
++        DestroyBuffer(vkDevice, pSubpassModel->instanceBuffer, pSubpassModel->instanceBufferMemory);
++    }
+     DestroyBuffer(vkDevice, pSubpassModel->modelUniformBuffer, pSubpassModel->modelUniformBufferMemory);
+-    DestroyVertexBuffer(vkDevice, pSubpassModel->vertexBuffer, pSubpassModel->vertexBufferMemory);
+-}
+-
+-void CreateGeometrySubpass(Subpass *pGeometrySubpass, const char *shadersPath, VkRenderPass vkRenderPass, uint32_t geometrySubpassIndex, VkDevice vkDevice, VkViewport viewport, VkRect2D scissor)
+-{
+-    CreateVkPipeline(pGeometrySubpass, shadersPath, vkRenderPass, geometrySubpassIndex, vkDevice, viewport, scissor);
+-
+-    pGeometrySubpass->modelCountPerDescriptorPool = 256;
+-    pGeometrySubpass->vkDescriptorPoolCount = 0;
+-    pGeometrySubpass->vkDescriptorPools = NULL;
+-
+-    pGeometrySubpass->vkDescriptorPoolSizeCount = 1;
+-    pGeometrySubpass->vkDescriptorPoolSizes = TickernelMalloc(sizeof(VkDescriptorPoolSize) * pGeometrySubpass->vkDescriptorPoolSizeCount);
+-    pGeometrySubpass->vkDescriptorPoolSizes[0] = (VkDescriptorPoolSize){
+-        .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+-        .descriptorCount = pGeometrySubpass->modelCountPerDescriptorPool * 2,
+-    };
+-
+-    pGeometrySubpass->modelCount = 0;
+-    pGeometrySubpass->models = NULL;
+-
+-    pGeometrySubpass->removedIndexLinkedList.pHead = NULL;
+-    pGeometrySubpass->removedIndexLinkedList.dataSize = sizeof(uint32_t);
++    DestroyBuffer(vkDevice, pSubpassModel->vertexBuffer, pSubpassModel->vertexBufferMemory);
++    VkResult result = vkFreeDescriptorSets(vkDevice, pSubpassModel->vkDescriptorPool, 1, &pSubpassModel->vkDescriptorSet);
++    TryThrowVulkanError(result);
++    vkDestroyDescriptorPool(vkDevice, pSubpassModel->vkDescriptorPool, NULL);
++    TickernelRemoveFromCollection(&pGeometrySubpass->modelCollection, index);
+ }
+-void DestroyGeometrySubpass(Subpass *pGeometrySubpass, VkDevice vkDevice)
++void UpdateInstancesToGeometrySubpass(Subpass *pGeometrySubpass, uint32_t modelIndex, VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkCommandPool graphicVkCommandPool, VkQueue vkGraphicQueue, VkBuffer globalUniformBuffer, GeometrySubpassInstance *geometrySubpassInstances, uint32_t instanceCount)
+ {
+-    for (uint32_t i = 0; i < pGeometrySubpass->modelCount; i++)
++    SubpassModel *pSubpassModel = pGeometrySubpass->modelCollection.array[modelIndex];
++    if (0 == pSubpassModel->maxInstanceCount)
+     {
+-        if (pGeometrySubpass->models[i].isValid)
+-        {
+-            DestroyGeometrySubpassModel(pGeometrySubpass, vkDevice, i);
+-        }
+-        else
+-        {
+-            // Skip deleted
+-        }
++        pSubpassModel->maxInstanceCount = instanceCount;
++        pSubpassModel->instanceCount = instanceCount;
++        VkDeviceSize instanceBufferSize = sizeof(GeometrySubpassInstance) * pSubpassModel->instanceCount;
++        CreateBuffer(vkDevice, vkPhysicalDevice, instanceBufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &pSubpassModel->instanceBuffer, &pSubpassModel->instanceBufferMemory);
++        UpdateBuffer(vkDevice, pSubpassModel->instanceBufferMemory, 0, sizeof(GeometrySubpassInstance) * instanceCount, geometrySubpassInstances);
+     }
+-    TickernelFree(pGeometrySubpass->models);
+-
+-    for (uint32_t i = 0; i < pGeometrySubpass->vkDescriptorPoolCount; i++)
++    else if (instanceCount <= pSubpassModel->maxInstanceCount)
+     {
+-        vkDestroyDescriptorPool(vkDevice, pGeometrySubpass->vkDescriptorPools[i], NULL);
+-    }
+-    TickernelFree(pGeometrySubpass->vkDescriptorPools);
+-
+-    TickernelFree(pGeometrySubpass->vkDescriptorPoolSizes);
+-    TickernelClearLinkedList(&pGeometrySubpass->removedIndexLinkedList);
+-
+-    DestroyVkPipeline(pGeometrySubpass, vkDevice);
+-}
+-
+-void AddModelToGeometrySubpass(Subpass *pGeometrySubpass, VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkCommandPool graphicVkCommandPool, VkQueue vkGraphicQueue, VkBuffer globalUniformBuffer, uint32_t vertexCount, GeometrySubpassVertex *geometrySubpassVertices, uint32_t *pIndex)
+-{
+-    AddModelToSubpass(vkDevice, pGeometrySubpass, pIndex);
+-    CreateGeometrySubpassModel(pGeometrySubpass, vkDevice, vkPhysicalDevice, graphicVkCommandPool, vkGraphicQueue, globalUniformBuffer, vertexCount, geometrySubpassVertices, *pIndex);
+-}
+-void RemoveModelFromGeometrySubpass(Subpass *pGeometrySubpass, VkDevice vkDevice, uint32_t index)
+-{
+-    DestroyGeometrySubpassModel(pGeometrySubpass, vkDevice, index);
+-    RemoveModelFromSubpass(index, pGeometrySubpass);
+-}
+-void UpdateModelUniformToGeometrySubpass(Subpass *pGeometrySubpass, uint32_t index, GeometrySubpassModelUniformBuffer geometrySubpassModelUniformBuffer)
+-{
+-    SubpassModel *pSubpassModel = &pGeometrySubpass->models[index];
+-    if (pSubpassModel->isValid)
+-    {
+-        memcpy(pGeometrySubpass->models[index].modelUniformBufferMapped, &geometrySubpassModelUniformBuffer, sizeof(geometrySubpassModelUniformBuffer));
++        pSubpassModel->instanceCount = instanceCount;
++        VkDeviceSize bufferSize = sizeof(GeometrySubpassInstance) * pSubpassModel->instanceCount;
++        UpdateBuffer(vkDevice, pSubpassModel->instanceBufferMemory, 0, bufferSize, geometrySubpassInstances);
+     }
+     else
+     {
+-        TickernelError("Geometry subpass model index: %d reference a invaild model!", index);
++        DestroyBuffer(vkDevice, pSubpassModel->instanceBuffer, pSubpassModel->instanceBufferMemory);
++        pSubpassModel->maxInstanceCount = instanceCount;
++        pSubpassModel->instanceCount = instanceCount;
++        VkDeviceSize instanceBufferSize = sizeof(GeometrySubpassInstance) * pSubpassModel->instanceCount;
++        CreateBuffer(vkDevice, vkPhysicalDevice, instanceBufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &pSubpassModel->instanceBuffer, &pSubpassModel->instanceBufferMemory);
++        UpdateBuffer(vkDevice, pSubpassModel->instanceBufferMemory, 0, sizeof(GeometrySubpassInstance) * instanceCount, geometrySubpassInstances);
+     }
+-}
+\ No newline at end of file
++}
+diff --git a/src/geometrySubpass.h b/src/geometrySubpass.h
+index e100da8..612d3d4 100644
+--- a/src/geometrySubpass.h
++++ b/src/geometrySubpass.h
+@@ -1,30 +1,29 @@
+ #pragma once
+ #include <graphicEngineCore.h>
+ 
+-typedef struct GeometrySubpassVertexStruct
++typedef struct
+ {
+     vec3 position;
+     vec4 color;
+     vec3 normal;
+ } GeometrySubpassVertex;
+ 
+-typedef struct GeometrySubpassModelStruct
++typedef struct
++{
++    mat4 model;
++} GeometrySubpassInstance;
++
++typedef struct
+ {
+     uint32_t count;
+     GeometrySubpassVertex *geometrySubpassVertices;
+ 
+ } GeometrySubpassModel;
+ 
+-typedef struct GeometrySubpassModelUniformBufferStruct
+-{
+-    mat4 model;
+-} GeometrySubpassModelUniformBuffer;
+-
+ // For graphic engine
+ void CreateGeometrySubpass(Subpass *pGeometrySubpass, const char *shadersPath, VkRenderPass vkRenderPass, uint32_t geometrySubpassIndex, VkDevice vkDevice, VkViewport viewport, VkRect2D scissor);
+ void DestroyGeometrySubpass(Subpass *pGeometrySubpass, VkDevice vkDevice);
+ 
+-// For user
+ void AddModelToGeometrySubpass(Subpass *pGeometrySubpass, VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkCommandPool graphicVkCommandPool, VkQueue vkGraphicQueue, VkBuffer globalUniformBuffer, uint32_t vertexCount, GeometrySubpassVertex *geometrySubpassVertices, uint32_t *pIndex);
+ void RemoveModelFromGeometrySubpass(Subpass *pGeometrySubpass, VkDevice vkDevice, uint32_t index);
+-void UpdateModelUniformToGeometrySubpass(Subpass *pGeometrySubpass, uint32_t index, GeometrySubpassModelUniformBuffer geometrySubpassModelUniformBuffer);
+\ No newline at end of file
++void UpdateInstancesToGeometrySubpass(Subpass *pGeometrySubpass, uint32_t modelIndex, VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkCommandPool graphicVkCommandPool, VkQueue vkGraphicQueue, VkBuffer globalUniformBuffer, GeometrySubpassInstance *geometrySubpassInstances, uint32_t instanceCount);
+\ No newline at end of file
+diff --git a/src/graphicEngineCore.c b/src/graphicEngineCore.c
+index ffdb3b9..50c7e10 100644
+--- a/src/graphicEngineCore.c
++++ b/src/graphicEngineCore.c
+@@ -66,7 +66,7 @@ static void FindSupportedFormat(VkPhysicalDevice vkPhysicalDevice, VkFormat *can
+     printf("Target format not found!");
+ }
+ 
+-static void CopyVkBuffer(VkCommandPool graphicVkCommandPool, VkDevice vkDevice, VkQueue vkGraphicQueue, VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
++void CopyVkBuffer(VkCommandPool graphicVkCommandPool, VkDevice vkDevice, VkQueue vkGraphicQueue, VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize offset, VkDeviceSize size)
+ {
+     VkCommandBuffer vkCommandBuffer;
+     VkCommandBufferAllocateInfo vkCommandBufferAllocateInfo = {
+@@ -91,7 +91,7 @@ static void CopyVkBuffer(VkCommandPool graphicVkCommandPool, VkDevice vkDevice,
+ 
+     VkBufferCopy copyRegion = {
+         .srcOffset = 0,
+-        .dstOffset = 0,
++        .dstOffset = offset,
+         .size = size,
+     };
+     vkCmdCopyBuffer(vkCommandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
+@@ -149,28 +149,29 @@ void DestroyBuffer(VkDevice vkDevice, VkBuffer vkBuffer, VkDeviceMemory deviceMe
+     vkDestroyBuffer(vkDevice, vkBuffer, NULL);
+ }
+ 
+-void CreateVertexBuffer(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkCommandPool graphicVkCommandPool, VkQueue vkGraphicQueue, VkDeviceSize vertexBufferSize, void *vertices, VkBuffer *pVertexBuffer, VkDeviceMemory *pVertexBufferMemory)
++void UpdateBufferWithStagingBuffer(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkDeviceSize offset, VkDeviceSize bufferSize, void *bufferData, VkCommandPool graphicVkCommandPool, VkQueue vkGraphicQueue, VkBuffer vkBuffer)
+ {
+     VkBuffer stagingBuffer;
+     VkDeviceMemory stagingBufferMemory;
+-    CreateBuffer(vkDevice, vkPhysicalDevice, vertexBufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingBuffer, &stagingBufferMemory);
++    CreateBuffer(vkDevice, vkPhysicalDevice, bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingBuffer, &stagingBufferMemory);
+ 
+     void *pData;
+-    VkResult result = vkMapMemory(vkDevice, stagingBufferMemory, 0, vertexBufferSize, 0, &pData);
++    VkResult result = vkMapMemory(vkDevice, stagingBufferMemory, offset, bufferSize, 0, &pData);
+     TryThrowVulkanError(result);
+-    memcpy(pData, vertices, vertexBufferSize);
++    memcpy(pData, bufferData, bufferSize);
+     vkUnmapMemory(vkDevice, stagingBufferMemory);
+-    CreateBuffer(vkDevice, vkPhysicalDevice, vertexBufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, pVertexBuffer, pVertexBufferMemory);
+-    TryThrowVulkanError(result);
+-    CopyVkBuffer(graphicVkCommandPool, vkDevice, vkGraphicQueue, stagingBuffer, *pVertexBuffer, vertexBufferSize);
++
++    CopyVkBuffer(graphicVkCommandPool, vkDevice, vkGraphicQueue, stagingBuffer, vkBuffer, 0, bufferSize);
+ 
+     vkDestroyBuffer(vkDevice, stagingBuffer, NULL);
+     vkFreeMemory(vkDevice, stagingBufferMemory, NULL);
+ }
+-void DestroyVertexBuffer(VkDevice vkDevice, VkBuffer vertexBuffer, VkDeviceMemory vertexBufferMemory)
++void UpdateBuffer(VkDevice vkDevice, VkDeviceMemory bufferMemory, VkDeviceSize offset, VkDeviceSize bufferSize, void *bufferData)
+ {
+-    vkDestroyBuffer(vkDevice, vertexBuffer, NULL);
+-    vkFreeMemory(vkDevice, vertexBufferMemory, NULL);
++    void *data;
++    vkMapMemory(vkDevice, bufferMemory, offset, bufferSize, 0, &data);
++    memcpy(data, bufferData, bufferSize);
++    vkUnmapMemory(vkDevice, bufferMemory);
+ }
+ 
+ void FindMemoryType(VkPhysicalDevice vkPhysicalDevice, uint32_t typeFilter, VkMemoryPropertyFlags memoryPropertyFlags, uint32_t *memoryTypeIndex)
+@@ -280,59 +281,3 @@ void DestroyVkShaderModule(VkDevice vkDevice, VkShaderModule vkShaderModule)
+ {
+     vkDestroyShaderModule(vkDevice, vkShaderModule, NULL);
+ }
+-
+-void AddModelToSubpass(VkDevice vkDevice, Subpass *pSubpass, uint32_t *pIndex)
+-{
+-    if (NULL != pSubpass->removedIndexLinkedList.pHead)
+-    {
+-        uint32_t modelIndex = *(uint32_t *)pSubpass->removedIndexLinkedList.pHead->pData;
+-        TickernelRemoveFromLinkedList(&pSubpass->removedIndexLinkedList);
+-        *pIndex = modelIndex;
+-        return;
+-    }
+-    else if (pSubpass->modelCount < pSubpass->vkDescriptorPoolCount * pSubpass->modelCountPerDescriptorPool)
+-    {
+-        *pIndex = pSubpass->modelCount;
+-        pSubpass->modelCount++;
+-        return;
+-    }
+-    else
+-    {
+-        uint32_t newVkDescriptorPoolCount = pSubpass->vkDescriptorPoolCount + 1;
+-        VkDescriptorPool *newVkDescriptorPools = TickernelMalloc(sizeof(VkDescriptorPool) * newVkDescriptorPoolCount);
+-        memcpy(newVkDescriptorPools, pSubpass->vkDescriptorPools, sizeof(VkDescriptorPool) * pSubpass->vkDescriptorPoolCount);
+-        TickernelFree(pSubpass->vkDescriptorPools);
+-        VkDescriptorPoolCreateInfo descriptorPoolCreateInfo = {
+-            .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+-            .pNext = NULL,
+-            .flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
+-            .maxSets = pSubpass->modelCountPerDescriptorPool,
+-            .poolSizeCount = pSubpass->vkDescriptorPoolSizeCount,
+-            .pPoolSizes = pSubpass->vkDescriptorPoolSizes,
+-        };
+-        VkResult result = vkCreateDescriptorPool(vkDevice, &descriptorPoolCreateInfo, NULL, &newVkDescriptorPools[pSubpass->vkDescriptorPoolCount]);
+-        TryThrowVulkanError(result);
+-        pSubpass->vkDescriptorPoolCount = newVkDescriptorPoolCount;
+-        pSubpass->vkDescriptorPools = newVkDescriptorPools;
+-
+-        SubpassModel *newModels = TickernelMalloc(sizeof(SubpassModel) * pSubpass->modelCountPerDescriptorPool * newVkDescriptorPoolCount);
+-        memcpy(newModels, pSubpass->models, sizeof(SubpassModel) * pSubpass->modelCount);
+-        TickernelFree(pSubpass->models);
+-        pSubpass->models = newModels;
+-
+-        *pIndex = pSubpass->modelCount;
+-        pSubpass->modelCount++;
+-        return;
+-    }
+-}
+-void RemoveModelFromSubpass(uint32_t index, Subpass *pSubpass)
+-{
+-    if (index == (pSubpass->modelCount - 1))
+-    {
+-        pSubpass->modelCount--;
+-    }
+-    else
+-    {
+-        TickernelAddToLinkedList(&pSubpass->removedIndexLinkedList, &index);
+-    }
+-}
+\ No newline at end of file
+diff --git a/src/graphicEngineCore.h b/src/graphicEngineCore.h
+index f01b5ef..900d572 100644
+--- a/src/graphicEngineCore.h
++++ b/src/graphicEngineCore.h
+@@ -7,7 +7,6 @@
+ #include <tickernelWindow.h>
+ #define INVALID_VKFRAMEBUFFER 0
+ #define MAX_VK_DESCRIPTOR_TPYE 11
+-
+ typedef struct GlobalUniformBufferStruct
+ {
+     mat4 view;
+@@ -16,18 +15,26 @@ typedef struct GlobalUniformBufferStruct
+     float pointSizeFactor;
+ } GlobalUniformBuffer;
+ 
++// GlobalBuffer 世界场景中的数据
++// ModelBuffer 每种建筑的数据
++// InstanceBuffer 每个建筑实例的数据
+ typedef struct SubpassModelStruct
+ {
+     uint32_t vertexCount;
+     VkBuffer vertexBuffer;
+     VkDeviceMemory vertexBufferMemory;
+ 
++    uint32_t maxInstanceCount;
++    uint32_t instanceCount;
++    VkBuffer instanceBuffer;
++    VkDeviceMemory instanceBufferMemory;
++
+     VkBuffer modelUniformBuffer;
+     VkDeviceMemory modelUniformBufferMemory;
+     void *modelUniformBufferMapped;
+ 
++    VkDescriptorPool vkDescriptorPool;
+     VkDescriptorSet vkDescriptorSet;
+-    bool isValid;
+ } SubpassModel;
+ 
+ typedef struct SubpassStruct
+@@ -36,14 +43,7 @@ typedef struct SubpassStruct
+     VkPipelineLayout vkPipelineLayout;
+     VkDescriptorSetLayout descriptorSetLayout;
+ 
+-    uint32_t modelCountPerDescriptorPool;
+-    uint32_t vkDescriptorPoolCount;
+-    VkDescriptorPool *vkDescriptorPools;
+-    uint32_t modelCount;
+-    SubpassModel *models;
+-    TickernelLinkedList removedIndexLinkedList;
+-    // TickernelCollection modelCollection;
+-
++    TickernelCollection modelCollection;
+     uint32_t vkDescriptorPoolSizeCount;
+     VkDescriptorPoolSize *vkDescriptorPoolSizes;
+ } Subpass;
+@@ -66,11 +66,8 @@ void DestroyGraphicImage(VkDevice vkDevice, GraphicImage graphicImage);
+ void CreateVkShaderModule(VkDevice vkDevice, const char *filePath, VkShaderModule *pVkShaderModule);
+ void DestroyVkShaderModule(VkDevice vkDevice, VkShaderModule vkShaderModule);
+ 
++void CopyVkBuffer(VkCommandPool graphicVkCommandPool, VkDevice vkDevice, VkQueue vkGraphicQueue, VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize offset, VkDeviceSize size);
+ void CreateBuffer(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkDeviceSize bufferSize, VkBufferUsageFlags bufferUsageFlags, VkMemoryPropertyFlags msemoryPropertyFlags, VkBuffer *pBuffer, VkDeviceMemory *pDeviceMemory);
+ void DestroyBuffer(VkDevice vkDevice, VkBuffer vkBuffer, VkDeviceMemory deviceMemory);
+-
+-void CreateVertexBuffer(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkCommandPool graphicVkCommandPool, VkQueue vkGraphicQueue, VkDeviceSize vertexBufferSize, void *vertices, VkBuffer *pVertexBuffer, VkDeviceMemory *pVertexBufferMemory);
+-void DestroyVertexBuffer(VkDevice vkDevice, VkBuffer vertexBuffer, VkDeviceMemory vertexBufferMemory);
+-
+-void AddModelToSubpass(VkDevice vkDevice, Subpass *pSubpass, uint32_t *pModelIndex);
+-void RemoveModelFromSubpass(uint32_t modelIndex, Subpass *pSubpass);
++void UpdateBufferWithStagingBuffer(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkDeviceSize offset, VkDeviceSize bufferSize, void *bufferData, VkCommandPool graphicVkCommandPool, VkQueue vkGraphicQueue, VkBuffer vkBuffer);
++void UpdateBuffer(VkDevice vkDevice, VkDeviceMemory bufferMemory, VkDeviceSize offset, VkDeviceSize bufferSize, void *bufferData);
+\ No newline at end of file
+diff --git a/src/lightingSubpass.c b/src/lightingSubpass.c
+index f7fda8f..d3acbf2 100644
+--- a/src/lightingSubpass.c
++++ b/src/lightingSubpass.c
+@@ -66,7 +66,7 @@ static void CreateVkPipeline(Subpass *pLightingSubpass, const char *shadersPath,
+         .flags = 0,
+         .rasterizerDiscardEnable = VK_FALSE,
+         .polygonMode = VK_POLYGON_MODE_FILL,
+-        .cullMode = VK_CULL_MODE_NONE,
++        .cullMode = VK_CULL_MODE_BACK_BIT,
+         .frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE,
+         .depthBiasEnable = VK_FALSE,
+         .depthBiasConstantFactor = 0,
+@@ -220,27 +220,50 @@ static void DestroyVkPipeline(Subpass *pLightingSubpass, VkDevice vkDevice)
+     vkDestroyPipeline(vkDevice, pLightingSubpass->vkPipeline, NULL);
+ }
+ 
+-static void CreateLightingSubpassModel(Subpass *pLightingSubpass, VkDevice vkDevice, VkBuffer globalUniformBuffer, VkImageView depthVkImageView, VkImageView albedoVkImageView, VkImageView normalVkImageView, uint32_t index)
++static void CreateLightingSubpassModel(Subpass *pLightingSubpass, VkDevice vkDevice, VkBuffer globalUniformBuffer, VkImageView depthVkImageView, VkImageView albedoVkImageView, VkImageView normalVkImageView)
+ {
+-    SubpassModel *pSubpassModel = &pLightingSubpass->models[index];
+-    pSubpassModel->vertexCount = 3;
+-    pSubpassModel->vertexBuffer = NULL;
+-    pSubpassModel->vertexBufferMemory = NULL;
++    assert(pLightingSubpass != NULL);
++    assert(pLightingSubpass->vkDescriptorPoolSizes != NULL);
++    assert(pLightingSubpass->vkDescriptorPoolSizeCount > 0);
++    assert(pLightingSubpass->descriptorSetLayout != VK_NULL_HANDLE);
++    assert(vkDevice != VK_NULL_HANDLE);
++    SubpassModel subpassModel = {
++        .vertexCount = 0,
++        .vertexBuffer = NULL,
++        .vertexBufferMemory = NULL,
+ 
+-    pSubpassModel->modelUniformBuffer = NULL;
+-    pSubpassModel->modelUniformBufferMemory = NULL;
+-    pSubpassModel->modelUniformBufferMapped = NULL;
++        .maxInstanceCount = 0,
++        .instanceCount = 0,
++        .instanceBuffer = NULL,
++        .instanceBufferMemory = NULL,
+ 
++        .modelUniformBuffer = NULL,
++        .modelUniformBufferMemory = NULL,
++        .modelUniformBufferMapped = NULL,
++
++        .vkDescriptorPool = NULL,
++        .vkDescriptorSet = NULL,
++    };
+     // Create vkDescriptorSet
+-    uint32_t poolIndex = index / pLightingSubpass->modelCountPerDescriptorPool;
++    VkDescriptorPoolCreateInfo descriptorPoolCreateInfo = {
++        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
++        .pNext = NULL,
++        .flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
++        .maxSets = 1,
++        .poolSizeCount = pLightingSubpass->vkDescriptorPoolSizeCount,
++        .pPoolSizes = pLightingSubpass->vkDescriptorPoolSizes,
++    };
++    VkResult result = vkCreateDescriptorPool(vkDevice, &descriptorPoolCreateInfo, NULL, &subpassModel.vkDescriptorPool);
++    TryThrowVulkanError(result);
+     VkDescriptorSetAllocateInfo descriptorSetAllocateInfo = {
+         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+         .pNext = NULL,
+-        .descriptorPool = pLightingSubpass->vkDescriptorPools[poolIndex],
++        .descriptorPool = subpassModel.vkDescriptorPool,
+         .descriptorSetCount = 1,
+         .pSetLayouts = &pLightingSubpass->descriptorSetLayout,
+     };
+-    VkResult result = vkAllocateDescriptorSets(vkDevice, &descriptorSetAllocateInfo, &pSubpassModel->vkDescriptorSet);
++
++    result = vkAllocateDescriptorSets(vkDevice, &descriptorSetAllocateInfo, &subpassModel.vkDescriptorSet);
+     TryThrowVulkanError(result);
+     VkDescriptorBufferInfo globalDescriptorBufferInfo = {
+         .buffer = globalUniformBuffer,
+@@ -266,7 +289,7 @@ static void CreateLightingSubpassModel(Subpass *pLightingSubpass, VkDevice vkDev
+         {
+             .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+             .pNext = NULL,
+-            .dstSet = pSubpassModel->vkDescriptorSet,
++            .dstSet = subpassModel.vkDescriptorSet,
+             .dstBinding = 0,
+             .dstArrayElement = 0,
+             .descriptorCount = 1,
+@@ -278,7 +301,7 @@ static void CreateLightingSubpassModel(Subpass *pLightingSubpass, VkDevice vkDev
+         {
+             .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+             .pNext = NULL,
+-            .dstSet = pSubpassModel->vkDescriptorSet,
++            .dstSet = subpassModel.vkDescriptorSet,
+             .dstBinding = 1,
+             .dstArrayElement = 0,
+             .descriptorCount = 1,
+@@ -290,7 +313,7 @@ static void CreateLightingSubpassModel(Subpass *pLightingSubpass, VkDevice vkDev
+         {
+             .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+             .pNext = NULL,
+-            .dstSet = pSubpassModel->vkDescriptorSet,
++            .dstSet = subpassModel.vkDescriptorSet,
+             .dstBinding = 2,
+             .dstArrayElement = 0,
+             .descriptorCount = 1,
+@@ -302,7 +325,7 @@ static void CreateLightingSubpassModel(Subpass *pLightingSubpass, VkDevice vkDev
+         {
+             .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+             .pNext = NULL,
+-            .dstSet = pSubpassModel->vkDescriptorSet,
++            .dstSet = subpassModel.vkDescriptorSet,
+             .dstBinding = 3,
+             .dstArrayElement = 0,
+             .descriptorCount = 1,
+@@ -313,80 +336,47 @@ static void CreateLightingSubpassModel(Subpass *pLightingSubpass, VkDevice vkDev
+         },
+     };
+     vkUpdateDescriptorSets(vkDevice, 4, descriptorWrites, 0, NULL);
+-    pSubpassModel->isValid = true;
++    uint32_t index;
++    TickernelAddToCollection(&pLightingSubpass->modelCollection, &subpassModel, &index);
+ }
+ static void DestroyLightingSubpassModel(Subpass *pLightingSubpass, VkDevice vkDevice, uint32_t index)
+ {
+-    SubpassModel *pSubpassModel = &pLightingSubpass->models[index];
+-    pSubpassModel->isValid = false;
+-
+-    uint32_t poolIndex = index / pLightingSubpass->modelCountPerDescriptorPool;
+-    VkResult result = vkFreeDescriptorSets(vkDevice, pLightingSubpass->vkDescriptorPools[poolIndex], 1, &pSubpassModel->vkDescriptorSet);
++    SubpassModel *pSubpassModel = pLightingSubpass->modelCollection.array[index];
++    VkResult result = vkFreeDescriptorSets(vkDevice, pSubpassModel->vkDescriptorPool, 1, &pSubpassModel->vkDescriptorSet);
+     TryThrowVulkanError(result);
+-
+-    DestroyVertexBuffer(vkDevice, pSubpassModel->vertexBuffer, pSubpassModel->vertexBufferMemory);
++    vkDestroyDescriptorPool(vkDevice, pSubpassModel->vkDescriptorPool, NULL);
++    TickernelRemoveFromCollection(&pLightingSubpass->modelCollection, index);
+ }
+ 
+ void CreateLightingSubpass(Subpass *pLightingSubpass, const char *shadersPath, VkRenderPass vkRenderPass, uint32_t lightingSubpassIndex, VkDevice vkDevice, VkViewport viewport, VkRect2D scissor, VkBuffer globalUniformBuffer, VkImageView depthVkImageView, VkImageView albedoVkImageView, VkImageView normalVkImageView)
+ {
+     CreateVkPipeline(pLightingSubpass, shadersPath, vkRenderPass, lightingSubpassIndex, vkDevice, viewport, scissor);
+ 
+-    pLightingSubpass->modelCountPerDescriptorPool = 1;
+-    pLightingSubpass->vkDescriptorPoolCount = 0;
+-    pLightingSubpass->vkDescriptorPools = NULL;
+-
+     pLightingSubpass->vkDescriptorPoolSizeCount = 2;
+     pLightingSubpass->vkDescriptorPoolSizes = TickernelMalloc(sizeof(VkDescriptorPoolSize) * pLightingSubpass->vkDescriptorPoolSizeCount);
+     pLightingSubpass->vkDescriptorPoolSizes[0] = (VkDescriptorPoolSize){
+         .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+-        .descriptorCount = pLightingSubpass->modelCountPerDescriptorPool,
++        .descriptorCount = 1,
+     };
+     pLightingSubpass->vkDescriptorPoolSizes[1] = (VkDescriptorPoolSize){
+         .type = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT,
+-        .descriptorCount = pLightingSubpass->modelCountPerDescriptorPool * 3,
++        .descriptorCount = 3,
+     };
+ 
+-    pLightingSubpass->modelCount = 0;
+-    pLightingSubpass->models = NULL;
+-    pLightingSubpass->removedIndexLinkedList.pHead = NULL;
+-    pLightingSubpass->removedIndexLinkedList.dataSize = sizeof(uint32_t);
+-
+-    uint32_t index;
+-    AddModelToSubpass(vkDevice, pLightingSubpass, &index);
+-    CreateLightingSubpassModel(pLightingSubpass, vkDevice, globalUniformBuffer, depthVkImageView, albedoVkImageView, normalVkImageView, index);
++    TickernelCreateCollection(&pLightingSubpass->modelCollection, sizeof(SubpassModel), 1);
++    CreateLightingSubpassModel(pLightingSubpass, vkDevice, globalUniformBuffer, depthVkImageView, albedoVkImageView, normalVkImageView);
+ }
+ 
+ void DestroyLightingSubpass(Subpass *pLightingSubpass, VkDevice vkDevice)
+ {
+     DestroyLightingSubpassModel(pLightingSubpass, vkDevice, 0);
+-    RemoveModelFromSubpass(0, pLightingSubpass);
+-
+-    for (uint32_t i = 0; i < pLightingSubpass->modelCountPerDescriptorPool; i++)
+-    {
+-        if (pLightingSubpass->models[i].isValid)
+-        {
+-            DestroyLightingSubpassModel(pLightingSubpass, vkDevice, i);
+-        }
+-        else
+-        {
+-            // Skip deleted
+-        }
+-    }
+-    TickernelFree(pLightingSubpass->models);
+-
+-    for (uint32_t i = 0; i < pLightingSubpass->vkDescriptorPoolCount; i++)
+-    {
+-        vkDestroyDescriptorPool(vkDevice, pLightingSubpass->vkDescriptorPools[i], NULL);
+-    }
+-    TickernelFree(pLightingSubpass->vkDescriptorPools);
+-
++    TickernelDestroyCollection(&pLightingSubpass->modelCollection);
+     TickernelFree(pLightingSubpass->vkDescriptorPoolSizes);
+-    TickernelClearLinkedList(&pLightingSubpass->removedIndexLinkedList);
+-   
++
+     DestroyVkPipeline(pLightingSubpass, vkDevice);
+ }
+ void RecreateLightingSubpassModel(Subpass *pLightingSubpass, VkDevice vkDevice, VkBuffer globalUniformBuffer, VkImageView depthVkImageView, VkImageView albedoVkImageView, VkImageView normalVkImageView)
+ {
+     DestroyLightingSubpassModel(pLightingSubpass, vkDevice, 0);
+-    CreateLightingSubpassModel(pLightingSubpass, vkDevice, globalUniformBuffer, depthVkImageView, albedoVkImageView, normalVkImageView, 0);
++    CreateLightingSubpassModel(pLightingSubpass, vkDevice, globalUniformBuffer, depthVkImageView, albedoVkImageView, normalVkImageView);
+ }
+\ No newline at end of file
+diff --git a/src/luaEngine.c b/src/luaEngine.c
+index 9751020..dc6ca31 100644
+--- a/src/luaEngine.c
++++ b/src/luaEngine.c
+@@ -125,31 +125,37 @@ static int RemoveModel(lua_State *pLuaState)
+     return 0;
+ }
+ 
+-static int UpdateModelUniformBuffer(lua_State *pLuaState)
++static int UpdateInstances(lua_State *pLuaState)
+ {
+     //  index modelMatrix
+-    GeometrySubpassModelUniformBuffer buffer;
+-    for (uint32_t row = 0; row < 4; row++)
++
++    lua_len(pLuaState, -1);
++    uint32_t instanceCount = luaL_checkinteger(pLuaState, -1);
++    lua_pop(pLuaState, 1);
++    GeometrySubpassInstance instances[instanceCount];
++    for (uint32_t i = 0; i < instanceCount; i++)
+     {
+-        int rowValueType = lua_geti(pLuaState, -1, row + 1);
+-        //  index modelMatrix column
+-        AssertLuaType(rowValueType, LUA_TTABLE);
+-        for (uint32_t column = 0; column < 4; column++)
++        int instanceType = lua_geti(pLuaState, -1, i + 1);
++        AssertLuaType(instanceType, LUA_TTABLE);
++        for (uint32_t row = 0; row < 4; row++)
+         {
+-            //  index modelMatrix column value
+-            int columnValueType = lua_geti(pLuaState, -1, column + 1);
+-            AssertLuaType(columnValueType, LUA_TNUMBER);
+-            buffer.model[column][row] = luaL_checknumber(pLuaState, -1);
++            int rowValueType = lua_geti(pLuaState, -1, row + 1);
++            AssertLuaType(rowValueType, LUA_TTABLE);
++            for (uint32_t column = 0; column < 4; column++)
++            {
++                int columnValueType = lua_geti(pLuaState, -1, column + 1);
++                AssertLuaType(columnValueType, LUA_TNUMBER);
++                instances[i].model[column][row] = luaL_checknumber(pLuaState, -1);
++                lua_pop(pLuaState, 1);
++            }
+             lua_pop(pLuaState, 1);
+-            //  index modelMatrix column
+         }
+         lua_pop(pLuaState, 1);
+-        //  index modelMatrix
+     }
+-
+     lua_pop(pLuaState, 1);
++
+     // index
+-    uint32_t index = luaL_checkinteger(pLuaState, -1);
++    uint32_t modelIndex = luaL_checkinteger(pLuaState, -1);
+     lua_pop(pLuaState, 1);
+ 
+     int gameStateTpye = lua_getglobal(pLuaState, "gameState");
+@@ -158,7 +164,7 @@ static int UpdateModelUniformBuffer(lua_State *pLuaState)
+     AssertLuaType(pGraphicEngineTpye, LUA_TLIGHTUSERDATA);
+     GraphicEngine *pGraphicEngine = lua_touserdata(pLuaState, -1);
+     lua_pop(pLuaState, 2);
+-    UpdateModelUniformToGeometrySubpass(&pGraphicEngine->deferredRenderPass.geometrySubpass, index, buffer);
++    UpdateInstancesToGeometrySubpass(&pGraphicEngine->deferredRenderPass.geometrySubpass, modelIndex, pGraphicEngine->vkDevice, pGraphicEngine->vkPhysicalDevice, pGraphicEngine->graphicVkCommandPool, pGraphicEngine->vkGraphicQueue, pGraphicEngine->globalUniformBuffer, instances, instanceCount);
+     return 0;
+ }
+ 
+@@ -313,8 +319,8 @@ void StartLua(LuaEngine *pLuaEngine)
+     lua_pushcfunction(pLuaState, RemoveModel);
+     lua_setfield(pLuaState, -2, "RemoveModel");
+ 
+-    lua_pushcfunction(pLuaState, UpdateModelUniformBuffer);
+-    lua_setfield(pLuaState, -2, "UpdateModelUniformBuffer");
++    lua_pushcfunction(pLuaState, UpdateInstances);
++    lua_setfield(pLuaState, -2, "UpdateInstances");
+ 
+     lua_pushcfunction(pLuaState, SetCamera);
+     lua_setfield(pLuaState, -2, "SetCamera");
+diff --git a/src/main.c b/src/main.c
+index 17f4985..755bf29 100644
+--- a/src/main.c
++++ b/src/main.c
+@@ -23,7 +23,7 @@ int main(int argc, const char *argv[])
+     TickernelEngine *pTickernelEngine = TickernelMalloc(sizeof(TickernelEngine));
+     *pTickernelEngine = (TickernelEngine){
+         // .targetFrameRate = 60,
+-        .targetFrameRate = 60,
++        .targetFrameRate = 1,
+         // .frameCount = 4294967294,
+         .frameCount = 0,
+         .canUpdate = true,
+diff --git a/src/tickernelCore.c b/src/tickernelCore.c
+index 3f12f2c..9cb22a5 100644
+--- a/src/tickernelCore.c
++++ b/src/tickernelCore.c
+@@ -210,7 +210,7 @@ void TickernelDestroyCollection(TickernelCollection *pCollection)
+     TickernelDestroyLinkedList(&pCollection->removedIndexLinkedList);
+     TickernelFree(pCollection->array);
+ }
+-void TickernelAddToCollection(TickernelCollection *pCollection, void *pData, uint32_t *pOutputIndex)
++void TickernelAddToCollection(TickernelCollection *pCollection, void *pData, uint32_t *pIndex)
+ {
+     if (NULL != pCollection->removedIndexLinkedList.pHead)
+     {
+@@ -218,13 +218,13 @@ void TickernelAddToCollection(TickernelCollection *pCollection, void *pData, uin
+         TickernelRemoveFromLinkedList(&pCollection->removedIndexLinkedList);
+         pCollection->array[index] = TickernelMalloc(pCollection->dataSize);
+         memcpy(pCollection->array[index], pData, pCollection->dataSize);
+-        *pOutputIndex = index;
++        *pIndex = index;
+     }
+     else if (pCollection->length < pCollection->maxLength)
+     {
+         pCollection->array[pCollection->length] = TickernelMalloc(pCollection->dataSize);
+         memcpy(pCollection->array[pCollection->length], pData, pCollection->dataSize);
+-        *pOutputIndex = pCollection->length;
++        *pIndex = pCollection->length;
+         pCollection->length++;
+     }
+     else
+@@ -241,7 +241,7 @@ void TickernelAddToCollection(TickernelCollection *pCollection, void *pData, uin
+ 
+         pCollection->array[pCollection->length] = TickernelMalloc(pCollection->dataSize);
+         memcpy(pCollection->array[pCollection->length], pData, pCollection->dataSize);
+-        *pOutputIndex = pCollection->length;
++        *pIndex = pCollection->length;
+         pCollection->length++;
+     }
+ }
+diff --git a/src/tickernelCore.h b/src/tickernelCore.h
+index cb4ef33..fc21f23 100644
+--- a/src/tickernelCore.h
++++ b/src/tickernelCore.h
+@@ -63,7 +63,7 @@ void TickernelClearLinkedList(TickernelLinkedList *pLinkedList);
+ 
+ void TickernelCreateCollection(TickernelCollection *pCollection, size_t dataSize, uint32_t maxLength);
+ void TickernelDestroyCollection(TickernelCollection *pCollection);
+-void TickernelAddToCollection(TickernelCollection *pCollection, void *pData, uint32_t *pOutputIndex);
++void TickernelAddToCollection(TickernelCollection *pCollection, void *pData, uint32_t *pIndex);
+ void TickernelRemoveFromCollection(TickernelCollection *pCollection, uint32_t index);
+ void TickernelClearCollection(TickernelCollection *pCollection);
+ 
+diff --git a/temp.c b/temp.c
+new file mode 100644
+index 0000000..8c4166a
+--- /dev/null
++++ b/temp.c
+@@ -0,0 +1,55 @@
++// void CreateVertexBuffer(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkCommandPool graphicVkCommandPool, VkQueue vkGraphicQueue, VkDeviceSize vertexBufferSize, void *vertices, VkBuffer *pVertexBuffer, VkDeviceMemory *pVertexBufferMemory)
++// {
++//     // VkBuffer stagingBuffer;
++//     // VkDeviceMemory stagingBufferMemory;
++//     // CreateBuffer(vkDevice, vkPhysicalDevice, vertexBufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingBuffer, &stagingBufferMemory);
++
++//     // void *pData;
++//     // VkResult result = vkMapMemory(vkDevice, stagingBufferMemory, 0, vertexBufferSize, 0, &pData);
++//     // TryThrowVulkanError(result);
++//     // memcpy(pData, vertices, vertexBufferSize);
++//     // vkUnmapMemory(vkDevice, stagingBufferMemory);
++
++//     CreateBuffer(vkDevice, vkPhysicalDevice, vertexBufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, pVertexBuffer, pVertexBufferMemory);
++//     // CopyVkBuffer(graphicVkCommandPool, vkDevice, vkGraphicQueue, stagingBuffer, *pVertexBuffer, 0, vertexBufferSize);
++
++//     // vkDestroyBuffer(vkDevice, stagingBuffer, NULL);
++//     // vkFreeMemory(vkDevice, stagingBufferMemory, NULL);
++// }
++// void DestroyVertexBuffer(VkDevice vkDevice, VkBuffer vertexBuffer, VkDeviceMemory vertexBufferMemory)
++// {
++//     DestroyBuffer(vertexBuffer, vertexBufferMemory);
++// }
++// void UpdateVertexBuffer(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkCommandPool graphicVkCommandPool, VkQueue vkGraphicQueue, VkDeviceSize vertexBufferOffset, VkDeviceSize vertexBufferSize, void *vertices, VkBuffer vertexBuffer)
++// {
++//     VkBuffer stagingBuffer;
++//     VkDeviceMemory stagingBufferMemory;
++//     CreateBuffer(vkDevice, vkPhysicalDevice, vertexBufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingBuffer, &stagingBufferMemory);
++
++//     void *pData;
++//     VkResult result = vkMapMemory(vkDevice, stagingBufferMemory, 0, vertexBufferSize, 0, &pData);
++//     TryThrowVulkanError(result);
++//     memcpy(pData, vertices, vertexBufferSize);
++//     vkUnmapMemory(vkDevice, stagingBufferMemory);
++
++//     CopyVkBuffer(graphicVkCommandPool, vkDevice, vkGraphicQueue, stagingBuffer, *pVertexBuffer, 0, vertexBufferSize);
++
++//     vkDestroyBuffer(vkDevice, stagingBuffer, NULL);
++//     vkFreeMemory(vkDevice, stagingBufferMemory, NULL);
++// }
++
++// void CreateInstanceBuffer(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkCommandPool graphicVkCommandPool, VkQueue vkGraphicQueue, VkDeviceSize instanceBufferSize, VkBuffer *pInstanceBuffer, VkDeviceMemory *pInstanceBufferMemory)
++// {
++//     CreateBuffer(vkDevice, vkPhysicalDevice, instanceBufferSize, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, pInstanceBuffer, pInstanceBufferMemory);
++// }
++// void DestroyInstanceBuffer(VkDevice vkDevice, VkBuffer instanceBuffer, VkDeviceMemory instanceBufferMemory)
++// {
++//     DestroyBuffer(vkDevice, instanceBuffer, instanceBufferMemory);
++// }
++// void UpdateInstanceBuffer(VkDevice vkDevice, VkDeviceSize instanceBufferOffset, VkDeviceSize instanceBufferSize, void *instance, VkDeviceMemory instanceBufferMemory)
++// {
++//     void *data;
++//     vkMapMemory(vkDevice, instanceBufferMemory, instanceBufferOffset, instanceBufferSize, 0, &data);
++//     memcpy(data, instance, instanceBufferSize);
++//     vkUnmapMemory(vkDevice, instanceBufferMemory);
++// }
+diff --git a/temp.cpp.cpp b/temp.cpp.cpp
+new file mode 100644
+index 0000000..07e72b4
+--- /dev/null
++++ b/temp.cpp.cpp
+@@ -0,0 +1,1058 @@
++#define GLFW_INCLUDE_VULKAN
++#include <GLFW/glfw3.h>
++
++#include <glm/glm.hpp>
++
++#include <iostream>
++#include <fstream>
++#include <stdexcept>
++#include <algorithm>
++#include <vector>
++#include <cstring>
++#include <cstdlib>
++#include <cstdint>
++#include <limits>
++#include <array>
++#include <optional>
++#include <set>
++
++const uint32_t WIDTH = 800;
++const uint32_t HEIGHT = 600;
++
++const int MAX_FRAMES_IN_FLIGHT = 2;
++
++const std::vector<const char*> validationLayers = {
++    "VK_LAYER_KHRONOS_validation"
++};
++
++const std::vector<const char*> deviceExtensions = {
++    VK_KHR_SWAPCHAIN_EXTENSION_NAME
++};
++
++#ifdef NDEBUG
++const bool enableValidationLayers = false;
++#else
++const bool enableValidationLayers = true;
++#endif
++
++VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger) {
++    auto func = (PFN_vkCreateDebugUtilsMessengerEXT) vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT");
++    if (func != nullptr) {
++        return func(instance, pCreateInfo, pAllocator, pDebugMessenger);
++    } else {
++        return VK_ERROR_EXTENSION_NOT_PRESENT;
++    }
++}
++
++void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks* pAllocator) {
++    auto func = (PFN_vkDestroyDebugUtilsMessengerEXT) vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT");
++    if (func != nullptr) {
++        func(instance, debugMessenger, pAllocator);
++    }
++}
++
++struct QueueFamilyIndices {
++    std::optional<uint32_t> graphicsFamily;
++    std::optional<uint32_t> presentFamily;
++
++    bool isComplete() {
++        return graphicsFamily.has_value() && presentFamily.has_value();
++    }
++};
++
++struct SwapChainSupportDetails {
++    VkSurfaceCapabilitiesKHR capabilities;
++    std::vector<VkSurfaceFormatKHR> formats;
++    std::vector<VkPresentModeKHR> presentModes;
++};
++
++struct Vertex {
++    glm::vec2 pos;
++    glm::vec3 color;
++
++    static VkVertexInputBindingDescription getBindingDescription() {
++        VkVertexInputBindingDescription bindingDescription{};
++        bindingDescription.binding = 0;
++        bindingDescription.stride = sizeof(Vertex);
++        bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
++
++        return bindingDescription;
++    }
++
++    static std::array<VkVertexInputAttributeDescription, 2> getAttributeDescriptions() {
++        std::array<VkVertexInputAttributeDescription, 2> attributeDescriptions{};
++
++        attributeDescriptions[0].binding = 0;
++        attributeDescriptions[0].location = 0;
++        attributeDescriptions[0].format = VK_FORMAT_R32G32_SFLOAT;
++        attributeDescriptions[0].offset = offsetof(Vertex, pos);
++
++        attributeDescriptions[1].binding = 0;
++        attributeDescriptions[1].location = 1;
++        attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
++        attributeDescriptions[1].offset = offsetof(Vertex, color);
++
++        return attributeDescriptions;
++    }
++};
++
++const std::vector<Vertex> vertices = {
++    {{0.0f, -0.5f}, {1.0f, 0.0f, 0.0f}},
++    {{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
++    {{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}
++};
++
++class HelloTriangleApplication {
++public:
++    void run() {
++        initWindow();
++        initVulkan();
++        mainLoop();
++        cleanup();
++    }
++
++private:
++    GLFWwindow* window;
++
++    VkInstance instance;
++    VkDebugUtilsMessengerEXT debugMessenger;
++    VkSurfaceKHR surface;
++
++    VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
++    VkDevice device;
++
++    VkQueue graphicsQueue;
++    VkQueue presentQueue;
++
++    VkSwapchainKHR swapChain;
++    std::vector<VkImage> swapChainImages;
++    VkFormat swapChainImageFormat;
++    VkExtent2D swapChainExtent;
++    std::vector<VkImageView> swapChainImageViews;
++    std::vector<VkFramebuffer> swapChainFramebuffers;
++
++    VkRenderPass renderPass;
++    VkPipelineLayout pipelineLayout;
++    VkPipeline graphicsPipeline;
++
++    VkCommandPool commandPool;
++
++    VkBuffer vertexBuffer;
++    VkDeviceMemory vertexBufferMemory;
++
++    std::vector<VkCommandBuffer> commandBuffers;
++
++    std::vector<VkSemaphore> imageAvailableSemaphores;
++    std::vector<VkSemaphore> renderFinishedSemaphores;
++    std::vector<VkFence> inFlightFences;
++    uint32_t currentFrame = 0;
++
++    bool framebufferResized = false;
++
++    void initWindow() {
++        glfwInit();
++
++        glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
++
++        window = glfwCreateWindow(WIDTH, HEIGHT, "Vulkan", nullptr, nullptr);
++        glfwSetWindowUserPointer(window, this);
++        glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
++    }
++
++    static void framebufferResizeCallback(GLFWwindow* window, int width, int height) {
++        auto app = reinterpret_cast<HelloTriangleApplication*>(glfwGetWindowUserPointer(window));
++        app->framebufferResized = true;
++    }
++
++    void initVulkan() {
++        createInstance();
++        setupDebugMessenger();
++        createSurface();
++        pickPhysicalDevice();
++        createLogicalDevice();
++        createSwapChain();
++        createImageViews();
++        createRenderPass();
++        createGraphicsPipeline();
++        createFramebuffers();
++        createCommandPool();
++        createVertexBuffer();
++        createCommandBuffers();
++        createSyncObjects();
++    }
++
++    void mainLoop() {
++        while (!glfwWindowShouldClose(window)) {
++            glfwPollEvents();
++            drawFrame();
++        }
++
++        vkDeviceWaitIdle(device);
++    }
++
++    void cleanupSwapChain() {
++        for (auto framebuffer : swapChainFramebuffers) {
++            vkDestroyFramebuffer(device, framebuffer, nullptr);
++        }
++
++        for (auto imageView : swapChainImageViews) {
++            vkDestroyImageView(device, imageView, nullptr);
++        }
++
++        vkDestroySwapchainKHR(device, swapChain, nullptr);
++    }
++
++    void cleanup() {
++        cleanupSwapChain();
++
++        vkDestroyPipeline(device, graphicsPipeline, nullptr);
++        vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
++        vkDestroyRenderPass(device, renderPass, nullptr);
++
++        vkDestroyBuffer(device, vertexBuffer, nullptr);
++        vkFreeMemory(device, vertexBufferMemory, nullptr);
++
++        for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
++            vkDestroySemaphore(device, renderFinishedSemaphores[i], nullptr);
++            vkDestroySemaphore(device, imageAvailableSemaphores[i], nullptr);
++            vkDestroyFence(device, inFlightFences[i], nullptr);
++        }
++
++        vkDestroyCommandPool(device, commandPool, nullptr);
++
++        vkDestroyDevice(device, nullptr);
++
++        if (enableValidationLayers) {
++            DestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
++        }
++
++        vkDestroySurfaceKHR(instance, surface, nullptr);
++        vkDestroyInstance(instance, nullptr);
++
++        glfwDestroyWindow(window);
++
++        glfwTerminate();
++    }
++
++    void recreateSwapChain() {
++        int width = 0, height = 0;
++        glfwGetFramebufferSize(window, &width, &height);
++        while (width == 0 || height == 0) {
++            glfwGetFramebufferSize(window, &width, &height);
++            glfwWaitEvents();
++        }
++
++        vkDeviceWaitIdle(device);
++
++        cleanupSwapChain();
++
++        createSwapChain();
++        createImageViews();
++        createFramebuffers();
++    }
++
++    void createInstance() {
++        if (enableValidationLayers && !checkValidationLayerSupport()) {
++            throw std::runtime_error("validation layers requested, but not available!");
++        }
++
++        VkApplicationInfo appInfo{};
++        appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
++        appInfo.pApplicationName = "Hello Triangle";
++        appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
++        appInfo.pEngineName = "No Engine";
++        appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
++        appInfo.apiVersion = VK_API_VERSION_1_0;
++
++        VkInstanceCreateInfo createInfo{};
++        createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
++        createInfo.pApplicationInfo = &appInfo;
++
++        auto extensions = getRequiredExtensions();
++        createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
++        createInfo.ppEnabledExtensionNames = extensions.data();
++
++        VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo{};
++        if (enableValidationLayers) {
++            createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
++            createInfo.ppEnabledLayerNames = validationLayers.data();
++
++            populateDebugMessengerCreateInfo(debugCreateInfo);
++            createInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT*) &debugCreateInfo;
++        } else {
++            createInfo.enabledLayerCount = 0;
++
++            createInfo.pNext = nullptr;
++        }
++
++        if (vkCreateInstance(&createInfo, nullptr, &instance) != VK_SUCCESS) {
++            throw std::runtime_error("failed to create instance!");
++        }
++    }
++
++    void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo) {
++        createInfo = {};
++        createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
++        createInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
++        createInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
++        createInfo.pfnUserCallback = debugCallback;
++    }
++
++    void setupDebugMessenger() {
++        if (!enableValidationLayers) return;
++
++        VkDebugUtilsMessengerCreateInfoEXT createInfo;
++        populateDebugMessengerCreateInfo(createInfo);
++
++        if (CreateDebugUtilsMessengerEXT(instance, &createInfo, nullptr, &debugMessenger) != VK_SUCCESS) {
++            throw std::runtime_error("failed to set up debug messenger!");
++        }
++    }
++
++    void createSurface() {
++        if (glfwCreateWindowSurface(instance, window, nullptr, &surface) != VK_SUCCESS) {
++            throw std::runtime_error("failed to create window surface!");
++        }
++    }
++
++    void pickPhysicalDevice() {
++        uint32_t deviceCount = 0;
++        vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
++
++        if (deviceCount == 0) {
++            throw std::runtime_error("failed to find GPUs with Vulkan support!");
++        }
++
++        std::vector<VkPhysicalDevice> devices(deviceCount);
++        vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
++
++        for (const auto& device : devices) {
++            if (isDeviceSuitable(device)) {
++                physicalDevice = device;
++                break;
++            }
++        }
++
++        if (physicalDevice == VK_NULL_HANDLE) {
++            throw std::runtime_error("failed to find a suitable GPU!");
++        }
++    }
++
++    void createLogicalDevice() {
++        QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
++
++        std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
++        std::set<uint32_t> uniqueQueueFamilies = {indices.graphicsFamily.value(), indices.presentFamily.value()};
++
++        float queuePriority = 1.0f;
++        for (uint32_t queueFamily : uniqueQueueFamilies) {
++            VkDeviceQueueCreateInfo queueCreateInfo{};
++            queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
++            queueCreateInfo.queueFamilyIndex = queueFamily;
++            queueCreateInfo.queueCount = 1;
++            queueCreateInfo.pQueuePriorities = &queuePriority;
++            queueCreateInfos.push_back(queueCreateInfo);
++        }
++
++        VkPhysicalDeviceFeatures deviceFeatures{};
++
++        VkDeviceCreateInfo createInfo{};
++        createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
++
++        createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
++        createInfo.pQueueCreateInfos = queueCreateInfos.data();
++
++        createInfo.pEnabledFeatures = &deviceFeatures;
++
++        createInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size());
++        createInfo.ppEnabledExtensionNames = deviceExtensions.data();
++
++        if (enableValidationLayers) {
++            createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
++            createInfo.ppEnabledLayerNames = validationLayers.data();
++        } else {
++            createInfo.enabledLayerCount = 0;
++        }
++
++        if (vkCreateDevice(physicalDevice, &createInfo, nullptr, &device) != VK_SUCCESS) {
++            throw std::runtime_error("failed to create logical device!");
++        }
++
++        vkGetDeviceQueue(device, indices.graphicsFamily.value(), 0, &graphicsQueue);
++        vkGetDeviceQueue(device, indices.presentFamily.value(), 0, &presentQueue);
++    }
++
++    void createSwapChain() {
++        SwapChainSupportDetails swapChainSupport = querySwapChainSupport(physicalDevice);
++
++        VkSurfaceFormatKHR surfaceFormat = chooseSwapSurfaceFormat(swapChainSupport.formats);
++        VkPresentModeKHR presentMode = chooseSwapPresentMode(swapChainSupport.presentModes);
++        VkExtent2D extent = chooseSwapExtent(swapChainSupport.capabilities);
++
++        uint32_t imageCount = swapChainSupport.capabilities.minImageCount + 1;
++        if (swapChainSupport.capabilities.maxImageCount > 0 && imageCount > swapChainSupport.capabilities.maxImageCount) {
++            imageCount = swapChainSupport.capabilities.maxImageCount;
++        }
++
++        VkSwapchainCreateInfoKHR createInfo{};
++        createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
++        createInfo.surface = surface;
++
++        createInfo.minImageCount = imageCount;
++        createInfo.imageFormat = surfaceFormat.format;
++        createInfo.imageColorSpace = surfaceFormat.colorSpace;
++        createInfo.imageExtent = extent;
++        createInfo.imageArrayLayers = 1;
++        createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
++
++        QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
++        uint32_t queueFamilyIndices[] = {indices.graphicsFamily.value(), indices.presentFamily.value()};
++
++        if (indices.graphicsFamily != indices.presentFamily) {
++            createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
++            createInfo.queueFamilyIndexCount = 2;
++            createInfo.pQueueFamilyIndices = queueFamilyIndices;
++        } else {
++            createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
++        }
++
++        createInfo.preTransform = swapChainSupport.capabilities.currentTransform;
++        createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
++        createInfo.presentMode = presentMode;
++        createInfo.clipped = VK_TRUE;
++
++        if (vkCreateSwapchainKHR(device, &createInfo, nullptr, &swapChain) != VK_SUCCESS) {
++            throw std::runtime_error("failed to create swap chain!");
++        }
++
++        vkGetSwapchainImagesKHR(device, swapChain, &imageCount, nullptr);
++        swapChainImages.resize(imageCount);
++        vkGetSwapchainImagesKHR(device, swapChain, &imageCount, swapChainImages.data());
++
++        swapChainImageFormat = surfaceFormat.format;
++        swapChainExtent = extent;
++    }
++
++    void createImageViews() {
++        swapChainImageViews.resize(swapChainImages.size());
++
++        for (size_t i = 0; i < swapChainImages.size(); i++) {
++            VkImageViewCreateInfo createInfo{};
++            createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
++            createInfo.image = swapChainImages[i];
++            createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
++            createInfo.format = swapChainImageFormat;
++            createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
++            createInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
++            createInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
++            createInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
++            createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
++            createInfo.subresourceRange.baseMipLevel = 0;
++            createInfo.subresourceRange.levelCount = 1;
++            createInfo.subresourceRange.baseArrayLayer = 0;
++            createInfo.subresourceRange.layerCount = 1;
++
++            if (vkCreateImageView(device, &createInfo, nullptr, &swapChainImageViews[i]) != VK_SUCCESS) {
++                throw std::runtime_error("failed to create image views!");
++            }
++        }
++    }
++
++    void createRenderPass() {
++        VkAttachmentDescription colorAttachment{};
++        colorAttachment.format = swapChainImageFormat;
++        colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
++        colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
++        colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
++        colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
++        colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
++        colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
++        colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
++
++        VkAttachmentReference colorAttachmentRef{};
++        colorAttachmentRef.attachment = 0;
++        colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
++
++        VkSubpassDescription subpass{};
++        subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
++        subpass.colorAttachmentCount = 1;
++        subpass.pColorAttachments = &colorAttachmentRef;
++
++        VkSubpassDependency dependency{};
++        dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
++        dependency.dstSubpass = 0;
++        dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
++        dependency.srcAccessMask = 0;
++        dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
++        dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
++
++        VkRenderPassCreateInfo renderPassInfo{};
++        renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
++        renderPassInfo.attachmentCount = 1;
++        renderPassInfo.pAttachments = &colorAttachment;
++        renderPassInfo.subpassCount = 1;
++        renderPassInfo.pSubpasses = &subpass;
++        renderPassInfo.dependencyCount = 1;
++        renderPassInfo.pDependencies = &dependency;
++
++        if (vkCreateRenderPass(device, &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS) {
++            throw std::runtime_error("failed to create render pass!");
++        }
++    }
++
++    void createGraphicsPipeline() {
++        auto vertShaderCode = readFile("shaders/vert.spv");
++        auto fragShaderCode = readFile("shaders/frag.spv");
++
++        VkShaderModule vertShaderModule = createShaderModule(vertShaderCode);
++        VkShaderModule fragShaderModule = createShaderModule(fragShaderCode);
++
++        VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
++        vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
++        vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
++        vertShaderStageInfo.module = vertShaderModule;
++        vertShaderStageInfo.pName = "main";
++
++        VkPipelineShaderStageCreateInfo fragShaderStageInfo{};
++        fragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
++        fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
++        fragShaderStageInfo.module = fragShaderModule;
++        fragShaderStageInfo.pName = "main";
++
++        VkPipelineShaderStageCreateInfo shaderStages[] = {vertShaderStageInfo, fragShaderStageInfo};
++
++        VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
++        vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
++
++        auto bindingDescription = Vertex::getBindingDescription();
++        auto attributeDescriptions = Vertex::getAttributeDescriptions();
++
++        vertexInputInfo.vertexBindingDescriptionCount = 1;
++        vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
++        vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
++        vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
++
++        VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
++        inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
++        inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
++        inputAssembly.primitiveRestartEnable = VK_FALSE;
++
++        VkPipelineViewportStateCreateInfo viewportState{};
++        viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
++        viewportState.viewportCount = 1;
++        viewportState.scissorCount = 1;
++
++        VkPipelineRasterizationStateCreateInfo rasterizer{};
++        rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
++        rasterizer.depthClampEnable = VK_FALSE;
++        rasterizer.rasterizerDiscardEnable = VK_FALSE;
++        rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
++        rasterizer.lineWidth = 1.0f;
++        rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
++        rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
++        rasterizer.depthBiasEnable = VK_FALSE;
++
++        VkPipelineMultisampleStateCreateInfo multisampling{};
++        multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
++        multisampling.sampleShadingEnable = VK_FALSE;
++        multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
++
++        VkPipelineColorBlendAttachmentState colorBlendAttachment{};
++        colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
++        colorBlendAttachment.blendEnable = VK_FALSE;
++
++        VkPipelineColorBlendStateCreateInfo colorBlending{};
++        colorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
++        colorBlending.logicOpEnable = VK_FALSE;
++        colorBlending.logicOp = VK_LOGIC_OP_COPY;
++        colorBlending.attachmentCount = 1;
++        colorBlending.pAttachments = &colorBlendAttachment;
++        colorBlending.blendConstants[0] = 0.0f;
++        colorBlending.blendConstants[1] = 0.0f;
++        colorBlending.blendConstants[2] = 0.0f;
++        colorBlending.blendConstants[3] = 0.0f;
++
++        std::vector<VkDynamicState> dynamicStates = {
++            VK_DYNAMIC_STATE_VIEWPORT,
++            VK_DYNAMIC_STATE_SCISSOR
++        };
++        VkPipelineDynamicStateCreateInfo dynamicState{};
++        dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
++        dynamicState.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
++        dynamicState.pDynamicStates = dynamicStates.data();
++
++        VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
++        pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
++        pipelineLayoutInfo.setLayoutCount = 0;
++        pipelineLayoutInfo.pushConstantRangeCount = 0;
++
++        if (vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) {
++            throw std::runtime_error("failed to create pipeline layout!");
++        }
++
++        VkGraphicsPipelineCreateInfo pipelineInfo{};
++        pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
++        pipelineInfo.stageCount = 2;
++        pipelineInfo.pStages = shaderStages;
++        pipelineInfo.pVertexInputState = &vertexInputInfo;
++        pipelineInfo.pInputAssemblyState = &inputAssembly;
++        pipelineInfo.pViewportState = &viewportState;
++        pipelineInfo.pRasterizationState = &rasterizer;
++        pipelineInfo.pMultisampleState = &multisampling;
++        pipelineInfo.pColorBlendState = &colorBlending;
++        pipelineInfo.pDynamicState = &dynamicState;        
++        pipelineInfo.layout = pipelineLayout;
++        pipelineInfo.renderPass = renderPass;
++        pipelineInfo.subpass = 0;
++        pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
++
++        if (vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline) != VK_SUCCESS) {
++            throw std::runtime_error("failed to create graphics pipeline!");
++        }
++
++        vkDestroyShaderModule(device, fragShaderModule, nullptr);
++        vkDestroyShaderModule(device, vertShaderModule, nullptr);
++    }
++
++    void createFramebuffers() {
++        swapChainFramebuffers.resize(swapChainImageViews.size());
++
++        for (size_t i = 0; i < swapChainImageViews.size(); i++) {
++            VkImageView attachments[] = {
++                swapChainImageViews[i]
++            };
++
++            VkFramebufferCreateInfo framebufferInfo{};
++            framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
++            framebufferInfo.renderPass = renderPass;
++            framebufferInfo.attachmentCount = 1;
++            framebufferInfo.pAttachments = attachments;
++            framebufferInfo.width = swapChainExtent.width;
++            framebufferInfo.height = swapChainExtent.height;
++            framebufferInfo.layers = 1;
++
++            if (vkCreateFramebuffer(device, &framebufferInfo, nullptr, &swapChainFramebuffers[i]) != VK_SUCCESS) {
++                throw std::runtime_error("failed to create framebuffer!");
++            }
++        }
++    }
++
++    void createCommandPool() {
++        QueueFamilyIndices queueFamilyIndices = findQueueFamilies(physicalDevice);
++
++        VkCommandPoolCreateInfo poolInfo{};
++        poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
++        poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
++        poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
++
++        if (vkCreateCommandPool(device, &poolInfo, nullptr, &commandPool) != VK_SUCCESS) {
++            throw std::runtime_error("failed to create command pool!");
++        }
++    }
++
++    void createVertexBuffer() {
++        VkBufferCreateInfo bufferInfo{};
++        bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
++        bufferInfo.size = sizeof(vertices[0]) * vertices.size();
++        bufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
++        bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
++
++        if (vkCreateBuffer(device, &bufferInfo, nullptr, &vertexBuffer) != VK_SUCCESS) {
++            throw std::runtime_error("failed to create vertex buffer!");
++        }
++
++        VkMemoryRequirements memRequirements;
++        vkGetBufferMemoryRequirements(device, vertexBuffer, &memRequirements);
++
++        VkMemoryAllocateInfo allocInfo{};
++        allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
++        allocInfo.allocationSize = memRequirements.size;
++        allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
++
++        if (vkAllocateMemory(device, &allocInfo, nullptr, &vertexBufferMemory) != VK_SUCCESS) {
++            throw std::runtime_error("failed to allocate vertex buffer memory!");
++        }
++
++        vkBindBufferMemory(device, vertexBuffer, vertexBufferMemory, 0);
++
++        void* data;
++        vkMapMemory(device, vertexBufferMemory, 0, bufferInfo.size, 0, &data);
++            memcpy(data, vertices.data(), (size_t) bufferInfo.size);
++        vkUnmapMemory(device, vertexBufferMemory);
++    }
++
++    uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) {
++        VkPhysicalDeviceMemoryProperties memProperties;
++        vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProperties);
++
++        for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
++            if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties) {
++                return i;
++            }
++        }
++
++        throw std::runtime_error("failed to find suitable memory type!");
++    }
++
++    void createCommandBuffers() {
++        commandBuffers.resize(MAX_FRAMES_IN_FLIGHT);
++
++        VkCommandBufferAllocateInfo allocInfo{};
++        allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
++        allocInfo.commandPool = commandPool;
++        allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
++        allocInfo.commandBufferCount = (uint32_t) commandBuffers.size();
++
++        if (vkAllocateCommandBuffers(device, &allocInfo, commandBuffers.data()) != VK_SUCCESS) {
++            throw std::runtime_error("failed to allocate command buffers!");
++        }
++    }
++
++    void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex) {
++        VkCommandBufferBeginInfo beginInfo{};
++        beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
++
++        if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS) {
++            throw std::runtime_error("failed to begin recording command buffer!");
++        }
++
++        VkRenderPassBeginInfo renderPassInfo{};
++        renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
++        renderPassInfo.renderPass = renderPass;
++        renderPassInfo.framebuffer = swapChainFramebuffers[imageIndex];
++        renderPassInfo.renderArea.offset = {0, 0};
++        renderPassInfo.renderArea.extent = swapChainExtent;
++
++        VkClearValue clearColor = {{{0.0f, 0.0f, 0.0f, 1.0f}}};
++        renderPassInfo.clearValueCount = 1;
++        renderPassInfo.pClearValues = &clearColor;
++
++        vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
++
++            vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
++
++            VkViewport viewport{};
++            viewport.x = 0.0f;
++            viewport.y = 0.0f;
++            viewport.width = (float) swapChainExtent.width;
++            viewport.height = (float) swapChainExtent.height;
++            viewport.minDepth = 0.0f;
++            viewport.maxDepth = 1.0f;
++            vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
++
++            VkRect2D scissor{};
++            scissor.offset = {0, 0};
++            scissor.extent = swapChainExtent;
++            vkCmdSetScissor(commandBuffer, 0, 1, &scissor);            
++
++            VkBuffer vertexBuffers[] = {vertexBuffer};
++            VkDeviceSize offsets[] = {0};
++            vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
++
++            vkCmdDraw(commandBuffer, static_cast<uint32_t>(vertices.size()), 1, 0, 0);
++
++        vkCmdEndRenderPass(commandBuffer);
++
++        if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
++            throw std::runtime_error("failed to record command buffer!");
++        }
++    }
++
++    void createSyncObjects() {
++        imageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
++        renderFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
++        inFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
++
++        VkSemaphoreCreateInfo semaphoreInfo{};
++        semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
++
++        VkFenceCreateInfo fenceInfo{};
++        fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
++        fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
++
++        for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
++            if (vkCreateSemaphore(device, &semaphoreInfo, nullptr, &imageAvailableSemaphores[i]) != VK_SUCCESS ||
++                vkCreateSemaphore(device, &semaphoreInfo, nullptr, &renderFinishedSemaphores[i]) != VK_SUCCESS ||
++                vkCreateFence(device, &fenceInfo, nullptr, &inFlightFences[i]) != VK_SUCCESS) {
++                throw std::runtime_error("failed to create synchronization objects for a frame!");
++            }
++        }
++    }
++
++    void drawFrame() {
++        vkWaitForFences(device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
++
++        uint32_t imageIndex;
++        VkResult result = vkAcquireNextImageKHR(device, swapChain, UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
++
++        if (result == VK_ERROR_OUT_OF_DATE_KHR) {
++            recreateSwapChain();
++            return;
++        } else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
++            throw std::runtime_error("failed to acquire swap chain image!");
++        }
++
++        vkResetFences(device, 1, &inFlightFences[currentFrame]);
++
++        vkResetCommandBuffer(commandBuffers[currentFrame], /*VkCommandBufferResetFlagBits*/ 0);
++        recordCommandBuffer(commandBuffers[currentFrame], imageIndex);
++
++        VkSubmitInfo submitInfo{};
++        submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
++
++        VkSemaphore waitSemaphores[] = {imageAvailableSemaphores[currentFrame]};
++        VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
++        submitInfo.waitSemaphoreCount = 1;
++        submitInfo.pWaitSemaphores = waitSemaphores;
++        submitInfo.pWaitDstStageMask = waitStages;
++
++        submitInfo.commandBufferCount = 1;
++        submitInfo.pCommandBuffers = &commandBuffers[currentFrame];
++
++        VkSemaphore signalSemaphores[] = {renderFinishedSemaphores[currentFrame]};
++        submitInfo.signalSemaphoreCount = 1;
++        submitInfo.pSignalSemaphores = signalSemaphores;
++
++        if (vkQueueSubmit(graphicsQueue, 1, &submitInfo, inFlightFences[currentFrame]) != VK_SUCCESS) {
++            throw std::runtime_error("failed to submit draw command buffer!");
++        }
++
++        VkPresentInfoKHR presentInfo{};
++        presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
++
++        presentInfo.waitSemaphoreCount = 1;
++        presentInfo.pWaitSemaphores = signalSemaphores;
++
++        VkSwapchainKHR swapChains[] = {swapChain};
++        presentInfo.swapchainCount = 1;
++        presentInfo.pSwapchains = swapChains;
++
++        presentInfo.pImageIndices = &imageIndex;
++
++        result = vkQueuePresentKHR(presentQueue, &presentInfo);
++
++        if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || framebufferResized) {
++            framebufferResized = false;
++            recreateSwapChain();
++        } else if (result != VK_SUCCESS) {
++            throw std::runtime_error("failed to present swap chain image!");
++        }
++
++        currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
++    }
++
++    VkShaderModule createShaderModule(const std::vector<char>& code) {
++        VkShaderModuleCreateInfo createInfo{};
++        createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
++        createInfo.codeSize = code.size();
++        createInfo.pCode = reinterpret_cast<const uint32_t*>(code.data());
++
++        VkShaderModule shaderModule;
++        if (vkCreateShaderModule(device, &createInfo, nullptr, &shaderModule) != VK_SUCCESS) {
++            throw std::runtime_error("failed to create shader module!");
++        }
++
++        return shaderModule;
++    }
++
++    VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats) {
++        for (const auto& availableFormat : availableFormats) {
++            if (availableFormat.format == VK_FORMAT_B8G8R8A8_SRGB && availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
++                return availableFormat;
++            }
++        }
++
++        return availableFormats[0];
++    }
++
++    VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes) {
++        for (const auto& availablePresentMode : availablePresentModes) {
++            if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR) {
++                return availablePresentMode;
++            }
++        }
++
++        return VK_PRESENT_MODE_FIFO_KHR;
++    }
++
++    VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities) {
++        if (capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max()) {
++            return capabilities.currentExtent;
++        } else {
++            int width, height;
++            glfwGetFramebufferSize(window, &width, &height);
++
++            VkExtent2D actualExtent = {
++                static_cast<uint32_t>(width),
++                static_cast<uint32_t>(height)
++            };
++
++            actualExtent.width = std::clamp(actualExtent.width, capabilities.minImageExtent.width, capabilities.maxImageExtent.width);
++            actualExtent.height = std::clamp(actualExtent.height, capabilities.minImageExtent.height, capabilities.maxImageExtent.height);
++
++            return actualExtent;
++        }
++    }
++
++    SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device) {
++        SwapChainSupportDetails details;
++
++        vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, surface, &details.capabilities);
++
++        uint32_t formatCount;
++        vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &formatCount, nullptr);
++
++        if (formatCount != 0) {
++            details.formats.resize(formatCount);
++            vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &formatCount, details.formats.data());
++        }
++
++        uint32_t presentModeCount;
++        vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &presentModeCount, nullptr);
++
++        if (presentModeCount != 0) {
++            details.presentModes.resize(presentModeCount);
++            vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &presentModeCount, details.presentModes.data());
++        }
++
++        return details;
++    }
++
++    bool isDeviceSuitable(VkPhysicalDevice device) {
++        QueueFamilyIndices indices = findQueueFamilies(device);
++
++        bool extensionsSupported = checkDeviceExtensionSupport(device);
++
++        bool swapChainAdequate = false;
++        if (extensionsSupported) {
++            SwapChainSupportDetails swapChainSupport = querySwapChainSupport(device);
++            swapChainAdequate = !swapChainSupport.formats.empty() && !swapChainSupport.presentModes.empty();
++        }
++
++        return indices.isComplete() && extensionsSupported && swapChainAdequate;
++    }
++
++    bool checkDeviceExtensionSupport(VkPhysicalDevice device) {
++        uint32_t extensionCount;
++        vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr);
++
++        std::vector<VkExtensionProperties> availableExtensions(extensionCount);
++        vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, availableExtensions.data());
++
++        std::set<std::string> requiredExtensions(deviceExtensions.begin(), deviceExtensions.end());
++
++        for (const auto& extension : availableExtensions) {
++            requiredExtensions.erase(extension.extensionName);
++        }
++
++        return requiredExtensions.empty();
++    }
++
++    QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device) {
++        QueueFamilyIndices indices;
++
++        uint32_t queueFamilyCount = 0;
++        vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
++
++        std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
++        vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
++
++        int i = 0;
++        for (const auto& queueFamily : queueFamilies) {
++            if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
++                indices.graphicsFamily = i;
++            }
++
++            VkBool32 presentSupport = false;
++            vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, &presentSupport);
++
++            if (presentSupport) {
++                indices.presentFamily = i;
++            }
++
++            if (indices.isComplete()) {
++                break;
++            }
++
++            i++;
++        }
++
++        return indices;
++    }
++
++    std::vector<const char*> getRequiredExtensions() {
++        uint32_t glfwExtensionCount = 0;
++        const char** glfwExtensions;
++        glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
++
++        std::vector<const char*> extensions(glfwExtensions, glfwExtensions + glfwExtensionCount);
++
++        if (enableValidationLayers) {
++            extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
++        }
++
++        return extensions;
++    }
++
++    bool checkValidationLayerSupport() {
++        uint32_t layerCount;
++        vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
++
++        std::vector<VkLayerProperties> availableLayers(layerCount);
++        vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
++
++        for (const char* layerName : validationLayers) {
++            bool layerFound = false;
++
++            for (const auto& layerProperties : availableLayers) {
++                if (strcmp(layerName, layerProperties.layerName) == 0) {
++                    layerFound = true;
++                    break;
++                }
++            }
++
++            if (!layerFound) {
++                return false;
++            }
++        }
++
++        return true;
++    }
++
++    static std::vector<char> readFile(const std::string& filename) {
++        std::ifstream file(filename, std::ios::ate | std::ios::binary);
++
++        if (!file.is_open()) {
++            throw std::runtime_error("failed to open file!");
++        }
++
++        size_t fileSize = (size_t) file.tellg();
++        std::vector<char> buffer(fileSize);
++
++        file.seekg(0);
++        file.read(buffer.data(), fileSize);
++
++        file.close();
++
++        return buffer;
++    }
++
++    static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData) {
++        std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
++
++        return VK_FALSE;
++    }
++};
++
++int main() {
++    HelloTriangleApplication app;
++
++    try {
++        app.run();
++    } catch (const std::exception& e) {
++        std::cerr << e.what() << std::endl;
++        return EXIT_FAILURE;
++    }
++
++    return EXIT_SUCCESS;
++}
+\ No newline at end of file

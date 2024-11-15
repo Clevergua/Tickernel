@@ -109,182 +109,182 @@ function gameState.SetNormals(vertices, normals)
             end
         end
 
-        -- local length = 1 / 1.414 / 1.414
-        -- if indexMap[x - 1] ~= nil then
-        --     if indexMap[x - 1][y - 1] ~= nil then
-        --         if indexMap[x - 1][y - 1][z - 1] ~= nil then
-        --             normals[i][1] = normals[i][1] + length;
-        --             normals[i][2] = normals[i][2] + length;
-        --             normals[i][3] = normals[i][3] + length;
-        --         end
-        --     end
-        -- end
-        -- if indexMap[x - 1] ~= nil then
-        --     if indexMap[x - 1][y + 1] ~= nil then
-        --         if indexMap[x - 1][y + 1][z - 1] ~= nil then
-        --             normals[i][1] = normals[i][1] + length;
-        --             normals[i][2] = normals[i][2] - length;
-        --             normals[i][3] = normals[i][3] + length;
-        --         end
-        --     end
-        -- end
-        -- if indexMap[x - 1] ~= nil then
-        --     if indexMap[x - 1][y - 1] ~= nil then
-        --         if indexMap[x - 1][y - 1][z + 1] ~= nil then
-        --             normals[i][1] = normals[i][1] + length;
-        --             normals[i][2] = normals[i][2] + length;
-        --             normals[i][3] = normals[i][3] - length;
-        --         end
-        --     end
-        -- end
-        -- if indexMap[x - 1] ~= nil then
-        --     if indexMap[x - 1][y + 1] ~= nil then
-        --         if indexMap[x - 1][y + 1][z + 1] ~= nil then
-        --             normals[i][1] = normals[i][1] + length;
-        --             normals[i][2] = normals[i][2] - length;
-        --             normals[i][3] = normals[i][3] - length;
-        --         end
-        --     end
-        -- end
+        local length = 1 / 1.414 / 1.414
+        if indexMap[x - 1] ~= nil then
+            if indexMap[x - 1][y - 1] ~= nil then
+                if indexMap[x - 1][y - 1][z - 1] ~= nil then
+                    normals[i][1] = normals[i][1] + length;
+                    normals[i][2] = normals[i][2] + length;
+                    normals[i][3] = normals[i][3] + length;
+                end
+            end
+        end
+        if indexMap[x - 1] ~= nil then
+            if indexMap[x - 1][y + 1] ~= nil then
+                if indexMap[x - 1][y + 1][z - 1] ~= nil then
+                    normals[i][1] = normals[i][1] + length;
+                    normals[i][2] = normals[i][2] - length;
+                    normals[i][3] = normals[i][3] + length;
+                end
+            end
+        end
+        if indexMap[x - 1] ~= nil then
+            if indexMap[x - 1][y - 1] ~= nil then
+                if indexMap[x - 1][y - 1][z + 1] ~= nil then
+                    normals[i][1] = normals[i][1] + length;
+                    normals[i][2] = normals[i][2] + length;
+                    normals[i][3] = normals[i][3] - length;
+                end
+            end
+        end
+        if indexMap[x - 1] ~= nil then
+            if indexMap[x - 1][y + 1] ~= nil then
+                if indexMap[x - 1][y + 1][z + 1] ~= nil then
+                    normals[i][1] = normals[i][1] + length;
+                    normals[i][2] = normals[i][2] - length;
+                    normals[i][3] = normals[i][3] - length;
+                end
+            end
+        end
 
-        -- if indexMap[x + 1] ~= nil then
-        --     if indexMap[x + 1][y - 1] ~= nil then
-        --         if indexMap[x + 1][y - 1][z - 1] ~= nil then
-        --             normals[i][1] = normals[i][1] - length;
-        --             normals[i][2] = normals[i][2] + length;
-        --             normals[i][3] = normals[i][3] + length;
-        --         end
-        --     end
-        -- end
-        -- if indexMap[x + 1] ~= nil then
-        --     if indexMap[x + 1][y + 1] ~= nil then
-        --         if indexMap[x + 1][y + 1][z - 1] ~= nil then
-        --             normals[i][1] = normals[i][1] - length;
-        --             normals[i][2] = normals[i][2] - length;
-        --             normals[i][3] = normals[i][3] + length;
-        --         end
-        --     end
-        -- end
-        -- if indexMap[x + 1] ~= nil then
-        --     if indexMap[x + 1][y - 1] ~= nil then
-        --         if indexMap[x + 1][y - 1][z + 1] ~= nil then
-        --             normals[i][1] = normals[i][1] - length;
-        --             normals[i][2] = normals[i][2] + length;
-        --             normals[i][3] = normals[i][3] - length;
-        --         end
-        --     end
-        -- end
-        -- if indexMap[x + 1] ~= nil then
-        --     if indexMap[x + 1][y + 1] ~= nil then
-        --         if indexMap[x + 1][y + 1][z + 1] ~= nil then
-        --             normals[i][1] = normals[i][1] - length;
-        --             normals[i][2] = normals[i][2] - length;
-        --             normals[i][3] = normals[i][3] - length;
-        --         end
-        --     end
-        -- end
+        if indexMap[x + 1] ~= nil then
+            if indexMap[x + 1][y - 1] ~= nil then
+                if indexMap[x + 1][y - 1][z - 1] ~= nil then
+                    normals[i][1] = normals[i][1] - length;
+                    normals[i][2] = normals[i][2] + length;
+                    normals[i][3] = normals[i][3] + length;
+                end
+            end
+        end
+        if indexMap[x + 1] ~= nil then
+            if indexMap[x + 1][y + 1] ~= nil then
+                if indexMap[x + 1][y + 1][z - 1] ~= nil then
+                    normals[i][1] = normals[i][1] - length;
+                    normals[i][2] = normals[i][2] - length;
+                    normals[i][3] = normals[i][3] + length;
+                end
+            end
+        end
+        if indexMap[x + 1] ~= nil then
+            if indexMap[x + 1][y - 1] ~= nil then
+                if indexMap[x + 1][y - 1][z + 1] ~= nil then
+                    normals[i][1] = normals[i][1] - length;
+                    normals[i][2] = normals[i][2] + length;
+                    normals[i][3] = normals[i][3] - length;
+                end
+            end
+        end
+        if indexMap[x + 1] ~= nil then
+            if indexMap[x + 1][y + 1] ~= nil then
+                if indexMap[x + 1][y + 1][z + 1] ~= nil then
+                    normals[i][1] = normals[i][1] - length;
+                    normals[i][2] = normals[i][2] - length;
+                    normals[i][3] = normals[i][3] - length;
+                end
+            end
+        end
 
-        -- length = 1 / 1.414;
-        -- if indexMap[x - 1] ~= nil then
-        --     if indexMap[x - 1][y - 1] ~= nil then
-        --         if indexMap[x - 1][y - 1][z] ~= nil then
-        --             normals[i][1] = normals[i][1] + length;
-        --             normals[i][2] = normals[i][2] + length;
-        --         end
-        --     end
-        -- end
-        -- if indexMap[x - 1] ~= nil then
-        --     if indexMap[x - 1][y + 1] ~= nil then
-        --         if indexMap[x - 1][y + 1][z] ~= nil then
-        --             normals[i][1] = normals[i][1] + length;
-        --             normals[i][2] = normals[i][2] - length;
-        --         end
-        --     end
-        -- end
-        -- if indexMap[x - 1] ~= nil then
-        --     if indexMap[x - 1][y] ~= nil then
-        --         if indexMap[x - 1][y][z - 1] ~= nil then
-        --             normals[i][1] = normals[i][1] + length;
-        --             normals[i][3] = normals[i][3] + length;
-        --         end
-        --     end
-        -- end
-        -- if indexMap[x - 1] ~= nil then
-        --     if indexMap[x - 1][y] ~= nil then
-        --         if indexMap[x - 1][y][z + 1] ~= nil then
-        --             normals[i][1] = normals[i][1] + length;
-        --             normals[i][3] = normals[i][3] - length;
-        --         end
-        --     end
-        -- end
-        -- if indexMap[x + 1] ~= nil then
-        --     if indexMap[x + 1][y - 1] ~= nil then
-        --         if indexMap[x + 1][y - 1][z] ~= nil then
-        --             normals[i][1] = normals[i][1] - length;
-        --             normals[i][2] = normals[i][2] + length;
-        --         end
-        --     end
-        -- end
-        -- if indexMap[x + 1] ~= nil then
-        --     if indexMap[x + 1][y + 1] ~= nil then
-        --         if indexMap[x + 1][y + 1][z] ~= nil then
-        --             normals[i][1] = normals[i][1] - length;
-        --             normals[i][2] = normals[i][2] - length;
-        --         end
-        --     end
-        -- end
-        -- if indexMap[x + 1] ~= nil then
-        --     if indexMap[x + 1][y] ~= nil then
-        --         if indexMap[x + 1][y][z - 1] ~= nil then
-        --             normals[i][1] = normals[i][1] - length;
-        --             normals[i][3] = normals[i][3] + length;
-        --         end
-        --     end
-        -- end
-        -- if indexMap[x + 1] ~= nil then
-        --     if indexMap[x + 1][y] ~= nil then
-        --         if indexMap[x + 1][y][z + 1] ~= nil then
-        --             normals[i][1] = normals[i][1] - length;
-        --             normals[i][3] = normals[i][3] - length;
-        --         end
-        --     end
-        -- end
-        -- if indexMap[x] ~= nil then
-        --     if indexMap[x][y - 1] ~= nil then
-        --         if indexMap[x][y - 1][z - 1] ~= nil then
-        --             normals[i][2] = normals[i][2] + length;
-        --             normals[i][3] = normals[i][3] + length;
-        --         end
-        --     end
-        -- end
-        -- if indexMap[x] ~= nil then
-        --     if indexMap[x][y - 1] ~= nil then
-        --         if indexMap[x][y - 1][z + 1] ~= nil then
-        --             normals[i][2] = normals[i][2] + length;
-        --             normals[i][3] = normals[i][3] - length;
-        --         end
-        --     end
-        -- end
-        -- if indexMap[x] ~= nil then
-        --     if indexMap[x][y + 1] ~= nil then
-        --         if indexMap[x][y + 1][z - 1] ~= nil then
-        --             normals[i][2] = normals[i][2] - length;
-        --             normals[i][3] = normals[i][3] + length;
-        --         end
-        --     end
-        -- end
-        -- if indexMap[x] ~= nil then
-        --     if indexMap[x][y + 1] ~= nil then
-        --         if indexMap[x][y + 1][z + 1] ~= nil then
-        --             normals[i][2] = normals[i][2] - length;
-        --             normals[i][3] = normals[i][3] - length;
-        --         end
-        --     end
-        -- end
+        length = 1 / 1.414;
+        if indexMap[x - 1] ~= nil then
+            if indexMap[x - 1][y - 1] ~= nil then
+                if indexMap[x - 1][y - 1][z] ~= nil then
+                    normals[i][1] = normals[i][1] + length;
+                    normals[i][2] = normals[i][2] + length;
+                end
+            end
+        end
+        if indexMap[x - 1] ~= nil then
+            if indexMap[x - 1][y + 1] ~= nil then
+                if indexMap[x - 1][y + 1][z] ~= nil then
+                    normals[i][1] = normals[i][1] + length;
+                    normals[i][2] = normals[i][2] - length;
+                end
+            end
+        end
+        if indexMap[x - 1] ~= nil then
+            if indexMap[x - 1][y] ~= nil then
+                if indexMap[x - 1][y][z - 1] ~= nil then
+                    normals[i][1] = normals[i][1] + length;
+                    normals[i][3] = normals[i][3] + length;
+                end
+            end
+        end
+        if indexMap[x - 1] ~= nil then
+            if indexMap[x - 1][y] ~= nil then
+                if indexMap[x - 1][y][z + 1] ~= nil then
+                    normals[i][1] = normals[i][1] + length;
+                    normals[i][3] = normals[i][3] - length;
+                end
+            end
+        end
+        if indexMap[x + 1] ~= nil then
+            if indexMap[x + 1][y - 1] ~= nil then
+                if indexMap[x + 1][y - 1][z] ~= nil then
+                    normals[i][1] = normals[i][1] - length;
+                    normals[i][2] = normals[i][2] + length;
+                end
+            end
+        end
+        if indexMap[x + 1] ~= nil then
+            if indexMap[x + 1][y + 1] ~= nil then
+                if indexMap[x + 1][y + 1][z] ~= nil then
+                    normals[i][1] = normals[i][1] - length;
+                    normals[i][2] = normals[i][2] - length;
+                end
+            end
+        end
+        if indexMap[x + 1] ~= nil then
+            if indexMap[x + 1][y] ~= nil then
+                if indexMap[x + 1][y][z - 1] ~= nil then
+                    normals[i][1] = normals[i][1] - length;
+                    normals[i][3] = normals[i][3] + length;
+                end
+            end
+        end
+        if indexMap[x + 1] ~= nil then
+            if indexMap[x + 1][y] ~= nil then
+                if indexMap[x + 1][y][z + 1] ~= nil then
+                    normals[i][1] = normals[i][1] - length;
+                    normals[i][3] = normals[i][3] - length;
+                end
+            end
+        end
+        if indexMap[x] ~= nil then
+            if indexMap[x][y - 1] ~= nil then
+                if indexMap[x][y - 1][z - 1] ~= nil then
+                    normals[i][2] = normals[i][2] + length;
+                    normals[i][3] = normals[i][3] + length;
+                end
+            end
+        end
+        if indexMap[x] ~= nil then
+            if indexMap[x][y - 1] ~= nil then
+                if indexMap[x][y - 1][z + 1] ~= nil then
+                    normals[i][2] = normals[i][2] + length;
+                    normals[i][3] = normals[i][3] - length;
+                end
+            end
+        end
+        if indexMap[x] ~= nil then
+            if indexMap[x][y + 1] ~= nil then
+                if indexMap[x][y + 1][z - 1] ~= nil then
+                    normals[i][2] = normals[i][2] - length;
+                    normals[i][3] = normals[i][3] + length;
+                end
+            end
+        end
+        if indexMap[x] ~= nil then
+            if indexMap[x][y + 1] ~= nil then
+                if indexMap[x][y + 1][z + 1] ~= nil then
+                    normals[i][2] = normals[i][2] - length;
+                    normals[i][3] = normals[i][3] - length;
+                end
+            end
+        end
     end
 end
 
-function gameState.DrawModel(px, py, pz, scale, model)
+function gameState.DrawModel(instances, model)
     local vertices = {}
     local colors = {}
     local normals = {}
@@ -313,18 +313,8 @@ function gameState.DrawModel(px, py, pz, scale, model)
             end
         end
     end
-
     gameState.SetNormals(vertices, normals)
-
     local modelIndex = gameState.AddModel(vertices, colors, normals)
-    local instances = {
-        {
-            { scale, 0,     0,     px },
-            { 0,     scale, 0,     py },
-            { 0,     0,     scale, pz },
-            { 0,     0,     0,     1 },
-        },
-    }
     gameState.UpdateInstances(modelIndex, instances)
     return modelIndex
 end
