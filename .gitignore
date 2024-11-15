@@ -53,3 +53,4 @@ dkms.conf
 
 #Project build dir
 build/
+out/
