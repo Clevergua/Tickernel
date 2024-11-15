@@ -108,7 +108,6 @@ function gameState.Start()
         for i = 1, count do
             local x = gameMath.LCGRandom(index * 525234532 + i * 42342345) % 50
             local y = gameMath.LCGRandom(index * 431513511 + i * 24141312) % 50
-            print("x:" .. x .. ",y:" .. y)
             instances[i] = {
                 { scale, 0,     0,     x },
                 { 0,     scale, 0,     y },
