@@ -88,38 +88,39 @@ end
 function gameState.Start()
     print("Lua Start")
     local pixel = 16
-    local modelsPath = gameState.assetsPath ..
-        gameState.pathSeparator .. "models" .. gameState.pathSeparator
-    print("Loading models")
-    local models = {
-        gameState.LoadModel(modelsPath .. "LargeBuilding01_0.tvoxel"),
-        gameState.LoadModel(modelsPath .. "SmallBuilding01_0.tvoxel"),
-        gameState.LoadModel(modelsPath .. "SmallBuilding02_0.tvoxel"),
-        gameState.LoadModel(modelsPath .. "SmallBuilding03_0.tvoxel"),
-        gameState.LoadModel(modelsPath .. "SmallBuilding04_0.tvoxel"),
-        gameState.LoadModel(modelsPath .. "TallBuilding01_0.tvoxel"),
-        gameState.LoadModel(modelsPath .. "TallBuilding02_0.tvoxel"),
-        gameState.LoadModel(modelsPath .. "TallBuilding03_0.tvoxel"),
-    }
-    local scale = 1 / 16;
-    for index, model in ipairs(models) do
-        local count = 10
-        local instances = {}
-        for i = 1, count do
-            local x = gameMath.LCGRandom(index * 525234532 + i * 42342345) % 50
-            local y = gameMath.LCGRandom(index * 431513511 + i * 24141312) % 50
-            instances[i] = {
-                { scale, 0,     0,     x },
-                { 0,     scale, 0,     y },
-                { 0,     0,     scale, 0 },
-                { 0,     0,     0,     1 },
-            }
-        end
-        gameState.DrawModel(instances, model)
-    end
 
-    local length = 64
-    local width = 64
+    local scale = 1 / 16;
+    -- local modelsPath = gameState.assetsPath ..
+    --     gameState.pathSeparator .. "models" .. gameState.pathSeparator
+    -- print("Loading models")
+    -- local models = {
+    --     gameState.LoadModel(modelsPath .. "LargeBuilding01_0.tvoxel"),
+    --     gameState.LoadModel(modelsPath .. "SmallBuilding01_0.tvoxel"),
+    --     gameState.LoadModel(modelsPath .. "SmallBuilding02_0.tvoxel"),
+    --     gameState.LoadModel(modelsPath .. "SmallBuilding03_0.tvoxel"),
+    --     gameState.LoadModel(modelsPath .. "SmallBuilding04_0.tvoxel"),
+    --     gameState.LoadModel(modelsPath .. "TallBuilding01_0.tvoxel"),
+    --     gameState.LoadModel(modelsPath .. "TallBuilding02_0.tvoxel"),
+    --     gameState.LoadModel(modelsPath .. "TallBuilding03_0.tvoxel"),
+    -- }
+    -- for index, model in ipairs(models) do
+    --     local count = 10
+    --     local instances = {}
+    --     for i = 1, count do
+    --         local x = gameMath.LCGRandom(index * 525234532 + i * 42342345) % 50
+    --         local y = gameMath.LCGRandom(index * 431513511 + i * 24141312) % 50
+    --         instances[i] = {
+    --             { scale, 0,     0,     x },
+    --             { 0,     scale, 0,     y },
+    --             { 0,     0,     scale, 0 },
+    --             { 0,     0,     0,     1 },
+    --         }
+    --     end
+    --     gameState.DrawModel(instances, model)
+    -- end
+
+    local length = 16
+    local width = 16
 
     print("Generating world..")
     local temperatureMap = {}
@@ -230,7 +231,7 @@ function gameState.Start()
         end
     end
     print("Drawing models..")
-    for i = 1, 10 do
+    for i = 1, 1 do
         if blockToVertices[i] ~= nil then
             gameState.SetNormals(blockToVertices[i], blockToNormals[i])
             local index = gameState.AddModel(blockToVertices[i], blockToColors[i], blockToNormals[i])

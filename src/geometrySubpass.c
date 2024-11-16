@@ -286,12 +286,10 @@ void CreateGeometrySubpass(Subpass *pGeometrySubpass, const char *shadersPath, V
 }
 void DestroyGeometrySubpass(Subpass *pGeometrySubpass, VkDevice vkDevice)
 {
-
-    for (uint32_t i = pGeometrySubpass->modelCollection.length - 1; i > 0; i--)
+    for (uint32_t i = pGeometrySubpass->modelCollection.length - 1; i != UINT32_MAX; i--)
     {
         RemoveModelFromGeometrySubpass(pGeometrySubpass, vkDevice, i);
     }
-
     TickernelDestroyCollection(&pGeometrySubpass->modelCollection);
 
     TickernelFree(pGeometrySubpass->vkDescriptorPoolSizes);
@@ -374,6 +372,7 @@ void RemoveModelFromGeometrySubpass(Subpass *pGeometrySubpass, VkDevice vkDevice
     }
     DestroyBuffer(vkDevice, pSubpassModel->modelUniformBuffer, pSubpassModel->modelUniformBufferMemory);
     DestroyBuffer(vkDevice, pSubpassModel->vertexBuffer, pSubpassModel->vertexBufferMemory);
+
     VkResult result = vkFreeDescriptorSets(vkDevice, pSubpassModel->vkDescriptorPool, 1, &pSubpassModel->vkDescriptorSet);
     TryThrowVulkanError(result);
     vkDestroyDescriptorPool(vkDevice, pSubpassModel->vkDescriptorPool, NULL);

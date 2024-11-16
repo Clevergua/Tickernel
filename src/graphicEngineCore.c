@@ -162,9 +162,7 @@ void UpdateBufferWithStagingBuffer(VkDevice vkDevice, VkPhysicalDevice vkPhysica
     vkUnmapMemory(vkDevice, stagingBufferMemory);
 
     CopyVkBuffer(graphicVkCommandPool, vkDevice, vkGraphicQueue, stagingBuffer, vkBuffer, 0, bufferSize);
-
-    vkDestroyBuffer(vkDevice, stagingBuffer, NULL);
-    vkFreeMemory(vkDevice, stagingBufferMemory, NULL);
+    DestroyBuffer(vkDevice, stagingBuffer, stagingBufferMemory);
 }
 void UpdateBuffer(VkDevice vkDevice, VkDeviceMemory bufferMemory, VkDeviceSize offset, VkDeviceSize bufferSize, void *bufferData)
 {
