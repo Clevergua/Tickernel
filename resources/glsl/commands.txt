@@ -1,4 +1,0 @@
-./resources/glsl/glslc ./resources/glsl/geometry.vert -o ./assets/shaders/geometry.vert.spv;
-./resources/glsl/glslc ./resources/glsl/geometry.frag -o ./assets/shaders/geometry.frag.spv;
-./resources/glsl/glslc ./resources/glsl/lighting.vert -o ./assets/shaders/lighting.vert.spv;
-./resources/glsl/glslc ./resources/glsl/lighting.frag -o ./assets/shaders/lighting.frag.spv;

@@ -13,15 +13,15 @@ find_library(LUA_LIBRARY NAMES "liblua.dylib" "lualib53.dylib" "liblua.dll" "lib
 file(GLOB_RECURSE SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/*.c)
 
 set(HEADER_DIRS
- ${Vulkan_INCLUDE_DIRS}
- ${CMAKE_CURRENT_SOURCE_DIR}/include/cglm
- ${CMAKE_SOURCE_DIR}/include/lua
- ${CMAKE_CURRENT_SOURCE_DIR}/src)
+    ${Vulkan_INCLUDE_DIRS}
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/cglm
+    ${CMAKE_SOURCE_DIR}/include/lua
+    ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
-set(LIBRARYS 
- ${Vulkan_LIBRARIES}
- ${LUA_LIBRARY}
- ${CGLM_LIBRARY}
+set(LIBRARYS
+    ${Vulkan_LIBRARIES}
+    ${LUA_LIBRARY}
+    ${CGLM_LIBRARY}
 )
 if(WIN32)
     # Windows paltform
@@ -39,7 +39,7 @@ elseif(APPLE)
     list(APPEND SOURCES ${OCSOURCES})
 
 else()
-# Ohter platform
+    # Ohter platform
     message("Unknown platform!")
 endif()
 
@@ -50,11 +50,35 @@ target_include_directories(${PROJECT_NAME} PUBLIC ${HEADER_DIRS})
 message("   LIBRARYS:${LIBRARYS}")
 target_link_libraries(${PROJECT_NAME} ${LIBRARYS})
 
+# Copy libs
 set(DLL_LIBS)
 file(GLOB_RECURSE DLL_LIBS ${CMAKE_SOURCE_DIR}/lib/*.dylib ${CMAKE_SOURCE_DIR}/lib/*.dll)
 message(DLL_LIBS: ${DLL_LIBS})
+add_custom_target(CopyDLL COMMAND ${CMAKE_COMMAND} -E copy_if_different ${DLL_LIBS} ${CMAKE_BINARY_DIR}/${DLL_FILENAME})
+add_dependencies(${PROJECT_NAME} CopyDLL)
 
+# Compile shaders
+find_program(GLSLC_EXECUTABLE glslc)
+set(SHADER_SOURCES_DIR ${CMAKE_SOURCE_DIR}/resources/glsl)
+set(SHADER_SOURCES)
+file(GLOB_RECURSE SHADER_SOURCES ${SHADER_SOURCES_DIR}/*.vert ${SHADER_SOURCES_DIR}/*.frag)
+
+set(SHADER_OUTPUT_DIR ${CMAKE_SOURCE_DIR}/assets/shaders)
+foreach(SHADER ${SHADER_SOURCES})
+    get_filename_component(SHADER_NAME ${SHADER} NAME)
+    set(SPIRV ${SHADER_OUTPUT_DIR}/${SHADER_NAME}.spv)
+    add_custom_command(
+        OUTPUT ${SPIRV}
+        COMMAND ${GLSLC_EXECUTABLE} ${SHADER} -o ${SPIRV}
+        DEPENDS ${SHADER}
+        COMMENT "Compiling ${SHADER} to SPIR-V"
+    )
+    list(APPEND SPIRV_BINARIES ${SPIRV})
+endforeach()
+add_custom_target(CompileShaders DEPENDS ${SPIRV_BINARIES})
+add_dependencies(${PROJECT_NAME} CompileShaders)
+# Copy assets
 add_custom_target(CopyAssets COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_LIST_DIR}/assets ${CMAKE_BINARY_DIR}/assets)
-add_dependencies(${PROJECT_NAME}  CopyAssets)
-add_custom_target(CopyDLL COMMAND ${CMAKE_COMMAND} -E copy_if_different  ${DLL_LIBS}  ${CMAKE_BINARY_DIR}/${DLL_FILENAME})
-add_dependencies(${PROJECT_NAME}  CopyDLL)
+add_dependencies(${PROJECT_NAME} CopyAssets)
+
+
