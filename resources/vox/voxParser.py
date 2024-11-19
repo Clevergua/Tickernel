@@ -139,7 +139,7 @@ def ParseVoxFile(filePath):
             tickernelVoxelModel.indexToProperties[4].append(color[1])
             tickernelVoxelModel.indexToProperties[5].append(color[2])
             tickernelVoxelModel.indexToProperties[6].append(color[3])
-            print(f'tickernelVoxel: ({voxel[0]}, {voxel[1]}, {voxel[2]}) ({color[0]}, {color[1]}, {color[2]}, {color[3]})')
+            # print(f'tickernelVoxel: ({voxel[0]}, {voxel[1]}, {voxel[2]}) ({color[0]}, {color[1]}, {color[2]}, {color[3]})')
         tickernelVoxelModels.append(tickernelVoxelModel)
 
     directory = os.path.dirname(filePath)
@@ -148,7 +148,7 @@ def ParseVoxFile(filePath):
     print(f"The directory of the file is: {directory}")
     for index, tickernelVoxelModel in enumerate(tickernelVoxelModels):
         print(f"Index: {index}, Model: {tickernelVoxelModel}")
-        newFileName = f"{name}_{index}.tvoxel"
+        newFileName = f"{name}_{index}.tknvox"
         newFilePath = os.path.join(directory, newFileName)
         WriteTickernelVoxelModel(newFilePath, tickernelVoxelModel)
 
