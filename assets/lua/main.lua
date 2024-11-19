@@ -94,14 +94,14 @@ function gameState.Start()
         gameState.pathSeparator .. "models" .. gameState.pathSeparator
     print("Loading models")
     local models = {
-        gameState.LoadModel(modelsPath .. "LargeBuilding01_0.tvoxel"),
-        gameState.LoadModel(modelsPath .. "SmallBuilding01_0.tvoxel"),
-        gameState.LoadModel(modelsPath .. "SmallBuilding02_0.tvoxel"),
-        gameState.LoadModel(modelsPath .. "SmallBuilding03_0.tvoxel"),
-        gameState.LoadModel(modelsPath .. "SmallBuilding04_0.tvoxel"),
-        gameState.LoadModel(modelsPath .. "TallBuilding01_0.tvoxel"),
-        gameState.LoadModel(modelsPath .. "TallBuilding02_0.tvoxel"),
-        gameState.LoadModel(modelsPath .. "TallBuilding03_0.tvoxel"),
+        gameState.LoadModel(modelsPath .. "LargeBuilding01_0.tknvox"),
+        gameState.LoadModel(modelsPath .. "SmallBuilding01_0.tknvox"),
+        gameState.LoadModel(modelsPath .. "SmallBuilding02_0.tknvox"),
+        gameState.LoadModel(modelsPath .. "SmallBuilding03_0.tknvox"),
+        gameState.LoadModel(modelsPath .. "SmallBuilding04_0.tknvox"),
+        gameState.LoadModel(modelsPath .. "TallBuilding01_0.tknvox"),
+        gameState.LoadModel(modelsPath .. "TallBuilding02_0.tknvox"),
+        gameState.LoadModel(modelsPath .. "TallBuilding03_0.tknvox"),
     }
     for index, model in ipairs(models) do
         local count = 10

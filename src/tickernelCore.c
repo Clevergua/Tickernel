@@ -26,7 +26,7 @@ void TickernelError(char const *const _Format, ...)
 
     if (symbols == NULL)
     {
-        perror("backtrace_symbols");
+        TickernelError("backtrace_symbols");
         exit(EXIT_FAILURE);
     }
 

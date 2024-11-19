@@ -7,7 +7,7 @@ local gameState = {
 }
 
 local integer = 0
----Add model to geometry subpass
+---Add model to opaqueGeometry subpass
 ---@param vertices table
 ---@param colors table
 ---@return integer
@@ -15,7 +15,7 @@ function gameState.AddModel(vertices, colors, normals)
     return integer
 end
 
----Add model to geometry subpass
+---Add model to opaqueGeometry subpass
 ---@param index integer
 function gameState.RemoveModel(index)
 end

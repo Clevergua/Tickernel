@@ -1,33 +1,33 @@
-#include <geometrySubpass.h>
-static void CreateVkPipeline(Subpass *pGeometrySubpass, const char *shadersPath, VkRenderPass vkRenderPass, uint32_t geometrySubpassIndex, VkDevice vkDevice, VkViewport viewport, VkRect2D scissor)
+#include <opaqueGeometrySubpass.h>
+static void CreateVkPipeline(Subpass *pOpaqueGeometrySubpass, const char *shadersPath, VkRenderPass vkRenderPass, uint32_t opaqueGeometrySubpassIndex, VkDevice vkDevice, VkViewport viewport, VkRect2D scissor)
 {
-    VkShaderModule geometryVertShaderModule;
-    char geometryVertShaderPath[FILENAME_MAX];
-    strcpy(geometryVertShaderPath, shadersPath);
-    TickernelCombinePaths(geometryVertShaderPath, FILENAME_MAX, "geometry.vert.spv");
-    CreateVkShaderModule(vkDevice, geometryVertShaderPath, &geometryVertShaderModule);
+    VkShaderModule opaqueGeometryVertShaderModule;
+    char opaqueGeometryVertShaderPath[FILENAME_MAX];
+    strcpy(opaqueGeometryVertShaderPath, shadersPath);
+    TickernelCombinePaths(opaqueGeometryVertShaderPath, FILENAME_MAX, "opaqueGeometry.vert.spv");
+    CreateVkShaderModule(vkDevice, opaqueGeometryVertShaderPath, &opaqueGeometryVertShaderModule);
     VkPipelineShaderStageCreateInfo vertShaderStageCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
         .pNext = NULL,
         .flags = 0,
         .stage = VK_SHADER_STAGE_VERTEX_BIT,
-        .module = geometryVertShaderModule,
+        .module = opaqueGeometryVertShaderModule,
         .pName = "main",
         .pSpecializationInfo = NULL,
     };
 
-    VkShaderModule geometryFragShaderModule;
+    VkShaderModule opaqueGeometryFragShaderModule;
 
-    char geometryFragShaderPath[FILENAME_MAX];
-    strcpy(geometryFragShaderPath, shadersPath);
-    TickernelCombinePaths(geometryFragShaderPath, FILENAME_MAX, "geometry.frag.spv");
-    CreateVkShaderModule(vkDevice, geometryFragShaderPath, &geometryFragShaderModule);
+    char opaqueGeometryFragShaderPath[FILENAME_MAX];
+    strcpy(opaqueGeometryFragShaderPath, shadersPath);
+    TickernelCombinePaths(opaqueGeometryFragShaderPath, FILENAME_MAX, "opaqueGeometry.frag.spv");
+    CreateVkShaderModule(vkDevice, opaqueGeometryFragShaderPath, &opaqueGeometryFragShaderModule);
     VkPipelineShaderStageCreateInfo fragShaderStageCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
         .pNext = NULL,
         .flags = 0,
         .stage = VK_SHADER_STAGE_FRAGMENT_BIT,
-        .module = geometryFragShaderModule,
+        .module = opaqueGeometryFragShaderModule,
         .pName = "main",
         .pSpecializationInfo = NULL,
     };
@@ -38,12 +38,12 @@ static void CreateVkPipeline(Subpass *pGeometrySubpass, const char *shadersPath,
     VkVertexInputBindingDescription *vertexBindingDescriptions = (VkVertexInputBindingDescription[]){
         {
             .binding = 0,
-            .stride = sizeof(GeometrySubpassVertex),
+            .stride = sizeof(OpaqueGeometrySubpassVertex),
             .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
         },
         {
             .binding = 1,
-            .stride = sizeof(GeometrySubpassInstance),
+            .stride = sizeof(OpaqueGeometrySubpassInstance),
             .inputRate = VK_VERTEX_INPUT_RATE_INSTANCE,
         },
     };
@@ -53,44 +53,44 @@ static void CreateVkPipeline(Subpass *pGeometrySubpass, const char *shadersPath,
             .location = 0,
             .binding = 0,
             .format = VK_FORMAT_R32G32B32_SFLOAT,
-            .offset = offsetof(GeometrySubpassVertex, position),
+            .offset = offsetof(OpaqueGeometrySubpassVertex, position),
         },
         {
             .location = 1,
             .binding = 0,
             .format = VK_FORMAT_R32G32B32_SFLOAT,
-            .offset = offsetof(GeometrySubpassVertex, color),
+            .offset = offsetof(OpaqueGeometrySubpassVertex, color),
         },
         {
             .location = 2,
             .binding = 0,
             .format = VK_FORMAT_R32G32B32_SFLOAT,
-            .offset = offsetof(GeometrySubpassVertex, normal),
+            .offset = offsetof(OpaqueGeometrySubpassVertex, normal),
         },
         // Instance:
         {
             .location = 3,
             .binding = 1,
             .format = VK_FORMAT_R32G32B32A32_SFLOAT,
-            .offset = offsetof(GeometrySubpassInstance, model) + sizeof(vec4) * 0,
+            .offset = offsetof(OpaqueGeometrySubpassInstance, model) + sizeof(vec4) * 0,
         },
         {
             .location = 4,
             .binding = 1,
             .format = VK_FORMAT_R32G32B32A32_SFLOAT,
-            .offset = offsetof(GeometrySubpassInstance, model) + sizeof(vec4) * 1,
+            .offset = offsetof(OpaqueGeometrySubpassInstance, model) + sizeof(vec4) * 1,
         },
         {
             .location = 5,
             .binding = 1,
             .format = VK_FORMAT_R32G32B32A32_SFLOAT,
-            .offset = offsetof(GeometrySubpassInstance, model) + sizeof(vec4) * 2,
+            .offset = offsetof(OpaqueGeometrySubpassInstance, model) + sizeof(vec4) * 2,
         },
         {
             .location = 6,
             .binding = 1,
             .format = VK_FORMAT_R32G32B32A32_SFLOAT,
-            .offset = offsetof(GeometrySubpassInstance, model) + sizeof(vec4) * 3,
+            .offset = offsetof(OpaqueGeometrySubpassInstance, model) + sizeof(vec4) * 3,
         },
     };
     VkPipelineVertexInputStateCreateInfo vkPipelineVertexInputStateCreateInfo = {
@@ -223,20 +223,20 @@ static void CreateVkPipeline(Subpass *pGeometrySubpass, const char *shadersPath,
         .bindingCount = 1,
         .pBindings = bindings,
     };
-    VkResult result = vkCreateDescriptorSetLayout(vkDevice, &descriptorSetLayoutCreateInfo, NULL, &pGeometrySubpass->descriptorSetLayout);
+    VkResult result = vkCreateDescriptorSetLayout(vkDevice, &descriptorSetLayoutCreateInfo, NULL, &pOpaqueGeometrySubpass->descriptorSetLayout);
     VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
         .pNext = NULL,
         .flags = 0,
         .setLayoutCount = 1,
-        .pSetLayouts = &pGeometrySubpass->descriptorSetLayout,
+        .pSetLayouts = &pOpaqueGeometrySubpass->descriptorSetLayout,
         .pushConstantRangeCount = 0,
         .pPushConstantRanges = NULL,
     };
 
-    result = vkCreatePipelineLayout(vkDevice, &pipelineLayoutCreateInfo, NULL, &pGeometrySubpass->vkPipelineLayout);
+    result = vkCreatePipelineLayout(vkDevice, &pipelineLayoutCreateInfo, NULL, &pOpaqueGeometrySubpass->vkPipelineLayout);
     TryThrowVulkanError(result);
-    VkGraphicsPipelineCreateInfo geometryPipelineCreateInfo = {
+    VkGraphicsPipelineCreateInfo opaqueGeometryPipelineCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
         .pNext = NULL,
         .flags = 0,
@@ -251,52 +251,52 @@ static void CreateVkPipeline(Subpass *pGeometrySubpass, const char *shadersPath,
         .pDepthStencilState = &pipelineDepthStencilStateCreateInfo,
         .pColorBlendState = &colorBlendStateCreateInfo,
         .pDynamicState = &dynamicState,
-        .layout = pGeometrySubpass->vkPipelineLayout,
+        .layout = pOpaqueGeometrySubpass->vkPipelineLayout,
         .renderPass = vkRenderPass,
-        .subpass = geometrySubpassIndex,
+        .subpass = opaqueGeometrySubpassIndex,
         .basePipelineHandle = VK_NULL_HANDLE,
         .basePipelineIndex = 0,
     };
 
     VkPipelineCache pipelineCache = NULL;
-    result = vkCreateGraphicsPipelines(vkDevice, pipelineCache, 1, &geometryPipelineCreateInfo, NULL, &pGeometrySubpass->vkPipeline);
+    result = vkCreateGraphicsPipelines(vkDevice, pipelineCache, 1, &opaqueGeometryPipelineCreateInfo, NULL, &pOpaqueGeometrySubpass->vkPipeline);
     TryThrowVulkanError(result);
-    DestroyVkShaderModule(vkDevice, geometryVertShaderModule);
-    DestroyVkShaderModule(vkDevice, geometryFragShaderModule);
+    DestroyVkShaderModule(vkDevice, opaqueGeometryVertShaderModule);
+    DestroyVkShaderModule(vkDevice, opaqueGeometryFragShaderModule);
 }
-static void DestroyVkPipeline(Subpass *pGeometrySubpass, VkDevice vkDevice)
+static void DestroyVkPipeline(Subpass *pOpaqueGeometrySubpass, VkDevice vkDevice)
 {
-    vkDestroyDescriptorSetLayout(vkDevice, pGeometrySubpass->descriptorSetLayout, NULL);
-    vkDestroyPipelineLayout(vkDevice, pGeometrySubpass->vkPipelineLayout, NULL);
-    vkDestroyPipeline(vkDevice, pGeometrySubpass->vkPipeline, NULL);
+    vkDestroyDescriptorSetLayout(vkDevice, pOpaqueGeometrySubpass->descriptorSetLayout, NULL);
+    vkDestroyPipelineLayout(vkDevice, pOpaqueGeometrySubpass->vkPipelineLayout, NULL);
+    vkDestroyPipeline(vkDevice, pOpaqueGeometrySubpass->vkPipeline, NULL);
 }
 
-void CreateGeometrySubpass(Subpass *pGeometrySubpass, const char *shadersPath, VkRenderPass vkRenderPass, uint32_t geometrySubpassIndex, VkDevice vkDevice, VkViewport viewport, VkRect2D scissor)
+void CreateOpaqueGeometrySubpass(Subpass *pOpaqueGeometrySubpass, const char *shadersPath, VkRenderPass vkRenderPass, uint32_t opaqueGeometrySubpassIndex, VkDevice vkDevice, VkViewport viewport, VkRect2D scissor)
 {
-    CreateVkPipeline(pGeometrySubpass, shadersPath, vkRenderPass, geometrySubpassIndex, vkDevice, viewport, scissor);
+    CreateVkPipeline(pOpaqueGeometrySubpass, shadersPath, vkRenderPass, opaqueGeometrySubpassIndex, vkDevice, viewport, scissor);
 
-    pGeometrySubpass->vkDescriptorPoolSizeCount = 1;
-    pGeometrySubpass->vkDescriptorPoolSizes = TickernelMalloc(sizeof(VkDescriptorPoolSize) * pGeometrySubpass->vkDescriptorPoolSizeCount);
-    pGeometrySubpass->vkDescriptorPoolSizes[0] = (VkDescriptorPoolSize){
+    pOpaqueGeometrySubpass->vkDescriptorPoolSizeCount = 1;
+    pOpaqueGeometrySubpass->vkDescriptorPoolSizes = TickernelMalloc(sizeof(VkDescriptorPoolSize) * pOpaqueGeometrySubpass->vkDescriptorPoolSizeCount);
+    pOpaqueGeometrySubpass->vkDescriptorPoolSizes[0] = (VkDescriptorPoolSize){
         .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
         .descriptorCount = 1,
     };
 
-    TickernelCreateCollection(&pGeometrySubpass->modelCollection, sizeof(SubpassModel), 1);
+    TickernelCreateCollection(&pOpaqueGeometrySubpass->modelCollection, sizeof(SubpassModel), 1);
 }
-void DestroyGeometrySubpass(Subpass *pGeometrySubpass, VkDevice vkDevice)
+void DestroyOpaqueGeometrySubpass(Subpass *pOpaqueGeometrySubpass, VkDevice vkDevice)
 {
-    for (uint32_t i = pGeometrySubpass->modelCollection.length - 1; i != UINT32_MAX; i--)
+    for (uint32_t i = pOpaqueGeometrySubpass->modelCollection.length - 1; i != UINT32_MAX; i--)
     {
-        RemoveModelFromGeometrySubpass(pGeometrySubpass, vkDevice, i);
+        RemoveModelFromOpaqueGeometrySubpass(pOpaqueGeometrySubpass, vkDevice, i);
     }
-    TickernelDestroyCollection(&pGeometrySubpass->modelCollection);
+    TickernelDestroyCollection(&pOpaqueGeometrySubpass->modelCollection);
 
-    TickernelFree(pGeometrySubpass->vkDescriptorPoolSizes);
-    DestroyVkPipeline(pGeometrySubpass, vkDevice);
+    TickernelFree(pOpaqueGeometrySubpass->vkDescriptorPoolSizes);
+    DestroyVkPipeline(pOpaqueGeometrySubpass, vkDevice);
 }
 
-void AddModelToGeometrySubpass(Subpass *pGeometrySubpass, VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkCommandPool graphicVkCommandPool, VkQueue vkGraphicQueue, VkBuffer globalUniformBuffer, uint32_t vertexCount, GeometrySubpassVertex *geometrySubpassVertices, uint32_t *pIndex)
+void AddModelToOpaqueGeometrySubpass(Subpass *pOpaqueGeometrySubpass, VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkCommandPool graphicVkCommandPool, VkQueue vkGraphicQueue, VkBuffer globalUniformBuffer, uint32_t vertexCount, OpaqueGeometrySubpassVertex *opaqueGeometrySubpassVertices, uint32_t *pIndex)
 {
     SubpassModel subpassModel = {
         .vertexCount = vertexCount,
@@ -315,17 +315,17 @@ void AddModelToGeometrySubpass(Subpass *pGeometrySubpass, VkDevice vkDevice, VkP
         .vkDescriptorPool = NULL,
         .vkDescriptorSet = NULL,
     };
-    VkDeviceSize vertexBufferSize = sizeof(GeometrySubpassVertex) * vertexCount;
+    VkDeviceSize vertexBufferSize = sizeof(OpaqueGeometrySubpassVertex) * vertexCount;
     CreateBuffer(vkDevice, vkPhysicalDevice, vertexBufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &subpassModel.vertexBuffer, &subpassModel.vertexBufferMemory);
-    UpdateBufferWithStagingBuffer(vkDevice, vkPhysicalDevice, 0, vertexBufferSize, geometrySubpassVertices, graphicVkCommandPool, vkGraphicQueue, subpassModel.vertexBuffer);
+    UpdateBufferWithStagingBuffer(vkDevice, vkPhysicalDevice, 0, vertexBufferSize, opaqueGeometrySubpassVertices, graphicVkCommandPool, vkGraphicQueue, subpassModel.vertexBuffer);
     // Create vkDescriptorPool
     VkDescriptorPoolCreateInfo descriptorPoolCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
         .pNext = NULL,
         .flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
         .maxSets = 1,
-        .poolSizeCount = pGeometrySubpass->vkDescriptorPoolSizeCount,
-        .pPoolSizes = pGeometrySubpass->vkDescriptorPoolSizes,
+        .poolSizeCount = pOpaqueGeometrySubpass->vkDescriptorPoolSizeCount,
+        .pPoolSizes = pOpaqueGeometrySubpass->vkDescriptorPoolSizes,
     };
     VkResult result = vkCreateDescriptorPool(vkDevice, &descriptorPoolCreateInfo, NULL, &subpassModel.vkDescriptorPool);
     TryThrowVulkanError(result);
@@ -336,7 +336,7 @@ void AddModelToGeometrySubpass(Subpass *pGeometrySubpass, VkDevice vkDevice, VkP
         .pNext = NULL,
         .descriptorPool = subpassModel.vkDescriptorPool,
         .descriptorSetCount = 1,
-        .pSetLayouts = &pGeometrySubpass->descriptorSetLayout,
+        .pSetLayouts = &pOpaqueGeometrySubpass->descriptorSetLayout,
     };
     result = vkAllocateDescriptorSets(vkDevice, &descriptorSetAllocateInfo, &subpassModel.vkDescriptorSet);
     TryThrowVulkanError(result);
@@ -361,11 +361,11 @@ void AddModelToGeometrySubpass(Subpass *pGeometrySubpass, VkDevice vkDevice, VkP
         },
     };
     vkUpdateDescriptorSets(vkDevice, 1, descriptorWrites, 0, NULL);
-    TickernelAddToCollection(&pGeometrySubpass->modelCollection, &subpassModel, pIndex);
+    TickernelAddToCollection(&pOpaqueGeometrySubpass->modelCollection, &subpassModel, pIndex);
 }
-void RemoveModelFromGeometrySubpass(Subpass *pGeometrySubpass, VkDevice vkDevice, uint32_t index)
+void RemoveModelFromOpaqueGeometrySubpass(Subpass *pOpaqueGeometrySubpass, VkDevice vkDevice, uint32_t index)
 {
-    SubpassModel *pSubpassModel = pGeometrySubpass->modelCollection.array[index];
+    SubpassModel *pSubpassModel = pOpaqueGeometrySubpass->modelCollection.array[index];
     if (pSubpassModel->maxInstanceCount > 0)
     {
         DestroyBuffer(vkDevice, pSubpassModel->instanceBuffer, pSubpassModel->instanceBufferMemory);
@@ -376,32 +376,32 @@ void RemoveModelFromGeometrySubpass(Subpass *pGeometrySubpass, VkDevice vkDevice
     VkResult result = vkFreeDescriptorSets(vkDevice, pSubpassModel->vkDescriptorPool, 1, &pSubpassModel->vkDescriptorSet);
     TryThrowVulkanError(result);
     vkDestroyDescriptorPool(vkDevice, pSubpassModel->vkDescriptorPool, NULL);
-    TickernelRemoveFromCollection(&pGeometrySubpass->modelCollection, index);
+    TickernelRemoveFromCollection(&pOpaqueGeometrySubpass->modelCollection, index);
 }
-void UpdateInstancesToGeometrySubpass(Subpass *pGeometrySubpass, uint32_t modelIndex, VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkCommandPool graphicVkCommandPool, VkQueue vkGraphicQueue, VkBuffer globalUniformBuffer, GeometrySubpassInstance *geometrySubpassInstances, uint32_t instanceCount)
+void UpdateInstancesToOpaqueGeometrySubpass(Subpass *pOpaqueGeometrySubpass, uint32_t modelIndex, VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkCommandPool graphicVkCommandPool, VkQueue vkGraphicQueue, VkBuffer globalUniformBuffer, OpaqueGeometrySubpassInstance *opaqueGeometrySubpassInstances, uint32_t instanceCount)
 {
-    SubpassModel *pSubpassModel = pGeometrySubpass->modelCollection.array[modelIndex];
+    SubpassModel *pSubpassModel = pOpaqueGeometrySubpass->modelCollection.array[modelIndex];
     if (0 == pSubpassModel->maxInstanceCount)
     {
         pSubpassModel->maxInstanceCount = instanceCount;
         pSubpassModel->instanceCount = instanceCount;
-        VkDeviceSize instanceBufferSize = sizeof(GeometrySubpassInstance) * pSubpassModel->instanceCount;
+        VkDeviceSize instanceBufferSize = sizeof(OpaqueGeometrySubpassInstance) * pSubpassModel->instanceCount;
         CreateBuffer(vkDevice, vkPhysicalDevice, instanceBufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &pSubpassModel->instanceBuffer, &pSubpassModel->instanceBufferMemory);
-        UpdateBuffer(vkDevice, pSubpassModel->instanceBufferMemory, 0, sizeof(GeometrySubpassInstance) * instanceCount, geometrySubpassInstances);
+        UpdateBuffer(vkDevice, pSubpassModel->instanceBufferMemory, 0, sizeof(OpaqueGeometrySubpassInstance) * instanceCount, opaqueGeometrySubpassInstances);
     }
     else if (instanceCount <= pSubpassModel->maxInstanceCount)
     {
         pSubpassModel->instanceCount = instanceCount;
-        VkDeviceSize bufferSize = sizeof(GeometrySubpassInstance) * pSubpassModel->instanceCount;
-        UpdateBuffer(vkDevice, pSubpassModel->instanceBufferMemory, 0, bufferSize, geometrySubpassInstances);
+        VkDeviceSize bufferSize = sizeof(OpaqueGeometrySubpassInstance) * pSubpassModel->instanceCount;
+        UpdateBuffer(vkDevice, pSubpassModel->instanceBufferMemory, 0, bufferSize, opaqueGeometrySubpassInstances);
     }
     else
     {
         DestroyBuffer(vkDevice, pSubpassModel->instanceBuffer, pSubpassModel->instanceBufferMemory);
         pSubpassModel->maxInstanceCount = instanceCount;
         pSubpassModel->instanceCount = instanceCount;
-        VkDeviceSize instanceBufferSize = sizeof(GeometrySubpassInstance) * pSubpassModel->instanceCount;
+        VkDeviceSize instanceBufferSize = sizeof(OpaqueGeometrySubpassInstance) * pSubpassModel->instanceCount;
         CreateBuffer(vkDevice, vkPhysicalDevice, instanceBufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &pSubpassModel->instanceBuffer, &pSubpassModel->instanceBufferMemory);
-        UpdateBuffer(vkDevice, pSubpassModel->instanceBufferMemory, 0, sizeof(GeometrySubpassInstance) * instanceCount, geometrySubpassInstances);
+        UpdateBuffer(vkDevice, pSubpassModel->instanceBufferMemory, 0, sizeof(OpaqueGeometrySubpassInstance) * instanceCount, opaqueGeometrySubpassInstances);
     }
 }

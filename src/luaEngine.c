@@ -42,7 +42,7 @@ static int AddModel(lua_State *pLuaState)
 
     if (vertexCount > 0)
     {
-        GeometrySubpassVertex *geometrySubpassVertices = TickernelMalloc(sizeof(GeometrySubpassVertex) * vertexCount);
+        OpaqueGeometrySubpassVertex *opaqueGeometrySubpassVertices = TickernelMalloc(sizeof(OpaqueGeometrySubpassVertex) * vertexCount);
         for (uint32_t i = 0; i < vertexCount; i++)
         {
             int vertexType = lua_geti(pLuaState, -3, i + 1);
@@ -52,7 +52,7 @@ static int AddModel(lua_State *pLuaState)
             {
                 int vertexValueType = lua_geti(pLuaState, -1, j + 1);
                 AssertLuaType(vertexValueType, LUA_TNUMBER);
-                geometrySubpassVertices[i].position[j] = luaL_checknumber(pLuaState, -1);
+                opaqueGeometrySubpassVertices[i].position[j] = luaL_checknumber(pLuaState, -1);
                 lua_pop(pLuaState, 1);
             }
             lua_pop(pLuaState, 1);
@@ -64,7 +64,7 @@ static int AddModel(lua_State *pLuaState)
             {
                 int colorValueType = lua_geti(pLuaState, -1, j + 1);
                 AssertLuaType(colorValueType, LUA_TNUMBER);
-                geometrySubpassVertices[i].color[j] = luaL_checknumber(pLuaState, -1) / 255.0f;
+                opaqueGeometrySubpassVertices[i].color[j] = luaL_checknumber(pLuaState, -1) / 255.0f;
                 lua_pop(pLuaState, 1);
             }
             lua_pop(pLuaState, 1);
@@ -76,7 +76,7 @@ static int AddModel(lua_State *pLuaState)
             {
                 int normalValueType = lua_geti(pLuaState, -1, j + 1);
                 AssertLuaType(normalValueType, LUA_TNUMBER);
-                geometrySubpassVertices[i].normal[j] = luaL_checknumber(pLuaState, -1);
+                opaqueGeometrySubpassVertices[i].normal[j] = luaL_checknumber(pLuaState, -1);
                 lua_pop(pLuaState, 1);
             }
             lua_pop(pLuaState, 1);
@@ -92,9 +92,9 @@ static int AddModel(lua_State *pLuaState)
         GraphicEngine *pGraphicEngine = lua_touserdata(pLuaState, -1);
         lua_pop(pLuaState, 2);
 
-        AddModelToGeometrySubpass(&pGraphicEngine->deferredRenderPass.geometrySubpass, pGraphicEngine->vkDevice, pGraphicEngine->vkPhysicalDevice, pGraphicEngine->graphicVkCommandPool, pGraphicEngine->vkGraphicQueue, pGraphicEngine->globalUniformBuffer, vertexCount, geometrySubpassVertices, &outputIndex);
+        AddModelToOpaqueGeometrySubpass(&pGraphicEngine->deferredRenderPass.opaqueGeometrySubpass, pGraphicEngine->vkDevice, pGraphicEngine->vkPhysicalDevice, pGraphicEngine->graphicVkCommandPool, pGraphicEngine->vkGraphicQueue, pGraphicEngine->globalUniformBuffer, vertexCount, opaqueGeometrySubpassVertices, &outputIndex);
 
-        TickernelFree(geometrySubpassVertices);
+        TickernelFree(opaqueGeometrySubpassVertices);
 
         lua_pushinteger(pLuaState, outputIndex);
 
@@ -121,7 +121,7 @@ static int RemoveModel(lua_State *pLuaState)
     GraphicEngine *pGraphicEngine = lua_touserdata(pLuaState, -1);
     lua_pop(pLuaState, 2);
 
-    RemoveModelFromGeometrySubpass(&pGraphicEngine->deferredRenderPass.geometrySubpass, pGraphicEngine->vkDevice, index);
+    RemoveModelFromOpaqueGeometrySubpass(&pGraphicEngine->deferredRenderPass.opaqueGeometrySubpass, pGraphicEngine->vkDevice, index);
     return 0;
 }
 
@@ -132,7 +132,7 @@ static int UpdateInstances(lua_State *pLuaState)
     lua_len(pLuaState, -1);
     uint32_t instanceCount = luaL_checkinteger(pLuaState, -1);
     lua_pop(pLuaState, 1);
-    GeometrySubpassInstance instances[instanceCount];
+    OpaqueGeometrySubpassInstance instances[instanceCount];
     for (uint32_t i = 0; i < instanceCount; i++)
     {
         int instanceType = lua_geti(pLuaState, -1, i + 1);
@@ -164,7 +164,7 @@ static int UpdateInstances(lua_State *pLuaState)
     AssertLuaType(pGraphicEngineTpye, LUA_TLIGHTUSERDATA);
     GraphicEngine *pGraphicEngine = lua_touserdata(pLuaState, -1);
     lua_pop(pLuaState, 2);
-    UpdateInstancesToGeometrySubpass(&pGraphicEngine->deferredRenderPass.geometrySubpass, modelIndex, pGraphicEngine->vkDevice, pGraphicEngine->vkPhysicalDevice, pGraphicEngine->graphicVkCommandPool, pGraphicEngine->vkGraphicQueue, pGraphicEngine->globalUniformBuffer, instances, instanceCount);
+    UpdateInstancesToOpaqueGeometrySubpass(&pGraphicEngine->deferredRenderPass.opaqueGeometrySubpass, modelIndex, pGraphicEngine->vkDevice, pGraphicEngine->vkPhysicalDevice, pGraphicEngine->graphicVkCommandPool, pGraphicEngine->vkGraphicQueue, pGraphicEngine->globalUniformBuffer, instances, instanceCount);
     return 0;
 }
 

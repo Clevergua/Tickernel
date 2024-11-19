@@ -710,7 +710,7 @@ static void RecreateSwapchain(GraphicEngine *pGraphicEngine)
     CreateGraphicImages(pGraphicEngine);
 
     DeferredRenderPass *pDeferredRenderPass = &pGraphicEngine->deferredRenderPass;
-    RecreateLightingSubpassModel(&pGraphicEngine->deferredRenderPass.lightingSubpass, pGraphicEngine->vkDevice, pGraphicEngine->globalUniformBuffer, pGraphicEngine->depthGraphicImage.vkImageView, pGraphicEngine->albedoGraphicImage.vkImageView, pGraphicEngine->normalGraphicImage.vkImageView);
+    RecreateOpaqueLightingSubpassModel(&pGraphicEngine->deferredRenderPass.opaqueLightingSubpass, pGraphicEngine->vkDevice, pGraphicEngine->globalUniformBuffer, pGraphicEngine->depthGraphicImage.vkImageView, pGraphicEngine->albedoGraphicImage.vkImageView, pGraphicEngine->normalGraphicImage.vkImageView);
     for (uint32_t i = 0; i < pDeferredRenderPass->vkFramebufferCount; i++)
     {
         if (pDeferredRenderPass->vkFramebuffers[i] == INVALID_VKFRAMEBUFFER)

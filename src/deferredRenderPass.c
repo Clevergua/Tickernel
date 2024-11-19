@@ -78,20 +78,20 @@ static void CreateVkRenderPass(DeferredRenderPass *pDeferredRenderPass, VkDevice
         normalAttachmentDescription,
     };
 
-    VkAttachmentReference geometryDepthAttachmentReference = {
+    VkAttachmentReference opaqueGeometryDepthAttachmentReference = {
         .attachment = 1,
         .layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
     };
-    VkAttachmentReference geometryAlbedoAttachmentReference = {
+    VkAttachmentReference opaqueGeometryAlbedoAttachmentReference = {
         .attachment = 2,
         .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
     };
-    VkAttachmentReference geometryNormalAttachmentReference = {
+    VkAttachmentReference opaqueGeometryNormalAttachmentReference = {
         .attachment = 3,
         .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
     };
-    VkAttachmentReference colorAttachments[] = {geometryAlbedoAttachmentReference, geometryNormalAttachmentReference};
-    VkSubpassDescription geometrySubpassDescription = {
+    VkAttachmentReference colorAttachments[] = {opaqueGeometryAlbedoAttachmentReference, opaqueGeometryNormalAttachmentReference};
+    VkSubpassDescription opaqueGeometrySubpassDescription = {
         .flags = 0,
         .pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
         .inputAttachmentCount = 0,
@@ -99,24 +99,24 @@ static void CreateVkRenderPass(DeferredRenderPass *pDeferredRenderPass, VkDevice
         .colorAttachmentCount = 2,
         .pColorAttachments = colorAttachments,
         .pResolveAttachments = NULL,
-        .pDepthStencilAttachment = &geometryDepthAttachmentReference,
+        .pDepthStencilAttachment = &opaqueGeometryDepthAttachmentReference,
         .preserveAttachmentCount = 0,
         .pPreserveAttachments = NULL,
     };
 
-    VkAttachmentReference lightingColorAttachmentReference = {
+    VkAttachmentReference opaqueLightingColorAttachmentReference = {
         .attachment = 0,
         .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
     };
-    VkAttachmentReference lightingDepthAttachmentReference = {
+    VkAttachmentReference opaqueLightingDepthAttachmentReference = {
         .attachment = 1,
         .layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL,
     };
-    VkAttachmentReference lightingAlbedoAttachmentReference = {
+    VkAttachmentReference opaqueLightingAlbedoAttachmentReference = {
         .attachment = 2,
         .layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
     };
-    VkAttachmentReference lightingNormalAttachmentReference = {
+    VkAttachmentReference opaqueLightingNormalAttachmentReference = {
         .attachment = 3,
         .layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
     };
@@ -124,9 +124,9 @@ static void CreateVkRenderPass(DeferredRenderPass *pDeferredRenderPass, VkDevice
         .flags = 0,
         .pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
         .inputAttachmentCount = 3,
-        .pInputAttachments = (const VkAttachmentReference[]){lightingDepthAttachmentReference, lightingAlbedoAttachmentReference, lightingNormalAttachmentReference},
+        .pInputAttachments = (const VkAttachmentReference[]){opaqueLightingDepthAttachmentReference, opaqueLightingAlbedoAttachmentReference, opaqueLightingNormalAttachmentReference},
         .colorAttachmentCount = 1,
-        .pColorAttachments = &lightingColorAttachmentReference,
+        .pColorAttachments = &opaqueLightingColorAttachmentReference,
         .pResolveAttachments = NULL,
         .pDepthStencilAttachment = NULL,
         .preserveAttachmentCount = 0,
@@ -134,7 +134,7 @@ static void CreateVkRenderPass(DeferredRenderPass *pDeferredRenderPass, VkDevice
     };
     uint32_t subpassCount = 2;
     VkSubpassDescription vkSubpassDescriptions[] = {
-        geometrySubpassDescription,
+        opaqueGeometrySubpassDescription,
         ligthtingSubpassDescription,
     };
     uint32_t dependencyCount = subpassCount - 1;
@@ -201,14 +201,14 @@ void CreateDeferredRenderPass(DeferredRenderPass *pDeferredRenderPass, VkDevice 
     CreateVkFramebuffers(pDeferredRenderPass, vkFramebufferCount);
 
     uint32_t subpassIndex = 0;
-    CreateGeometrySubpass(&pDeferredRenderPass->geometrySubpass, pDeferredRenderPass->shadersPath, pDeferredRenderPass->vkRenderPass, subpassIndex, vkDevice, viewport, scissor);
+    CreateOpaqueGeometrySubpass(&pDeferredRenderPass->opaqueGeometrySubpass, pDeferredRenderPass->shadersPath, pDeferredRenderPass->vkRenderPass, subpassIndex, vkDevice, viewport, scissor);
     subpassIndex++;
-    CreateLightingSubpass(&pDeferredRenderPass->lightingSubpass, pDeferredRenderPass->shadersPath, pDeferredRenderPass->vkRenderPass, subpassIndex, vkDevice, viewport, scissor, globalUniformBuffer, depthGraphicImage.vkImageView, albedoGraphicImage.vkImageView, normalGraphicImage.vkImageView);
+    CreateOpaqueLightingSubpass(&pDeferredRenderPass->opaqueLightingSubpass, pDeferredRenderPass->shadersPath, pDeferredRenderPass->vkRenderPass, subpassIndex, vkDevice, viewport, scissor, globalUniformBuffer, depthGraphicImage.vkImageView, albedoGraphicImage.vkImageView, normalGraphicImage.vkImageView);
 }
 void DestroyDeferredRenderPass(DeferredRenderPass *pDeferredRenderPass, VkDevice vkDevice)
 {
-    DestroyGeometrySubpass(&pDeferredRenderPass->geometrySubpass, vkDevice);
-    DestroyLightingSubpass(&pDeferredRenderPass->lightingSubpass, vkDevice);
+    DestroyOpaqueGeometrySubpass(&pDeferredRenderPass->opaqueGeometrySubpass, vkDevice);
+    DestroyOpaqueLightingSubpass(&pDeferredRenderPass->opaqueLightingSubpass, vkDevice);
     DestroyVkFramebuffers(pDeferredRenderPass, vkDevice);
     DestroyVkRenderPass(pDeferredRenderPass, vkDevice);
 }
@@ -264,17 +264,17 @@ void RecordDeferredRenderPass(DeferredRenderPass *pDeferredRenderPass, VkCommand
         };
     vkCmdBeginRenderPass(vkCommandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-    Subpass *pGeometrySubpass = &pDeferredRenderPass->geometrySubpass;
-    vkCmdBindPipeline(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pGeometrySubpass->vkPipeline);
-    for (uint32_t modelIndex = 0; modelIndex < pGeometrySubpass->modelCollection.length; modelIndex++)
+    Subpass *pOpaqueGeometrySubpass = &pDeferredRenderPass->opaqueGeometrySubpass;
+    vkCmdBindPipeline(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pOpaqueGeometrySubpass->vkPipeline);
+    for (uint32_t modelIndex = 0; modelIndex < pOpaqueGeometrySubpass->modelCollection.length; modelIndex++)
     {
-        SubpassModel *pSubpassModel = pGeometrySubpass->modelCollection.array[modelIndex];
+        SubpassModel *pSubpassModel = pOpaqueGeometrySubpass->modelCollection.array[modelIndex];
         if (NULL != pSubpassModel)
         {
             vkCmdSetViewport(vkCommandBuffer, 0, 1, &viewport);
             vkCmdSetScissor(vkCommandBuffer, 0, 1, &scissor);
 
-            vkCmdBindDescriptorSets(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pGeometrySubpass->vkPipelineLayout, 0, 1, &pSubpassModel->vkDescriptorSet, 0, NULL);
+            vkCmdBindDescriptorSets(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pOpaqueGeometrySubpass->vkPipelineLayout, 0, 1, &pSubpassModel->vkDescriptorSet, 0, NULL);
             VkBuffer vertexBuffers[] = {pSubpassModel->vertexBuffer, pSubpassModel->instanceBuffer};
             VkDeviceSize offsets[] = {0, 0};
             vkCmdBindVertexBuffers(vkCommandBuffer, 0, 2, vertexBuffers, offsets);
@@ -282,13 +282,13 @@ void RecordDeferredRenderPass(DeferredRenderPass *pDeferredRenderPass, VkCommand
         }
     }
     vkCmdNextSubpass(vkCommandBuffer, VK_SUBPASS_CONTENTS_INLINE);
-    // lighting subpass
-    Subpass *pLightingSubpass = &pDeferredRenderPass->lightingSubpass;
-    SubpassModel *pSubpassModel = pLightingSubpass->modelCollection.array[0];
-    vkCmdBindPipeline(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pLightingSubpass->vkPipeline);
+    // opaqueLighting subpass
+    Subpass *pOpaqueLightingSubpass = &pDeferredRenderPass->opaqueLightingSubpass;
+    SubpassModel *pSubpassModel = pOpaqueLightingSubpass->modelCollection.array[0];
+    vkCmdBindPipeline(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pOpaqueLightingSubpass->vkPipeline);
     vkCmdSetViewport(vkCommandBuffer, 0, 1, &viewport);
     vkCmdSetScissor(vkCommandBuffer, 0, 1, &scissor);
-    vkCmdBindDescriptorSets(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pLightingSubpass->vkPipelineLayout, 0, 1, &pSubpassModel->vkDescriptorSet, 0, NULL);
+    vkCmdBindDescriptorSets(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pOpaqueLightingSubpass->vkPipelineLayout, 0, 1, &pSubpassModel->vkDescriptorSet, 0, NULL);
     vkCmdDraw(vkCommandBuffer, 3, 1, 0, 0);
 
     vkCmdEndRenderPass(vkCommandBuffer);

@@ -73,7 +73,7 @@ void DeserializeTickernelVoxel(const char *filename, TickernelVoxel *pTickernelV
     FILE *file = fopen(filename, "rb");
     if (file == NULL)
     {
-        perror("Failed to open file for reading");
+        TickernelError("Failed to open file for reading");
         return;
     }
     size_t freadResult;
