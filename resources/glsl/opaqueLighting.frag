@@ -1,13 +1,11 @@
 #version 450
 precision highp float;
-layout(binding = 0) uniform GlobalUniform
-{
+layout(binding = 0) uniform GlobalUniform {
     mat4 view;
     mat4 proj;
     mat4 inv_view_proj;
     float pointSizeFactor;
-}
-globalUniform;
+} globalUniform;
 
 layout(input_attachment_index = 0, binding = 1) uniform subpassInput i_depth;
 layout(input_attachment_index = 1, binding = 2) uniform subpassInput i_albedo;
@@ -16,8 +14,7 @@ layout(input_attachment_index = 2, binding = 3) uniform subpassInput i_normal;
 layout(location = 0) in vec2 in_uv;
 layout(location = 0) out vec4 o_color;
 
-void main()
-{
+void main() {
     vec4 clip = vec4(in_uv * 2.0 - 1.0, subpassLoad(i_depth).x, 1.0);
     vec4 world_w = globalUniform.inv_view_proj * clip;
     vec3 position = world_w.xyz / world_w.w;
