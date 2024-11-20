@@ -246,6 +246,18 @@ function gameState.Start()
     --         gameState.UpdateInstances(index, modelMatrix)
     --     end
     -- end
+    local directionalLight = {
+        color = { 1, 1, 1, 1 },
+        direction = { 1, -1, -1 },
+    }
+    local pointLights = {
+        {
+            color = { 1, 0, 0, 1 },
+            position = { 25, 36, 1 },
+            range = 15,
+        }
+    }
+    gameState.UpdateLightsUniformBuffer(directionalLight, pointLights)
 end
 
 function gameState.End()
@@ -258,12 +270,12 @@ local t = 0
 
 function gameState.Update()
     print("Lua Update")
-    t = t + 0.0005
+    t = t + 0.005
     local distance = gameMath.PingPong(0, 20, t)
     cameraPosition[1] = 15 + distance
     targetPosition[1] = 15 + distance
 
-    gameState.SetCamera(cameraPosition, targetPosition)
+    gameState.UpdateGlobalUniformBuffer(cameraPosition, targetPosition)
 end
 
 _G.gameState = gameState

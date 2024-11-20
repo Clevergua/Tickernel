@@ -135,40 +135,47 @@ static void CreateVkPipeline(Subpass *pOpaqueLightingSubpass, const char *shader
         .pDynamicStates = dynamicStates,
     };
 
-    VkDescriptorSetLayoutBinding globalUniformLayoutBinding = {
-        .binding = 0,
-        .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-        .descriptorCount = 1,
-        .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
-        .pImmutableSamplers = NULL,
-    };
     VkDescriptorSetLayoutBinding depthAttachmentLayoutBinding = {
-        .binding = 1,
+        .binding = 0,
         .descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT,
         .descriptorCount = 1,
         .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
         .pImmutableSamplers = NULL,
     };
     VkDescriptorSetLayoutBinding albedoAttachmentLayoutBinding = {
-        .binding = 2,
+        .binding = 1,
         .descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT,
         .descriptorCount = 1,
         .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
         .pImmutableSamplers = NULL,
     };
     VkDescriptorSetLayoutBinding normalAttachmentLayoutBinding = {
-        .binding = 3,
+        .binding = 2,
         .descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT,
         .descriptorCount = 1,
         .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
         .pImmutableSamplers = NULL,
     };
-    VkDescriptorSetLayoutBinding *bindings = (VkDescriptorSetLayoutBinding[]){globalUniformLayoutBinding, depthAttachmentLayoutBinding, albedoAttachmentLayoutBinding, normalAttachmentLayoutBinding};
+    VkDescriptorSetLayoutBinding globalUniformLayoutBinding = {
+        .binding = 3,
+        .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+        .descriptorCount = 1,
+        .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
+        .pImmutableSamplers = NULL,
+    };
+    VkDescriptorSetLayoutBinding lightsUniformLayoutBinding = {
+        .binding = 4,
+        .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+        .descriptorCount = 1,
+        .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
+        .pImmutableSamplers = NULL,
+    };
+    VkDescriptorSetLayoutBinding *bindings = (VkDescriptorSetLayoutBinding[]){depthAttachmentLayoutBinding, albedoAttachmentLayoutBinding, normalAttachmentLayoutBinding, globalUniformLayoutBinding, lightsUniformLayoutBinding};
     VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
         .pNext = NULL,
         .flags = 0,
-        .bindingCount = 4,
+        .bindingCount = 5,
         .pBindings = bindings,
     };
 
@@ -220,7 +227,7 @@ static void DestroyVkPipeline(Subpass *pOpaqueLightingSubpass, VkDevice vkDevice
     vkDestroyPipeline(vkDevice, pOpaqueLightingSubpass->vkPipeline, NULL);
 }
 
-static void CreateOpaqueLightingSubpassModel(Subpass *pOpaqueLightingSubpass, VkDevice vkDevice, VkBuffer globalUniformBuffer, VkImageView depthVkImageView, VkImageView albedoVkImageView, VkImageView normalVkImageView)
+static void CreateOpaqueLightingSubpassModel(Subpass *pOpaqueLightingSubpass, VkDevice vkDevice, VkBuffer globalUniformBuffer, VkBuffer lightsUniformBuffer, VkImageView depthVkImageView, VkImageView albedoVkImageView, VkImageView normalVkImageView)
 {
     assert(pOpaqueLightingSubpass != NULL);
     assert(pOpaqueLightingSubpass->vkDescriptorPoolSizes != NULL);
@@ -270,6 +277,11 @@ static void CreateOpaqueLightingSubpassModel(Subpass *pOpaqueLightingSubpass, Vk
         .offset = 0,
         .range = sizeof(GlobalUniformBuffer),
     };
+    VkDescriptorBufferInfo lightsDescriptorBufferInfo = {
+        .buffer = lightsUniformBuffer,
+        .offset = 0,
+        .range = sizeof(LightsUniformBuffer),
+    };
     VkDescriptorImageInfo depthVkDescriptorImageInfo = {
         .sampler = NULL,
         .imageView = depthVkImageView,
@@ -293,18 +305,6 @@ static void CreateOpaqueLightingSubpassModel(Subpass *pOpaqueLightingSubpass, Vk
             .dstBinding = 0,
             .dstArrayElement = 0,
             .descriptorCount = 1,
-            .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-            .pImageInfo = NULL,
-            .pBufferInfo = &globalDescriptorBufferInfo,
-            .pTexelBufferView = NULL,
-        },
-        {
-            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-            .pNext = NULL,
-            .dstSet = subpassModel.vkDescriptorSet,
-            .dstBinding = 1,
-            .dstArrayElement = 0,
-            .descriptorCount = 1,
             .descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT,
             .pImageInfo = &depthVkDescriptorImageInfo,
             .pBufferInfo = NULL,
@@ -314,7 +314,7 @@ static void CreateOpaqueLightingSubpassModel(Subpass *pOpaqueLightingSubpass, Vk
             .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
             .pNext = NULL,
             .dstSet = subpassModel.vkDescriptorSet,
-            .dstBinding = 2,
+            .dstBinding = 1,
             .dstArrayElement = 0,
             .descriptorCount = 1,
             .descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT,
@@ -326,7 +326,7 @@ static void CreateOpaqueLightingSubpassModel(Subpass *pOpaqueLightingSubpass, Vk
             .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
             .pNext = NULL,
             .dstSet = subpassModel.vkDescriptorSet,
-            .dstBinding = 3,
+            .dstBinding = 2,
             .dstArrayElement = 0,
             .descriptorCount = 1,
             .descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT,
@@ -334,8 +334,32 @@ static void CreateOpaqueLightingSubpassModel(Subpass *pOpaqueLightingSubpass, Vk
             .pBufferInfo = NULL,
             .pTexelBufferView = NULL,
         },
+        {
+            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            .pNext = NULL,
+            .dstSet = subpassModel.vkDescriptorSet,
+            .dstBinding = 3,
+            .dstArrayElement = 0,
+            .descriptorCount = 1,
+            .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+            .pImageInfo = NULL,
+            .pBufferInfo = &globalDescriptorBufferInfo,
+            .pTexelBufferView = NULL,
+        },
+        {
+            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            .pNext = NULL,
+            .dstSet = subpassModel.vkDescriptorSet,
+            .dstBinding = 4,
+            .dstArrayElement = 0,
+            .descriptorCount = 1,
+            .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+            .pImageInfo = NULL,
+            .pBufferInfo = &lightsDescriptorBufferInfo,
+            .pTexelBufferView = NULL,
+        },
     };
-    vkUpdateDescriptorSets(vkDevice, 4, descriptorWrites, 0, NULL);
+    vkUpdateDescriptorSets(vkDevice, 5, descriptorWrites, 0, NULL);
     uint32_t index;
     TickernelAddToCollection(&pOpaqueLightingSubpass->modelCollection, &subpassModel, &index);
 }
@@ -348,7 +372,7 @@ static void DestroyOpaqueLightingSubpassModel(Subpass *pOpaqueLightingSubpass, V
     TickernelRemoveFromCollection(&pOpaqueLightingSubpass->modelCollection, index);
 }
 
-void CreateOpaqueLightingSubpass(Subpass *pOpaqueLightingSubpass, const char *shadersPath, VkRenderPass vkRenderPass, uint32_t opaqueLightingSubpassIndex, VkDevice vkDevice, VkViewport viewport, VkRect2D scissor, VkBuffer globalUniformBuffer, VkImageView depthVkImageView, VkImageView albedoVkImageView, VkImageView normalVkImageView)
+void CreateOpaqueLightingSubpass(Subpass *pOpaqueLightingSubpass, const char *shadersPath, VkRenderPass vkRenderPass, uint32_t opaqueLightingSubpassIndex, VkDevice vkDevice, VkViewport viewport, VkRect2D scissor, VkBuffer globalUniformBuffer, VkBuffer lightsUniformBuffer, VkImageView depthVkImageView, VkImageView albedoVkImageView, VkImageView normalVkImageView)
 {
     CreateVkPipeline(pOpaqueLightingSubpass, shadersPath, vkRenderPass, opaqueLightingSubpassIndex, vkDevice, viewport, scissor);
 
@@ -364,7 +388,7 @@ void CreateOpaqueLightingSubpass(Subpass *pOpaqueLightingSubpass, const char *sh
     };
 
     TickernelCreateCollection(&pOpaqueLightingSubpass->modelCollection, sizeof(SubpassModel), 1);
-    CreateOpaqueLightingSubpassModel(pOpaqueLightingSubpass, vkDevice, globalUniformBuffer, depthVkImageView, albedoVkImageView, normalVkImageView);
+    CreateOpaqueLightingSubpassModel(pOpaqueLightingSubpass, vkDevice, globalUniformBuffer, lightsUniformBuffer, depthVkImageView, albedoVkImageView, normalVkImageView);
 }
 
 void DestroyOpaqueLightingSubpass(Subpass *pOpaqueLightingSubpass, VkDevice vkDevice)
@@ -375,8 +399,8 @@ void DestroyOpaqueLightingSubpass(Subpass *pOpaqueLightingSubpass, VkDevice vkDe
 
     DestroyVkPipeline(pOpaqueLightingSubpass, vkDevice);
 }
-void RecreateOpaqueLightingSubpassModel(Subpass *pOpaqueLightingSubpass, VkDevice vkDevice, VkBuffer globalUniformBuffer, VkImageView depthVkImageView, VkImageView albedoVkImageView, VkImageView normalVkImageView)
+void RecreateOpaqueLightingSubpassModel(Subpass *pOpaqueLightingSubpass, VkDevice vkDevice, VkBuffer globalUniformBuffer, VkBuffer lightsUniformBuffer, VkImageView depthVkImageView, VkImageView albedoVkImageView, VkImageView normalVkImageView)
 {
     DestroyOpaqueLightingSubpassModel(pOpaqueLightingSubpass, vkDevice, 0);
-    CreateOpaqueLightingSubpassModel(pOpaqueLightingSubpass, vkDevice, globalUniformBuffer, depthVkImageView, albedoVkImageView, normalVkImageView);
+    CreateOpaqueLightingSubpassModel(pOpaqueLightingSubpass, vkDevice, globalUniformBuffer, lightsUniformBuffer, depthVkImageView, albedoVkImageView, normalVkImageView);
 }

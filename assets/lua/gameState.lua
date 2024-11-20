@@ -26,10 +26,16 @@ end
 function gameState.UpdateInstances(modelIndex, instances)
 end
 
----SetCamera
+---UpdateGlobalUniformBuffer
 ---@param cameraPosition table
 ---@param targetPosition table
-function gameState.SetCamera(cameraPosition, targetPosition)
+function gameState.UpdateGlobalUniformBuffer(cameraPosition, targetPosition)
+end
+
+---UpdateGlobalUniformBuffer
+---@param directionalLight table
+---@param pointLights table
+function gameState.UpdateLightsUniformBuffer(directionalLight, pointLights)
 end
 
 local model = {

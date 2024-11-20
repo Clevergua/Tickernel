@@ -7,13 +7,35 @@
 #include <tickernelWindow.h>
 #define INVALID_VKFRAMEBUFFER 0
 #define MAX_VK_DESCRIPTOR_TPYE 11
-typedef struct GlobalUniformBufferStruct
+#define MAX_POINT_LIGHT_COUNT 256
+
+typedef struct
 {
     mat4 view;
     mat4 proj;
     mat4 inv_view_proj;
     float pointSizeFactor;
 } GlobalUniformBuffer;
+
+typedef struct
+{
+    vec4 color;
+    vec3 direction;
+} DirectionalLight;
+
+typedef struct
+{
+    vec4 color;
+    vec3 position;
+    float range;
+} PointLight;
+
+typedef struct
+{
+    DirectionalLight directionalLight;
+    int pointLightCount;
+    PointLight pointLights[MAX_POINT_LIGHT_COUNT];
+} LightsUniformBuffer;
 
 // GlobalBuffer 世界场景中的数据
 // ModelBuffer 每种建筑的数据

@@ -16,6 +16,8 @@ static void TickernelStart(TickernelEngine *pTickernelEngine)
     pGraphicEngine->windowHeight = 512;
     pGraphicEngine->targetSwapchainImageCount = 2;
     pGraphicEngine->assetsPath = TickernelMalloc(sizeof(char) * FILENAME_MAX);
+    pGraphicEngine->canUpdateGlobalUniformBuffer = false;
+    pGraphicEngine->canUpdateLightsUniformBuffer = false;
     strcpy(pGraphicEngine->assetsPath, pTickernelEngine->assetsPath);
     
     StartGraphicEngine(pGraphicEngine);

@@ -168,7 +168,46 @@ static int UpdateInstances(lua_State *pLuaState)
     return 0;
 }
 
-static int SetCamera(lua_State *pLuaState)
+static int UpdateGlobalUniformBuffer(lua_State *pLuaState)
+{
+    int gameStateTpye = lua_getglobal(pLuaState, "gameState");
+    AssertLuaType(gameStateTpye, LUA_TTABLE);
+    int pGraphicEngineTpye = lua_getfield(pLuaState, -1, "pGraphicEngine");
+    AssertLuaType(pGraphicEngineTpye, LUA_TLIGHTUSERDATA);
+    GraphicEngine *pGraphicEngine = lua_touserdata(pLuaState, -1);
+    lua_pop(pLuaState, 2);
+    vec3 targetPosition;
+    vec3 cameraPosition;
+    for (uint32_t i = 0; i < 3; i++)
+    {
+        int targetPositionValueType = lua_geti(pLuaState, -1, i + 1);
+        AssertLuaType(targetPositionValueType, LUA_TNUMBER);
+        targetPosition[i] = luaL_checknumber(pLuaState, -1);
+        lua_pop(pLuaState, 1);
+
+        int cameraPositionValueType = lua_geti(pLuaState, -2, i + 1);
+        AssertLuaType(cameraPositionValueType, LUA_TNUMBER);
+        cameraPosition[i] = luaL_checknumber(pLuaState, -1);
+        lua_pop(pLuaState, 1);
+    }
+
+    GlobalUniformBuffer ubo;
+    glm_lookat(cameraPosition, targetPosition, (vec3){0.0f, 0.0f, 1.0f}, ubo.view);
+    float deg = 45.0f;
+    ubo.pointSizeFactor = 0.618 * pGraphicEngine->swapchainHeight / tanf(glm_rad(deg / 2));
+    glm_perspective(glm_rad(deg), pGraphicEngine->swapchainWidth / (float)pGraphicEngine->swapchainHeight, 1.0f, 2048.0f, ubo.proj);
+    ubo.proj[1][1] *= -1;
+    mat4 view_proj;
+    glm_mat4_mul(ubo.proj, ubo.view, view_proj);
+    glm_mat4_inv(view_proj, ubo.inv_view_proj);
+
+    lua_pop(pLuaState, 2);
+    pGraphicEngine->inputGlobalUniformBuffer = ubo;
+    pGraphicEngine->canUpdateGlobalUniformBuffer = true;
+    return 0;
+}
+
+static int UpdateLightsUniformBuffer(lua_State *pLuaState)
 {
     int gameStateTpye = lua_getglobal(pLuaState, "gameState");
     AssertLuaType(gameStateTpye, LUA_TTABLE);
@@ -177,20 +216,75 @@ static int SetCamera(lua_State *pLuaState)
     GraphicEngine *pGraphicEngine = lua_touserdata(pLuaState, -1);
     lua_pop(pLuaState, 2);
 
-    for (uint32_t i = 0; i < 3; i++)
-    {
-        int targetPositionValueType = lua_geti(pLuaState, -1, i + 1);
-        AssertLuaType(targetPositionValueType, LUA_TNUMBER);
-        pGraphicEngine->targetPosition[i] = luaL_checknumber(pLuaState, -1);
-        lua_pop(pLuaState, 1);
+    LightsUniformBuffer lightsUniformBuffer;
 
-        int cameraPositionValueType = lua_geti(pLuaState, -2, i + 1);
-        AssertLuaType(cameraPositionValueType, LUA_TNUMBER);
-        pGraphicEngine->cameraPosition[i] = luaL_checknumber(pLuaState, -1);
+    lua_len(pLuaState, -1);
+    uint32_t pointLightCount = luaL_checkinteger(pLuaState, -1);
+    lightsUniformBuffer.pointLightCount = pointLightCount;
+    lua_pop(pLuaState, 1);
+    for (uint32_t i = 0; i < pointLightCount; i++)
+    {
+        int pointLightsType = lua_geti(pLuaState, -1, i + 1);
+        AssertLuaType(pointLightsType, LUA_TTABLE);
+        {
+            int colorType = lua_getfield(pLuaState, -1, "color");
+            AssertLuaType(colorType, LUA_TTABLE);
+            for (uint32_t j = 0; j < 4; j++)
+            {
+                int colorValueType = lua_geti(pLuaState, -1, j + 1);
+                AssertLuaType(colorValueType, LUA_TNUMBER);
+                lightsUniformBuffer.pointLights[i].color[j] = luaL_checknumber(pLuaState, -1);
+                lua_pop(pLuaState, 1);
+            }
+            lua_pop(pLuaState, 1);
+
+            int positionType = lua_getfield(pLuaState, -1, "position");
+            AssertLuaType(positionType, LUA_TTABLE);
+            for (uint32_t j = 0; j < 3; j++)
+            {
+                int positionValueType = lua_geti(pLuaState, -1, j + 1);
+                AssertLuaType(positionValueType, LUA_TNUMBER);
+                lightsUniformBuffer.pointLights[i].position[j] = luaL_checknumber(pLuaState, -1);
+                lua_pop(pLuaState, 1);
+            }
+            lua_pop(pLuaState, 1);
+
+            int rangeType = lua_getfield(pLuaState, -1, "range");
+            AssertLuaType(rangeType, LUA_TNUMBER);
+            lightsUniformBuffer.pointLights[i].range = luaL_checknumber(pLuaState, -1);
+            lua_pop(pLuaState, 1);
+        }
         lua_pop(pLuaState, 1);
     }
-    lua_pop(pLuaState, 2);
+    lua_pop(pLuaState, 1);
 
+    {
+        int colorType = lua_getfield(pLuaState, -1, "color");
+        AssertLuaType(colorType, LUA_TTABLE);
+        for (uint32_t i = 0; i < 4; i++)
+        {
+            int colorValueType = lua_geti(pLuaState, -1, i + 1);
+            AssertLuaType(colorValueType, LUA_TNUMBER);
+            lightsUniformBuffer.directionalLight.color[i] = luaL_checknumber(pLuaState, -1);
+            lua_pop(pLuaState, 1);
+        }
+        lua_pop(pLuaState, 1);
+
+        int directionType = lua_getfield(pLuaState, -1, "direction");
+        AssertLuaType(directionType, LUA_TTABLE);
+        for (uint32_t i = 0; i < 3; i++)
+        {
+            int directionValueType = lua_geti(pLuaState, -1, i + 1);
+            AssertLuaType(directionValueType, LUA_TNUMBER);
+            lightsUniformBuffer.directionalLight.direction[i] = luaL_checknumber(pLuaState, -1);
+            lua_pop(pLuaState, 1);
+        }
+        lua_pop(pLuaState, 1);
+    }
+    lua_pop(pLuaState, 1);
+    pGraphicEngine->inputLightsUniformBuffer = lightsUniformBuffer;
+    pGraphicEngine->canUpdateLightsUniformBuffer = true;
+    // assert(lua_gettop(pLuaState) == 0);
     return 0;
 }
 
@@ -322,8 +416,11 @@ void StartLua(LuaEngine *pLuaEngine)
     lua_pushcfunction(pLuaState, UpdateInstances);
     lua_setfield(pLuaState, -2, "UpdateInstances");
 
-    lua_pushcfunction(pLuaState, SetCamera);
-    lua_setfield(pLuaState, -2, "SetCamera");
+    lua_pushcfunction(pLuaState, UpdateGlobalUniformBuffer);
+    lua_setfield(pLuaState, -2, "UpdateGlobalUniformBuffer");
+
+    lua_pushcfunction(pLuaState, UpdateLightsUniformBuffer);
+    lua_setfield(pLuaState, -2, "UpdateLightsUniformBuffer");
 
     lua_pushcfunction(pLuaState, LoadModel);
     lua_setfield(pLuaState, -2, "LoadModel");

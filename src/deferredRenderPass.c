@@ -195,7 +195,7 @@ static void DestroyVkFramebuffers(DeferredRenderPass *pDeferredRenderPass, VkDev
     TickernelFree(pDeferredRenderPass->vkFramebuffers);
 }
 
-void CreateDeferredRenderPass(DeferredRenderPass *pDeferredRenderPass, VkDevice vkDevice, VkFormat swapchainVkFormat, GraphicImage depthGraphicImage, GraphicImage albedoGraphicImage, GraphicImage normalGraphicImage, uint32_t vkFramebufferCount, VkViewport viewport, VkRect2D scissor, VkBuffer globalUniformBuffer)
+void CreateDeferredRenderPass(DeferredRenderPass *pDeferredRenderPass, VkDevice vkDevice, VkFormat swapchainVkFormat, GraphicImage depthGraphicImage, GraphicImage albedoGraphicImage, GraphicImage normalGraphicImage, uint32_t vkFramebufferCount, VkViewport viewport, VkRect2D scissor, VkBuffer globalUniformBuffer, VkBuffer lightsUniformBuffer)
 {
     CreateVkRenderPass(pDeferredRenderPass, vkDevice, swapchainVkFormat, depthGraphicImage.vkFormat, albedoGraphicImage.vkFormat, normalGraphicImage.vkFormat);
     CreateVkFramebuffers(pDeferredRenderPass, vkFramebufferCount);
@@ -203,7 +203,7 @@ void CreateDeferredRenderPass(DeferredRenderPass *pDeferredRenderPass, VkDevice 
     uint32_t subpassIndex = 0;
     CreateOpaqueGeometrySubpass(&pDeferredRenderPass->opaqueGeometrySubpass, pDeferredRenderPass->shadersPath, pDeferredRenderPass->vkRenderPass, subpassIndex, vkDevice, viewport, scissor);
     subpassIndex++;
-    CreateOpaqueLightingSubpass(&pDeferredRenderPass->opaqueLightingSubpass, pDeferredRenderPass->shadersPath, pDeferredRenderPass->vkRenderPass, subpassIndex, vkDevice, viewport, scissor, globalUniformBuffer, depthGraphicImage.vkImageView, albedoGraphicImage.vkImageView, normalGraphicImage.vkImageView);
+    CreateOpaqueLightingSubpass(&pDeferredRenderPass->opaqueLightingSubpass, pDeferredRenderPass->shadersPath, pDeferredRenderPass->vkRenderPass, subpassIndex, vkDevice, viewport, scissor, globalUniformBuffer, lightsUniformBuffer, depthGraphicImage.vkImageView, albedoGraphicImage.vkImageView, normalGraphicImage.vkImageView);
 }
 void DestroyDeferredRenderPass(DeferredRenderPass *pDeferredRenderPass, VkDevice vkDevice)
 {

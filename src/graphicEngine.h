@@ -24,7 +24,7 @@ typedef struct GraphicEngineStruct
     VkDevice vkDevice;
     VkQueue vkGraphicQueue;
     VkQueue vkPresentQueue;
-    
+
     VkSwapchainKHR vkSwapchain;
     VkSurfaceFormatKHR surfaceFormat;
     uint32_t swapchainImageCount;
@@ -43,15 +43,20 @@ typedef struct GraphicEngineStruct
     VkBuffer globalUniformBuffer;
     VkDeviceMemory globalUniformBufferMemory;
     void *globalUniformBufferMapped;
+    VkBuffer lightsUniformBuffer;
+    VkDeviceMemory lightsUniformBufferMemory;
+    void *lightsUniformBufferMapped;
+
+    bool canUpdateGlobalUniformBuffer;
+    bool canUpdateLightsUniformBuffer;
+    GlobalUniformBuffer inputGlobalUniformBuffer;
+    LightsUniformBuffer inputLightsUniformBuffer;
 
     GraphicImage depthGraphicImage;
     GraphicImage albedoGraphicImage;
     GraphicImage normalGraphicImage;
     DeferredRenderPass deferredRenderPass;
     uint32_t fullScreenTriangleModelIndex;
-
-    vec3 cameraPosition;
-    vec3 targetPosition;
 } GraphicEngine;
 void StartGraphicEngine(GraphicEngine *pGraphicEngine);
 void UpdateGraphicEngine(GraphicEngine *pGraphicEngine, bool *pCanUpdate);

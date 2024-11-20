@@ -710,7 +710,7 @@ static void RecreateSwapchain(GraphicEngine *pGraphicEngine)
     CreateGraphicImages(pGraphicEngine);
 
     DeferredRenderPass *pDeferredRenderPass = &pGraphicEngine->deferredRenderPass;
-    RecreateOpaqueLightingSubpassModel(&pGraphicEngine->deferredRenderPass.opaqueLightingSubpass, pGraphicEngine->vkDevice, pGraphicEngine->globalUniformBuffer, pGraphicEngine->depthGraphicImage.vkImageView, pGraphicEngine->albedoGraphicImage.vkImageView, pGraphicEngine->normalGraphicImage.vkImageView);
+    RecreateOpaqueLightingSubpassModel(&pGraphicEngine->deferredRenderPass.opaqueLightingSubpass, pGraphicEngine->vkDevice, pGraphicEngine->globalUniformBuffer, pGraphicEngine->lightsUniformBuffer, pGraphicEngine->depthGraphicImage.vkImageView, pGraphicEngine->albedoGraphicImage.vkImageView, pGraphicEngine->normalGraphicImage.vkImageView);
     for (uint32_t i = 0; i < pDeferredRenderPass->vkFramebufferCount; i++)
     {
         if (pDeferredRenderPass->vkFramebuffers[i] == INVALID_VKFRAMEBUFFER)
@@ -822,34 +822,53 @@ static void CreateVkCommandBuffers(GraphicEngine *pGraphicEngine)
     TryThrowVulkanError(result);
 }
 
-static void CreateGlobalUniformBuffers(GraphicEngine *pGraphicEngine)
+static void CreateUniformBuffers(GraphicEngine *pGraphicEngine)
 {
-    size_t bufferSize = sizeof(GlobalUniformBuffer);
     VkResult result = VK_SUCCESS;
+    size_t bufferSize = sizeof(GlobalUniformBuffer);
     CreateBuffer(pGraphicEngine->vkDevice, pGraphicEngine->vkPhysicalDevice, bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &pGraphicEngine->globalUniformBuffer, &pGraphicEngine->globalUniformBufferMemory);
     result = vkMapMemory(pGraphicEngine->vkDevice, pGraphicEngine->globalUniformBufferMemory, 0, bufferSize, 0, &pGraphicEngine->globalUniformBufferMapped);
     TryThrowVulkanError(result);
+
+    bufferSize = sizeof(LightsUniformBuffer);
+    CreateBuffer(pGraphicEngine->vkDevice, pGraphicEngine->vkPhysicalDevice, bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &pGraphicEngine->lightsUniformBuffer, &pGraphicEngine->lightsUniformBufferMemory);
+    result = vkMapMemory(pGraphicEngine->vkDevice, pGraphicEngine->lightsUniformBufferMemory, 0, bufferSize, 0, &pGraphicEngine->lightsUniformBufferMapped);
+    TryThrowVulkanError(result);
 }
 
-static void DestroyGlobalUniformBuffers(GraphicEngine *pGraphicEngine)
+static void DestroyUniformBuffers(GraphicEngine *pGraphicEngine)
 {
+    vkUnmapMemory(pGraphicEngine->vkDevice, pGraphicEngine->lightsUniformBufferMemory);
+    DestroyBuffer(pGraphicEngine->vkDevice, pGraphicEngine->lightsUniformBuffer, pGraphicEngine->lightsUniformBufferMemory);
+
     vkUnmapMemory(pGraphicEngine->vkDevice, pGraphicEngine->globalUniformBufferMemory);
     DestroyBuffer(pGraphicEngine->vkDevice, pGraphicEngine->globalUniformBuffer, pGraphicEngine->globalUniformBufferMemory);
 }
 
 static void UpdateGlobalUniformBuffer(GraphicEngine *pGraphicEngine)
 {
-    GlobalUniformBuffer ubo;
-    glm_lookat(pGraphicEngine->cameraPosition, pGraphicEngine->targetPosition, (vec3){0.0f, 0.0f, 1.0f}, ubo.view);
-    float deg = 45.0f;
-    // ubo.pointSizeFactor = 0.3f * pGraphicEngine->height / tanf(glm_rad(deg / 2));
-    ubo.pointSizeFactor = 0.618 * pGraphicEngine->swapchainHeight / tanf(glm_rad(deg / 2));
-    glm_perspective(glm_rad(deg), pGraphicEngine->swapchainWidth / (float)pGraphicEngine->swapchainHeight, 1.0f, 2048.0f, ubo.proj);
-    ubo.proj[1][1] *= -1;
-    mat4 view_proj;
-    glm_mat4_mul(ubo.proj, ubo.proj, view_proj);
-    glm_mat4_inv(view_proj, ubo.inv_view_proj);
-    memcpy(pGraphicEngine->globalUniformBufferMapped, &ubo, sizeof(ubo));
+    if (pGraphicEngine->canUpdateGlobalUniformBuffer)
+    {
+        memcpy(pGraphicEngine->globalUniformBufferMapped, &pGraphicEngine->inputGlobalUniformBuffer, sizeof(pGraphicEngine->inputGlobalUniformBuffer));
+        pGraphicEngine->canUpdateGlobalUniformBuffer = false;
+    }
+    else
+    {
+        // do nothing.
+    }
+}
+
+static void UpdateLightsUniformBuffer(GraphicEngine *pGraphicEngine)
+{
+    if (pGraphicEngine->canUpdateLightsUniformBuffer)
+    {
+        memcpy(pGraphicEngine->lightsUniformBufferMapped, &pGraphicEngine->inputLightsUniformBuffer, sizeof(pGraphicEngine->inputLightsUniformBuffer));
+        pGraphicEngine->canUpdateLightsUniformBuffer = false;
+    }
+    else
+    {
+        // do nothing.
+    }
 }
 
 static void DestroyVkCommandBuffers(GraphicEngine *pGraphicEngine)
@@ -906,7 +925,7 @@ void StartGraphicEngine(GraphicEngine *pGraphicEngine)
     CreateSignals(pGraphicEngine);
     CreateCommandPools(pGraphicEngine);
     CreateVkCommandBuffers(pGraphicEngine);
-    CreateGlobalUniformBuffers(pGraphicEngine);
+    CreateUniformBuffers(pGraphicEngine);
     CreateGraphicImages(pGraphicEngine);
 
     VkViewport viewport = {
@@ -929,7 +948,7 @@ void StartGraphicEngine(GraphicEngine *pGraphicEngine)
         .offset = offset,
         .extent = extent,
     };
-    CreateDeferredRenderPass(&pGraphicEngine->deferredRenderPass, pGraphicEngine->vkDevice, pGraphicEngine->surfaceFormat.format, pGraphicEngine->depthGraphicImage, pGraphicEngine->albedoGraphicImage, pGraphicEngine->normalGraphicImage, pGraphicEngine->swapchainImageCount, viewport, scissor, pGraphicEngine->globalUniformBuffer);
+    CreateDeferredRenderPass(&pGraphicEngine->deferredRenderPass, pGraphicEngine->vkDevice, pGraphicEngine->surfaceFormat.format, pGraphicEngine->depthGraphicImage, pGraphicEngine->albedoGraphicImage, pGraphicEngine->normalGraphicImage, pGraphicEngine->swapchainImageCount, viewport, scissor, pGraphicEngine->globalUniformBuffer, pGraphicEngine->lightsUniformBuffer);
 }
 
 void UpdateGraphicEngine(GraphicEngine *pGraphicEngine, bool *pCanUpdate)
@@ -952,6 +971,7 @@ void UpdateGraphicEngine(GraphicEngine *pGraphicEngine, bool *pCanUpdate)
         if (VK_SUCCESS == result || VK_SUBOPTIMAL_KHR == result)
         {
             UpdateGlobalUniformBuffer(pGraphicEngine);
+            UpdateLightsUniformBuffer(pGraphicEngine);
             RecordCommandBuffer(pGraphicEngine);
             SubmitCommandBuffer(pGraphicEngine);
             Present(pGraphicEngine);
@@ -980,7 +1000,7 @@ void EndGraphicEngine(GraphicEngine *pGraphicEngine)
 
     DestroyDeferredRenderPass(&pGraphicEngine->deferredRenderPass, pGraphicEngine->vkDevice);
     DestroyGraphicImages(pGraphicEngine);
-    DestroyGlobalUniformBuffers(pGraphicEngine);
+    DestroyUniformBuffers(pGraphicEngine);
     DestroyVkCommandBuffers(pGraphicEngine);
     DestroyCommandPools(pGraphicEngine);
     DestroySignals(pGraphicEngine);
