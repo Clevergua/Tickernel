@@ -380,7 +380,7 @@ void CreateOpaqueLightingSubpass(Subpass *pOpaqueLightingSubpass, const char *sh
     pOpaqueLightingSubpass->vkDescriptorPoolSizes = TickernelMalloc(sizeof(VkDescriptorPoolSize) * pOpaqueLightingSubpass->vkDescriptorPoolSizeCount);
     pOpaqueLightingSubpass->vkDescriptorPoolSizes[0] = (VkDescriptorPoolSize){
         .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-        .descriptorCount = 1,
+        .descriptorCount = 2,
     };
     pOpaqueLightingSubpass->vkDescriptorPoolSizes[1] = (VkDescriptorPoolSize){
         .type = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT,
