@@ -161,6 +161,10 @@ function gameMath.PerlinNoise3D(seed, x, y, z)
     return SmoothLerp(y0, y1, sz);
 end
 
+function gameMath.RandomColor(seed)
+    
+end
+
 
 -- local ns = 0.0099
 -- local min = 0

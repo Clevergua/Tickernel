@@ -119,144 +119,158 @@ function gameState.Start()
         gameState.DrawModel(instances, model)
     end
 
-    -- local length = 64
-    -- local width = 64
+    local length = 64
+    local width = 64
 
-    -- print("Generating world..")
-    -- local temperatureMap = {}
-    -- local humidityMap = {}
+    print("Generating world..")
+    local temperatureMap = {}
+    local humidityMap = {}
 
-    -- for x = 1, length do
-    --     temperatureMap[x] = {}
-    --     humidityMap[x] = {}
-    --     for y = 1, width do
-    --         temperatureMap[x][y] = GetTemperature(x, y)
-    --         humidityMap[x][y] = GetHumidity(x, y)
-    --     end
-    -- end
+    for x = 1, length do
+        temperatureMap[x] = {}
+        humidityMap[x] = {}
+        for y = 1, width do
+            temperatureMap[x][y] = GetTemperature(x, y)
+            humidityMap[x][y] = GetHumidity(x, y)
+        end
+    end
 
-    -- local pixelMap = {}
-    -- local height = 8
-    -- for x = 1, length * pixel do
-    --     pixelMap[x] = {}
-    --     for y = 1, width * pixel do
-    --         pixelMap[x][y] = {}
-    --         for z = 1, height do
-    --             pixelMap[x][y][z] = block.none
-    --         end
-    --     end
-    -- end
-    -- print("Generating dirt..")
-    -- for x = 1, length * pixel do
-    --     for y = 1, width * pixel do
-    --         for z = 1, 4 do
-    --             pixelMap[x][y][z] = block.dirt
-    --         end
-    --     end
-    -- end
-    -- print("Generating surface..")
-    -- for x = 1, length do
-    --     for y = 1, width do
-    --         local centerTemperature = temperatureMap[x][y]
-    --         local centerHumidity = humidityMap[x][y]
-    --         -- Target values
-    --         local targetTemperature, targetHumidity
-    --         if centerTemperature < -temperatureStepValue then
-    --             targetTemperature = -1
-    --         elseif centerTemperature < temperatureStepValue then
-    --             targetTemperature = 0
-    --         else
-    --             targetTemperature = 1
-    --         end
+    local pixelMap = {}
+    local height = 8
+    for x = 1, length * pixel do
+        pixelMap[x] = {}
+        for y = 1, width * pixel do
+            pixelMap[x][y] = {}
+            for z = 1, height do
+                pixelMap[x][y][z] = block.none
+            end
+        end
+    end
+    print("Generating dirt..")
+    for x = 1, length * pixel do
+        for y = 1, width * pixel do
+            for z = 1, 4 do
+                pixelMap[x][y][z] = block.dirt
+            end
+        end
+    end
+    print("Generating surface..")
+    for x = 1, length do
+        for y = 1, width do
+            local centerTemperature = temperatureMap[x][y]
+            local centerHumidity = humidityMap[x][y]
+            -- Target values
+            local targetTemperature, targetHumidity
+            if centerTemperature < -temperatureStepValue then
+                targetTemperature = -1
+            elseif centerTemperature < temperatureStepValue then
+                targetTemperature = 0
+            else
+                targetTemperature = 1
+            end
 
-    --         if centerHumidity < -humidityStepValue then
-    --             targetHumidity = -1
-    --         elseif centerHumidity < humidityStepValue then
-    --             targetHumidity = 0
-    --         else
-    --             targetHumidity = 1
-    --         end
-    --         for px = 1, pixel do
-    --             for py = 1, pixel do
-    --                 local dx = (px - pixel / 2 - 0.5) / pixel * 2
-    --                 local dy = (py - pixel / 2 - 0.5) / pixel * 2
-    --                 local temperature = GetTemperature((x + dx), (y + dy))
-    --                 local humidity = GetHumidity((x + dx), (y + dy))
-    --                 local t = 0.5 * (math.abs(dx) + math.abs(dy))
+            if centerHumidity < -humidityStepValue then
+                targetHumidity = -1
+            elseif centerHumidity < humidityStepValue then
+                targetHumidity = 0
+            else
+                targetHumidity = 1
+            end
+            for px = 1, pixel do
+                for py = 1, pixel do
+                    local dx = (px - pixel / 2 - 0.5) / pixel * 2
+                    local dy = (py - pixel / 2 - 0.5) / pixel * 2
+                    local temperature = GetTemperature((x + dx), (y + dy))
+                    local humidity = GetHumidity((x + dx), (y + dy))
+                    local t = 0.5 * (math.abs(dx) + math.abs(dy))
 
-    --                 temperature = gameMath.Lerp(targetTemperature, temperature, t)
-    --                 humidity = gameMath.Lerp(targetHumidity, humidity, t)
+                    temperature = gameMath.Lerp(targetTemperature, temperature, t)
+                    humidity = gameMath.Lerp(targetHumidity, humidity, t)
 
-    --                 local holeNoiseScale = 0.37
-    --                 local holeNoise = gameMath.PerlinNoise2D(2134, holeNoiseScale * ((x - 1) * pixel + px),
-    --                     holeNoiseScale * ((y - 1) * pixel + py));
-    --                 holeNoise = holeNoise + t
-    --                 if holeNoise < 0.9 then
-    --                     local b = GetBlock(temperature, humidity)
-    --                     if b == block.water or b == block.ice or b == block.lava or b == block.swamp then
-    --                         pixelMap[(x - 1) * pixel + px][(y - 1) * pixel + py][2] = block.none
-    --                         pixelMap[(x - 1) * pixel + px][(y - 1) * pixel + py][3] = block.none
-    --                         pixelMap[(x - 1) * pixel + px][(y - 1) * pixel + py][4] = block.none
-    --                     else
-    --                         pixelMap[(x - 1) * pixel + px][(y - 1) * pixel + py][5] = b
-    --                         if holeNoise < 0.5 then
-    --                             pixelMap[(x - 1) * pixel + px][(y - 1) * pixel + py][6] = b
-    --                         end
-    --                     end
-    --                 else
-    --                     -- skip
-    --                 end
-    --             end
-    --         end
-    --     end
-    -- end
-    -- print("Generating vertices..")
-    -- local blockToVertices = {}
-    -- local blockToColors = {}
-    -- local blockToNormals = {}
-    -- for x = 1, length * pixel do
-    --     for y = 1, width * pixel do
-    --         for z = 1, height do
-    --             if pixelMap[x][y][z] ~= block.none then
-    --                 if blockToVertices[pixelMap[x][y][z]] == nil then
-    --                     blockToVertices[pixelMap[x][y][z]] = {}
-    --                     blockToColors[pixelMap[x][y][z]] = {}
-    --                     blockToNormals[pixelMap[x][y][z]] = {}
-    --                 end
-    --                 table.insert(blockToVertices[pixelMap[x][y][z]], { x, y, z - 4 })
-    --                 table.insert(blockToColors[pixelMap[x][y][z]], blockToColor[pixelMap[x][y][z]])
-    --                 table.insert(blockToNormals[pixelMap[x][y][z]], { 0, 0, 0 })
-    --             end
-    --         end
-    --     end
-    -- end
-    -- print("Drawing models..")
-    -- for i = 1, 10 do
-    --     if blockToVertices[i] ~= nil then
-    --         gameState.SetNormals(blockToVertices[i], blockToNormals[i])
-    --         local index = gameState.AddModel(blockToVertices[i], blockToColors[i], blockToNormals[i])
-    --         local modelMatrix = {
-    --             {
-    --                 { scale, 0,     0,     0 },
-    --                 { 0,     scale, 0,     0 },
-    --                 { 0,     0,     scale, -4 * scale },
-    --                 { 0,     0,     0,     1 },
-    --             },
-    --         }
-    --         gameState.UpdateInstances(index, modelMatrix)
-    --     end
-    -- end
+                    local holeNoiseScale = 0.37
+                    local holeNoise = gameMath.PerlinNoise2D(2134, holeNoiseScale * ((x - 1) * pixel + px),
+                        holeNoiseScale * ((y - 1) * pixel + py));
+                    holeNoise = holeNoise + t
+                    if holeNoise < 0.9 then
+                        local b = GetBlock(temperature, humidity)
+                        if b == block.water or b == block.ice or b == block.lava or b == block.swamp then
+                            pixelMap[(x - 1) * pixel + px][(y - 1) * pixel + py][2] = block.none
+                            pixelMap[(x - 1) * pixel + px][(y - 1) * pixel + py][3] = block.none
+                            pixelMap[(x - 1) * pixel + px][(y - 1) * pixel + py][4] = block.none
+                        else
+                            pixelMap[(x - 1) * pixel + px][(y - 1) * pixel + py][5] = b
+                            if holeNoise < 0.5 then
+                                pixelMap[(x - 1) * pixel + px][(y - 1) * pixel + py][6] = b
+                            end
+                        end
+                    else
+                        -- skip
+                    end
+                end
+            end
+        end
+    end
+    print("Generating vertices..")
+    local blockToVertices = {}
+    local blockToColors = {}
+    local blockToNormals = {}
+    for x = 1, length * pixel do
+        for y = 1, width * pixel do
+            for z = 1, height do
+                if pixelMap[x][y][z] ~= block.none then
+                    if blockToVertices[pixelMap[x][y][z]] == nil then
+                        blockToVertices[pixelMap[x][y][z]] = {}
+                        blockToColors[pixelMap[x][y][z]] = {}
+                        blockToNormals[pixelMap[x][y][z]] = {}
+                    end
+                    table.insert(blockToVertices[pixelMap[x][y][z]], { x, y, z - 4 })
+                    table.insert(blockToColors[pixelMap[x][y][z]], blockToColor[pixelMap[x][y][z]])
+                    table.insert(blockToNormals[pixelMap[x][y][z]], { 0, 0, 0 })
+                end
+            end
+        end
+    end
+    print("Drawing models..")
+    for i = 1, 10 do
+        if blockToVertices[i] ~= nil then
+            gameState.SetNormals(blockToVertices[i], blockToNormals[i])
+            local index = gameState.AddModel(blockToVertices[i], blockToColors[i], blockToNormals[i])
+            local modelMatrix = {
+                {
+                    { scale, 0,     0,     0 },
+                    { 0,     scale, 0,     0 },
+                    { 0,     0,     scale, -4 * scale },
+                    { 0,     0,     0,     1 },
+                },
+            }
+            gameState.UpdateInstances(index, modelMatrix)
+        end
+    end
     local directionalLight = {
-        color = { 1, 1, 1, 1 },
+        color = { 1, 1, 1, 0.4 },
         direction = { 1, -1, -1 },
     }
     local pointLights = {
         {
-            color = { 1, 0, 0, 1 },
+            color = { 1, 0, 0, 5 },
             position = { 25, 36, 1 },
-            range = 15,
-        }
+            range = 3,
+        },
     }
+    local index = 1;
+    for y = 1, length do
+        for x = 1, width do
+            local r = math.abs(gameMath.LCGRandom(gameMath.CantorPair(x, y)) % 100)
+            if r < 5 then
+                pointLights[index] = {
+                    color = { 0.8, 0.5, 0, 1.5 },
+                    position = { x, y, 1 },
+                    range = 2.5,
+                }
+                index = index + 1;
+            end
+        end
+    end
     gameState.UpdateLightsUniformBuffer(directionalLight, pointLights)
 end
 
@@ -270,7 +284,7 @@ local t = 0
 
 function gameState.Update()
     print("Lua Update")
-    t = t + 0.005
+    t = t + 0.0005
     local distance = gameMath.PingPong(0, 20, t)
     cameraPosition[1] = 15 + distance
     targetPosition[1] = 15 + distance
