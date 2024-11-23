@@ -272,12 +272,6 @@ function gameState.Start()
         end
     end
     gameState.UpdateLightsUniformBuffer(directionalLight, pointLights)
-
-    -- Perform a full garbage-collection cycle
-    collectgarbage("collect")
-    -- Get the current memory usage in kilobytes
-    local memoryUsage = collectgarbage("count")
-    print("Memory usage (KB):", memoryUsage)
 end
 
 function gameState.End()
@@ -290,12 +284,18 @@ local t = 0
 
 function gameState.Update()
     print("Lua Update")
+    if gameState.frameCount == 0 then
+        collectgarbage("collect")
+    end
     t = t + 0.0005
     local distance = gameMath.PingPong(0, 20, t)
     cameraPosition[1] = 15 + distance
     targetPosition[1] = 15 + distance
-
+    -- collectgarbage("collect")
+    local memoryUsage = collectgarbage("count")
+    print("Current memory usage: ", memoryUsage, "KB")
     gameState.UpdateGlobalUniformBuffer(cameraPosition, targetPosition)
+    gameState.frameCount = gameState.frameCount + 1
 end
 
 _G.gameState = gameState

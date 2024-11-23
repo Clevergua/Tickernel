@@ -4,6 +4,7 @@ local gameState = {
     pGraphicEngine = nil,
     assetsPath = "",
     pathSeparator = "",
+    frameCount = 0,
 }
 
 local integer = 0
