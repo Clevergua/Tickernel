@@ -272,6 +272,12 @@ function gameState.Start()
         end
     end
     gameState.UpdateLightsUniformBuffer(directionalLight, pointLights)
+
+    -- Perform a full garbage-collection cycle
+    collectgarbage("collect")
+    -- Get the current memory usage in kilobytes
+    local memoryUsage = collectgarbage("count")
+    print("Memory usage (KB):", memoryUsage)
 end
 
 function gameState.End()

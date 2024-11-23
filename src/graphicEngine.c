@@ -913,6 +913,11 @@ static void SetUpGraphicEngine(GraphicEngine *pGraphicEngine)
     strcpy(pGraphicEngine->deferredRenderPass.shadersPath, pGraphicEngine->assetsPath);
     TickernelCombinePaths(pGraphicEngine->deferredRenderPass.shadersPath, FILENAME_MAX, "shaders");
 }
+static void TearDownGraphicEngine(GraphicEngine *pGraphicEngine)
+{
+    TickernelFree(pGraphicEngine->deferredRenderPass.shadersPath);
+    TickernelDestroyWindow(pGraphicEngine->pTickernelWindow);
+}
 
 void StartGraphicEngine(GraphicEngine *pGraphicEngine)
 {
@@ -1010,5 +1015,5 @@ void EndGraphicEngine(GraphicEngine *pGraphicEngine)
     // Destroy vkPhysicsDevice
     DestroyVKSurface(pGraphicEngine);
     DestroyVKInstance(pGraphicEngine);
-    TickernelDestroyWindow(pGraphicEngine->pTickernelWindow);
+    TearDownGraphicEngine(pGraphicEngine);
 }
