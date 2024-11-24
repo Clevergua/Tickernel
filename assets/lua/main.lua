@@ -33,7 +33,7 @@ local humidityStepValue = 0.2
 local temperatureStepValue = 0.2
 local temperatureSeed = 3213
 local humiditySeed = 56234
-local temperatureNoiseScale = 0.0237
+local temperatureNoiseScale = 0.047
 local humidityNoiseScale = 0.047
 
 local function GetTemperature(x, y)
@@ -87,9 +87,12 @@ local function GetBlock(temperature, humidity)
 end
 function gameState.Start()
     print("Lua Start")
-    local pixel = 16
 
-    local scale = 1 / 16;
+    local length = 32
+    local width = 32
+
+    local pixel = 16
+    local scale = 1 / pixel;
     local modelsPath = gameState.assetsPath ..
         gameState.pathSeparator .. "models" .. gameState.pathSeparator
     print("Loading models")
@@ -107,8 +110,8 @@ function gameState.Start()
         local count = 10
         local instances = {}
         for i = 1, count do
-            local x = gameMath.LCGRandom(index * 525234532 + i * 42342345) % 50
-            local y = gameMath.LCGRandom(index * 431513511 + i * 24141312) % 50
+            local x = gameMath.LCGRandom((index + 13251) * 525234532 + i * 42342345) % length
+            local y = gameMath.LCGRandom((index + 2317831) * 431513511 + i * 24141312) % width
             instances[i] = {
                 { scale, 0,     0,     x },
                 { 0,     scale, 0,     y },
@@ -119,8 +122,6 @@ function gameState.Start()
         gameState.DrawModel(instances, model)
     end
 
-    local length = 64
-    local width = 64
 
     print("Generating world..")
     local temperatureMap = {}
@@ -154,6 +155,8 @@ function gameState.Start()
             end
         end
     end
+
+    local pointLights = {}
     print("Generating surface..")
     for x = 1, length do
         for y = 1, width do
@@ -176,6 +179,15 @@ function gameState.Start()
             else
                 targetHumidity = 1
             end
+
+            if GetBlock(centerTemperature, centerHumidity) == block.lava then
+                table.insert(pointLights, {
+                    color = { 0.8, 0.3, 0, 1 },
+                    position = { x, y, 0.125 },
+                    range = 2,
+                })
+            end
+
             for px = 1, pixel do
                 for py = 1, pixel do
                     local dx = (px - pixel / 2 - 0.5) / pixel * 2
@@ -187,19 +199,19 @@ function gameState.Start()
                     temperature = gameMath.Lerp(targetTemperature, temperature, t)
                     humidity = gameMath.Lerp(targetHumidity, humidity, t)
 
-                    local holeNoiseScale = 0.37
+                    local holeNoiseScale = 0.47
                     local holeNoise = gameMath.PerlinNoise2D(2134, holeNoiseScale * ((x - 1) * pixel + px),
                         holeNoiseScale * ((y - 1) * pixel + py));
                     holeNoise = holeNoise + t
-                    if holeNoise < 0.9 then
+                    if holeNoise < 1.2 then
                         local b = GetBlock(temperature, humidity)
                         if b == block.water or b == block.ice or b == block.lava or b == block.swamp then
-                            pixelMap[(x - 1) * pixel + px][(y - 1) * pixel + py][2] = block.none
-                            pixelMap[(x - 1) * pixel + px][(y - 1) * pixel + py][3] = block.none
-                            pixelMap[(x - 1) * pixel + px][(y - 1) * pixel + py][4] = block.none
+                            pixelMap[(x - 1) * pixel + px][(y - 1) * pixel + py][2] = b
+                            pixelMap[(x - 1) * pixel + px][(y - 1) * pixel + py][3] = b
+                            pixelMap[(x - 1) * pixel + px][(y - 1) * pixel + py][4] = b
                         else
                             pixelMap[(x - 1) * pixel + px][(y - 1) * pixel + py][5] = b
-                            if holeNoise < 0.5 then
+                            if holeNoise < 0.2 then
                                 pixelMap[(x - 1) * pixel + px][(y - 1) * pixel + py][6] = b
                             end
                         end
@@ -247,30 +259,9 @@ function gameState.Start()
         end
     end
     local directionalLight = {
-        color = { 1, 1, 1, 0.4 },
+        color = { 1, 1, 1, 1 },
         direction = { 1, -1, -1 },
     }
-    local pointLights = {
-        {
-            color = { 1, 0, 0, 5 },
-            position = { 25, 36, 1 },
-            range = 3,
-        },
-    }
-    local index = 1;
-    for y = 1, length do
-        for x = 1, width do
-            local r = math.abs(gameMath.LCGRandom(gameMath.CantorPair(x, y)) % 100)
-            if r < 5 then
-                pointLights[index] = {
-                    color = { 0.8, 0.5, 0, 1.5 },
-                    position = { x, y, 1 },
-                    range = 2.5,
-                }
-                index = index + 1;
-            end
-        end
-    end
     gameState.UpdateLightsUniformBuffer(directionalLight, pointLights)
 end
 
@@ -278,8 +269,8 @@ function gameState.End()
     print("Lua Start")
 end
 
-local cameraPosition = { 18, 32, 20 }
-local targetPosition = { 18, 40, 0 }
+local cameraPosition = { 0, 12, 15 }
+local targetPosition = { 0, 16, 0 }
 local t = 0
 
 function gameState.Update()
@@ -287,10 +278,10 @@ function gameState.Update()
     if gameState.frameCount == 0 then
         collectgarbage("collect")
     end
-    t = t + 0.0005
-    local distance = gameMath.PingPong(0, 20, t)
-    cameraPosition[1] = 15 + distance
-    targetPosition[1] = 15 + distance
+    t = t + 0.001
+    local distance = gameMath.PingPong(12, 20, t)
+    cameraPosition[1] = distance
+    targetPosition[1] = distance
     -- collectgarbage("collect")
     local memoryUsage = collectgarbage("count")
     print("Current memory usage: ", memoryUsage, "KB")
