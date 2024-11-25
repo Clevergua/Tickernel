@@ -210,7 +210,7 @@ function gameState.Start()
                             heightMap[4] = block.none
                         else
                             heightMap[5] = b
-                            if holeNoise < 0.3 then
+                            if holeNoise < 0.4 then
                                 heightMap[6] = b
                             end
                         end
