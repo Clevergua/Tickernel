@@ -31,10 +31,10 @@ local block = {
 
 local humidityStepValue = 0.2
 local temperatureStepValue = 0.2
-local temperatureSeed = 3213
-local humiditySeed = 56234
-local temperatureNoiseScale = 0.047
-local humidityNoiseScale = 0.047
+local temperatureSeed = 4214
+local humiditySeed = 7645
+local temperatureNoiseScale = 0.057
+local humidityNoiseScale = 0.057
 
 local function GetTemperature(x, y)
     local result = 0
@@ -107,7 +107,7 @@ function gameState.Start()
         gameState.LoadModel(modelsPath .. "TallBuilding03_0.tknvox"),
     }
     for index, model in ipairs(models) do
-        local count = 10
+        local count = 4
         local instances = {}
         for i = 1, count do
             local x = math.abs(gameMath.LCGRandom((index + 13251) * 525234532 + i * 42342345)) % length
@@ -190,29 +190,28 @@ function gameState.Start()
 
             for px = 1, pixel do
                 for py = 1, pixel do
-                    local dx = (px - pixel / 2 - 0.5) / pixel * 2
-                    local dy = (py - pixel / 2 - 0.5) / pixel * 2
+                    local dx = (px - pixel / 2 - 0.5) / pixel
+                    local dy = (py - pixel / 2 - 0.5) / pixel
                     local temperature = GetTemperature((x + dx), (y + dy))
                     local humidity = GetHumidity((x + dx), (y + dy))
-                    local t = 0.5 * (math.abs(dx) + math.abs(dy))
-
+                    local t = math.max(math.abs(dx), math.abs(dy)) * 2
                     temperature = gameMath.Lerp(targetTemperature, temperature, t)
                     humidity = gameMath.Lerp(targetHumidity, humidity, t)
-
-                    local holeNoiseScale = 0.37
+                    local holeNoiseScale = 0.27
                     local holeNoise = gameMath.PerlinNoise2D(2134, holeNoiseScale * ((x - 1) * pixel + px),
                         holeNoiseScale * ((y - 1) * pixel + py));
                     holeNoise = holeNoise + t
-                    if holeNoise < 0.95 then
+                    if holeNoise < 1.25 then
                         local b = GetBlock(temperature, humidity)
+                        local heightMap = pixelMap[(x - 1) * pixel + px][(y - 1) * pixel + py]
                         if b == block.water or b == block.ice or b == block.lava or b == block.swamp then
-                            pixelMap[(x - 1) * pixel + px][(y - 1) * pixel + py][2] = b
-                            pixelMap[(x - 1) * pixel + px][(y - 1) * pixel + py][3] = b
-                            pixelMap[(x - 1) * pixel + px][(y - 1) * pixel + py][4] = b
+                            heightMap[2] = block.none
+                            heightMap[3] = block.none
+                            heightMap[4] = block.none
                         else
-                            pixelMap[(x - 1) * pixel + px][(y - 1) * pixel + py][5] = b
-                            if holeNoise < 0.15 then
-                                pixelMap[(x - 1) * pixel + px][(y - 1) * pixel + py][6] = b
+                            heightMap[5] = b
+                            if holeNoise < 0.3 then
+                                heightMap[6] = b
                             end
                         end
                     else
@@ -269,7 +268,7 @@ function gameState.End()
     print("Lua Start")
 end
 
-local cameraPosition = { 0, 12, 15 }
+local cameraPosition = { 0, 12, 18 }
 local targetPosition = { 0, 16, 0 }
 local t = 0
 
@@ -279,7 +278,7 @@ function gameState.Update()
         collectgarbage("collect")
     end
     t = t + 0.001
-    local distance = gameMath.PingPong(12, 20, t)
+    local distance = gameMath.PingPong(15, 20, t)
     cameraPosition[1] = distance
     targetPosition[1] = distance
     -- collectgarbage("collect")
