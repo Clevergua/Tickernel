@@ -221,6 +221,11 @@ static int UpdateLightsUniformBuffer(lua_State *pLuaState)
     lua_len(pLuaState, -1);
     uint32_t pointLightCount = luaL_checkinteger(pLuaState, -1);
     lightsUniformBuffer.pointLightCount = pointLightCount;
+    if (pointLightCount > MAX_POINT_LIGHT_COUNT)
+    {
+        TickernelError("Point light count: %d out of range!\n", pointLightCount);
+    }
+
     lua_pop(pLuaState, 1);
     for (uint32_t i = 0; i < pointLightCount; i++)
     {

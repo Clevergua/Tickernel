@@ -6,12 +6,12 @@ local game = require("game")
 local blockToColor = {
     [1] = { 210, 150, 95, 255 },
     [2] = { 221, 160, 221, 255 },
-    [3] = { 180, 200, 120, 255 },
+    [3] = { 170, 225, 115, 255 },
     [4] = { 86, 98, 185, 255 },
     [5] = { 225, 225, 225, 255 },
     [6] = { 190, 190, 245, 255 },
-    [7] = { 254, 200, 150, 255 },
-    [8] = { 254, 43, 67, 255 },
+    [7] = { 225, 200, 150, 255 },
+    [8] = { 225, 43, 67, 255 },
     [9] = { 51, 41, 41, 255 },
     [10] = { 254, 43, 67, 255 },
 }
@@ -110,8 +110,8 @@ function gameState.Start()
         local count = 10
         local instances = {}
         for i = 1, count do
-            local x = gameMath.LCGRandom((index + 13251) * 525234532 + i * 42342345) % length
-            local y = gameMath.LCGRandom((index + 2317831) * 431513511 + i * 24141312) % width
+            local x = math.abs(gameMath.LCGRandom((index + 13251) * 525234532 + i * 42342345)) % length
+            local y = math.abs(gameMath.LCGRandom((x - 2317831) * 431513511 + index * 24141312 - i * 2131204)) % width
             instances[i] = {
                 { scale, 0,     0,     x },
                 { 0,     scale, 0,     y },
@@ -182,7 +182,7 @@ function gameState.Start()
 
             if GetBlock(centerTemperature, centerHumidity) == block.lava then
                 table.insert(pointLights, {
-                    color = { 0.8, 0.3, 0, 1 },
+                    color = { 0.7, 0.4, 0, 1 },
                     position = { x, y, 0.125 },
                     range = 2,
                 })
@@ -199,11 +199,11 @@ function gameState.Start()
                     temperature = gameMath.Lerp(targetTemperature, temperature, t)
                     humidity = gameMath.Lerp(targetHumidity, humidity, t)
 
-                    local holeNoiseScale = 0.47
+                    local holeNoiseScale = 0.37
                     local holeNoise = gameMath.PerlinNoise2D(2134, holeNoiseScale * ((x - 1) * pixel + px),
                         holeNoiseScale * ((y - 1) * pixel + py));
                     holeNoise = holeNoise + t
-                    if holeNoise < 1.2 then
+                    if holeNoise < 0.95 then
                         local b = GetBlock(temperature, humidity)
                         if b == block.water or b == block.ice or b == block.lava or b == block.swamp then
                             pixelMap[(x - 1) * pixel + px][(y - 1) * pixel + py][2] = b
@@ -211,7 +211,7 @@ function gameState.Start()
                             pixelMap[(x - 1) * pixel + px][(y - 1) * pixel + py][4] = b
                         else
                             pixelMap[(x - 1) * pixel + px][(y - 1) * pixel + py][5] = b
-                            if holeNoise < 0.2 then
+                            if holeNoise < 0.15 then
                                 pixelMap[(x - 1) * pixel + px][(y - 1) * pixel + py][6] = b
                             end
                         end
@@ -259,7 +259,7 @@ function gameState.Start()
         end
     end
     local directionalLight = {
-        color = { 1, 1, 1, 1 },
+        color = { 1, 1, 1, 0.618 },
         direction = { 1, -1, -1 },
     }
     gameState.UpdateLightsUniformBuffer(directionalLight, pointLights)
