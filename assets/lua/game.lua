@@ -1,13 +1,55 @@
 local gameMath = require("gameMath")
 
-local game = {}
+local game = {
+    terrain = {
+        snow = 1,
+        ice = 2,
+        sand = 3,
+        grass = 4,
+        water = 5,
+        lava = 6,
+        andosols = 7,
+    },
+    seed = 0,
+    temperatureSeed = 0,
+    humiditySeed = 0,
+    length = 0,
+    width = 0,
+    terrainMap = nil,
+    blockMap = nil,
+}
 
--- local humidityStepValue = 0.33
--- local temperatureStepValue = 0.33
+local humidityStepValue = 0.2
+local temperatureStepValue = 0.2
 local temperatureNoiseScale = 0.097
 local humidityNoiseScale = 0.137
 
-function game.GetHumidity(gameData, x, y)
+
+function game.GetTerrain(temperature, humidity)
+    if temperature < -temperatureStepValue then
+        if humidity < humidityStepValue then
+            return game.terrain.snow
+        else
+            return game.terrain.ice
+        end
+    elseif temperature < temperatureStepValue then
+        if humidity < -humidityStepValue then
+            return game.terrain.sand
+        elseif humidity < humidityStepValue then
+            return game.terrain.grass
+        else
+            return game.terrain.water
+        end
+    else
+        if humidity < -humidityStepValue then
+            return game.terrain.lava
+        else
+            return game.terrain.andosols
+        end
+    end
+end
+
+function game.GetHumidity(x, y)
     local level = 2
     local humidity = 0
     local seed = game.humiditySeed;
@@ -16,9 +58,10 @@ function game.GetHumidity(gameData, x, y)
         humidity = humidity + gameMath.PerlinNoise2D(seed, x * humidityNoiseScale * m, y * humidityNoiseScale * m) / m
         seed = gameMath.LCGRandom(seed)
     end
+    return humidity
 end
 
-function game.GetTemperature(gameData, x, y)
+function game.GetTemperature(x, y)
     local level = 2
     local temperature = 0
     local seed = game.temperatureSeed;
@@ -28,36 +71,26 @@ function game.GetTemperature(gameData, x, y)
             gameMath.PerlinNoise2D(seed, x * temperatureNoiseScale * m, y * temperatureNoiseScale * m) / m
         seed = gameMath.LCGRandom(seed)
     end
-    temperature = temperature + (x - (gameData.length - 1) / 2) / (gameData.length - 1)
-
-
-    return temperature, humidity
+    temperature = temperature + (x - (game.length - 1) / 2) / (game.length - 1)
+    return temperature
 end
 
-function game.CreateGame(seed, length)
-    local gameData = {
-        seed = seed,
-        temperatureSeed = seed + 1,
-        humiditySeed = seed + 2,
-        length = length,
-        width = 64,
-        terrainMap = nil,
-        blockMap = nil,
-    }
-    for x = 1, gameData.length do
-        for y = 1, gameData.width do
-
+function game.GenerateWorld(seed, length, width)
+    game.seed = seed
+    game.temperatureSeed = seed + 1
+    game.humiditySeed = seed + 2
+    game.length = length
+    game.width = width
+    game.terrainMap = {}
+    game.blockMap = {}
+    for x = 1, game.length do
+        game.terrainMap[x] = {}
+        for y = 1, game.width do
+            local temperature = game.GetTemperature(x, y)
+            local humidity = game.GetHumidity(x, y)
+            game.terrainMap[x][y] = game.GetTerrain(temperature, humidity)
         end
     end
-    return gameData
-end
-
-function game.DestroyGame(game)
-    game = nil
-end
-
-function game.GenerateWorld(length, width, seed)
-
 end
 
 return game
