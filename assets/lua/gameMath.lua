@@ -161,16 +161,20 @@ function gameMath.PerlinNoise3D(seed, x, y, z)
     return SmoothLerp(y0, y1, sz);
 end
 
-function gameMath.RandomColor(seed)
-    
-end
-
-
 -- local ns = 0.0099
+
+-- local intervalCount = 10
+-- local intervals = {}
+-- for i = 1, intervalCount do
+--     intervals[i] = 0
+-- end
+
 -- local min = 0
 -- local max = 0
--- for x = 1, 1000000 do
---     for y = 1, 1000000 do
+-- local totalCount = 0
+
+-- for x = 1, 100 do
+--     for y = 1, 100000 do
 --         local n = gameMath.PerlinNoise2D(43214, x * ns, y * ns)
 --         if n < min then
 --             min = n
@@ -178,9 +182,25 @@ end
 --         if n > max then
 --             max = n
 --         end
+--         if n >= -1 and n <= 1 then
+--             local index = math.floor(((n + 1) / 2) * intervalCount) + 1
+--             if index < 1 then index = 1 end
+--             if index > intervalCount then index = intervalCount end
+--             intervals[index] = intervals[index] + 1
+--             totalCount = totalCount + 1
+--         end
+--     end
+--     for i = 1, intervalCount do
+--         local rangeStart = -1 + (i - 1) * (2 / intervalCount)
+--         local rangeEnd = rangeStart + (2 / intervalCount)
+--         local percentage = (intervals[i] / totalCount) * 100
+--         print(string.format("Interval %d (%.2f to %.2f): %.2f%%", i, rangeStart, rangeEnd, percentage))
 --     end
 -- end
--- print(min)
--- print(max)
+
+-- print("Min value: ", min)
+-- print("Max value: ", max)
+
+
 
 return gameMath

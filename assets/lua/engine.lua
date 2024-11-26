@@ -1,6 +1,6 @@
 table.empty = {}
 
-local gameState = {
+local engine = {
     pGraphicEngine = nil,
     assetsPath = "",
     pathSeparator = "",
@@ -12,31 +12,31 @@ local integer = 0
 ---@param vertices table
 ---@param colors table
 ---@return integer
-function gameState.AddModel(vertices, colors, normals)
+function engine.AddModel(vertices, colors, normals)
     return integer
 end
 
 ---Add model to opaqueGeometry subpass
 ---@param index integer
-function gameState.RemoveModel(index)
+function engine.RemoveModel(index)
 end
 
 ---Update model unifrom buffer
 ---@param modelIndex integer
 ---@param instances table
-function gameState.UpdateInstances(modelIndex, instances)
+function engine.UpdateInstances(modelIndex, instances)
 end
 
 ---UpdateGlobalUniformBuffer
 ---@param cameraPosition table
 ---@param targetPosition table
-function gameState.UpdateGlobalUniformBuffer(cameraPosition, targetPosition)
+function engine.UpdateGlobalUniformBuffer(cameraPosition, targetPosition)
 end
 
 ---UpdateGlobalUniformBuffer
 ---@param directionalLight table
 ---@param pointLights table
-function gameState.UpdateLightsUniformBuffer(directionalLight, pointLights)
+function engine.UpdateLightsUniformBuffer(directionalLight, pointLights)
 end
 
 local model = {
@@ -48,11 +48,11 @@ local model = {
 }
 ---Deserialize .ply model
 ---@param path string
-function gameState.LoadModel(path)
+function engine.LoadModel(path)
     return model
 end
 
-function gameState.SetNormals(vertices, normals)
+function engine.SetNormals(vertices, normals)
     local indexMap = {}
     local vertexCount = #vertices
     for i = 1, vertexCount do
@@ -290,7 +290,7 @@ function gameState.SetNormals(vertices, normals)
     end
 end
 
-function gameState.DrawModel(instances, model)
+function engine.DrawModel(instances, model)
     local vertices = {}
     local colors = {}
     local normals = {}
@@ -319,10 +319,10 @@ function gameState.DrawModel(instances, model)
             end
         end
     end
-    gameState.SetNormals(vertices, normals)
-    local modelIndex = gameState.AddModel(vertices, colors, normals)
-    gameState.UpdateInstances(modelIndex, instances)
+    engine.SetNormals(vertices, normals)
+    local modelIndex = engine.AddModel(vertices, colors, normals)
+    engine.UpdateInstances(modelIndex, instances)
     return modelIndex
 end
 
-return gameState
+return engine

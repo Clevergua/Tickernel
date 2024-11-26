@@ -85,8 +85,8 @@ static int AddModel(lua_State *pLuaState)
 
         uint32_t outputIndex;
 
-        int gameStateTpye = lua_getglobal(pLuaState, "gameState");
-        AssertLuaType(gameStateTpye, LUA_TTABLE);
+        int engineTpye = lua_getglobal(pLuaState, "engine");
+        AssertLuaType(engineTpye, LUA_TTABLE);
         int pGraphicEngineTpye = lua_getfield(pLuaState, -1, "pGraphicEngine");
         AssertLuaType(pGraphicEngineTpye, LUA_TLIGHTUSERDATA);
         GraphicEngine *pGraphicEngine = lua_touserdata(pLuaState, -1);
@@ -114,8 +114,8 @@ static int RemoveModel(lua_State *pLuaState)
     uint32_t index = luaL_checkinteger(pLuaState, -1);
     lua_pop(pLuaState, 1);
 
-    int gameStateTpye = lua_getglobal(pLuaState, "gameState");
-    AssertLuaType(gameStateTpye, LUA_TTABLE);
+    int engineTpye = lua_getglobal(pLuaState, "engine");
+    AssertLuaType(engineTpye, LUA_TTABLE);
     int pGraphicEngineTpye = lua_getfield(pLuaState, -1, "pGraphicEngine");
     AssertLuaType(pGraphicEngineTpye, LUA_TLIGHTUSERDATA);
     GraphicEngine *pGraphicEngine = lua_touserdata(pLuaState, -1);
@@ -158,8 +158,8 @@ static int UpdateInstances(lua_State *pLuaState)
     uint32_t modelIndex = luaL_checkinteger(pLuaState, -1);
     lua_pop(pLuaState, 1);
 
-    int gameStateTpye = lua_getglobal(pLuaState, "gameState");
-    AssertLuaType(gameStateTpye, LUA_TTABLE);
+    int engineTpye = lua_getglobal(pLuaState, "engine");
+    AssertLuaType(engineTpye, LUA_TTABLE);
     int pGraphicEngineTpye = lua_getfield(pLuaState, -1, "pGraphicEngine");
     AssertLuaType(pGraphicEngineTpye, LUA_TLIGHTUSERDATA);
     GraphicEngine *pGraphicEngine = lua_touserdata(pLuaState, -1);
@@ -170,8 +170,8 @@ static int UpdateInstances(lua_State *pLuaState)
 
 static int UpdateGlobalUniformBuffer(lua_State *pLuaState)
 {
-    int gameStateTpye = lua_getglobal(pLuaState, "gameState");
-    AssertLuaType(gameStateTpye, LUA_TTABLE);
+    int engineTpye = lua_getglobal(pLuaState, "engine");
+    AssertLuaType(engineTpye, LUA_TTABLE);
     int pGraphicEngineTpye = lua_getfield(pLuaState, -1, "pGraphicEngine");
     AssertLuaType(pGraphicEngineTpye, LUA_TLIGHTUSERDATA);
     GraphicEngine *pGraphicEngine = lua_touserdata(pLuaState, -1);
@@ -209,8 +209,8 @@ static int UpdateGlobalUniformBuffer(lua_State *pLuaState)
 
 static int UpdateLightsUniformBuffer(lua_State *pLuaState)
 {
-    int gameStateTpye = lua_getglobal(pLuaState, "gameState");
-    AssertLuaType(gameStateTpye, LUA_TTABLE);
+    int engineTpye = lua_getglobal(pLuaState, "engine");
+    AssertLuaType(engineTpye, LUA_TTABLE);
     int pGraphicEngineTpye = lua_getfield(pLuaState, -1, "pGraphicEngine");
     AssertLuaType(pGraphicEngineTpye, LUA_TLIGHTUSERDATA);
     GraphicEngine *pGraphicEngine = lua_touserdata(pLuaState, -1);
