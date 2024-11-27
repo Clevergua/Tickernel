@@ -2,10 +2,11 @@ local engine = require("engine")
 local gameMath = require("gameMath")
 local game = require("game")
 
-local pixelCount = 16
-local modelScale = 1 / pixelCount;
-local pixel = {
+local voxelCount = 16
+local modelScale = 1 / voxelCount;
+local voxel = {
     none = { 0, 0, 0, 0 },
+    dirt = { 210, 150, 95, 255 },
     snow = { 225, 225, 225, 255 },
     ice = { 190, 190, 245, 255 },
     sand = { 225, 200, 150, 255 },
@@ -14,11 +15,22 @@ local pixel = {
     lava = { 225, 43, 67, 255 },
     andosols = { 51, 41, 41, 255 },
 }
+local terrainToRoughness = {
+    0.2,
+    0.2,
+    0.2,
+    0.5,
+    0.5,
+    0.8,
+    0.8,
+}
+
+local length = 32
+local width = 32
+
 function engine.Start()
     print("Lua Start")
 
-    local length = 64
-    local width = 32
 
     local modelsPath = engine.assetsPath ..
         engine.pathSeparator .. "models" .. engine.pathSeparator
@@ -34,7 +46,7 @@ function engine.Start()
         engine.LoadModel(modelsPath .. "TallBuilding03_0.tknvox"),
     }
     for index, model in ipairs(models) do
-        local count = 4
+        local count = 6
         local instances = {}
         for i = 1, count do
             local x = math.abs(gameMath.LCGRandom((index + 13251) * 525234532 + i * 42342345)) % length
@@ -54,14 +66,14 @@ function engine.Start()
     game.GenerateWorld(seed, length, width)
     print("Generating world..")
 
-    local pixelMap = {}
+    local voxelMap = {}
     local height = 8
-    for x = 1, length * pixelCount do
-        pixelMap[x] = {}
-        for y = 1, width * pixelCount do
-            pixelMap[x][y] = {}
+    for x = 1, length * voxelCount do
+        voxelMap[x] = {}
+        for y = 1, width * voxelCount do
+            voxelMap[x][y] = {}
             for z = 1, height do
-                pixelMap[x][y][z] = pixel.none
+                voxelMap[x][y][z] = voxel.none
             end
         end
     end
@@ -99,77 +111,103 @@ function engine.Start()
                 error("Unknown terrain")
             end
 
-            for px = 1, pixelCount do
-                for py = 1, pixelCount do
-                    local dx = (px - pixelCount / 2 - 0.5) / pixelCount
-                    local dy = (py - pixelCount / 2 - 0.5) / pixelCount
-                    local temperature = game.GetTemperature((x + dx), (y + dy))
-                    local humidity = game.GetHumidity((x + dx), (y + dy))
-                    local t = math.max(math.abs(dx), math.abs(dy)) * 2
-                    temperature = gameMath.Lerp(targetTemperature, temperature, t)
-                    humidity = gameMath.Lerp(targetHumidity, humidity, t)
-                    local holeNoiseScale = 0.27
-                    local holeNoise = gameMath.PerlinNoise2D(2134, holeNoiseScale * ((x - 1) * pixelCount + px),
-                        holeNoiseScale * ((y - 1) * pixelCount + py))
-                    holeNoise = holeNoise + t
-                    if holeNoise < 1.25 then
-                        local pixelTerrain = game.GetTerrain(temperature, humidity)
-                        local heightMap = pixelMap[(x - 1) * pixelCount + px][(y - 1) * pixelCount + py]
-                        if pixelTerrain == terrain.water or pixelTerrain == terrain.ice or pixelTerrain == terrain.lava then
-                            heightMap[2] = 0
-                            heightMap[3] = 0
-                            heightMap[4] = 0
-                        else
-                            heightMap[5] = pixelTerrain
-                            if holeNoise < 0.4 then
-                                heightMap[6] = pixelTerrain
-                            end
-                        end
+            for px = 1, voxelCount do
+                for py = 1, voxelCount do
+                    local dx = (px - voxelCount / 2 - 0.5) / voxelCount
+                    local dy = (py - voxelCount / 2 - 0.5) / voxelCount
+                    local deltaNoise = math.max(math.abs(dx), math.abs(dy)) * 2
+                    local temperature = gameMath.Lerp(targetTemperature, game.GetTemperature((x + dx), (y + dy)),
+                        deltaNoise)
+                    local humidity = gameMath.Lerp(targetHumidity, game.GetHumidity((x + dx), (y + dy)), deltaNoise)
+                    local voxelTerrain = game.GetTerrain(temperature, humidity)
+
+                    local roughnessNoiseScale = 0.27
+                    local roughnessNoise = gameMath.PerlinNoise2D(3478, roughnessNoiseScale * ((x - 1) * voxelCount + px),
+                        roughnessNoiseScale * ((y - 1) * voxelCount + py))
+                    local deltaHeight
+                    local deltaHeightStep = 0.15
+                    roughnessNoise = roughnessNoise * terrainToRoughness[voxelTerrain]
+                    if roughnessNoise > deltaHeightStep then
+                        deltaHeight = 1
+                    elseif roughnessNoise > -deltaHeightStep then
+                        deltaHeight = 0
                     else
-                        -- skip
+                        deltaHeight = -1
+                    end
+                    for z = 1, 4 + deltaHeight do
+                        voxelMap[(x - 1) * voxelCount + px][(y - 1) * voxelCount + py][z] = voxel.dirt
                     end
                 end
             end
         end
     end
-    print("Generating vertices..")
-    local blockToVertices = {}
-    local blockToColors = {}
-    local blockToNormals = {}
-    for x = 1, length * pixelCount do
-        for y = 1, width * pixelCount do
+
+    local vertices = {}
+    local colors = {}
+    local normals = {}
+    for x = 1, length * voxelCount do
+        for y = 1, width * voxelCount do
             for z = 1, height do
-                if pixelMap[x][y][z] ~= pixel.none then
-                    if blockToVertices[pixelMap[x][y][z]] == nil then
-                        blockToVertices[pixelMap[x][y][z]] = {}
-                        blockToColors[pixelMap[x][y][z]] = {}
-                        blockToNormals[pixelMap[x][y][z]] = {}
-                    end
-                    table.insert(blockToVertices[pixelMap[x][y][z]], { x, y, z - 4 })
-                    table.insert(blockToColors[pixelMap[x][y][z]], pixelMap[x][y][z])
-                    table.insert(blockToNormals[pixelMap[x][y][z]], { 0, 0, 0 })
+                if voxelMap[x][y][z] ~= voxel.none then
+                    table.insert(vertices, { x, y, z - 4 })
+                    table.insert(colors, voxelMap[x][y][z])
+                    table.insert(normals, { 0, 0, 0 })
                 end
             end
         end
     end
     print("Drawing models..")
-    for i = 1, 10 do
-        if blockToVertices[i] ~= nil then
-            engine.SetNormals(blockToVertices[i], blockToNormals[i])
-            local index = engine.AddModel(blockToVertices[i], blockToColors[i], blockToNormals[i])
-            local modelMatrix = {
-                {
-                    { modelScale, 0,          0,          0 },
-                    { 0,          modelScale, 0,          0 },
-                    { 0,          0,          modelScale, -4 * modelScale },
-                    { 0,          0,          0,          1 },
-                },
-            }
-            engine.UpdateInstances(index, modelMatrix)
-        end
-    end
+    engine.SetNormals(vertices, normals)
+    local index = engine.AddModel(vertices, colors, normals)
+    local modelMatrix = {
+        {
+            { modelScale, 0,          0,          0 },
+            { 0,          modelScale, 0,          0 },
+            { 0,          0,          modelScale, -4 * modelScale },
+            { 0,          0,          0,          1 },
+        },
+    }
+
+    engine.UpdateInstances(index, modelMatrix)
+
+    -- print("Generating vertices..")
+    -- local voxelToVertices = {}
+    -- local voxelToColors = {}
+    -- local voxelToNormals = {}
+    -- for x = 1, length * voxelCount do
+    --     for y = 1, width * voxelCount do
+    --         for z = 1, height do
+    --             if voxelMap[x][y][z] ~= voxel.none then
+    --                 if voxelToVertices[voxelMap[x][y][z]] == nil then
+    --                     voxelToVertices[voxelMap[x][y][z]] = {}
+    --                     voxelToColors[voxelMap[x][y][z]] = {}
+    --                     voxelToNormals[voxelMap[x][y][z]] = {}
+    --                 end
+    --                 table.insert(voxelToVertices[voxelMap[x][y][z]], { x, y, z - 4 })
+    --                 table.insert(voxelToColors[voxelMap[x][y][z]], voxelMap[x][y][z])
+    --                 table.insert(voxelToNormals[voxelMap[x][y][z]], { 0, 0, 0 })
+    --             end
+    --         end
+    --     end
+    -- end
+    -- print("Drawing models..")
+    -- for i = 1, 10 do
+    --     if voxelToVertices[i] ~= nil then
+    --         engine.SetNormals(voxelToVertices[i], voxelToNormals[i])
+    --         local index = engine.AddModel(voxelToVertices[i], voxelToColors[i], voxelToNormals[i])
+    --         local modelMatrix = {
+    --             {
+    --                 { modelScale, 0,          0,          0 },
+    --                 { 0,          modelScale, 0,          0 },
+    --                 { 0,          0,          modelScale, -4 * modelScale },
+    --                 { 0,          0,          0,          1 },
+    --             },
+    --         }
+    --         engine.UpdateInstances(index, modelMatrix)
+    --     end
+    -- end
     local directionalLight = {
-        color = { 1, 1, 1, 0.382 },
+        color = { 1, 1, 1, 1 },
         direction = { 1, -1, -1 },
     }
     engine.UpdateLightsUniformBuffer(directionalLight, pointLights)
