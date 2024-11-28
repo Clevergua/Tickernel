@@ -36,7 +36,7 @@ void main() {
     vec3 position = world_w.xyz / world_w.w;
     // o_color = vec4(position, 1);
     // return;
-    vec3 normal = normalize(subpassLoad(i_normal).xyz - 0.5 * 2);
+    vec3 normal = normalize((subpassLoad(i_normal).xyz - 0.5) * 2);
     float ndl = max(dot(normal, -normalize(lightsUniform.directionalLight.direction)), 0.0);
     float halfLambert = ndl * 0.5 + 0.5;
     vec4 albedo = subpassLoad(i_albedo);

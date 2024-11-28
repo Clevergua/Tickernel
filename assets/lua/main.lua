@@ -34,44 +34,43 @@ local terrainToFoundation = {
     voxel.andosols,
 }
 
-local length = 64
+local length = 32
 local width = 32
 
 function engine.Start()
     print("Lua Start")
 
+    local modelsPath = engine.assetsPath ..
+        engine.pathSeparator .. "models" .. engine.pathSeparator
+    print("Loading models")
+    local models = {
+        engine.LoadModel(modelsPath .. "LargeBuilding01_0.tknvox"),
+        engine.LoadModel(modelsPath .. "SmallBuilding01_0.tknvox"),
+        engine.LoadModel(modelsPath .. "SmallBuilding02_0.tknvox"),
+        engine.LoadModel(modelsPath .. "SmallBuilding03_0.tknvox"),
+        engine.LoadModel(modelsPath .. "SmallBuilding04_0.tknvox"),
+        engine.LoadModel(modelsPath .. "TallBuilding01_0.tknvox"),
+        engine.LoadModel(modelsPath .. "TallBuilding02_0.tknvox"),
+        engine.LoadModel(modelsPath .. "TallBuilding03_0.tknvox"),
+    }
+    for index, model in ipairs(models) do
+        local count = 6
+        local instances = {}
+        for i = 1, count do
+            local x = math.abs(gameMath.LCGRandom((index + 13251) * 525234532 + i * 42342345)) % length
+            local y = math.abs(gameMath.LCGRandom((x - 2317831) * 431513511 + index * 24141312 - i * 2131204)) % width
+            instances[i] = {
+                { modelScale, 0,          0,          x },
+                { 0,          modelScale, 0,          y },
+                { 0,          0,          modelScale, 0 },
+                { 0,          0,          0,          1 },
+            }
+        end
+        engine.DrawModel(instances, model)
+    end
 
-    -- local modelsPath = engine.assetsPath ..
-    --     engine.pathSeparator .. "models" .. engine.pathSeparator
-    -- print("Loading models")
-    -- local models = {
-    --     engine.LoadModel(modelsPath .. "LargeBuilding01_0.tknvox"),
-    --     engine.LoadModel(modelsPath .. "SmallBuilding01_0.tknvox"),
-    --     engine.LoadModel(modelsPath .. "SmallBuilding02_0.tknvox"),
-    --     engine.LoadModel(modelsPath .. "SmallBuilding03_0.tknvox"),
-    --     engine.LoadModel(modelsPath .. "SmallBuilding04_0.tknvox"),
-    --     engine.LoadModel(modelsPath .. "TallBuilding01_0.tknvox"),
-    --     engine.LoadModel(modelsPath .. "TallBuilding02_0.tknvox"),
-    --     engine.LoadModel(modelsPath .. "TallBuilding03_0.tknvox"),
-    -- }
-    -- for index, model in ipairs(models) do
-    --     local count = 6
-    --     local instances = {}
-    --     for i = 1, count do
-    --         local x = math.abs(gameMath.LCGRandom((index + 13251) * 525234532 + i * 42342345)) % length
-    --         local y = math.abs(gameMath.LCGRandom((x - 2317831) * 431513511 + index * 24141312 - i * 2131204)) % width
-    --         instances[i] = {
-    --             { modelScale, 0,          0,          x },
-    --             { 0,          modelScale, 0,          y },
-    --             { 0,          0,          modelScale, 0 },
-    --             { 0,          0,          0,          1 },
-    --         }
-    --     end
-    --     engine.DrawModel(instances, model)
-    -- end
 
-
-    local seed = 232
+    local seed = 0
     game.GenerateWorld(seed, length, width)
     print("Generating world..")
 
@@ -89,12 +88,20 @@ function engine.Start()
 
     local pointLights = {}
     print("Generating surface..")
+
     local terrain = game.terrain
     for x = 1, length do
         for y = 1, width do
             -- Target values
             local temperature = game.GetTemperature(x, y)
             local humidity = game.GetHumidity(x, y)
+            if game.terrainMap[x][y] == terrain.lava and #pointLights < 256 then
+                table.insert(pointLights, {
+                    color = { 0.7, 0.3, 0, 1 },
+                    position = { x, y, 0.5 },
+                    range = 2,
+                })
+            end
             for px = 1, voxelCount do
                 for py = 1, voxelCount do
                     local dx = (px - (voxelCount + 1) / 2) / voxelCount
@@ -169,48 +176,11 @@ function engine.Start()
             { 0,          0,          0,          1 },
         },
     }
-
     engine.UpdateInstances(index, modelMatrix)
 
-    -- print("Generating vertices..")
-    -- local voxelToVertices = {}
-    -- local voxelToColors = {}
-    -- local voxelToNormals = {}
-    -- for x = 1, length * voxelCount do
-    --     for y = 1, width * voxelCount do
-    --         for z = 1, height do
-    --             if voxelMap[x][y][z] ~= voxel.none then
-    --                 if voxelToVertices[voxelMap[x][y][z]] == nil then
-    --                     voxelToVertices[voxelMap[x][y][z]] = {}
-    --                     voxelToColors[voxelMap[x][y][z]] = {}
-    --                     voxelToNormals[voxelMap[x][y][z]] = {}
-    --                 end
-    --                 table.insert(voxelToVertices[voxelMap[x][y][z]], { x, y, z - 4 })
-    --                 table.insert(voxelToColors[voxelMap[x][y][z]], voxelMap[x][y][z])
-    --                 table.insert(voxelToNormals[voxelMap[x][y][z]], { 0, 0, 0 })
-    --             end
-    --         end
-    --     end
-    -- end
-    -- print("Drawing models..")
-    -- for i = 1, 10 do
-    --     if voxelToVertices[i] ~= nil then
-    --         engine.SetNormals(voxelToVertices[i], voxelToNormals[i])
-    --         local index = engine.AddModel(voxelToVertices[i], voxelToColors[i], voxelToNormals[i])
-    --         local modelMatrix = {
-    --             {
-    --                 { modelScale, 0,          0,          0 },
-    --                 { 0,          modelScale, 0,          0 },
-    --                 { 0,          0,          modelScale, -4 * modelScale },
-    --                 { 0,          0,          0,          1 },
-    --             },
-    --         }
-    --         engine.UpdateInstances(index, modelMatrix)
-    --     end
-    -- end
     local directionalLight = {
-        color = { 1, 1, 1, 1 },
-        direction = { 0, 0, -1 },
+        color = { 1, 1, 1, 0.5 },
+        direction = { -1, 0, -1 },
     }
     engine.UpdateLightsUniformBuffer(directionalLight, pointLights)
 end
