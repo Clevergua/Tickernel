@@ -9,7 +9,7 @@ local voxel = {
     dirt = { 210, 150, 95, 255 },
     snow = { 225, 225, 225, 255 },
     ice = { 190, 190, 245, 255 },
-    sand = { 225, 200, 150, 255 },
+    sand = { 245, 212, 163, 255 },
     grass = { 170, 225, 115, 255 },
     water = { 86, 98, 185, 255 },
     lava = { 225, 43, 67, 255 },
@@ -24,45 +24,54 @@ local terrainToRoughness = {
     0.8,
     0.8,
 }
+local terrainToFoundation = {
+    voxel.dirt,
+    voxel.sand,
+    voxel.sand,
+    voxel.dirt,
+    voxel.sand,
+    voxel.andosols,
+    voxel.andosols,
+}
 
-local length = 32
+local length = 64
 local width = 32
 
 function engine.Start()
     print("Lua Start")
 
 
-    local modelsPath = engine.assetsPath ..
-        engine.pathSeparator .. "models" .. engine.pathSeparator
-    print("Loading models")
-    local models = {
-        engine.LoadModel(modelsPath .. "LargeBuilding01_0.tknvox"),
-        engine.LoadModel(modelsPath .. "SmallBuilding01_0.tknvox"),
-        engine.LoadModel(modelsPath .. "SmallBuilding02_0.tknvox"),
-        engine.LoadModel(modelsPath .. "SmallBuilding03_0.tknvox"),
-        engine.LoadModel(modelsPath .. "SmallBuilding04_0.tknvox"),
-        engine.LoadModel(modelsPath .. "TallBuilding01_0.tknvox"),
-        engine.LoadModel(modelsPath .. "TallBuilding02_0.tknvox"),
-        engine.LoadModel(modelsPath .. "TallBuilding03_0.tknvox"),
-    }
-    for index, model in ipairs(models) do
-        local count = 6
-        local instances = {}
-        for i = 1, count do
-            local x = math.abs(gameMath.LCGRandom((index + 13251) * 525234532 + i * 42342345)) % length
-            local y = math.abs(gameMath.LCGRandom((x - 2317831) * 431513511 + index * 24141312 - i * 2131204)) % width
-            instances[i] = {
-                { modelScale, 0,          0,          x },
-                { 0,          modelScale, 0,          y },
-                { 0,          0,          modelScale, 0 },
-                { 0,          0,          0,          1 },
-            }
-        end
-        engine.DrawModel(instances, model)
-    end
+    -- local modelsPath = engine.assetsPath ..
+    --     engine.pathSeparator .. "models" .. engine.pathSeparator
+    -- print("Loading models")
+    -- local models = {
+    --     engine.LoadModel(modelsPath .. "LargeBuilding01_0.tknvox"),
+    --     engine.LoadModel(modelsPath .. "SmallBuilding01_0.tknvox"),
+    --     engine.LoadModel(modelsPath .. "SmallBuilding02_0.tknvox"),
+    --     engine.LoadModel(modelsPath .. "SmallBuilding03_0.tknvox"),
+    --     engine.LoadModel(modelsPath .. "SmallBuilding04_0.tknvox"),
+    --     engine.LoadModel(modelsPath .. "TallBuilding01_0.tknvox"),
+    --     engine.LoadModel(modelsPath .. "TallBuilding02_0.tknvox"),
+    --     engine.LoadModel(modelsPath .. "TallBuilding03_0.tknvox"),
+    -- }
+    -- for index, model in ipairs(models) do
+    --     local count = 6
+    --     local instances = {}
+    --     for i = 1, count do
+    --         local x = math.abs(gameMath.LCGRandom((index + 13251) * 525234532 + i * 42342345)) % length
+    --         local y = math.abs(gameMath.LCGRandom((x - 2317831) * 431513511 + index * 24141312 - i * 2131204)) % width
+    --         instances[i] = {
+    --             { modelScale, 0,          0,          x },
+    --             { 0,          modelScale, 0,          y },
+    --             { 0,          0,          modelScale, 0 },
+    --             { 0,          0,          0,          1 },
+    --         }
+    --     end
+    --     engine.DrawModel(instances, model)
+    -- end
 
 
-    local seed = 0
+    local seed = 232
     game.GenerateWorld(seed, length, width)
     print("Generating world..")
 
@@ -83,50 +92,32 @@ function engine.Start()
     local terrain = game.terrain
     for x = 1, length do
         for y = 1, width do
-            local currentTerrain = game.terrainMap[x][y]
             -- Target values
-            local targetTemperature, targetHumidity
-            if currentTerrain == terrain.snow then
-                targetTemperature = -1
-                targetHumidity = 0
-            elseif currentTerrain == terrain.ice then
-                targetTemperature = -1
-                targetHumidity = 1
-            elseif currentTerrain == terrain.sand then
-                targetTemperature = 0
-                targetHumidity = -1
-            elseif currentTerrain == terrain.grass then
-                targetTemperature = 0
-                targetHumidity = 0
-            elseif currentTerrain == terrain.water then
-                targetTemperature = 0
-                targetHumidity = 1
-            elseif currentTerrain == terrain.lava then
-                targetTemperature = 1
-                targetHumidity = -1
-            elseif currentTerrain == terrain.andosols then
-                targetTemperature = 0
-                targetHumidity = 0
-            else
-                error("Unknown terrain")
-            end
-
+            local temperature = game.GetTemperature(x, y)
+            local humidity = game.GetHumidity(x, y)
             for px = 1, voxelCount do
                 for py = 1, voxelCount do
-                    local dx = (px - voxelCount / 2 - 0.5) / voxelCount
-                    local dy = (py - voxelCount / 2 - 0.5) / voxelCount
+                    local dx = (px - (voxelCount + 1) / 2) / voxelCount
+                    local dy = (py - (voxelCount + 1) / 2) / voxelCount
                     local deltaNoise = math.max(math.abs(dx), math.abs(dy)) * 2
-                    local temperature = gameMath.Lerp(targetTemperature, game.GetTemperature((x + dx), (y + dy)),
+                    deltaNoise = deltaNoise ^ 4
+                    local voxelTemperature = game.GetTemperature((x + dx), (y + dy))
+                    local voxelHumidity = game.GetHumidity((x + dx), (y + dy))
+                    voxelTemperature = gameMath.Lerp(temperature, voxelTemperature,
                         deltaNoise)
-                    local humidity = gameMath.Lerp(targetHumidity, game.GetHumidity((x + dx), (y + dy)), deltaNoise)
-                    local voxelTerrain = game.GetTerrain(temperature, humidity)
+                    voxelHumidity = gameMath.Lerp(humidity, voxelHumidity, deltaNoise)
+                    local voxelTerrain = game.GetTerrain(voxelTemperature, voxelHumidity)
 
-                    local roughnessNoiseScale = 0.27
+                    local roughnessNoiseScale = 0.17
                     local roughnessNoise = gameMath.PerlinNoise2D(3478, roughnessNoiseScale * ((x - 1) * voxelCount + px),
                         roughnessNoiseScale * ((y - 1) * voxelCount + py))
-                    local deltaHeight
-                    local deltaHeightStep = 0.15
+                    roughnessNoiseScale = roughnessNoiseScale * 2
+                    roughnessNoise = roughnessNoise + 0.5 *
+                        gameMath.PerlinNoise2D(3211, roughnessNoiseScale * ((x - 1) * voxelCount + px),
+                            roughnessNoiseScale * ((y - 1) * voxelCount + py))
+                    local deltaHeightStep = 0.20
                     roughnessNoise = roughnessNoise * terrainToRoughness[voxelTerrain]
+                    local deltaHeight
                     if roughnessNoise > deltaHeightStep then
                         deltaHeight = 1
                     elseif roughnessNoise > -deltaHeightStep then
@@ -134,8 +125,18 @@ function engine.Start()
                     else
                         deltaHeight = -1
                     end
-                    for z = 1, 4 + deltaHeight do
-                        voxelMap[(x - 1) * voxelCount + px][(y - 1) * voxelCount + py][z] = voxel.dirt
+                    -- Foundation
+                    local voxelHeightMap = voxelMap[(x - 1) * voxelCount + px][(y - 1) * voxelCount + py]
+                    voxelHeightMap[1] = terrainToFoundation[game.GetTerrain(voxelTemperature, voxelHumidity)]
+
+                    if voxelTerrain == terrain.ice or voxelTerrain == terrain.water or voxelTerrain == terrain.lava then
+                        for z = 1, 2 + deltaHeight do
+                            voxelHeightMap[z] = terrainToFoundation[voxelTerrain]
+                        end
+                    else
+                        for z = 1, 5 + deltaHeight do
+                            voxelHeightMap[z] = terrainToFoundation[voxelTerrain]
+                        end
                     end
                 end
             end

@@ -21,8 +21,8 @@ local game = {
 
 local humidityStepValue = 0.2
 local temperatureStepValue = 0.2
-local temperatureNoiseScale = 0.097
-local humidityNoiseScale = 0.137
+local temperatureNoiseScale = 0.09
+local humidityNoiseScale = 0.09
 
 
 function game.GetTerrain(temperature, humidity)
@@ -50,28 +50,28 @@ function game.GetTerrain(temperature, humidity)
 end
 
 function game.GetHumidity(x, y)
-    local level = 2
+    local level = 1
     local humidity = 0
     local seed = game.humiditySeed;
     for i = 1, level do
         local m = 2 ^ (level - 1)
         humidity = humidity + gameMath.PerlinNoise2D(seed, x * humidityNoiseScale * m, y * humidityNoiseScale * m) / m
-        seed = gameMath.LCGRandom(seed)
+        -- seed = gameMath.LCGRandom(seed)
     end
     return humidity
 end
 
 function game.GetTemperature(x, y)
-    local level = 2
+    local level = 1
     local temperature = 0
     local seed = game.temperatureSeed;
     for i = 1, level do
         local m = 2 ^ (level - 1)
         temperature = temperature +
             gameMath.PerlinNoise2D(seed, x * temperatureNoiseScale * m, y * temperatureNoiseScale * m) / m
-        seed = gameMath.LCGRandom(seed)
+        -- seed = gameMath.LCGRandom(seed)
     end
-    temperature = temperature + (x - (game.length - 1) / 2) / (game.length - 1)
+    -- temperature = temperature + (x - (game.length - 1) / 2) / game.length
     return temperature
 end
 
