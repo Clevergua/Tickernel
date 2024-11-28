@@ -37,7 +37,7 @@ void main() {
     // o_color = vec4(position, 1);
     // return;
     vec3 normal = normalize(subpassLoad(i_normal).xyz - 0.5 * 2);
-    float ndl = max(dot(normal, normalize(lightsUniform.directionalLight.direction)), 0.0);
+    float ndl = max(dot(normal, -normalize(lightsUniform.directionalLight.direction)), 0.0);
     float halfLambert = ndl * 0.5 + 0.5;
     vec4 albedo = subpassLoad(i_albedo);
 
@@ -48,7 +48,7 @@ void main() {
         float distance = length(direction);
         float attenuation = clamp(1.0 - (distance / pointLight.range), 0.0, 1.0);
         float attenuationStep = step(distance, pointLight.range);
-        direction = normalize(direction);
+        direction = -normalize(direction);
         ndl = max(dot(normal, direction), 0.0);
         halfLambert = ndl * 0.5 + 0.5;
         o_rgb += albedo.rgb * pointLight.color.rgb * pointLight.color.a * halfLambert * attenuation * attenuationStep;

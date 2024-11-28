@@ -158,6 +158,7 @@ function engine.Start()
         end
     end
     print("Drawing models..")
+    print(normals)
     engine.SetNormals(vertices, normals)
     local index = engine.AddModel(vertices, colors, normals)
     local modelMatrix = {
@@ -209,7 +210,7 @@ function engine.Start()
     -- end
     local directionalLight = {
         color = { 1, 1, 1, 1 },
-        direction = { 1, -1, -1 },
+        direction = { 0, 0, -1 },
     }
     engine.UpdateLightsUniformBuffer(directionalLight, pointLights)
 end

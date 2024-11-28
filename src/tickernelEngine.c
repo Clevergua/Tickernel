@@ -12,8 +12,8 @@ static void TickernelStart(TickernelEngine *pTickernelEngine)
     pGraphicEngine->enableValidationLayers = true;
     pGraphicEngine->name = "Tickernel Engine";
     pGraphicEngine->targetPresentMode = VK_PRESENT_MODE_FIFO_KHR;
-    pGraphicEngine->windowWidth = 1000;
-    pGraphicEngine->windowHeight = 400;
+    pGraphicEngine->windowWidth = 800;
+    pGraphicEngine->windowHeight = 200;
     pGraphicEngine->targetSwapchainImageCount = 2;
     pGraphicEngine->assetsPath = TickernelMalloc(sizeof(char) * FILENAME_MAX);
     pGraphicEngine->canUpdateGlobalUniformBuffer = false;
