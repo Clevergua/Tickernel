@@ -21,8 +21,8 @@ local game = {
 
 local humidityStepValue = 0.2
 local temperatureStepValue = 0.2
-local temperatureNoiseScale = 0.09
-local humidityNoiseScale = 0.09
+local temperatureNoiseScale = 0.11
+local humidityNoiseScale = 0.11
 
 
 function game.GetTerrain(temperature, humidity)
