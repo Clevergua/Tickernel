@@ -13,14 +13,15 @@ local voxel = {
     grass = { 170, 225, 115, 255 },
     water = { 86, 98, 185, 255 },
     lava = { 225, 43, 67, 255 },
-    andosols = { 51, 41, 41, 255 },
+    volcanicRock = { 51, 41, 41, 255 },
+    volcanicAsh = { 128, 128, 128, 255 },
 }
 local terrainToRoughness = {
-    0.2,
-    0.2,
-    0.2,
-    0.5,
-    0.5,
+    0.3,
+    0.3,
+    0.3,
+    0.6,
+    0.6,
     0.8,
     0.8,
 }
@@ -30,10 +31,18 @@ local terrainToFoundation = {
     voxel.sand,
     voxel.dirt,
     voxel.sand,
-    voxel.andosols,
-    voxel.andosols,
+    voxel.volcanicRock,
+    voxel.volcanicRock,
 }
-
+local terrainToSurface = {
+    voxel.snow,
+    voxel.sand,
+    voxel.sand,
+    voxel.grass,
+    voxel.sand,
+    voxel.lava,
+    voxel.volcanicAsh,
+}
 local length = 32
 local width = 32
 
@@ -107,7 +116,7 @@ function engine.Start()
                     local dx = (px - (voxelCount + 1) / 2) / voxelCount
                     local dy = (py - (voxelCount + 1) / 2) / voxelCount
                     local deltaNoise = math.max(math.abs(dx), math.abs(dy)) * 2
-                    deltaNoise = deltaNoise ^ 4
+                    deltaNoise = deltaNoise ^ 3
                     local voxelTemperature = game.GetTemperature((x + dx), (y + dy))
                     local voxelHumidity = game.GetHumidity((x + dx), (y + dy))
                     voxelTemperature = gameMath.Lerp(temperature, voxelTemperature,
@@ -132,6 +141,7 @@ function engine.Start()
                     else
                         deltaHeight = -1
                     end
+
                     -- Foundation
                     local voxelHeightMap = voxelMap[(x - 1) * voxelCount + px][(y - 1) * voxelCount + py]
                     voxelHeightMap[1] = terrainToFoundation[game.GetTerrain(voxelTemperature, voxelHumidity)]
@@ -141,8 +151,37 @@ function engine.Start()
                             voxelHeightMap[z] = terrainToFoundation[voxelTerrain]
                         end
                     else
-                        for z = 1, 5 + deltaHeight do
+                        local surfaceNoiseScale = 0.27
+                        local surfaceNoise = gameMath.PerlinNoise2D(453980,
+                            surfaceNoiseScale * ((x - 1) * voxelCount + px),
+                            surfaceNoiseScale * ((y - 1) * voxelCount + py))
+                        for z = 1, 3 do
                             voxelHeightMap[z] = terrainToFoundation[voxelTerrain]
+                        end
+                        if deltaHeight < 0 then
+                            if surfaceNoise < 0.3 then
+                                voxelHeightMap[4] = terrainToSurface[voxelTerrain]
+                            else
+                                voxelHeightMap[4] = voxel.none
+                            end
+                        elseif deltaHeight == 0 then
+                            if surfaceNoise < 0.3 then
+                                voxelHeightMap[4] = terrainToSurface[voxelTerrain]
+                            else
+                                voxelHeightMap[4] = terrainToFoundation[voxelTerrain]
+                            end
+                        else
+                            if surfaceNoise < 0.0 then
+                                voxelHeightMap[4] = terrainToSurface[voxelTerrain]
+                            else
+                                voxelHeightMap[4] = terrainToFoundation[voxelTerrain]
+                            end
+
+                            if surfaceNoise < 0.3 then
+                                voxelHeightMap[5] = terrainToSurface[voxelTerrain]
+                            else
+                                voxelHeightMap[5] = terrainToFoundation[voxelTerrain]
+                            end
                         end
                     end
                 end
@@ -179,8 +218,8 @@ function engine.Start()
     engine.UpdateInstances(index, modelMatrix)
 
     local directionalLight = {
-        color = { 1, 1, 1, 0.5 },
-        direction = { -1, 0, -1 },
+        color = { 1, 1, 1, 0.618 },
+        direction = { -0.618, -0.618, -1 },
     }
     engine.UpdateLightsUniformBuffer(directionalLight, pointLights)
 end
