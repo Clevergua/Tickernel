@@ -140,17 +140,10 @@ function engine.Start()
             if random < 5 and #pointLights < 256 then
                 -- if random < 3 then
                 table.insert(pointLights, {
-                    color = { 0.8, 0.4, 0, 0.8 },
+                    color = { 0.8, 0.4, 0, 1 },
                     position = { x, y, 0.5 },
                     range = 4,
                 })
-                -- else
-                --     table.insert(pointLights, {
-                --         color = { 0.9, 0.2, 0.1, 0.8 },
-                --         position = { x, y, 0.5 },
-                --         range = 3,
-                --     })
-                -- end
             end
             for px = 1, voxelCount do
                 for py = 1, voxelCount do
@@ -181,9 +174,6 @@ function engine.Start()
                         deltaHeight = 0
                     else
                         deltaHeight = -1
-                    end
-                    if voxelTerrain == terrain.snow then
-                        deltaHeight = deltaHeight + 1
                     end
                     -- Foundation
                     local voxelHeightMap = voxelMap[(x - 1) * voxelCount + px][(y - 1) * voxelCount + py]
