@@ -33,38 +33,27 @@ function gameMath.PingPong(a, b, t)
     end
 end
 
-local SmoothLerp = function(a, b, t)
+function gameMath.SmoothLerp(a, b, t)
     t = t * t * t * (6 * t * t - 15 * t + 10)
     return a + (b - a) * t
 end
 
-
-
-local gradient2Ds = {
-    { x = -1, y = -1 },
-    { x = 1,  y = -1 },
-    { x = -1, y = 1 },
-    { x = 1,  y = 1 },
-    { x = 0,  y = -1 },
-    { x = -1, y = 0 },
-    { x = 0,  y = 1 },
-    { x = 1,  y = 0 },
-}
-
-local GetGradient2D = function(x, y, seed)
-    local hash = gameMath.LCGRandom(gameMath.CantorPair(gameMath.CantorPair(x, y), seed))
-    hash = hash > 0 and hash or math.abs(hash)
-    local index = hash % 8 + 1
-    local gradient = gradient2Ds[index]
-    return gradient.x, gradient.y
+local Grad2D = function(hash, x, y)
+    local gradIndex = hash % 8 + 1
+    local gradients = {
+        { 1, 1 }, { -1, 1 }, { 1, -1 }, { -1, -1 },
+        { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 }
+    }
+    local grad = gradients[gradIndex]
+    return grad[1] * x + grad[2] * y
 end
 
 local DotGridGradient2D = function(ix, iy, x, y, seed)
     local dx = x - ix
     local dy = y - iy
-
-    local gx, gy = GetGradient2D(ix, iy, seed)
-    return dx * gx + dy * gy
+    local hash = gameMath.LCGRandom(gameMath.CantorPair(gameMath.CantorPair(ix, iy), seed))
+    hash = hash & 0xFF
+    return Grad2D(hash, dx, dy)
 end
 
 ---comment
@@ -86,48 +75,28 @@ function gameMath.PerlinNoise2D(seed, x, y)
     local n0, n1, ix0, ix1, value
     n0 = DotGridGradient2D(x0, y0, x, y, seed)
     n1 = DotGridGradient2D(x1, y0, x, y, seed)
-    ix0 = SmoothLerp(n0, n1, sx)
+    ix0 = gameMath.SmoothLerp(n0, n1, sx)
     n0 = DotGridGradient2D(x0, y1, x, y, seed)
     n1 = DotGridGradient2D(x1, y1, x, y, seed)
-    ix1 = SmoothLerp(n0, n1, sx)
-    value = SmoothLerp(ix0, ix1, sy)
+    ix1 = gameMath.SmoothLerp(n0, n1, sx)
+    value = gameMath.SmoothLerp(ix0, ix1, sy)
     return value
 end
 
-local gradient3Ds =
-{
-    { x = 1,  y = 1,  z = 0 },
-    { x = -1, y = 1,  z = 0 },
-    { x = 1,  y = -1, z = 0 },
-    { x = -1, y = -1, z = 0 },
-    { x = 1,  y = 0,  z = 1 },
-    { x = -1, y = 0,  z = 1 },
-    { x = 1,  y = 0,  z = -1 },
-    { x = -1, y = 0,  z = -1 },
-    { x = 0,  y = 1,  z = 1 },
-    { x = 0,  y = -1, z = 1 },
-    { x = 0,  y = 1,  z = -1 },
-    { x = 0,  y = -1, z = -1 },
-    { x = 1,  y = 1,  z = 0 },
-    { x = 0,  y = -1, z = 1 },
-    { x = -1, y = 1,  z = 0 },
-    { x = 0,  y = -1, z = -1 },
-}
-
-local GetGradient3D = function(x, y, z, seed)
-    local hash = gameMath.LCGRandom(gameMath.CantorPair(gameMath.CantorPair(gameMath.CantorPair(x, y), z), seed))
-    hash = hash > 0 and hash or math.abs(hash)
-    local index = hash % 16 + 1
-    local gradient = gradient3Ds[index]
-    return gradient.x, gradient.y, gradient.z
+local Grad3D = function(hash, x, y, z)
+    local h = hash & 15
+    local u = h < 8 and x or y
+    local v = h < 4 and y or (h == 12 or h == 14) and x or z
+    return ((h & 1) == 0 and u or -u) + ((h & 2) == 0 and v or -v)
 end
 
 local DotGridGradient3D = function(ix, iy, iz, x, y, z, seed)
     local dx = x - ix
     local dy = y - iy
     local dz = z - iz
-    local gx, gy, gz = GetGradient3D(ix, iy, iz, seed)
-    return dx * gx + dy * gy + dz * gz
+    local hash = gameMath.LCGRandom(gameMath.CantorPair(gameMath.CantorPair(gameMath.CantorPair(ix, iy), iz), seed))
+    hash = hash & 0xFF
+    return Grad3D(hash, dx, dy, dz)
 end
 
 ---comment
@@ -150,20 +119,24 @@ function gameMath.PerlinNoise3D(seed, x, y, z)
     local sy = y - y0
     local sz = z - z0
     -- Interpolate between grid point gradients
-    local x00 = SmoothLerp(DotGridGradient3D(x0, y0, z0, x, y, z, seed), DotGridGradient3D(x1, y0, z0, x, y, z, seed), sx);
-    local x10 = SmoothLerp(DotGridGradient3D(x0, y1, z0, x, y, z, seed), DotGridGradient3D(x1, y1, z0, x, y, z, seed), sx);
-    local x01 = SmoothLerp(DotGridGradient3D(x0, y0, z1, x, y, z, seed), DotGridGradient3D(x1, y0, z1, x, y, z, seed), sx);
-    local x11 = SmoothLerp(DotGridGradient3D(x0, y1, z1, x, y, z, seed), DotGridGradient3D(x1, y1, z1, x, y, z, seed), sx);
+    local x00 = gameMath.SmoothLerp(DotGridGradient3D(x0, y0, z0, x, y, z, seed),
+        DotGridGradient3D(x1, y0, z0, x, y, z, seed), sx)
+    local x10 = gameMath.SmoothLerp(DotGridGradient3D(x0, y1, z0, x, y, z, seed),
+        DotGridGradient3D(x1, y1, z0, x, y, z, seed), sx)
+    local x01 = gameMath.SmoothLerp(DotGridGradient3D(x0, y0, z1, x, y, z, seed),
+        DotGridGradient3D(x1, y0, z1, x, y, z, seed), sx)
+    local x11 = gameMath.SmoothLerp(DotGridGradient3D(x0, y1, z1, x, y, z, seed),
+        DotGridGradient3D(x1, y1, z1, x, y, z, seed), sx)
 
-    local y0 = SmoothLerp(x00, x10, sy);
-    local y1 = SmoothLerp(x01, x11, sy);
+    local y0 = gameMath.SmoothLerp(x00, x10, sy)
+    local y1 = gameMath.SmoothLerp(x01, x11, sy)
 
-    return SmoothLerp(y0, y1, sz);
+    return gameMath.SmoothLerp(y0, y1, sz)
 end
 
 -- local ns = 0.0099
 
--- local intervalCount = 10
+-- local intervalCount = 40  -- 将间隔数量改为 20
 -- local intervals = {}
 -- for i = 1, intervalCount do
 --     intervals[i] = 0
@@ -200,7 +173,6 @@ end
 
 -- print("Min value: ", min)
 -- print("Max value: ", max)
-
 
 
 return gameMath
