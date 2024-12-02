@@ -47,7 +47,7 @@ local terrainViewMap = {
             terrain = terrain.sand,
             foundationRoughnessNoiseScale = 0.07,
             foundationRoughnessStep = 0.41,
-            foundationVoxel = voxel.dirt,
+            foundationVoxel = voxel.sand,
             foundationDeltaHeight = 0,
         },
         {
@@ -61,7 +61,7 @@ local terrainViewMap = {
             terrain = terrain.water,
             foundationRoughnessNoiseScale = 0.07,
             foundationRoughnessStep = 0.41,
-            foundationVoxel = voxel.dirt,
+            foundationVoxel = voxel.sand,
             foundationDeltaHeight = -3,
         },
     },
@@ -91,7 +91,6 @@ local terrainViewMap = {
 }
 
 local foundationSeed = 124321
-local foundationDecorationTemperatureSeed = 54328
 local function GetIndex(value, step)
     if value < -step then
         return 0
@@ -106,6 +105,7 @@ end
 
 function GetVoxelInterpolation(temperature, humidity)
     local step = 0.25
+    -- local step = 0.32
     -- local step = 0.21
     local temperatureIndex = GetIndex(temperature, step)
     local humidityIndex = GetIndex(temperature, step)
@@ -119,22 +119,23 @@ function GetVoxelInterpolation(temperature, humidity)
     local r10 = terrainViewMap[x1][y0]
     local r11 = terrainViewMap[x1][y1]
 
-    local dx = (temperature - (step * (x0 - 2))) / step
-    local dy = (humidity - (step * (y0 - 2))) / step
+    local dx = gameMath.Clamp((temperature - (step * (x0 - 2))) / step, 0, 1)
+    local dy = gameMath.Clamp((humidity - (step * (y0 - 2))) / step, 0, 1)
     return r00, r01, r10, r11, dx, dy
 end
 
 function GetVoxelViewInterpolatdData(r00, r01, r10, r11, dx, dy, key)
-    local tx = gameMath.Lerp(r00[key], r01[key], dx)
-    local ty = gameMath.Lerp(r10[key], r11[key], dx)
-    return gameMath.Lerp(tx, ty, dy)
+    local tx = gameMath.SmoothLerp(r00[key], r01[key], dx)
+    local ty = gameMath.SmoothLerp(r10[key], r11[key], dx)
+    local result = gameMath.SmoothLerp(tx, ty, dy)
+    return result
 end
 
 function GetVoxelViewData(temperature, humidity)
     if temperature < -game.temperatureStep then
         if humidity < -game.humidityStep then
             return terrainViewMap[1][1]
-        elseif humidity < -game.humidityStep then
+        elseif humidity < game.humidityStep then
             return terrainViewMap[1][2]
         else
             return terrainViewMap[1][3]
@@ -142,7 +143,7 @@ function GetVoxelViewData(temperature, humidity)
     elseif temperature < game.temperatureStep then
         if humidity < -game.humidityStep then
             return terrainViewMap[2][1]
-        elseif humidity < -game.humidityStep then
+        elseif humidity < game.humidityStep then
             return terrainViewMap[2][2]
         else
             return terrainViewMap[2][3]
@@ -150,7 +151,7 @@ function GetVoxelViewData(temperature, humidity)
     else
         if humidity < -game.humidityStep then
             return terrainViewMap[3][1]
-        elseif humidity < -game.humidityStep then
+        elseif humidity < game.humidityStep then
             return terrainViewMap[3][2]
         else
             return terrainViewMap[3][3]
@@ -212,7 +213,6 @@ function engine.Start()
 
     local pointLights = {}
     print("Generating surface..")
-    local min, max
     local terrain = game.terrain
     for x = 1, length do
         for y = 1, width do
@@ -233,7 +233,7 @@ function engine.Start()
                     local dx = (px - (voxelCount + 1) / 2) / voxelCount
                     local dy = (py - (voxelCount + 1) / 2) / voxelCount
                     local deltaNoise = math.max(math.abs(dx), math.abs(dy)) * 2
-                    deltaNoise = deltaNoise ^ 4
+                    deltaNoise = deltaNoise ^ 3
                     local voxelTemperature = game.GetTemperature((x + dx), (y + dy))
                     local voxelHumidity = game.GetHumidity((x + dx), (y + dy))
                     voxelTemperature = gameMath.Lerp(temperature, voxelTemperature,
@@ -258,16 +258,16 @@ function engine.Start()
                     else
                         deltaHeight = 1
                     end
+
                     local voxelHeightMap = voxelMap[(x - 1) * voxelCount + px][(y - 1) * voxelCount + py]
+
                     for z = 1, 5 + deltaHeight + foundationDeltaHeight do
                         voxelHeightMap[z] = GetVoxelViewData(voxelTemperature, voxelHumidity).foundationVoxel
                     end
-                    -- 添加装饰:
-                    local foundationDecorationNoiseScale = 0.47
-                    local foundationDecorationTemperature = gameMath.PerlinNoise2D(foundationDecorationTemperatureSeed,
-                        foundationDecorationNoiseScale * ((x - 1) * voxelCount + px),
-                        foundationDecorationNoiseScale * ((y - 1) * voxelCount + py))
-
+                    -- local foundationDecorationNoiseScale = 0.47
+                    -- local foundationDecorationTemperature = gameMath.PerlinNoise2D(foundationDecorationTemperatureSeed,
+                    --     foundationDecorationNoiseScale * ((x - 1) * voxelCount + px),
+                    --     foundationDecorationNoiseScale * ((y - 1) * voxelCount + py))
                     -- local voxelTerrain = game.GetTerrain(voxelTemperature, voxelHumidity)
                     -- local terrainView = terrainToView[voxelTerrain]
                     -- roughnessNoiseScale = roughnessNoiseScale * 2
@@ -331,6 +331,17 @@ function engine.Start()
             end
         end
     end
+    -- 计算并打印每个地形的平均温度和湿度
+    for terrain, stats in pairs(game.terrainStats) do
+        if stats.count > 0 then
+            local avgTemperature = stats.temperatureSum / stats.count
+            local avgHumidity = stats.humiditySum / stats.count
+            print(string.format("Terrain: %s, Avg Temperature: %.2f, Avg Humidity: %.2f", terrain, avgTemperature,
+                avgHumidity))
+        else
+            print(string.format("Terrain: %s, No data available.", terrain))
+        end
+    end
 
     local vertices = {}
     local colors = {}
@@ -391,6 +402,6 @@ function engine.Update()
 end
 
 _G.engine = engine
-
+engine.Start()
 print("Lua initialized!")
 return engine

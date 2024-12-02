@@ -17,25 +17,25 @@ local game = {
     width = 0,
     terrainMap = nil,
     blockMap = nil,
-    humidityStep = 0.15,
-    temperatureStep = 0.15,
+    humidityStep = 0.2,
+    temperatureStep = 0.2,
 }
 
 
 local temperatureNoiseScale = 0.37
 local humidityNoiseScale = 0.37
--- local terrainStats = {
---     { temperatureSum = 0, humiditySum = 0, count = 0 },
---     { temperatureSum = 0, humiditySum = 0, count = 0 },
---     { temperatureSum = 0, humiditySum = 0, count = 0 },
---     { temperatureSum = 0, humiditySum = 0, count = 0 },
---     { temperatureSum = 0, humiditySum = 0, count = 0 },
---     { temperatureSum = 0, humiditySum = 0, count = 0 },
---     { temperatureSum = 0, humiditySum = 0, count = 0 },
---     { temperatureSum = 0, humiditySum = 0, count = 0 },
---     { temperatureSum = 0, humiditySum = 0, count = 0 },
--- }
-
+local terrainStats = {
+    { temperatureSum = 0, humiditySum = 0, count = 0 },
+    { temperatureSum = 0, humiditySum = 0, count = 0 },
+    { temperatureSum = 0, humiditySum = 0, count = 0 },
+    { temperatureSum = 0, humiditySum = 0, count = 0 },
+    { temperatureSum = 0, humiditySum = 0, count = 0 },
+    { temperatureSum = 0, humiditySum = 0, count = 0 },
+    { temperatureSum = 0, humiditySum = 0, count = 0 },
+    { temperatureSum = 0, humiditySum = 0, count = 0 },
+    { temperatureSum = 0, humiditySum = 0, count = 0 },
+}
+game.terrainStats = terrainStats
 function game.GetTerrain(temperature, humidity)
     local terrain
     local statsIndex
@@ -45,45 +45,45 @@ function game.GetTerrain(temperature, humidity)
             statsIndex = 1
         elseif humidity < game.humidityStep then
             terrain = game.terrain.snow
-            statsIndex = 1
+            statsIndex = 2
         else
             terrain = game.terrain.ice
-            statsIndex = 1
+            statsIndex = 3
         end
     elseif temperature < game.temperatureStep then
         if humidity < -game.humidityStep then
             terrain = game.terrain.sand
-            statsIndex = 2
+            statsIndex = 1
         elseif humidity < game.humidityStep then
             terrain = game.terrain.grass
             statsIndex = 2
         else
             terrain = game.terrain.water
-            statsIndex = 2
+            statsIndex = 3
         end
     else
         if humidity < -game.humidityStep then
-            terrain = game.terrain.snow
-            statsIndex = 3
+            terrain = game.terrain.lava
+            statsIndex = 1
         elseif humidity < game.humidityStep then
-            terrain = game.terrain.snow
-            statsIndex = 3
+            terrain = game.terrain.volcanic
+            statsIndex = 2
         else
             terrain = game.terrain.volcanic
             statsIndex = 3
         end
     end
 
-    -- local stats = terrainStats[statsIndex]
-    -- stats.temperatureSum = stats.temperatureSum + temperature
-    -- stats.humiditySum = stats.humiditySum + humidity
-    -- stats.count = stats.count + 1
+    local stats = game.terrainStats[statsIndex]
+    stats.temperatureSum = stats.temperatureSum + temperature
+    stats.humiditySum = stats.humiditySum + humidity
+    stats.count = stats.count + 1
 
     return terrain
 end
 
 function game.GetHumidity(x, y)
-    local level = 2
+    local level = 3
     local humidity = 0
     local seed = game.humiditySeed;
     for i = 1, level do
@@ -95,7 +95,7 @@ function game.GetHumidity(x, y)
 end
 
 function game.GetTemperature(x, y)
-    local level = 2
+    local level = 3
     local temperature = 0
     local seed = game.temperatureSeed;
     for i = 1, level do
@@ -125,19 +125,5 @@ function game.GenerateWorld(seed, length, width)
         end
     end
 end
-
--- game.GenerateWorld(142, 1000, 5000)
-
--- -- 计算并打印每个地形的平均温度和湿度
--- for terrain, stats in pairs(terrainStats) do
---     if stats.count > 0 then
---         local avgTemperature = stats.temperatureSum / stats.count
---         local avgHumidity = stats.humiditySum / stats.count
---         print(string.format("Terrain: %s, Avg Temperature: %.2f, Avg Humidity: %.2f", terrain, avgTemperature,
---             avgHumidity))
---     else
---         print(string.format("Terrain: %s, No data available.", terrain))
---     end
--- end
 
 return game
