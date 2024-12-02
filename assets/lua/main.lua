@@ -36,7 +36,7 @@ local terrainViewMap = {
         },
         {
             terrain = terrain.ice,
-            foundationRoughnessNoiseScale = 0.07,
+            foundationRoughnessNoiseScale = 0.06,
             foundationRoughnessStep = 0.41,
             foundationVoxel = voxel.sand,
             foundationDeltaHeight = -3,
@@ -45,7 +45,7 @@ local terrainViewMap = {
     {
         {
             terrain = terrain.sand,
-            foundationRoughnessNoiseScale = 0.07,
+            foundationRoughnessNoiseScale = 0.06,
             foundationRoughnessStep = 0.41,
             foundationVoxel = voxel.sand,
             foundationDeltaHeight = 0,
@@ -59,7 +59,7 @@ local terrainViewMap = {
         },
         {
             terrain = terrain.water,
-            foundationRoughnessNoiseScale = 0.07,
+            foundationRoughnessNoiseScale = 0.06,
             foundationRoughnessStep = 0.41,
             foundationVoxel = voxel.sand,
             foundationDeltaHeight = -3,
@@ -91,36 +91,55 @@ local terrainViewMap = {
 }
 
 local foundationSeed = 124321
-local function GetIndex(value, step)
-    if value < -step then
-        return 0
-    elseif value < 0 then
-        return 1
-    elseif value < step then
-        return 2
-    else
-        return 3
-    end
-end
 
 function GetVoxelInterpolation(temperature, humidity)
-    local step = 0.25
-    -- local step = 0.32
-    -- local step = 0.21
-    local temperatureIndex = GetIndex(temperature, step)
-    local humidityIndex = GetIndex(temperature, step)
-    local x0 = gameMath.Clamp(temperatureIndex, 1, 3)
-    local x1 = gameMath.Clamp(temperatureIndex + 1, 1, 3)
-    local y0 = gameMath.Clamp(humidityIndex, 1, 3)
-    local y1 = gameMath.Clamp(humidityIndex + 1, 1, 3)
+    local x0, x1, y0, y1
+    local dx = 0
+    local dy = 0
+    local s1 = 0.04
+    local s2 = 0.02
+    if temperature < -game.temperatureStep - s1 then
+        x0 = 1
+        x1 = 1
+    elseif temperature < -game.temperatureStep + s2 then
+        x0 = 1
+        x1 = 2
+        dx = (temperature - (-game.temperatureStep - s1)) / (s1 + s2)
+    elseif temperature < game.temperatureStep - s2 then
+        x0 = 2
+        x1 = 2
+    elseif temperature < game.temperatureStep + s1 then
+        x0 = 2
+        x1 = 3
+        dx = (temperature - (game.temperatureStep - s2)) / (s1 + s2)
+    else
+        x0 = 3
+        x1 = 3
+    end
+    if humidity < -game.humidityStep - s1 then
+        y0 = 1
+        y1 = 1
+    elseif humidity < -game.humidityStep + s2 then
+        y0 = 1
+        y1 = 2
+        dy = (humidity - (-game.humidityStep - s1)) / (s1 + s2)
+    elseif humidity < game.humidityStep - s2 then
+        y0 = 2
+        y1 = 2
+    elseif humidity < game.humidityStep + s1 then
+        y0 = 2
+        y1 = 3
+        dy = (humidity - (game.humidityStep - s2)) / (s1 + s2)
+    else
+        y0 = 3
+        y1 = 3
+    end
 
     local r00 = terrainViewMap[x0][y0]
     local r01 = terrainViewMap[x0][y1]
     local r10 = terrainViewMap[x1][y0]
     local r11 = terrainViewMap[x1][y1]
 
-    local dx = gameMath.Clamp((temperature - (step * (x0 - 2))) / step, 0, 1)
-    local dy = gameMath.Clamp((humidity - (step * (y0 - 2))) / step, 0, 1)
     return r00, r01, r10, r11, dx, dy
 end
 
@@ -233,7 +252,7 @@ function engine.Start()
                     local dx = (px - (voxelCount + 1) / 2) / voxelCount
                     local dy = (py - (voxelCount + 1) / 2) / voxelCount
                     local deltaNoise = math.max(math.abs(dx), math.abs(dy)) * 2
-                    deltaNoise = deltaNoise ^ 3
+                    deltaNoise = deltaNoise ^ 4
                     local voxelTemperature = game.GetTemperature((x + dx), (y + dy))
                     local voxelHumidity = game.GetHumidity((x + dx), (y + dy))
                     voxelTemperature = gameMath.Lerp(temperature, voxelTemperature,
@@ -331,17 +350,7 @@ function engine.Start()
             end
         end
     end
-    -- 计算并打印每个地形的平均温度和湿度
-    for terrain, stats in pairs(game.terrainStats) do
-        if stats.count > 0 then
-            local avgTemperature = stats.temperatureSum / stats.count
-            local avgHumidity = stats.humiditySum / stats.count
-            print(string.format("Terrain: %s, Avg Temperature: %.2f, Avg Humidity: %.2f", terrain, avgTemperature,
-                avgHumidity))
-        else
-            print(string.format("Terrain: %s, No data available.", terrain))
-        end
-    end
+
 
     local vertices = {}
     local colors = {}

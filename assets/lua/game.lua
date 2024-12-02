@@ -17,73 +17,48 @@ local game = {
     width = 0,
     terrainMap = nil,
     blockMap = nil,
-    humidityStep = 0.2,
-    temperatureStep = 0.2,
+    humidityStep = 0.15,
+    temperatureStep = 0.15,
 }
 
 
-local temperatureNoiseScale = 0.37
-local humidityNoiseScale = 0.37
-local terrainStats = {
-    { temperatureSum = 0, humiditySum = 0, count = 0 },
-    { temperatureSum = 0, humiditySum = 0, count = 0 },
-    { temperatureSum = 0, humiditySum = 0, count = 0 },
-    { temperatureSum = 0, humiditySum = 0, count = 0 },
-    { temperatureSum = 0, humiditySum = 0, count = 0 },
-    { temperatureSum = 0, humiditySum = 0, count = 0 },
-    { temperatureSum = 0, humiditySum = 0, count = 0 },
-    { temperatureSum = 0, humiditySum = 0, count = 0 },
-    { temperatureSum = 0, humiditySum = 0, count = 0 },
-}
-game.terrainStats = terrainStats
+local temperatureNoiseScale = 0.27
+local humidityNoiseScale = 0.27
+
 function game.GetTerrain(temperature, humidity)
     local terrain
-    local statsIndex
     if temperature < -game.temperatureStep then
         if humidity < -game.humidityStep then
             terrain = game.terrain.snow
-            statsIndex = 1
         elseif humidity < game.humidityStep then
             terrain = game.terrain.snow
-            statsIndex = 2
         else
             terrain = game.terrain.ice
-            statsIndex = 3
         end
     elseif temperature < game.temperatureStep then
         if humidity < -game.humidityStep then
             terrain = game.terrain.sand
-            statsIndex = 1
         elseif humidity < game.humidityStep then
             terrain = game.terrain.grass
-            statsIndex = 2
         else
             terrain = game.terrain.water
-            statsIndex = 3
         end
     else
         if humidity < -game.humidityStep then
             terrain = game.terrain.lava
-            statsIndex = 1
         elseif humidity < game.humidityStep then
             terrain = game.terrain.volcanic
-            statsIndex = 2
         else
             terrain = game.terrain.volcanic
-            statsIndex = 3
         end
     end
 
-    local stats = game.terrainStats[statsIndex]
-    stats.temperatureSum = stats.temperatureSum + temperature
-    stats.humiditySum = stats.humiditySum + humidity
-    stats.count = stats.count + 1
 
     return terrain
 end
 
 function game.GetHumidity(x, y)
-    local level = 3
+    local level = 2
     local humidity = 0
     local seed = game.humiditySeed;
     for i = 1, level do
@@ -95,7 +70,7 @@ function game.GetHumidity(x, y)
 end
 
 function game.GetTemperature(x, y)
-    local level = 3
+    local level = 2
     local temperature = 0
     local seed = game.temperatureSeed;
     for i = 1, level do
@@ -104,7 +79,7 @@ function game.GetTemperature(x, y)
             gameMath.PerlinNoise2D(seed, x * temperatureNoiseScale * m, y * temperatureNoiseScale * m) / m
         seed = gameMath.LCGRandom(seed)
     end
-    -- temperature = temperature + (x - (game.length - 1) / 2) / game.length
+    temperature = temperature + (x - (game.length - 1) / 2) / game.length
     return temperature
 end
 
