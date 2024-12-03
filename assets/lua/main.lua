@@ -1,7 +1,7 @@
 local engine = require("engine")
 local gameMath = require("gameMath")
 local game = require("game")
-
+local profiler = require("profiler")
 local voxelCount = 16
 local modelScale = 1 / voxelCount;
 local voxel = {
@@ -178,9 +178,8 @@ function GetVoxelViewData(temperature, humidity)
     end
 end
 
-local length = 128
+local length = 32
 local width = 32
-
 function engine.Start()
     print("Lua Start")
 
@@ -229,24 +228,28 @@ function engine.Start()
             end
         end
     end
-
+    print("Generating lightings..")
     local pointLights = {}
-    print("Generating surface..")
-    local terrain = game.terrain
     for x = 1, length do
         for y = 1, width do
-            -- Target values
-            local temperature = game.GetTemperature(x, y)
-            local humidity = game.GetHumidity(x, y)
             local random = gameMath.LCGRandom(gameMath.CantorPair(x, y)) % 100
             if random < 5 and #pointLights < 256 then
-                -- if random < 3 then
                 table.insert(pointLights, {
                     color = { 0.8, 0.4, 0, 1 },
                     position = { x, y, 0.5 },
                     range = 4,
                 })
             end
+        end
+    end
+    profiler.start(1)
+    print("Generating voxel..")
+    for x = 1, length do
+        for y = 1, width do
+            -- Target values
+            local temperature = game.GetTemperature(x, y)
+            local humidity = game.GetHumidity(x, y)
+
             for px = 1, voxelCount do
                 for py = 1, voxelCount do
                     local dx = (px - (voxelCount + 1) / 2) / voxelCount
@@ -259,15 +262,15 @@ function engine.Start()
                         deltaNoise)
                     voxelHumidity = gameMath.Lerp(humidity, voxelHumidity, deltaNoise)
 
-                    local r00, r01, r10, r11, dx, dy = GetVoxelInterpolation(voxelTemperature, voxelHumidity)
-                    local foundationRoughnessNoiseScale = GetVoxelViewInterpolatdData(r00, r01, r10, r11, dx, dy,
+                    local r00, r01, r10, r11, tx, ty = GetVoxelInterpolation(voxelTemperature, voxelHumidity)
+                    local foundationRoughnessNoiseScale = GetVoxelViewInterpolatdData(r00, r01, r10, r11, tx, ty,
                         "foundationRoughnessNoiseScale")
                     local foundationRoughnessNoise = gameMath.PerlinNoise2D(foundationSeed,
                         foundationRoughnessNoiseScale * ((x - 1) * voxelCount + px),
                         foundationRoughnessNoiseScale * ((y - 1) * voxelCount + py))
-                    local foundationRoughnessStep = GetVoxelViewInterpolatdData(r00, r01, r10, r11, dx, dy,
+                    local foundationRoughnessStep = GetVoxelViewInterpolatdData(r00, r01, r10, r11, tx, ty,
                         "foundationRoughnessStep")
-                    local foundationDeltaHeight = GetVoxelViewInterpolatdData(r00, r01, r10, r11, dx, dy,
+                    local foundationDeltaHeight = GetVoxelViewInterpolatdData(r00, r01, r10, r11, tx, ty,
                         "foundationDeltaHeight")
                     local deltaHeight
                     if foundationRoughnessNoise < -foundationRoughnessStep then
@@ -283,74 +286,11 @@ function engine.Start()
                     for z = 1, 5 + deltaHeight + foundationDeltaHeight do
                         voxelHeightMap[z] = GetVoxelViewData(voxelTemperature, voxelHumidity).foundationVoxel
                     end
-                    -- local foundationDecorationNoiseScale = 0.47
-                    -- local foundationDecorationTemperature = gameMath.PerlinNoise2D(foundationDecorationTemperatureSeed,
-                    --     foundationDecorationNoiseScale * ((x - 1) * voxelCount + px),
-                    --     foundationDecorationNoiseScale * ((y - 1) * voxelCount + py))
-                    -- local voxelTerrain = game.GetTerrain(voxelTemperature, voxelHumidity)
-                    -- local terrainView = terrainToView[voxelTerrain]
-                    -- roughnessNoiseScale = roughnessNoiseScale * 2
-                    -- roughnessNoise = roughnessNoise + 0.5 *
-                    --     gameMath.PerlinNoise2D(3211, roughnessNoiseScale * ((x - 1) * voxelCount + px),
-                    --         roughnessNoiseScale * ((y - 1) * voxelCount + py))
-                    -- local deltaHeightStep = 0.1
-                    -- roughnessNoise = roughnessNoise * terrainView.roughness
-                    -- local deltaHeight
-                    -- if roughnessNoise > deltaHeightStep then
-                    --     deltaHeight = 1
-                    -- elseif roughnessNoise > -deltaHeightStep then
-                    --     deltaHeight = 0
-                    -- else
-                    --     deltaHeight = -1
-                    -- end
-                    -- local voxelHeightMap = voxelMap[(x - 1) * voxelCount + px][(y - 1) * voxelCount + py]
-                    -- for z = 1, 4 + deltaHeight do
-                    --     voxelHeightMap[z] = voxel.dirt
-                    -- end
-                    -- -- Foundation
-                    -- local voxelHeightMap = voxelMap[(x - 1) * voxelCount + px][(y - 1) * voxelCount + py]
-                    -- voxelHeightMap[1] = terrainView.foundation
-
-                    -- if voxelTerrain == terrain.ice or voxelTerrain == terrain.water or voxelTerrain == terrain.lava then
-                    --     for z = 1, 2 + deltaHeight do
-                    --         voxelHeightMap[z] = terrainView.foundation
-                    --     end
-                    --     if voxelTerrain == terrain.water then
-                    --         for z = 2 + deltaHeight, 4 do
-                    --             voxelHeightMap[z] = terrainView.surface
-                    --         end
-                    --     else
-                    --         for z = 2 + deltaHeight, 5 do
-                    --             voxelHeightMap[z] = terrainView.surface
-                    --         end
-                    --     end
-                    -- else
-                    --     local surfaceNoiseScale = terrainView.surfaceNoiseScale
-                    --     local surfaceNoise = gameMath.PerlinNoise2D(453980,
-                    --         surfaceNoiseScale * ((x - 1) * voxelCount + px),
-                    --         surfaceNoiseScale * ((y - 1) * voxelCount + py))
-
-                    --     if surfaceNoise > terrainView.surfaceStep + 0.1 then
-                    --         for z = 1, 3 + deltaHeight do
-                    --             voxelHeightMap[z] = terrainView.foundation
-                    --         end
-                    --         voxelHeightMap[5 + deltaHeight] = terrainView.surface
-                    --     elseif surfaceNoise > terrainView.surfaceStep then
-                    --         for z = 1, 4 + deltaHeight do
-                    --             voxelHeightMap[z] = terrainView.foundation
-                    --         end
-                    --         voxelHeightMap[5 + deltaHeight] = terrainView.surface
-                    --     else
-                    --         for z = 1, 5 + deltaHeight do
-                    --             voxelHeightMap[z] = terrainView.foundation
-                    --         end
-                    --     end
-                    -- end
                 end
             end
         end
     end
-
+    profiler.stop()
 
     local vertices = {}
     local colors = {}
@@ -366,6 +306,7 @@ function engine.Start()
             end
         end
     end
+
     print("Drawing models..")
     engine.SetNormals(vertices, normals)
     local index = engine.AddModel(vertices, colors, normals)
