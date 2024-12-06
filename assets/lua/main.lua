@@ -1,7 +1,7 @@
 local engine = require("engine")
 local gameMath = require("gameMath")
 local game = require("game")
-local profiler = require("profiler")
+-- local profiler = require("profiler")
 local voxelCount = 16
 local modelScale = 1 / voxelCount;
 local voxel = {
@@ -22,21 +22,21 @@ local terrainViewMap = {
     {
         {
             terrain = terrain.snow,
-            foundationRoughnessNoiseScale = 0.23,
+            foundationRoughnessNoiseScale = 3.68,
             foundationRoughnessStep = 0.27,
             foundationVoxel = voxel.dirt,
             foundationDeltaHeight = 0,
         },
         {
             terrain = terrain.snow,
-            foundationRoughnessNoiseScale = 0.23,
+            foundationRoughnessNoiseScale = 3.68,
             foundationRoughnessStep = 0.27,
             foundationVoxel = voxel.dirt,
             foundationDeltaHeight = 0,
         },
         {
             terrain = terrain.ice,
-            foundationRoughnessNoiseScale = 0.06,
+            foundationRoughnessNoiseScale = 0.96,
             foundationRoughnessStep = 0.41,
             foundationVoxel = voxel.sand,
             foundationDeltaHeight = -3,
@@ -45,21 +45,21 @@ local terrainViewMap = {
     {
         {
             terrain = terrain.sand,
-            foundationRoughnessNoiseScale = 0.06,
+            foundationRoughnessNoiseScale = 0.96,
             foundationRoughnessStep = 0.41,
             foundationVoxel = voxel.sand,
             foundationDeltaHeight = 0,
         },
         {
             terrain = terrain.grass,
-            foundationRoughnessNoiseScale = 0.23,
+            foundationRoughnessNoiseScale = 3.68,
             foundationRoughnessStep = 0.27,
             foundationVoxel = voxel.dirt,
             foundationDeltaHeight = 0,
         },
         {
             terrain = terrain.water,
-            foundationRoughnessNoiseScale = 0.06,
+            foundationRoughnessNoiseScale = 0.96,
             foundationRoughnessStep = 0.41,
             foundationVoxel = voxel.sand,
             foundationDeltaHeight = -3,
@@ -68,21 +68,21 @@ local terrainViewMap = {
     {
         {
             terrain = terrain.lava,
-            foundationRoughnessNoiseScale = 0.31,
+            foundationRoughnessNoiseScale = 4.96,
             foundationRoughnessStep = 0.2,
             foundationVoxel = voxel.volcanicRock,
             foundationDeltaHeight = -3,
         },
         {
             terrain = terrain.volcanic,
-            foundationRoughnessNoiseScale = 0.31,
+            foundationRoughnessNoiseScale = 4.96,
             foundationRoughnessStep = 0.2,
             foundationVoxel = voxel.volcanicRock,
             foundationDeltaHeight = 0,
         },
         {
             terrain = terrain.volcanic,
-            foundationRoughnessNoiseScale = 0.31,
+            foundationRoughnessNoiseScale = 4.96,
             foundationRoughnessStep = 0.2,
             foundationVoxel = voxel.volcanicRock,
             foundationDeltaHeight = 0,
@@ -91,7 +91,7 @@ local terrainViewMap = {
 }
 
 local foundationSeed = 124321
-
+local stoneNoiseSeed = 63548
 function GetVoxelInterpolation(temperature, humidity)
     local x0, x1, y0, y1
     local dx = 0
@@ -242,7 +242,7 @@ function engine.Start()
             end
         end
     end
-    profiler.start(1)
+    -- profiler.start(1)
     print("Generating voxel..")
     for x = 1, length do
         for y = 1, width do
@@ -266,8 +266,8 @@ function engine.Start()
                     local foundationRoughnessNoiseScale = GetVoxelViewInterpolatdData(r00, r01, r10, r11, tx, ty,
                         "foundationRoughnessNoiseScale")
                     local foundationRoughnessNoise = gameMath.PerlinNoise2D(foundationSeed,
-                        foundationRoughnessNoiseScale * ((x - 1) * voxelCount + px),
-                        foundationRoughnessNoiseScale * ((y - 1) * voxelCount + py))
+                        foundationRoughnessNoiseScale * (x + dx),
+                        foundationRoughnessNoiseScale * (y + dy))
                     local foundationRoughnessStep = GetVoxelViewInterpolatdData(r00, r01, r10, r11, tx, ty,
                         "foundationRoughnessStep")
                     local foundationDeltaHeight = GetVoxelViewInterpolatdData(r00, r01, r10, r11, tx, ty,
@@ -286,11 +286,13 @@ function engine.Start()
                     for z = 1, 5 + deltaHeight + foundationDeltaHeight do
                         voxelHeightMap[z] = GetVoxelViewData(voxelTemperature, voxelHumidity).foundationVoxel
                     end
+
+                    -- local stoneNoise = gameMath.PerlinNoise2D(stoneNoiseSeed, (x + dx), (y + dy))
                 end
             end
         end
     end
-    profiler.stop()
+    -- profiler.stop()
 
     local vertices = {}
     local colors = {}
@@ -352,6 +354,5 @@ function engine.Update()
 end
 
 _G.engine = engine
-engine.Start()
 print("Lua initialized!")
 return engine
