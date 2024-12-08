@@ -14,7 +14,8 @@ local voxel = {
     water = { 86, 98, 185, 255 },
     lava = { 225, 100, 67, 255 },
     volcanicRock = { 51, 41, 41, 255 },
-    volcanicAsh = { 128, 128, 128, 255 },
+    volcanicAsh = { 96, 96, 96, 255 },
+    stone = { 128, 128, 128, 255 }
 }
 
 local terrain = game.terrain
@@ -40,6 +41,7 @@ local terrainViewMap = {
             foundationRoughnessStep = 0.41,
             foundationVoxel = voxel.sand,
             foundationDeltaHeight = -3,
+
         },
     },
     {
@@ -92,44 +94,44 @@ local terrainViewMap = {
 
 local foundationSeed = 124321
 local stoneNoiseSeed = 63548
+local surfaceNoiseSeed = 213456
 function GetVoxelInterpolation(temperature, humidity)
     local x0, x1, y0, y1
     local dx = 0
     local dy = 0
-    local s1 = 0.04
-    local s2 = 0.02
-    if temperature < -game.temperatureStep - s1 then
+    local delta = 0.05
+    if temperature < -game.temperatureStep - delta then
         x0 = 1
         x1 = 1
-    elseif temperature < -game.temperatureStep + s2 then
+    elseif temperature < -game.temperatureStep then
         x0 = 1
         x1 = 2
-        dx = (temperature - (-game.temperatureStep - s1)) / (s1 + s2)
-    elseif temperature < game.temperatureStep - s2 then
+        dx = (temperature - (-game.temperatureStep - delta)) / delta
+    elseif temperature < game.temperatureStep then
         x0 = 2
         x1 = 2
-    elseif temperature < game.temperatureStep + s1 then
+    elseif temperature < game.temperatureStep + delta then
         x0 = 2
         x1 = 3
-        dx = (temperature - (game.temperatureStep - s2)) / (s1 + s2)
+        dx = (temperature - game.temperatureStep) / delta
     else
         x0 = 3
         x1 = 3
     end
-    if humidity < -game.humidityStep - s1 then
+    if humidity < -game.humidityStep - delta then
         y0 = 1
         y1 = 1
-    elseif humidity < -game.humidityStep + s2 then
+    elseif humidity < -game.humidityStep then
         y0 = 1
         y1 = 2
-        dy = (humidity - (-game.humidityStep - s1)) / (s1 + s2)
-    elseif humidity < game.humidityStep - s2 then
+        dy = (humidity - (-game.humidityStep - delta)) / delta
+    elseif humidity < game.humidityStep then
         y0 = 2
         y1 = 2
-    elseif humidity < game.humidityStep + s1 then
+    elseif humidity < game.humidityStep + delta then
         y0 = 2
         y1 = 3
-        dy = (humidity - (game.humidityStep - s2)) / (s1 + s2)
+        dy = (humidity - game.humidityStep) / delta
     else
         y0 = 3
         y1 = 3
@@ -218,7 +220,7 @@ function engine.Start()
     print("Generating world..")
 
     local voxelMap = {}
-    local height = 8
+    local height = 16
     for x = 1, length * voxelCount do
         voxelMap[x] = {}
         for y = 1, width * voxelCount do
@@ -242,8 +244,7 @@ function engine.Start()
             end
         end
     end
-    -- profiler.start(1)
-    print("Generating voxel..")
+    print("Generating terrain foundation..")
     for x = 1, length do
         for y = 1, width do
             -- Target values
@@ -282,18 +283,47 @@ function engine.Start()
                     end
 
                     local voxelHeightMap = voxelMap[(x - 1) * voxelCount + px][(y - 1) * voxelCount + py]
-
+                    local voxelViewData = GetVoxelViewData(voxelTemperature, voxelHumidity);
                     for z = 1, 5 + deltaHeight + foundationDeltaHeight do
-                        voxelHeightMap[z] = GetVoxelViewData(voxelTemperature, voxelHumidity).foundationVoxel
+                        voxelHeightMap[z] = voxelViewData.foundationVoxel
                     end
 
-                    -- local stoneNoise = gameMath.PerlinNoise2D(stoneNoiseSeed, (x + dx), (y + dy))
+                    local stoneNoiseScale = 1.71
+                    local stoneNoise = gameMath.PerlinNoise2D(stoneNoiseSeed, stoneNoiseScale * (x + dx),
+                        stoneNoiseScale * (y + dy))
+                    local stoneNoiseStep = 0.618
+                    local maxHeight
+                    if stoneNoise > stoneNoiseStep then
+                        maxHeight = 6 + deltaHeight + foundationDeltaHeight
+                        for z = 5 + deltaHeight + foundationDeltaHeight, 6 + deltaHeight + foundationDeltaHeight do
+                            voxelHeightMap[z] = voxel.stone
+                        end
+                    else
+                        maxHeight = 5 + deltaHeight + foundationDeltaHeight
+                    end
+                    if voxelViewData.terrain == terrain.snow then
+                        local snowNoiseScale = 0.96
+                        local snowNoise = gameMath.PerlinNoise2D(surfaceNoiseSeed,
+                            snowNoiseScale * (x + dx),
+                            snowNoiseScale * (y + dy))
+                        local snowHeight
+                        if snowNoise < -0.66 then
+                            snowHeight = 5 + deltaHeight + foundationDeltaHeight
+                        elseif snowNoise < -0.33 then
+                            snowHeight = 6 + deltaHeight + foundationDeltaHeight
+                        else
+                            snowHeight = 7 + deltaHeight + foundationDeltaHeight
+                        end
+                        for z = maxHeight + 1, snowHeight do
+                            voxelHeightMap[z] = voxel.snow
+                        end
+                    end
                 end
             end
         end
     end
     -- profiler.stop()
-
+    print("Generating terrain surface..")
     local vertices = {}
     local colors = {}
     local normals = {}
