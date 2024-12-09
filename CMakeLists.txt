@@ -33,11 +33,11 @@ elseif(APPLE)
     enable_language(OBJC)
     find_library(COCOA_LIBRARY Cocoa)
     find_library(QUARTZCORE_LIBRARY QuartzCore)
-    find_library(MOLTENVK_LIBRARY MoltenVK)
+    # find_library(MOLTENVK_LIBRARY MoltenVK)
 
     list(APPEND LIBRARYS ${COCOA_LIBRARY})
     list(APPEND LIBRARYS ${QUARTZCORE_LIBRARY})
-    list(APPEND LIBRARYS ${MOLTENVK_LIBRARY})
+    # list(APPEND LIBRARYS ${MOLTENVK_LIBRARY})
 
     file(GLOB_RECURSE OCSOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/*.m)
     list(APPEND SOURCES ${OCSOURCES})

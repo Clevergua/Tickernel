@@ -120,7 +120,7 @@ static void CreateVkRenderPass(DeferredRenderPass *pDeferredRenderPass, VkDevice
         .attachment = 3,
         .layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
     };
-    VkSubpassDescription ligthtingSubpassDescription = {
+    VkSubpassDescription opaqueLigthtingSubpassDescription = {
         .flags = 0,
         .pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
         .inputAttachmentCount = 3,
@@ -132,10 +132,11 @@ static void CreateVkRenderPass(DeferredRenderPass *pDeferredRenderPass, VkDevice
         .preserveAttachmentCount = 0,
         .pPreserveAttachments = NULL,
     };
-    uint32_t subpassCount = 2;
+    uint32_t subpassCount = 4;
     VkSubpassDescription vkSubpassDescriptions[] = {
         opaqueGeometrySubpassDescription,
-        ligthtingSubpassDescription,
+        opaqueLigthtingSubpassDescription,
+        
     };
     uint32_t dependencyCount = subpassCount - 1;
     VkSubpassDependency subpassDependencies[dependencyCount];

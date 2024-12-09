@@ -25,7 +25,6 @@ end
 
 function profiler.start(maxDepth)
     maxDepth = maxDepth or math.huge
-    depth = 1
     debug.sethook(hook, "cr")
 end
 
