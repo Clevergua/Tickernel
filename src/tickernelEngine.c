@@ -62,7 +62,7 @@ void RunTickernelEngine(TickernelEngine *pTickernelEngine)
         TickernelUpdate(pTickernelEngine, &pTickernelEngine->canUpdate);
         struct timespec frameEndTime;
         timespec_get(&frameEndTime, TIME_UTC);
-        uint32_t deltaMilliseconds = (frameEndTime.tv_sec - frameStartTime.tv_sec) * MILLISECONDS_PER_SECOND + (frameEndTime.tv_nsec - frameStartTime.tv_nsec) / NANOSECONDS_PER_MILLISECOND;
+        uint32_t deltaMilliseconds = (uint32_t)(frameEndTime.tv_sec - frameStartTime.tv_sec) * MILLISECONDS_PER_SECOND + (frameEndTime.tv_nsec - frameStartTime.tv_nsec) / NANOSECONDS_PER_MILLISECOND;
         uint32_t sleepMilliseconds;
         if (deltaMilliseconds < millisecondsPerFrame)
         {

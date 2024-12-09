@@ -4,7 +4,7 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 # Because of this use c99: https://stackoverflow.com/questions/40829032/how-to-install-c11-compiler-on-mac-os-with-optional-string-functions-included
 set(CMAKE_C_STANDARD 99)
 # Debug or Release
-message(${CMAKE_BUILD_TYPE})
+# message(${CMAKE_BUILD_TYPE})
 
 find_package(Vulkan REQUIRED)
 # find_library(GLFW3_LIBRARY NAMES "libglfw3.a" "libglfw.3.dylib" "glfw3.dll" "glfw3dll.lib" PATHS ${CMAKE_CURRENT_SOURCE_DIR}/lib/glfw3)
@@ -33,11 +33,16 @@ elseif(APPLE)
     enable_language(OBJC)
     find_library(COCOA_LIBRARY Cocoa)
     find_library(QUARTZCORE_LIBRARY QuartzCore)
+    find_library(MOLTENVK_LIBRARY MoltenVK)
+
     list(APPEND LIBRARYS ${COCOA_LIBRARY})
     list(APPEND LIBRARYS ${QUARTZCORE_LIBRARY})
+    list(APPEND LIBRARYS ${MOLTENVK_LIBRARY})
+
     file(GLOB_RECURSE OCSOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/*.m)
     list(APPEND SOURCES ${OCSOURCES})
 
+    
 else()
     # Ohter platform
     message("Unknown platform!")
@@ -78,7 +83,10 @@ endforeach()
 add_custom_target(CompileShaders DEPENDS ${SPIRV_BINARIES})
 add_dependencies(${PROJECT_NAME} CompileShaders)
 # Copy assets
-add_custom_target(CopyAssets COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_LIST_DIR}/assets ${CMAKE_BINARY_DIR}/assets)
+add_custom_target(CopyAssets
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    ${CMAKE_SOURCE_DIR}/assets
+    ${CMAKE_BINARY_DIR}/assets
+)
 add_dependencies(${PROJECT_NAME} CopyAssets)
-
 

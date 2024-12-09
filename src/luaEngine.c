@@ -36,7 +36,7 @@ static int AddModel(lua_State *pLuaState)
     lua_len(pLuaState, -2);
     //  vertices colors length
 
-    uint32_t vertexCount = luaL_checkinteger(pLuaState, -1);
+    lua_Integer vertexCount = luaL_checkinteger(pLuaState, -1);
     lua_pop(pLuaState, 1);
     //  vertices colors
 
@@ -92,7 +92,7 @@ static int AddModel(lua_State *pLuaState)
         GraphicEngine *pGraphicEngine = lua_touserdata(pLuaState, -1);
         lua_pop(pLuaState, 2);
 
-        AddModelToOpaqueGeometrySubpass(&pGraphicEngine->deferredRenderPass.opaqueGeometrySubpass, pGraphicEngine->vkDevice, pGraphicEngine->vkPhysicalDevice, pGraphicEngine->graphicVkCommandPool, pGraphicEngine->vkGraphicQueue, pGraphicEngine->globalUniformBuffer, vertexCount, opaqueGeometrySubpassVertices, &outputIndex);
+        AddModelToOpaqueGeometrySubpass(&pGraphicEngine->deferredRenderPass.opaqueGeometrySubpass, pGraphicEngine->vkDevice, pGraphicEngine->vkPhysicalDevice, pGraphicEngine->graphicVkCommandPool, pGraphicEngine->vkGraphicQueue, pGraphicEngine->globalUniformBuffer, (uint32_t)vertexCount, opaqueGeometrySubpassVertices, &outputIndex);
 
         TickernelFree(opaqueGeometrySubpassVertices);
 
@@ -111,7 +111,7 @@ static int AddModel(lua_State *pLuaState)
 
 static int RemoveModel(lua_State *pLuaState)
 {
-    uint32_t index = luaL_checkinteger(pLuaState, -1);
+    lua_Integer index = luaL_checkinteger(pLuaState, -1);
     lua_pop(pLuaState, 1);
 
     int engineTpye = lua_getglobal(pLuaState, "engine");
@@ -121,7 +121,7 @@ static int RemoveModel(lua_State *pLuaState)
     GraphicEngine *pGraphicEngine = lua_touserdata(pLuaState, -1);
     lua_pop(pLuaState, 2);
 
-    RemoveModelFromOpaqueGeometrySubpass(&pGraphicEngine->deferredRenderPass.opaqueGeometrySubpass, pGraphicEngine->vkDevice, index);
+    RemoveModelFromOpaqueGeometrySubpass(&pGraphicEngine->deferredRenderPass.opaqueGeometrySubpass, pGraphicEngine->vkDevice, (uint32_t)index);
     return 0;
 }
 
@@ -130,7 +130,7 @@ static int UpdateInstances(lua_State *pLuaState)
     //  index modelMatrix
 
     lua_len(pLuaState, -1);
-    uint32_t instanceCount = luaL_checkinteger(pLuaState, -1);
+    lua_Integer instanceCount = luaL_checkinteger(pLuaState, -1);
     lua_pop(pLuaState, 1);
     OpaqueGeometrySubpassInstance instances[instanceCount];
     for (uint32_t i = 0; i < instanceCount; i++)
@@ -155,7 +155,7 @@ static int UpdateInstances(lua_State *pLuaState)
     lua_pop(pLuaState, 1);
 
     // index
-    uint32_t modelIndex = luaL_checkinteger(pLuaState, -1);
+    lua_Integer modelIndex = luaL_checkinteger(pLuaState, -1);
     lua_pop(pLuaState, 1);
 
     int engineTpye = lua_getglobal(pLuaState, "engine");
@@ -164,7 +164,7 @@ static int UpdateInstances(lua_State *pLuaState)
     AssertLuaType(pGraphicEngineTpye, LUA_TLIGHTUSERDATA);
     GraphicEngine *pGraphicEngine = lua_touserdata(pLuaState, -1);
     lua_pop(pLuaState, 2);
-    UpdateInstancesToOpaqueGeometrySubpass(&pGraphicEngine->deferredRenderPass.opaqueGeometrySubpass, modelIndex, pGraphicEngine->vkDevice, pGraphicEngine->vkPhysicalDevice, pGraphicEngine->graphicVkCommandPool, pGraphicEngine->vkGraphicQueue, pGraphicEngine->globalUniformBuffer, instances, instanceCount);
+    UpdateInstancesToOpaqueGeometrySubpass(&pGraphicEngine->deferredRenderPass.opaqueGeometrySubpass, (uint32_t)modelIndex, pGraphicEngine->vkDevice, pGraphicEngine->vkPhysicalDevice, pGraphicEngine->graphicVkCommandPool, pGraphicEngine->vkGraphicQueue, pGraphicEngine->globalUniformBuffer, instances, (uint32_t)instanceCount);
     return 0;
 }
 
@@ -219,11 +219,11 @@ static int UpdateLightsUniformBuffer(lua_State *pLuaState)
     LightsUniformBuffer lightsUniformBuffer;
 
     lua_len(pLuaState, -1);
-    uint32_t pointLightCount = luaL_checkinteger(pLuaState, -1);
-    lightsUniformBuffer.pointLightCount = pointLightCount;
+    lua_Integer pointLightCount = luaL_checkinteger(pLuaState, -1);
+    lightsUniformBuffer.pointLightCount = (int)pointLightCount;
     if (pointLightCount > MAX_POINT_LIGHT_COUNT)
     {
-        TickernelError("Point light count: %d out of range!\n", pointLightCount);
+        TickernelError("Point light count: %d out of range!\n", (int)pointLightCount);
     }
 
     lua_pop(pLuaState, 1);

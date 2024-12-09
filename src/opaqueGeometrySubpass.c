@@ -17,7 +17,6 @@ static void CreateVkPipeline(Subpass *pOpaqueGeometrySubpass, const char *shader
     };
 
     VkShaderModule opaqueGeometryFragShaderModule;
-
     char opaqueGeometryFragShaderPath[FILENAME_MAX];
     strcpy(opaqueGeometryFragShaderPath, shadersPath);
     TickernelCombinePaths(opaqueGeometryFragShaderPath, FILENAME_MAX, "opaqueGeometry.frag.spv");

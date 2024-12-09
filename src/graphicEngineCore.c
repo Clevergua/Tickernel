@@ -242,7 +242,7 @@ void CreateVkShaderModule(VkDevice vkDevice, const char *filePath, VkShaderModul
     FILE *pFile = fopen(filePath, "rb");
     if (NULL == pFile)
     {
-        printf("Failed to read file with path: %s\n", filePath);
+        TickernelError("Failed to read file with path: %s\n", filePath);
     }
     else
     {
@@ -265,7 +265,8 @@ void CreateVkShaderModule(VkDevice vkDevice, const char *filePath, VkShaderModul
                 .pCode = pCode,
             };
             VkShaderModule shaderModule;
-            vkCreateShaderModule(vkDevice, &shaderModuleCreateInfo, NULL, pVkShaderModule);
+            VkResult result = vkCreateShaderModule(vkDevice, &shaderModuleCreateInfo, NULL, pVkShaderModule);
+            TryThrowVulkanError(result);
             TickernelFree(pCode);
         }
         else

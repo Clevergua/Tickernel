@@ -82,8 +82,8 @@ void TickernelFree(void *block)
 
 bool TickernelStartsWith(const char *str, const char *prefix)
 {
-    int strLength = strlen(str);
-    int prefixLength = strlen(prefix);
+    size_t strLength = strlen(str);
+    size_t prefixLength = strlen(prefix);
     if (strLength < prefixLength)
     {
         return false;
@@ -97,8 +97,8 @@ bool TickernelStartsWith(const char *str, const char *prefix)
 
 bool TickernelEndsWith(const char *str, const char *suffix)
 {
-    int strLength = strlen(str);
-    int suffixLength = strlen(suffix);
+    size_t strLength = strlen(str);
+    size_t suffixLength = strlen(suffix);
     if (strLength < suffixLength)
     {
         return false;
