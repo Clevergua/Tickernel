@@ -52,6 +52,7 @@ typedef struct GraphicEngineStruct
     GlobalUniformBuffer inputGlobalUniformBuffer;
     LightsUniformBuffer inputLightsUniformBuffer;
 
+    GraphicImage colorGraphicImage;
     GraphicImage depthGraphicImage;
     GraphicImage albedoGraphicImage;
     GraphicImage normalGraphicImage;

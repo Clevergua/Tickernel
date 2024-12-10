@@ -670,6 +670,7 @@ static void CreateGraphicImages(GraphicEngine *pGraphicEngine)
     CreateGraphicImage(pGraphicEngine->vkDevice, pGraphicEngine->vkPhysicalDevice, vkExtent3D, depthVkFormat, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_IMAGE_ASPECT_DEPTH_BIT, &pGraphicEngine->depthGraphicImage);
     CreateGraphicImage(pGraphicEngine->vkDevice, pGraphicEngine->vkPhysicalDevice, vkExtent3D, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_IMAGE_ASPECT_COLOR_BIT, &pGraphicEngine->albedoGraphicImage);
     CreateGraphicImage(pGraphicEngine->vkDevice, pGraphicEngine->vkPhysicalDevice, vkExtent3D, VK_FORMAT_A2R10G10B10_UNORM_PACK32, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_IMAGE_ASPECT_COLOR_BIT, &pGraphicEngine->normalGraphicImage);
+    CreateGraphicImage(pGraphicEngine->vkDevice, pGraphicEngine->vkPhysicalDevice, vkExtent3D, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_IMAGE_ASPECT_COLOR_BIT, &pGraphicEngine->colorGraphicImage);
 }
 
 static void DestroyGraphicImages(GraphicEngine *pGraphicEngine)
@@ -682,7 +683,6 @@ static void DestroyGraphicImages(GraphicEngine *pGraphicEngine)
 static void RecreateSwapchain(GraphicEngine *pGraphicEngine)
 {
     VkResult result = VK_SUCCESS;
-
     uint32_t width, height;
     TickernelGetWindowFramebufferSize(pGraphicEngine->pTickernelWindow, &width, &height);
     while (0 == width || 0 == height)
@@ -690,9 +690,11 @@ static void RecreateSwapchain(GraphicEngine *pGraphicEngine)
         TickernelGetWindowFramebufferSize(pGraphicEngine->pTickernelWindow, &width, &height);
         TickernelWaitWindowEvent();
     }
+    bool hasSizeChanged = false;
     if (width != pGraphicEngine->swapchainWidth || height != pGraphicEngine->swapchainHeight)
     {
         printf("Swapchain's width and height have changed! (%d, %d) to (%d, %d)", pGraphicEngine->swapchainWidth, pGraphicEngine->swapchainHeight, width, height);
+        hasSizeChanged = true;
         pGraphicEngine->swapchainWidth = width;
         pGraphicEngine->swapchainHeight = height;
     }
@@ -710,19 +712,8 @@ static void RecreateSwapchain(GraphicEngine *pGraphicEngine)
     CreateGraphicImages(pGraphicEngine);
 
     DeferredRenderPass *pDeferredRenderPass = &pGraphicEngine->deferredRenderPass;
+    RecreateDeferredRenderPassFrameBuffer(pDeferredRenderPass, pGraphicEngine->vkDevice, pGraphicEngine->colorGraphicImage, pGraphicEngine->depthGraphicImage, pGraphicEngine->albedoGraphicImage, pGraphicEngine->normalGraphicImage, width, height);
     RecreateOpaqueLightingSubpassModel(&pGraphicEngine->deferredRenderPass.opaqueLightingSubpass, pGraphicEngine->vkDevice, pGraphicEngine->globalUniformBuffer, pGraphicEngine->lightsUniformBuffer, pGraphicEngine->depthGraphicImage.vkImageView, pGraphicEngine->albedoGraphicImage.vkImageView, pGraphicEngine->normalGraphicImage.vkImageView);
-    for (uint32_t i = 0; i < pDeferredRenderPass->vkFramebufferCount; i++)
-    {
-        if (pDeferredRenderPass->vkFramebuffers[i] == INVALID_VKFRAMEBUFFER)
-        {
-            // continue;
-        }
-        else
-        {
-            vkDestroyFramebuffer(pGraphicEngine->vkDevice, pDeferredRenderPass->vkFramebuffers[i], NULL);
-            pDeferredRenderPass->vkFramebuffers[i] = INVALID_VKFRAMEBUFFER;
-        }
-    }
 }
 
 static void CreateCommandPools(GraphicEngine *pGraphicEngine)
@@ -901,7 +892,7 @@ static void RecordCommandBuffer(GraphicEngine *pGraphicEngine)
         .offset = offset,
         .extent = extent,
     };
-    RecordDeferredRenderPass(&pGraphicEngine->deferredRenderPass, vkCommandBuffer, viewport, scissor, pGraphicEngine->frameIndex, pGraphicEngine->swapchainImageViews, pGraphicEngine->depthGraphicImage.vkImageView, pGraphicEngine->albedoGraphicImage.vkImageView, pGraphicEngine->normalGraphicImage.vkImageView, pGraphicEngine->vkDevice);
+    RecordDeferredRenderPass(&pGraphicEngine->deferredRenderPass, vkCommandBuffer, viewport, scissor, pGraphicEngine->frameIndex, pGraphicEngine->colorGraphicImage.vkImageView, pGraphicEngine->depthGraphicImage.vkImageView, pGraphicEngine->albedoGraphicImage.vkImageView, pGraphicEngine->normalGraphicImage.vkImageView, pGraphicEngine->vkDevice);
 }
 
 static void SetUpGraphicEngine(GraphicEngine *pGraphicEngine)
@@ -953,7 +944,7 @@ void StartGraphicEngine(GraphicEngine *pGraphicEngine)
         .offset = offset,
         .extent = extent,
     };
-    CreateDeferredRenderPass(&pGraphicEngine->deferredRenderPass, pGraphicEngine->vkDevice, pGraphicEngine->surfaceFormat.format, pGraphicEngine->depthGraphicImage, pGraphicEngine->albedoGraphicImage, pGraphicEngine->normalGraphicImage, pGraphicEngine->swapchainImageCount, viewport, scissor, pGraphicEngine->globalUniformBuffer, pGraphicEngine->lightsUniformBuffer);
+    CreateDeferredRenderPass(&pGraphicEngine->deferredRenderPass, pGraphicEngine->vkDevice, pGraphicEngine->colorGraphicImage, pGraphicEngine->depthGraphicImage, pGraphicEngine->albedoGraphicImage, pGraphicEngine->normalGraphicImage, viewport, scissor, pGraphicEngine->globalUniformBuffer, pGraphicEngine->lightsUniformBuffer);
 }
 
 void UpdateGraphicEngine(GraphicEngine *pGraphicEngine, bool *pCanUpdate)
