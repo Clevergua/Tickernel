@@ -712,8 +712,7 @@ static void RecreateSwapchain(GraphicEngine *pGraphicEngine)
     CreateGraphicImages(pGraphicEngine);
 
     DeferredRenderPass *pDeferredRenderPass = &pGraphicEngine->deferredRenderPass;
-    RecreateDeferredRenderPassFrameBuffer(pDeferredRenderPass, pGraphicEngine->vkDevice, pGraphicEngine->colorGraphicImage, pGraphicEngine->depthGraphicImage, pGraphicEngine->albedoGraphicImage, pGraphicEngine->normalGraphicImage, width, height);
-    RecreateOpaqueLightingSubpassModel(&pGraphicEngine->deferredRenderPass.opaqueLightingSubpass, pGraphicEngine->vkDevice, pGraphicEngine->globalUniformBuffer, pGraphicEngine->lightsUniformBuffer, pGraphicEngine->depthGraphicImage.vkImageView, pGraphicEngine->albedoGraphicImage.vkImageView, pGraphicEngine->normalGraphicImage.vkImageView);
+    UpdateDeferredRenderPass(pDeferredRenderPass, pGraphicEngine->vkDevice, pGraphicEngine->colorGraphicImage, pGraphicEngine->depthGraphicImage, pGraphicEngine->albedoGraphicImage, pGraphicEngine->normalGraphicImage, width, height, pGraphicEngine->globalUniformBuffer, pGraphicEngine->lightsUniformBuffer);
 }
 
 static void CreateCommandPools(GraphicEngine *pGraphicEngine)
@@ -892,7 +891,7 @@ static void RecordCommandBuffer(GraphicEngine *pGraphicEngine)
         .offset = offset,
         .extent = extent,
     };
-    RecordDeferredRenderPass(&pGraphicEngine->deferredRenderPass, vkCommandBuffer, viewport, scissor, pGraphicEngine->frameIndex, pGraphicEngine->colorGraphicImage.vkImageView, pGraphicEngine->depthGraphicImage.vkImageView, pGraphicEngine->albedoGraphicImage.vkImageView, pGraphicEngine->normalGraphicImage.vkImageView, pGraphicEngine->vkDevice);
+    RecordDeferredRenderPass(&pGraphicEngine->deferredRenderPass, vkCommandBuffer, viewport, scissor, pGraphicEngine->vkDevice);
 }
 
 static void SetUpGraphicEngine(GraphicEngine *pGraphicEngine)

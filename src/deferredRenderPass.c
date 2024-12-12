@@ -109,10 +109,8 @@ static void CreateVkRenderPass(DeferredRenderPass *pDeferredRenderPass, VkDevice
         .pPreserveAttachments = NULL,
     };
 
-    uint32_t subpassCount = 4;
+    uint32_t subpassCount = 2;
     VkSubpassDescription vkSubpassDescriptions[] = {
-        geometrySubpassDescription,
-        ligthtingSubpassDescription,
         geometrySubpassDescription,
         ligthtingSubpassDescription,
     };
@@ -179,8 +177,28 @@ void DestroyDeferredRenderPass(DeferredRenderPass *pDeferredRenderPass, VkDevice
     vkDestroyFramebuffer(vkDevice, pDeferredRenderPass->vkFramebuffer, NULL);
     DestroyVkRenderPass(pDeferredRenderPass, vkDevice);
 }
+void UpdateDeferredRenderPass(DeferredRenderPass *pDeferredRenderPass, VkDevice vkDevice, GraphicImage colorGraphicImage, GraphicImage depthGraphicImage, GraphicImage albedoGraphicImage, GraphicImage normalGraphicImage, uint32_t width, uint32_t height, VkBuffer globalUniformBuffer, VkBuffer lightsUniformBuffer)
+{
+    vkDestroyFramebuffer(vkDevice, pDeferredRenderPass->vkFramebuffer, NULL);
+    VkImageView attachments[] = {colorGraphicImage.vkImageView, depthGraphicImage.vkImageView, albedoGraphicImage.vkImageView, normalGraphicImage.vkImageView};
+    VkFramebufferCreateInfo vkFramebufferCreateInfo = {
+        .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
+        .pNext = NULL,
+        .flags = 0,
+        .renderPass = pDeferredRenderPass->vkRenderPass,
+        .attachmentCount = 4,
+        .pAttachments = attachments,
+        .width = width,
+        .height = height,
+        .layers = 1,
+    };
+    VkResult result = vkCreateFramebuffer(vkDevice, &vkFramebufferCreateInfo, NULL, &pDeferredRenderPass->vkFramebuffer);
+    TryThrowVulkanError(result);
 
-void RecordDeferredRenderPass(DeferredRenderPass *pDeferredRenderPass, VkCommandBuffer vkCommandBuffer, VkViewport viewport, VkRect2D scissor, uint32_t frameIndex, VkImageView colorVkImageView, VkImageView depthVkImageView, VkImageView albedoVkImageView, VkImageView normalVkImageView, VkDevice vkDevice)
+    Subpass *pOpaqueLightingSubpass = &pDeferredRenderPass->opaqueLightingSubpass;
+    RecreateOpaqueLightingSubpassModel(pOpaqueLightingSubpass, vkDevice, globalUniformBuffer, lightsUniformBuffer, depthGraphicImage.vkImageView, albedoGraphicImage.vkImageView, normalGraphicImage.vkImageView);
+}
+void RecordDeferredRenderPass(DeferredRenderPass *pDeferredRenderPass, VkCommandBuffer vkCommandBuffer, VkViewport viewport, VkRect2D scissor, VkDevice vkDevice)
 {
     VkCommandBufferBeginInfo vkCommandBufferBeginInfo =
         {
@@ -256,62 +274,6 @@ void RecordDeferredRenderPass(DeferredRenderPass *pDeferredRenderPass, VkCommand
     vkCmdDraw(vkCommandBuffer, 3, 1, 0, 0);
     vkCmdEndRenderPass(vkCommandBuffer);
 
-    // VkRenderPassBeginInfo renderPassBeginInfo =
-    //     {
-    //         .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
-    //         .pNext = NULL,
-    //         .renderPass = pDeferredRenderPass->vkRenderPass,
-    //         .framebuffer = pDeferredRenderPass->vkFramebuffer,
-    //         .renderArea = renderArea,
-    //         .clearValueCount = clearValueCount,
-    //         .pClearValues = clearValues,
-    //     };
-    // vkCmdBeginRenderPass(vkCommandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
-    // Subpass *pOpaqueGeometrySubpass = &pDeferredRenderPass->opaqueGeometrySubpass;
-    // vkCmdBindPipeline(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pOpaqueGeometrySubpass->vkPipeline);
-    // for (uint32_t modelIndex = 0; modelIndex < pOpaqueGeometrySubpass->modelCollection.length; modelIndex++)
-    // {
-    //     SubpassModel *pSubpassModel = pOpaqueGeometrySubpass->modelCollection.array[modelIndex];
-    //     if (NULL != pSubpassModel)
-    //     {
-    //         vkCmdSetViewport(vkCommandBuffer, 0, 1, &viewport);
-    //         vkCmdSetScissor(vkCommandBuffer, 0, 1, &scissor);
-    //         vkCmdBindDescriptorSets(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pOpaqueGeometrySubpass->vkPipelineLayout, 0, 1, &pSubpassModel->vkDescriptorSet, 0, NULL);
-    //         VkBuffer vertexBuffers[] = {pSubpassModel->vertexBuffer, pSubpassModel->instanceBuffer};
-    //         VkDeviceSize offsets[] = {0, 0};
-    //         vkCmdBindVertexBuffers(vkCommandBuffer, 0, 2, vertexBuffers, offsets);
-    //         vkCmdDraw(vkCommandBuffer, pSubpassModel->vertexCount, pSubpassModel->instanceCount, 0, 0);
-    //     }
-    // }
-    // vkCmdNextSubpass(vkCommandBuffer, VK_SUBPASS_CONTENTS_INLINE);
-    // // opaqueLighting subpass
-    // Subpass *pOpaqueLightingSubpass = &pDeferredRenderPass->opaqueLightingSubpass;
-    // SubpassModel *pSubpassModel = pOpaqueLightingSubpass->modelCollection.array[0];
-    // vkCmdBindPipeline(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pOpaqueLightingSubpass->vkPipeline);
-    // vkCmdSetViewport(vkCommandBuffer, 0, 1, &viewport);
-    // vkCmdSetScissor(vkCommandBuffer, 0, 1, &scissor);
-    // vkCmdBindDescriptorSets(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pOpaqueLightingSubpass->vkPipelineLayout, 0, 1, &pSubpassModel->vkDescriptorSet, 0, NULL);
-    // vkCmdDraw(vkCommandBuffer, 3, 1, 0, 0);
-    // vkCmdEndRenderPass(vkCommandBuffer);
-
     result = vkEndCommandBuffer(vkCommandBuffer);
-    TryThrowVulkanError(result);
-}
-
-void RecreateDeferredRenderPassFrameBuffer(DeferredRenderPass *pDeferredRenderPass, VkDevice vkDevice, GraphicImage colorGraphicImage, GraphicImage depthGraphicImage, GraphicImage albedoGraphicImage, GraphicImage normalGraphicImage, uint32_t width, uint32_t height)
-{
-    VkImageView attachments[] = {colorGraphicImage.vkImageView, depthGraphicImage.vkImageView, albedoGraphicImage.vkImageView, normalGraphicImage.vkImageView};
-    VkFramebufferCreateInfo vkFramebufferCreateInfo = {
-        .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
-        .pNext = NULL,
-        .flags = 0,
-        .renderPass = pDeferredRenderPass->vkRenderPass,
-        .attachmentCount = 4,
-        .pAttachments = attachments,
-        .width = width,
-        .height = height,
-        .layers = 1,
-    };
-    VkResult result = vkCreateFramebuffer(vkDevice, &vkFramebufferCreateInfo, NULL, &pDeferredRenderPass->vkFramebuffer);
     TryThrowVulkanError(result);
 }
