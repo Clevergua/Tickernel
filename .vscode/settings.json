@@ -1,5 +1,7 @@
 {
     "files.associations": {
-        "postprocessrenderpass.h": "c"
+        "postprocessrenderpass.h": "c",
+        "bitset": "c",
+        "unordered_map": "c"
     }
 }
