@@ -678,6 +678,7 @@ static void DestroyGraphicImages(GraphicEngine *pGraphicEngine)
     DestroyGraphicImage(pGraphicEngine->vkDevice, pGraphicEngine->normalGraphicImage);
     DestroyGraphicImage(pGraphicEngine->vkDevice, pGraphicEngine->albedoGraphicImage);
     DestroyGraphicImage(pGraphicEngine->vkDevice, pGraphicEngine->depthGraphicImage);
+    DestroyGraphicImage(pGraphicEngine->vkDevice, pGraphicEngine->colorGraphicImage);
 }
 
 static void RecreateSwapchain(GraphicEngine *pGraphicEngine)
@@ -711,8 +712,8 @@ static void RecreateSwapchain(GraphicEngine *pGraphicEngine)
     DestroyGraphicImages(pGraphicEngine);
     CreateGraphicImages(pGraphicEngine);
 
-    DeferredRenderPass *pDeferredRenderPass = &pGraphicEngine->deferredRenderPass;
-    UpdateDeferredRenderPass(pDeferredRenderPass, pGraphicEngine->vkDevice, pGraphicEngine->colorGraphicImage, pGraphicEngine->depthGraphicImage, pGraphicEngine->albedoGraphicImage, pGraphicEngine->normalGraphicImage, width, height, pGraphicEngine->globalUniformBuffer, pGraphicEngine->lightsUniformBuffer);
+    UpdateDeferredRenderPass(&pGraphicEngine->deferredRenderPass, pGraphicEngine->vkDevice, pGraphicEngine->colorGraphicImage, pGraphicEngine->depthGraphicImage, pGraphicEngine->albedoGraphicImage, pGraphicEngine->normalGraphicImage, width, height, pGraphicEngine->globalUniformBuffer, pGraphicEngine->lightsUniformBuffer);
+    UpdatePostProcessRenderPass(&pGraphicEngine->postProcessRenderPass, pGraphicEngine->vkDevice, pGraphicEngine->colorGraphicImage, width, height, pGraphicEngine->swapchainImageViews);
 }
 
 static void CreateCommandPools(GraphicEngine *pGraphicEngine)
@@ -891,21 +892,31 @@ static void RecordCommandBuffer(GraphicEngine *pGraphicEngine)
         .offset = offset,
         .extent = extent,
     };
+    VkCommandBufferBeginInfo vkCommandBufferBeginInfo =
+        {
+            .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+            .pNext = NULL,
+            .flags = 0,
+            .pInheritanceInfo = NULL,
+        };
+    VkResult result = vkBeginCommandBuffer(vkCommandBuffer, &vkCommandBufferBeginInfo);
+    TryThrowVulkanError(result);
+
     RecordDeferredRenderPass(&pGraphicEngine->deferredRenderPass, vkCommandBuffer, viewport, scissor, pGraphicEngine->vkDevice);
+    RecordPostProcessRenderPass(&pGraphicEngine->postProcessRenderPass, vkCommandBuffer, viewport, scissor, pGraphicEngine->vkDevice, pGraphicEngine->frameIndex);
+
+    result = vkEndCommandBuffer(vkCommandBuffer);
+    TryThrowVulkanError(result);
 }
 
 static void SetUpGraphicEngine(GraphicEngine *pGraphicEngine)
 {
     pGraphicEngine->frameCount = 0;
     pGraphicEngine->pTickernelWindow = TickernelCreateWindow(pGraphicEngine->windowWidth, pGraphicEngine->windowHeight, "Tickernel Engine");
-
-    pGraphicEngine->deferredRenderPass.shadersPath = TickernelMalloc(sizeof(char) * FILENAME_MAX);
-    strcpy(pGraphicEngine->deferredRenderPass.shadersPath, pGraphicEngine->assetsPath);
-    TickernelCombinePaths(pGraphicEngine->deferredRenderPass.shadersPath, FILENAME_MAX, "shaders");
 }
 static void TearDownGraphicEngine(GraphicEngine *pGraphicEngine)
 {
-    TickernelFree(pGraphicEngine->deferredRenderPass.shadersPath);
+    // TickernelFree(pGraphicEngine->deferredRenderPass.shadersPath);
     TickernelDestroyWindow(pGraphicEngine->pTickernelWindow);
 }
 
@@ -943,7 +954,8 @@ void StartGraphicEngine(GraphicEngine *pGraphicEngine)
         .offset = offset,
         .extent = extent,
     };
-    CreateDeferredRenderPass(&pGraphicEngine->deferredRenderPass, pGraphicEngine->vkDevice, pGraphicEngine->colorGraphicImage, pGraphicEngine->depthGraphicImage, pGraphicEngine->albedoGraphicImage, pGraphicEngine->normalGraphicImage, viewport, scissor, pGraphicEngine->globalUniformBuffer, pGraphicEngine->lightsUniformBuffer);
+    CreateDeferredRenderPass(&pGraphicEngine->deferredRenderPass, pGraphicEngine->shadersPath, pGraphicEngine->vkDevice, pGraphicEngine->colorGraphicImage, pGraphicEngine->depthGraphicImage, pGraphicEngine->albedoGraphicImage, pGraphicEngine->normalGraphicImage, viewport, scissor, pGraphicEngine->globalUniformBuffer, pGraphicEngine->lightsUniformBuffer);
+    CreatePostProcessRenderPass(&pGraphicEngine->postProcessRenderPass, pGraphicEngine->shadersPath, pGraphicEngine->vkDevice, pGraphicEngine->colorGraphicImage, viewport, scissor, pGraphicEngine->swapchainImageCount, pGraphicEngine->swapchainImageViews, pGraphicEngine->surfaceFormat.format);
 }
 
 void UpdateGraphicEngine(GraphicEngine *pGraphicEngine, bool *pCanUpdate)
@@ -993,7 +1005,9 @@ void EndGraphicEngine(GraphicEngine *pGraphicEngine)
     VkResult result = vkDeviceWaitIdle(pGraphicEngine->vkDevice);
     TryThrowVulkanError(result);
 
+    DestroyPostProcessRenderPass(&pGraphicEngine->postProcessRenderPass, pGraphicEngine->vkDevice);
     DestroyDeferredRenderPass(&pGraphicEngine->deferredRenderPass, pGraphicEngine->vkDevice);
+
     DestroyGraphicImages(pGraphicEngine);
     DestroyUniformBuffers(pGraphicEngine);
     DestroyVkCommandBuffers(pGraphicEngine);

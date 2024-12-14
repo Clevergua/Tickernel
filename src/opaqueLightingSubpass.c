@@ -227,7 +227,7 @@ static void DestroyVkPipeline(Subpass *pOpaqueLightingSubpass, VkDevice vkDevice
     vkDestroyPipeline(vkDevice, pOpaqueLightingSubpass->vkPipeline, NULL);
 }
 
-static void CreateOpaqueLightingSubpassModel(Subpass *pOpaqueLightingSubpass, VkDevice vkDevice, VkBuffer globalUniformBuffer, VkBuffer lightsUniformBuffer, VkImageView depthVkImageView, VkImageView albedoVkImageView, VkImageView normalVkImageView)
+static void CreatePostProcessSubpassModel(Subpass *pOpaqueLightingSubpass, VkDevice vkDevice, VkBuffer globalUniformBuffer, VkBuffer lightsUniformBuffer, VkImageView depthVkImageView, VkImageView albedoVkImageView, VkImageView normalVkImageView)
 {
     assert(pOpaqueLightingSubpass != NULL);
     assert(pOpaqueLightingSubpass->vkDescriptorPoolSizes != NULL);
@@ -388,7 +388,7 @@ void CreateOpaqueLightingSubpass(Subpass *pOpaqueLightingSubpass, const char *sh
     };
 
     TickernelCreateCollection(&pOpaqueLightingSubpass->modelCollection, sizeof(SubpassModel), 1);
-    CreateOpaqueLightingSubpassModel(pOpaqueLightingSubpass, vkDevice, globalUniformBuffer, lightsUniformBuffer, depthVkImageView, albedoVkImageView, normalVkImageView);
+    CreatePostProcessSubpassModel(pOpaqueLightingSubpass, vkDevice, globalUniformBuffer, lightsUniformBuffer, depthVkImageView, albedoVkImageView, normalVkImageView);
 }
 
 void DestroyOpaqueLightingSubpass(Subpass *pOpaqueLightingSubpass, VkDevice vkDevice)
@@ -402,5 +402,5 @@ void DestroyOpaqueLightingSubpass(Subpass *pOpaqueLightingSubpass, VkDevice vkDe
 void RecreateOpaqueLightingSubpassModel(Subpass *pOpaqueLightingSubpass, VkDevice vkDevice, VkBuffer globalUniformBuffer, VkBuffer lightsUniformBuffer, VkImageView depthVkImageView, VkImageView albedoVkImageView, VkImageView normalVkImageView)
 {
     DestroyOpaqueLightingSubpassModel(pOpaqueLightingSubpass, vkDevice, 0);
-    CreateOpaqueLightingSubpassModel(pOpaqueLightingSubpass, vkDevice, globalUniformBuffer, lightsUniformBuffer, depthVkImageView, albedoVkImageView, normalVkImageView);
+    CreatePostProcessSubpassModel(pOpaqueLightingSubpass, vkDevice, globalUniformBuffer, lightsUniformBuffer, depthVkImageView, albedoVkImageView, normalVkImageView);
 }

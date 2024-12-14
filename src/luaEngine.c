@@ -386,7 +386,7 @@ void StartLua(LuaEngine *pLuaEngine)
 
     // Set package path
     char packagePath[FILENAME_MAX];
-    strcpy(packagePath, pLuaEngine->assetsPath);
+    strcpy(packagePath, pLuaEngine->shadersPath);
     TickernelCombinePaths(packagePath, FILENAME_MAX, "lua");
     TickernelCombinePaths(packagePath, FILENAME_MAX, "?.lua;");
     lua_getglobal(pLuaState, "package");
@@ -396,7 +396,7 @@ void StartLua(LuaEngine *pLuaEngine)
 
     // Do file main.lua
     char luaMainFilePath[FILENAME_MAX];
-    strcpy(luaMainFilePath, pLuaEngine->assetsPath);
+    strcpy(luaMainFilePath, pLuaEngine->shadersPath);
     TickernelCombinePaths(luaMainFilePath, FILENAME_MAX, "lua");
     TickernelCombinePaths(luaMainFilePath, FILENAME_MAX, "main.lua");
     // Put engine state on the stack
@@ -406,7 +406,7 @@ void StartLua(LuaEngine *pLuaEngine)
     lua_pushlightuserdata(pLuaState, pLuaEngine->pGraphicEngine);
     lua_setfield(pLuaState, -2, "pGraphicEngine");
 
-    lua_pushstring(pLuaState, pLuaEngine->assetsPath);
+    lua_pushstring(pLuaState, pLuaEngine->shadersPath);
     lua_setfield(pLuaState, -2, "assetsPath");
 
     lua_pushstring(pLuaState, TickernelGetPathSeparator());

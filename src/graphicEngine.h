@@ -1,5 +1,6 @@
 #pragma once
 #include <deferredRenderPass.h>
+#include <postProcessRenderPass.h>
 typedef struct GraphicEngineStruct
 {
     // Config
@@ -9,7 +10,7 @@ typedef struct GraphicEngineStruct
     int windowWidth;
     int targetSwapchainImageCount;
     VkPresentModeKHR targetPresentMode;
-    char *assetsPath;
+    char *shadersPath;
 
     // Runtime
     uint32_t swapchainHeight;
@@ -57,6 +58,7 @@ typedef struct GraphicEngineStruct
     GraphicImage albedoGraphicImage;
     GraphicImage normalGraphicImage;
     DeferredRenderPass deferredRenderPass;
+    PostProcessRenderPass postProcessRenderPass;
     uint32_t fullScreenTriangleModelIndex;
 } GraphicEngine;
 void StartGraphicEngine(GraphicEngine *pGraphicEngine);

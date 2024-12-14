@@ -2,6 +2,8 @@
     "files.associations": {
         "postprocessrenderpass.h": "c",
         "bitset": "c",
-        "unordered_map": "c"
+        "unordered_map": "c",
+        "postprocesssubpass.h": "c",
+        "graphicengine.h": "c"
     }
 }
