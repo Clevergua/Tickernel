@@ -132,6 +132,7 @@ void UpdatePostProcessRenderPass(PostProcessRenderPass *pPostProcessRenderPass, 
         VkResult result = vkCreateFramebuffer(vkDevice, &vkFramebufferCreateInfo, NULL, &pPostProcessRenderPass->vkFramebuffers[i]);
         TryThrowVulkanError(result);
     }
+    RecreatePostProcessSubpassModel(&pPostProcessRenderPass->postProcessSubpass, vkDevice, colorGraphicImage.vkImageView);
 }
 void RecordPostProcessRenderPass(PostProcessRenderPass *pPostProcessRenderPass, VkCommandBuffer vkCommandBuffer, VkViewport viewport, VkRect2D scissor, VkDevice vkDevice, uint32_t frameIndex)
 {
