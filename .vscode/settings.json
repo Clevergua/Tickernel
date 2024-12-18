@@ -4,6 +4,8 @@
         "bitset": "c",
         "unordered_map": "c",
         "postprocesssubpass.h": "c",
-        "graphicengine.h": "c"
+        "graphicengine.h": "c",
+        "deferredrenderpass.h": "c",
+        "opaquelightingsubpass.h": "c"
     }
 }

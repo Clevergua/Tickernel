@@ -1,6 +1,6 @@
 #pragma once
-#include <deferredRenderPass.h>
-#include <postProcessRenderPass.h>
+#include <renderPasses/deferredRenderPass.h>
+#include <renderPasses/postProcessRenderPass.h>
 typedef struct GraphicEngineStruct
 {
     // Config
