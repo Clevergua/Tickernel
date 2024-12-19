@@ -1,6 +1,6 @@
 #pragma once
-#include <renderPasses/subpasses/opaqueGeometrySubpass.h>
-#include <renderPasses/subpasses/opaqueLightingSubpass.h>
+#include <opaqueGeometrySubpass.h>
+#include <opaqueLightingSubpass.h>
 
 typedef struct DeferredRenderPassStruct
 {

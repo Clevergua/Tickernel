@@ -1,4 +1,4 @@
-#include <renderPasses/deferredRenderPass.h>
+#include <deferredRenderPass.h>
 
 static void CreateVkRenderPass(DeferredRenderPass *pDeferredRenderPass, VkDevice vkDevice, VkFormat colorVkFormat, VkFormat depthVkFormat, VkFormat albedoVkFormat, VkFormat normalVkFormat)
 {

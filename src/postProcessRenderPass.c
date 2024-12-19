@@ -1,4 +1,4 @@
-#include <renderPasses/postProcessRenderPass.h>
+#include <postProcessRenderPass.h>
 static void CreateVkRenderPass(PostProcessRenderPass *pPostProcessRenderPass, VkDevice vkDevice, VkFormat colorVkFormat, VkFormat swapchainVkFormat)
 {
     VkAttachmentDescription colorAttachmentDescription = {

@@ -1,5 +1,5 @@
 #pragma once
-#include <renderPasses/subpasses/postProcessSubpass.h>
+#include <postProcessSubpass.h>
 
 typedef struct PostProcessRenderPassStruct
 {
