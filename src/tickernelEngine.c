@@ -34,8 +34,18 @@ static void TickernelStart(TickernelEngine *pTickernelEngine)
 static void TickernelUpdate(TickernelEngine *pTickernelEngine, bool *pCanUpdate)
 {
     printf("Tickernel Update!\n");
+    struct timespec startTime, endTime;
+    timespec_get(&startTime, TIME_UTC);
     UpdateLua(pTickernelEngine->pLuaEngine);
+    timespec_get(&endTime, TIME_UTC);
+    uint32_t luaDeltaTime = (uint32_t)(endTime.tv_sec - startTime.tv_sec) * MILLISECONDS_PER_SECOND + (endTime.tv_nsec - startTime.tv_nsec) / NANOSECONDS_PER_MILLISECOND;
+    printf("Lua Cost Time: %u ms\n", luaDeltaTime);
+
+    timespec_get(&startTime, TIME_UTC);
     UpdateGraphicEngine(pTickernelEngine->pGraphicEngine, pCanUpdate);
+    timespec_get(&endTime, TIME_UTC);
+    uint32_t graphicDeltaTime = (uint32_t)(endTime.tv_sec - startTime.tv_sec) * MILLISECONDS_PER_SECOND + (endTime.tv_nsec - startTime.tv_nsec) / NANOSECONDS_PER_MILLISECOND;
+    printf("Graphic Cost Time: %u ms\n", graphicDeltaTime);
 }
 
 static void TickernelEnd(TickernelEngine *pTickernelEngine)
