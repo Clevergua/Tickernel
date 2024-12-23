@@ -318,7 +318,7 @@ function engine.Start()
             for z = 1, height do
                 -- if voxelMap[x - 1][y][z] == nil or voxelMap[x + 1][y][z] == nil or voxelMap[x][y - 1][z] == nil or voxelMap[x][y + 1][z] == nil or voxelMap[x][y][z - 1] == nil or voxelMap[x][y][z + 1] == nil then
                 if voxelMap[x][y][z] ~= nil then
-                    table.insert(vertices, { x, y, z - 4 })
+                    table.insert(vertices, { x, y, z })
                     table.insert(colors, voxelMap[x][y][z])
                     table.insert(normals, { 0, 0, 0 })
                 end
