@@ -1,4 +1,5 @@
 import argparse
+import math
 import struct
 import os
 import glob
@@ -28,11 +29,113 @@ class TickernelVoxelModel:
         self.indexToProperties = []
         import struct
 
+def SetNormals(voxModel, indexMap):
+    vertexCount = len(voxModel.voxels)
+
+    for i in range(vertexCount):
+        x, y, z, colorIndex = voxModel.voxels[i]
+        nx, ny, nz = 0, 0, 0
+        if x - 1 in indexMap and y in indexMap[x - 1] and z in indexMap[x - 1][y]:
+            nx += 1
+        if x + 1 in indexMap and y in indexMap[x + 1] and z in indexMap[x + 1][y]:
+            nx -= 1
+        if x in indexMap and y - 1 in indexMap[x] and z in indexMap[x][y - 1]:
+            ny += 1
+        if x in indexMap and y + 1 in indexMap[x] and z in indexMap[x][y + 1]:
+            ny -= 1
+        if x in indexMap and y in indexMap[x] and z - 1 in indexMap[x][y]:
+            nz += 1
+        if x in indexMap and y in indexMap[x] and z + 1 in indexMap[x][y]:
+            nz -= 1
+
+        length = 1 / 1.414
+        if x - 1 in indexMap and y - 1 in indexMap[x - 1] and z in indexMap[x - 1][y - 1]:
+            nx += length
+            ny += length
+        if x - 1 in indexMap and y + 1 in indexMap[x - 1] and z in indexMap[x - 1][y + 1]:
+            nx += length
+            ny -= length
+        if x - 1 in indexMap and y in indexMap[x - 1] and z - 1 in indexMap[x - 1][y]:
+            nx += length
+            nz += length
+        if x - 1 in indexMap and y in indexMap[x - 1] and z + 1 in indexMap[x - 1][y]:
+            nx += length
+            nz -= length
+        if x + 1 in indexMap and y - 1 in indexMap[x + 1] and z in indexMap[x + 1][y - 1]:
+            nx -= length
+            ny += length
+        if x + 1 in indexMap and y + 1 in indexMap[x + 1] and z in indexMap[x + 1][y + 1]:
+            nx -= length
+            ny -= length
+        if x + 1 in indexMap and y in indexMap[x + 1] and z - 1 in indexMap[x + 1][y]:
+            nx -= length
+            nz += length
+        if x + 1 in indexMap and y in indexMap[x + 1] and z + 1 in indexMap[x + 1][y]:
+            nx -= length
+            nz -= length
+        if x in indexMap and y - 1 in indexMap[x] and z - 1 in indexMap[x][y - 1]:
+            ny += length
+            nz += length
+        if x in indexMap and y - 1 in indexMap[x] and z + 1 in indexMap[x][y - 1]:
+            ny += length
+            nz -= length
+        if x in indexMap and y + 1 in indexMap[x] and z - 1 in indexMap[x][y + 1]:
+            ny -= length
+            nz += length
+        if x in indexMap and y + 1 in indexMap[x] and z + 1 in indexMap[x][y + 1]:
+            ny -= length
+            nz -= length
+        length = 1 / 1.414 / 1.414
+        
+        if x - 1 in indexMap and y - 1 in indexMap[x - 1] and z - 1 in indexMap[x - 1][y - 1]:
+            nx += length
+            ny += length
+            nz += length
+        if x - 1 in indexMap and y + 1 in indexMap[x - 1] and z - 1 in indexMap[x - 1][y + 1]:
+            nx += length
+            ny -= length
+            nz += length
+        if x - 1 in indexMap and y - 1 in indexMap[x - 1] and z + 1 in indexMap[x - 1][y - 1]:
+            nx += length
+            ny += length
+            nz -= length
+        if x - 1 in indexMap and y + 1 in indexMap[x - 1] and z + 1 in indexMap[x - 1][y + 1]:
+            nx += length
+            ny -= length
+            nz -= length
+        if x + 1 in indexMap and y - 1 in indexMap[x + 1] and z - 1 in indexMap[x + 1][y - 1]:
+            nx -= length
+            ny += length
+            nz += length
+        if x + 1 in indexMap and y + 1 in indexMap[x + 1] and z - 1 in indexMap[x + 1][y + 1]:
+            nx -= length
+            ny -= length
+            nz += length
+        if x + 1 in indexMap and y - 1 in indexMap[x + 1] and z + 1 in indexMap[x + 1][y - 1]:
+            nx -= length
+            ny += length
+            nz -= length
+        if x + 1 in indexMap and y + 1 in indexMap[x + 1] and z + 1 in indexMap[x + 1][y + 1]:
+            nx -= length
+            ny -= length
+            nz -= length
+
+        
+        length = math.sqrt(nx * nx + ny * ny + nz * nz)
+        if length > 0.001:
+            nx = nx / length
+            ny = ny / length
+            nz = nz / length
+        else:
+            nx = 0
+            ny = 0
+            nz = 0
+        voxModel.voxels[i] = (x, y, z, colorIndex, nx, ny, nz)
 
 def WriteTickernelVoxelModel(filePath, tickernelVoxelModel):
     with open(filePath, 'wb') as file:
         file.write(struct.pack('<I', tickernelVoxelModel.propertyCount))
-        for name in tickernelVoxelModel. names:
+        for name in tickernelVoxelModel.names:
             length = len(name) + 1
             file.write(struct.pack('<I', length))
             file.write(name.encode('utf-8') + b'\x00')
@@ -42,12 +145,25 @@ def WriteTickernelVoxelModel(filePath, tickernelVoxelModel):
         
         file.write(struct.pack('<I', tickernelVoxelModel.vertexCount))
         
-        # for properties in tickernelVoxelModel.indexToProperties:
-        for index, properties in enumerate(tickernelVoxelModel.indexToProperties):
+        for properties, t in zip(tickernelVoxelModel.indexToProperties, tickernelVoxelModel.types):
             for property in properties:
-                file.write(struct.pack('<B', property))
-    
-            
+                if t == TickernelVoxelPropertyType.TICKERNEL_VOXEL_INT8:
+                    file.write(struct.pack('<b', int(property)))
+                elif t == TickernelVoxelPropertyType.TICKERNEL_VOXEL_UINT8:
+                    file.write(struct.pack('<B', int(property)))
+                elif t == TickernelVoxelPropertyType.TICKERNEL_VOXEL_INT16:
+                    file.write(struct.pack('<h', int(property)))
+                elif t == TickernelVoxelPropertyType.TICKERNEL_VOXEL_UINT16:
+                    file.write(struct.pack('<H', int(property)))
+                elif t == TickernelVoxelPropertyType.TICKERNEL_VOXEL_INT32:
+                    file.write(struct.pack('<i', int(property)))
+                elif t == TickernelVoxelPropertyType.TICKERNEL_VOXEL_UINT32:
+                    file.write(struct.pack('<I', int(property)))
+                elif t == TickernelVoxelPropertyType.TICKERNEL_VOXEL_FLOAT32:
+                    file.write(struct.pack('<f', float(property)))
+                else:
+                    raise ValueError(f"Unsupported property type: {type(property)}")
+
 def ParseVoxFile(filePath):
     voxModels = []
     colors = []
@@ -68,7 +184,7 @@ def ParseVoxFile(filePath):
         print(f"Num bytes of Main chunk content: {mainChunkContentBytes}")
         mainChunkChildrenBytes = struct.unpack('<I', file.read(4))[0]
         print(f"Num bytes of Main's children chunks: {mainChunkChildrenBytes}")
-        # skip chunk countent
+        # skip chunk content
         file.seek(mainChunkContentBytes, 1)
         # handle children chunks
         while True:
@@ -76,44 +192,39 @@ def ParseVoxFile(filePath):
             if not chunkID:
                 break
             chunkContentBytes = struct.unpack('<I', file.read(4))[0]
-            # print(f"Num bytes of chunk content bytes: {chunkContentBytes}")
             chunkChildrenBytes = struct.unpack('<I', file.read(4))[0]
-            # print(f"Num bytes of chunk children bytes: {chunkChildrenBytes}")
-            if not chunkID:
-                break
+            if chunkID == b'SIZE':
+                print(f"Handle SIZE chunk")
+                x, y, z = struct.unpack('<III', file.read(12))
+                print(f"Model size: x={x}, y={y}, z={z}")
+                voxModels.append(VoxModel())
+                voxModels[-1].size = (x, y, z)
+            elif chunkID == b'XYZI':
+                print(f"Handle XYZI chunk")
+                voxelCount = struct.unpack('<I', file.read(4))[0]
+                print(f"Num of voxels: {voxelCount}")
+                for _ in range(voxelCount):
+                    x, y, z, color = struct.unpack('<BBBB', file.read(4))
+                    voxModels[-1].voxels.append((x, y, z, color))
+                    print(f'Voxel ({x}, {y}, {z}, {color})')
+            elif chunkID == b'RGBA':
+                print(f"Handle RGBA chunk")
+                colors.append((0, 0, 0, 0))
+                colorCount = 255
+                for _ in range(colorCount):
+                    r, g, b, a = struct.unpack('<BBBB', file.read(4))
+                    colors.append((r, g, b, a))
+                    print(f'Color ({r}, {g}, {b}, {a})')
+                file.seek(4, 1)
             else:
-                if chunkID == b'SIZE':
-                    print(f"Handle SIZE chunk")
-                    x, y, z = struct.unpack('<III', file.read(12))
-                    print(f"Model size: x={x}, y={y}, z={z}")
-                    voxModels.append(VoxModel())
-                    voxModels[len(voxModels) - 1].size = (x, y, z)
-                elif chunkID == b'XYZI':
-                    print(f"Handle XYZI chunk")
-                    voxelCount = struct.unpack('<I', file.read(4))[0]
-                    print(f"Num of voxels: {voxelCount}")
-                    for _ in range(voxelCount):
-                        x, y, z, color = struct.unpack('<BBBB', file.read(4))
-                        voxModels[len(voxModels) - 1].voxels.append((x, y, z, color))
-                        print(f'Voxel ({x}, {y}, {z}, {color})')
-                elif chunkID == b'RGBA':
-                    print(f"Handle RGBA chunk")
-                    colors.append((0, 0, 0, 0))
-                    colorCount = 255
-                    for _ in range(colorCount):
-                        r, g, b, a = struct.unpack('<BBBB', file.read(4))
-                        colors.append((r, g, b, a))
-                        print(f'Color ({r}, {g}, {b}, {a})')
-                    file.seek(4, 1)
-                else:
-                    print(f"Skip unknown chunk with ID {chunkID}")
-                    file.seek(chunkContentBytes, 1)
+                print(f"Skip unknown chunk with ID {chunkID}")
+                file.seek(chunkContentBytes, 1)
+    
     tickernelVoxelModels = []
-    print(len(voxModels))
     for voxModel in voxModels:
         tickernelVoxelModel = TickernelVoxelModel()
-        tickernelVoxelModel.propertyCount = 7
-        tickernelVoxelModel.names = ["x", "y", "z", "r", "g", "b", "a"]
+        tickernelVoxelModel.propertyCount = 10  # Including normals
+        tickernelVoxelModel.names = ["px", "py", "pz", "r", "g", "b", "a", "nx", "ny", "nz"]
         tickernelVoxelModel.types = [
             TickernelVoxelPropertyType.TICKERNEL_VOXEL_UINT8,
             TickernelVoxelPropertyType.TICKERNEL_VOXEL_UINT8,
@@ -122,13 +233,26 @@ def ParseVoxFile(filePath):
             TickernelVoxelPropertyType.TICKERNEL_VOXEL_UINT8,
             TickernelVoxelPropertyType.TICKERNEL_VOXEL_UINT8,
             TickernelVoxelPropertyType.TICKERNEL_VOXEL_UINT8,
+            TickernelVoxelPropertyType.TICKERNEL_VOXEL_FLOAT32,
+            TickernelVoxelPropertyType.TICKERNEL_VOXEL_FLOAT32,
+            TickernelVoxelPropertyType.TICKERNEL_VOXEL_FLOAT32
         ]
+        tickernelVoxelModel.vertexCount = 0
+        tickernelVoxelModel.indexToProperties = [[] for _ in range(tickernelVoxelModel.propertyCount)]
+        indexMap = {}
         vertexCount = len(voxModel.voxels)
-        tickernelVoxelModel.vertexCount = vertexCount
-        tickernelVoxelModel.indexToProperties = []
-        for propertyIndex in range(tickernelVoxelModel.propertyCount):
-            tickernelVoxelModel.indexToProperties.append([])
-            
+        for i in range(vertexCount):
+            x, y, z, colorIndex = voxModel.voxels[i]
+            if x not in indexMap:
+                indexMap[x] = {}
+            if y not in indexMap[x]:
+                indexMap[x][y] = {}
+            indexMap[x][y][z] = i
+        # 剔除不必要的点
+        if (x - 1 in indexMap and y in indexMap[x - 1] and z in indexMap[x - 1][y]) and (x + 1 in indexMap and y in indexMap[x + 1] and z in indexMap[x + 1][y]) and (x in indexMap and y - 1 in indexMap[x] and z in indexMap[x][y - 1]) and (x in indexMap and y + 1 in indexMap[x] and z in indexMap[x][y + 1]) and (x in indexMap and y in indexMap[x] and z - 1 in indexMap[x][y]) and (x in indexMap and y in indexMap[x] and z + 1 in indexMap[x][y]):
+            continue
+        # 计算法线
+        SetNormals(voxModel, indexMap)
         for voxel in voxModel.voxels:
             tickernelVoxelModel.indexToProperties[0].append(voxel[0])
             tickernelVoxelModel.indexToProperties[1].append(voxel[1])
@@ -139,19 +263,20 @@ def ParseVoxFile(filePath):
             tickernelVoxelModel.indexToProperties[4].append(color[1])
             tickernelVoxelModel.indexToProperties[5].append(color[2])
             tickernelVoxelModel.indexToProperties[6].append(color[3])
-            # print(f'tickernelVoxel: ({voxel[0]}, {voxel[1]}, {voxel[2]}) ({color[0]}, {color[1]}, {color[2]}, {color[3]})')
+
+            tickernelVoxelModel.indexToProperties[7].append(voxel[4])
+            tickernelVoxelModel.indexToProperties[8].append(voxel[5])
+            tickernelVoxelModel.indexToProperties[9].append(voxel[6])
+            tickernelVoxelModel.vertexCount += 1
         tickernelVoxelModels.append(tickernelVoxelModel)
 
     directory = os.path.dirname(filePath)
     fileName = os.path.basename(filePath)
     name, ext = os.path.splitext(fileName)
-    print(f"The directory of the file is: {directory}")
     for index, tickernelVoxelModel in enumerate(tickernelVoxelModels):
-        print(f"Index: {index}, Model: {tickernelVoxelModel}")
         newFileName = f"{name}_{index}.tknvox"
         newFilePath = os.path.join(directory, newFileName)
         WriteTickernelVoxelModel(newFilePath, tickernelVoxelModel)
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Parse .vox files in the specified directory.")
@@ -164,7 +289,6 @@ if __name__ == "__main__":
     for file_path in file_paths:
         print(f"Processing file: {file_path}")
         ParseVoxFile(file_path)
-
 
 # if __name__ == "__main__":
 #     parser = argparse.ArgumentParser(description="Parse .vox file and print vertices.")

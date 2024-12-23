@@ -5,7 +5,6 @@ local game = require("game")
 local voxelCount = 16
 local modelScale = 1 / voxelCount;
 local voxel = {
-    none = { 0, 0, 0, 0 },
     dirt = { 210, 150, 95, 255 },
     snow = { 250, 250, 250, 255 },
     ice = { 190, 190, 245, 255 },
@@ -221,29 +220,16 @@ function engine.Start()
 
     local voxelMap = {}
     local height = 16
-    for x = 1, length * voxelCount do
+    for x = 0, length * voxelCount + 1 do
         voxelMap[x] = {}
-        for y = 1, width * voxelCount do
+        for y = 0, width * voxelCount + 1 do
             voxelMap[x][y] = {}
-            for z = 1, height do
-                voxelMap[x][y][z] = voxel.none
+            for z = 0, height + 1 do
+                voxelMap[x][y][z] = nil
             end
         end
     end
-    print("Generating lightings..")
-    local pointLights = {}
-    for x = 1, length do
-        for y = 1, width do
-            local random = gameMath.LCGRandom(gameMath.CantorPair(x, y)) % 100
-            if random < 5 and #pointLights < 256 then
-                table.insert(pointLights, {
-                    color = { 0.8, 0.4, 0, 1 },
-                    position = { x, y, 0.5 },
-                    range = 4,
-                })
-            end
-        end
-    end
+
     print("Generating terrain foundation..")
     for x = 1, length do
         for y = 1, width do
@@ -330,17 +316,21 @@ function engine.Start()
     for x = 1, length * voxelCount do
         for y = 1, width * voxelCount do
             for z = 1, height do
-                if voxelMap[x][y][z] ~= voxel.none then
+                -- if voxelMap[x - 1][y][z] == nil or voxelMap[x + 1][y][z] == nil or voxelMap[x][y - 1][z] == nil or voxelMap[x][y + 1][z] == nil or voxelMap[x][y][z - 1] == nil or voxelMap[x][y][z + 1] == nil then
+                if voxelMap[x][y][z] ~= nil then
                     table.insert(vertices, { x, y, z - 4 })
                     table.insert(colors, voxelMap[x][y][z])
                     table.insert(normals, { 0, 0, 0 })
                 end
+                -- else
+                --     -- continue
+                -- end
             end
         end
     end
 
     print("Drawing models..")
-    engine.SetNormals(vertices, normals)
+    engine.SetNormals(vertices, normals, voxelMap)
     local index = engine.AddModel(vertices, colors, normals)
     local modelMatrix = {
         {
@@ -351,7 +341,20 @@ function engine.Start()
         },
     }
     engine.UpdateInstances(index, modelMatrix)
-
+    print("Generating lightings..")
+    local pointLights = {}
+    for x = 1, length do
+        for y = 1, width do
+            local random = gameMath.LCGRandom(gameMath.CantorPair(x, y)) % 100
+            if random < 5 and #pointLights < 256 then
+                table.insert(pointLights, {
+                    color = { 0.8, 0.4, 0, 1 },
+                    position = { x, y, 0.5 },
+                    range = 4,
+                })
+            end
+        end
+    end
     local directionalLight = {
         color = { 0.3, 0.3, 0.8, 0.618 },
         direction = { -0.618, -0.618, -1 },

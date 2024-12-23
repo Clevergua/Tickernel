@@ -52,241 +52,138 @@ function engine.LoadModel(path)
     return model
 end
 
-function engine.SetNormals(vertices, normals)
-    local indexMap = {}
+function engine.SetNormals(vertices, normals, voxelMap)
     local vertexCount = #vertices
     for i = 1, vertexCount do
         local x = vertices[i][1]
         local y = vertices[i][2]
         local z = vertices[i][3]
-        if indexMap[x] == nil then
-            indexMap[x] = {}
+        if voxelMap[x - 1][y][z] ~= nil then
+            normals[i][1] = normals[i][1] + 1;
         end
-        if indexMap[x][y] == nil then
-            indexMap[x][y] = {}
+        if voxelMap[x + 1][y][z] ~= nil then
+            normals[i][1] = normals[i][1] - 1;
         end
-        indexMap[x][y][z] = i
-    end
-
-    for i = 1, vertexCount do
-        local x = vertices[i][1]
-        local y = vertices[i][2]
-        local z = vertices[i][3]
-        if indexMap[x - 1] ~= nil then
-            if indexMap[x - 1][y] ~= nil then
-                if indexMap[x - 1][y][z] ~= nil then
-                    normals[i][1] = normals[i][1] + 1;
-                end
-            end
+        if voxelMap[x][y - 1][z] ~= nil then
+            normals[i][2] = normals[i][2] + 1;
         end
-        if indexMap[x + 1] ~= nil then
-            if indexMap[x + 1][y] ~= nil then
-                if indexMap[x + 1][y][z] ~= nil then
-                    normals[i][1] = normals[i][1] - 1;
-                end
-            end
+        if voxelMap[x][y + 1][z] ~= nil then
+            normals[i][2] = normals[i][2] - 1;
         end
-        if indexMap[x] ~= nil then
-            if indexMap[x][y - 1] ~= nil then
-                if indexMap[x][y - 1][z] ~= nil then
-                    normals[i][2] = normals[i][2] + 1;
-                end
-            end
+        if voxelMap[x][y][z - 1] ~= nil then
+            normals[i][3] = normals[i][3] + 1;
         end
-        if indexMap[x] ~= nil then
-            if indexMap[x][y + 1] ~= nil then
-                if indexMap[x][y + 1][z] ~= nil then
-                    normals[i][2] = normals[i][2] - 1;
-                end
-            end
-        end
-        if indexMap[x] ~= nil then
-            if indexMap[x][y] ~= nil then
-                if indexMap[x][y][z - 1] ~= nil then
-                    normals[i][3] = normals[i][3] + 1;
-                end
-            end
-        end
-        if indexMap[x] ~= nil then
-            if indexMap[x][y] ~= nil then
-                if indexMap[x][y][z + 1] ~= nil then
-                    normals[i][3] = normals[i][3] - 1;
-                end
-            end
+        if voxelMap[x][y][z + 1] ~= nil then
+            normals[i][3] = normals[i][3] - 1;
         end
 
         local length = 1 / 1.414 / 1.414
-        if indexMap[x - 1] ~= nil then
-            if indexMap[x - 1][y - 1] ~= nil then
-                if indexMap[x - 1][y - 1][z - 1] ~= nil then
-                    normals[i][1] = normals[i][1] + length;
-                    normals[i][2] = normals[i][2] + length;
-                    normals[i][3] = normals[i][3] + length;
-                end
-            end
+        if voxelMap[x - 1][y - 1][z - 1] ~= nil then
+            normals[i][1] = normals[i][1] + length;
+            normals[i][2] = normals[i][2] + length;
+            normals[i][3] = normals[i][3] + length;
         end
-        if indexMap[x - 1] ~= nil then
-            if indexMap[x - 1][y + 1] ~= nil then
-                if indexMap[x - 1][y + 1][z - 1] ~= nil then
-                    normals[i][1] = normals[i][1] + length;
-                    normals[i][2] = normals[i][2] - length;
-                    normals[i][3] = normals[i][3] + length;
-                end
-            end
+        if voxelMap[x - 1][y + 1][z - 1] ~= nil then
+            normals[i][1] = normals[i][1] + length;
+            normals[i][2] = normals[i][2] - length;
+            normals[i][3] = normals[i][3] + length;
         end
-        if indexMap[x - 1] ~= nil then
-            if indexMap[x - 1][y - 1] ~= nil then
-                if indexMap[x - 1][y - 1][z + 1] ~= nil then
-                    normals[i][1] = normals[i][1] + length;
-                    normals[i][2] = normals[i][2] + length;
-                    normals[i][3] = normals[i][3] - length;
-                end
-            end
+        if voxelMap[x - 1][y - 1][z + 1] ~= nil then
+            normals[i][1] = normals[i][1] + length;
+            normals[i][2] = normals[i][2] + length;
+            normals[i][3] = normals[i][3] - length;
         end
-        if indexMap[x - 1] ~= nil then
-            if indexMap[x - 1][y + 1] ~= nil then
-                if indexMap[x - 1][y + 1][z + 1] ~= nil then
-                    normals[i][1] = normals[i][1] + length;
-                    normals[i][2] = normals[i][2] - length;
-                    normals[i][3] = normals[i][3] - length;
-                end
-            end
+        if voxelMap[x - 1][y + 1][z + 1] ~= nil then
+            normals[i][1] = normals[i][1] + length;
+            normals[i][2] = normals[i][2] - length;
+            normals[i][3] = normals[i][3] - length;
         end
 
-        if indexMap[x + 1] ~= nil then
-            if indexMap[x + 1][y - 1] ~= nil then
-                if indexMap[x + 1][y - 1][z - 1] ~= nil then
-                    normals[i][1] = normals[i][1] - length;
-                    normals[i][2] = normals[i][2] + length;
-                    normals[i][3] = normals[i][3] + length;
-                end
-            end
+        if voxelMap[x + 1][y - 1][z - 1] ~= nil then
+            normals[i][1] = normals[i][1] - length;
+            normals[i][2] = normals[i][2] + length;
+            normals[i][3] = normals[i][3] + length;
         end
-        if indexMap[x + 1] ~= nil then
-            if indexMap[x + 1][y + 1] ~= nil then
-                if indexMap[x + 1][y + 1][z - 1] ~= nil then
-                    normals[i][1] = normals[i][1] - length;
-                    normals[i][2] = normals[i][2] - length;
-                    normals[i][3] = normals[i][3] + length;
-                end
-            end
+        if voxelMap[x + 1][y + 1][z - 1] ~= nil then
+            normals[i][1] = normals[i][1] - length;
+            normals[i][2] = normals[i][2] - length;
+            normals[i][3] = normals[i][3] + length;
         end
-        if indexMap[x + 1] ~= nil then
-            if indexMap[x + 1][y - 1] ~= nil then
-                if indexMap[x + 1][y - 1][z + 1] ~= nil then
-                    normals[i][1] = normals[i][1] - length;
-                    normals[i][2] = normals[i][2] + length;
-                    normals[i][3] = normals[i][3] - length;
-                end
-            end
+        if voxelMap[x + 1][y - 1][z + 1] ~= nil then
+            normals[i][1] = normals[i][1] - length;
+            normals[i][2] = normals[i][2] + length;
+            normals[i][3] = normals[i][3] - length;
         end
-        if indexMap[x + 1] ~= nil then
-            if indexMap[x + 1][y + 1] ~= nil then
-                if indexMap[x + 1][y + 1][z + 1] ~= nil then
-                    normals[i][1] = normals[i][1] - length;
-                    normals[i][2] = normals[i][2] - length;
-                    normals[i][3] = normals[i][3] - length;
-                end
-            end
+        if voxelMap[x + 1][y + 1][z + 1] ~= nil then
+            normals[i][1] = normals[i][1] - length;
+            normals[i][2] = normals[i][2] - length;
+            normals[i][3] = normals[i][3] - length;
         end
 
         length = 1 / 1.414;
-        if indexMap[x - 1] ~= nil then
-            if indexMap[x - 1][y - 1] ~= nil then
-                if indexMap[x - 1][y - 1][z] ~= nil then
-                    normals[i][1] = normals[i][1] + length;
-                    normals[i][2] = normals[i][2] + length;
-                end
-            end
+        if voxelMap[x - 1][y - 1][z] ~= nil then
+            normals[i][1] = normals[i][1] + length;
+            normals[i][2] = normals[i][2] + length;
         end
-        if indexMap[x - 1] ~= nil then
-            if indexMap[x - 1][y + 1] ~= nil then
-                if indexMap[x - 1][y + 1][z] ~= nil then
-                    normals[i][1] = normals[i][1] + length;
-                    normals[i][2] = normals[i][2] - length;
-                end
-            end
+        if voxelMap[x - 1][y + 1][z] ~= nil then
+            normals[i][1] = normals[i][1] + length;
+            normals[i][2] = normals[i][2] - length;
         end
-        if indexMap[x - 1] ~= nil then
-            if indexMap[x - 1][y] ~= nil then
-                if indexMap[x - 1][y][z - 1] ~= nil then
-                    normals[i][1] = normals[i][1] + length;
-                    normals[i][3] = normals[i][3] + length;
-                end
-            end
+        if voxelMap[x - 1][y][z - 1] ~= nil then
+            normals[i][1] = normals[i][1] + length;
+            normals[i][3] = normals[i][3] + length;
         end
-        if indexMap[x - 1] ~= nil then
-            if indexMap[x - 1][y] ~= nil then
-                if indexMap[x - 1][y][z + 1] ~= nil then
-                    normals[i][1] = normals[i][1] + length;
-                    normals[i][3] = normals[i][3] - length;
-                end
-            end
+        if voxelMap[x - 1][y][z + 1] ~= nil then
+            normals[i][1] = normals[i][1] + length;
+            normals[i][3] = normals[i][3] - length;
         end
-        if indexMap[x + 1] ~= nil then
-            if indexMap[x + 1][y - 1] ~= nil then
-                if indexMap[x + 1][y - 1][z] ~= nil then
-                    normals[i][1] = normals[i][1] - length;
-                    normals[i][2] = normals[i][2] + length;
-                end
-            end
+        if voxelMap[x + 1][y - 1][z] ~= nil then
+            normals[i][1] = normals[i][1] - length;
+            normals[i][2] = normals[i][2] + length;
         end
-        if indexMap[x + 1] ~= nil then
-            if indexMap[x + 1][y + 1] ~= nil then
-                if indexMap[x + 1][y + 1][z] ~= nil then
-                    normals[i][1] = normals[i][1] - length;
-                    normals[i][2] = normals[i][2] - length;
-                end
-            end
+        if voxelMap[x + 1][y + 1][z] ~= nil then
+            normals[i][1] = normals[i][1] - length;
+            normals[i][2] = normals[i][2] - length;
         end
-        if indexMap[x + 1] ~= nil then
-            if indexMap[x + 1][y] ~= nil then
-                if indexMap[x + 1][y][z - 1] ~= nil then
-                    normals[i][1] = normals[i][1] - length;
-                    normals[i][3] = normals[i][3] + length;
-                end
-            end
+        if voxelMap[x + 1][y][z - 1] ~= nil then
+            normals[i][1] = normals[i][1] - length;
+            normals[i][3] = normals[i][3] + length;
         end
-        if indexMap[x + 1] ~= nil then
-            if indexMap[x + 1][y] ~= nil then
-                if indexMap[x + 1][y][z + 1] ~= nil then
-                    normals[i][1] = normals[i][1] - length;
-                    normals[i][3] = normals[i][3] - length;
-                end
-            end
+        if voxelMap[x + 1][y][z + 1] ~= nil then
+            normals[i][1] = normals[i][1] - length;
+            normals[i][3] = normals[i][3] - length;
         end
-        if indexMap[x] ~= nil then
-            if indexMap[x][y - 1] ~= nil then
-                if indexMap[x][y - 1][z - 1] ~= nil then
-                    normals[i][2] = normals[i][2] + length;
-                    normals[i][3] = normals[i][3] + length;
-                end
-            end
+        if voxelMap[x][y - 1][z - 1] ~= nil then
+            normals[i][2] = normals[i][2] + length;
+            normals[i][3] = normals[i][3] + length;
         end
-        if indexMap[x] ~= nil then
-            if indexMap[x][y - 1] ~= nil then
-                if indexMap[x][y - 1][z + 1] ~= nil then
-                    normals[i][2] = normals[i][2] + length;
-                    normals[i][3] = normals[i][3] - length;
-                end
-            end
+        if voxelMap[x][y - 1][z + 1] ~= nil then
+            normals[i][2] = normals[i][2] + length;
+            normals[i][3] = normals[i][3] - length;
         end
-        if indexMap[x] ~= nil then
-            if indexMap[x][y + 1] ~= nil then
-                if indexMap[x][y + 1][z - 1] ~= nil then
-                    normals[i][2] = normals[i][2] - length;
-                    normals[i][3] = normals[i][3] + length;
-                end
-            end
+        if voxelMap[x][y + 1][z - 1] ~= nil then
+            normals[i][2] = normals[i][2] - length;
+            normals[i][3] = normals[i][3] + length;
         end
-        if indexMap[x] ~= nil then
-            if indexMap[x][y + 1] ~= nil then
-                if indexMap[x][y + 1][z + 1] ~= nil then
-                    normals[i][2] = normals[i][2] - length;
-                    normals[i][3] = normals[i][3] - length;
-                end
-            end
+        if voxelMap[x][y + 1][z + 1] ~= nil then
+            normals[i][2] = normals[i][2] - length;
+            normals[i][3] = normals[i][3] - length;
         end
+
+        local nx = normals[i][1]
+        local ny = normals[i][2]
+        local nz = normals[i][3]
+        local len = math.sqrt(nx * nx + ny * ny + nz * nz)
+        if len > 0.001 then
+            normals[i][1] = nx / len
+            normals[i][2] = ny / len
+            normals[i][3] = nz / len
+        else
+            normals[i][1] = 0
+            normals[i][2] = 0
+            normals[i][3] = 0
+        end
+        -- print("normal:" .. normals[i][1], normals[i][2], normals[i][3]);
     end
 end
 
@@ -301,12 +198,11 @@ function engine.DrawModel(instances, model)
         for j = 1, model.propertyCount do
             local propertyName = model.names[j]
             colors[i][4] = 0
-            normals[i] = { 0, 0, 0 }
-            if propertyName == "x" then
+            if propertyName == "px" then
                 vertices[i][1] = model.indexToProperties[j][i]
-            elseif propertyName == "y" then
+            elseif propertyName == "py" then
                 vertices[i][2] = model.indexToProperties[j][i]
-            elseif propertyName == "z" then
+            elseif propertyName == "pz" then
                 vertices[i][3] = model.indexToProperties[j][i]
             elseif propertyName == "r" then
                 colors[i][1] = model.indexToProperties[j][i]
@@ -314,12 +210,18 @@ function engine.DrawModel(instances, model)
                 colors[i][2] = model.indexToProperties[j][i]
             elseif propertyName == "b" then
                 colors[i][3] = model.indexToProperties[j][i]
+            elseif propertyName == "nx" then
+                normals[i][1] = model.indexToProperties[j][i]
+            elseif propertyName == "ny" then
+                normals[i][2] = model.indexToProperties[j][i]
+            elseif propertyName == "nz" then
+                normals[i][3] = model.indexToProperties[j][i]
             else
                 -- do nothing
             end
         end
+        -- print("normal:" .. normals[i][1], normals[i][2], normals[i][3]);
     end
-    engine.SetNormals(vertices, normals)
     local modelIndex = engine.AddModel(vertices, colors, normals)
     engine.UpdateInstances(modelIndex, instances)
     return modelIndex
