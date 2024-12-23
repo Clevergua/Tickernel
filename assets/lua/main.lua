@@ -186,7 +186,7 @@ function engine.Start()
 
     local modelsPath = engine.assetsPath ..
         engine.pathSeparator .. "models" .. engine.pathSeparator
-    print("Loading models")
+    print("Loading models..")
     local models = {
         engine.LoadModel(modelsPath .. "LargeBuilding01_0.tknvox"),
         engine.LoadModel(modelsPath .. "SmallBuilding01_0.tknvox"),
@@ -206,7 +206,7 @@ function engine.Start()
             instances[i] = {
                 { modelScale, 0,          0,          x },
                 { 0,          modelScale, 0,          y },
-                { 0,          0,          modelScale, 0 },
+                { 0,          0,          modelScale, 4 * modelScale },
                 { 0,          0,          0,          1 },
             }
         end
@@ -316,15 +316,26 @@ function engine.Start()
     for x = 1, length * voxelCount do
         for y = 1, width * voxelCount do
             for z = 1, height do
-                -- if voxelMap[x - 1][y][z] == nil or voxelMap[x + 1][y][z] == nil or voxelMap[x][y - 1][z] == nil or voxelMap[x][y + 1][z] == nil or voxelMap[x][y][z - 1] == nil or voxelMap[x][y][z + 1] == nil then
                 if voxelMap[x][y][z] ~= nil then
-                    table.insert(vertices, { x, y, z })
-                    table.insert(colors, voxelMap[x][y][z])
-                    table.insert(normals, { 0, 0, 0 })
+                    local isSurrounded = true
+                    for dx = -1, 1 do
+                        for dy = -1, 1 do
+                            for dz = -1, 1 do
+                                if dx ~= 0 or dy ~= 0 or dz ~= 0 and voxelMap[x + dx][y + dy][z + dz] == nil then
+                                    isSurrounded = false
+                                    break
+                                end
+                            end
+                        end
+                    end
+                    if isSurrounded then
+                        -- continue
+                    else
+                        table.insert(vertices, { x, y, z })
+                        table.insert(colors, voxelMap[x][y][z])
+                        table.insert(normals, { 0, 0, 0 })
+                    end
                 end
-                -- else
-                --     -- continue
-                -- end
             end
         end
     end

@@ -86,7 +86,7 @@ def SetNormals(voxModel, indexMap):
             ny -= length
             nz -= length
         length = 1 / 1.414 / 1.414
-        
+
         if x - 1 in indexMap and y - 1 in indexMap[x - 1] and z - 1 in indexMap[x - 1][y - 1]:
             nx += length
             ny += length
@@ -163,6 +163,18 @@ def WriteTickernelVoxelModel(filePath, tickernelVoxelModel):
                     file.write(struct.pack('<f', float(property)))
                 else:
                     raise ValueError(f"Unsupported property type: {type(property)}")
+                
+def isSurrounded(x, y, z, indexMap):
+    for dx in range(-1, 2):
+        for dy in range(-1, 2):
+            for dz in range(-1, 2):
+                # 跳过中心点
+                if dx == 0 and dy == 0 and dz == 0:
+                    continue
+                nx, ny, nz = x + dx, y + dy, z + dz
+                if not (nx in indexMap and ny in indexMap[nx] and nz in indexMap[nx][ny]):
+                    return False
+    return True
 
 def ParseVoxFile(filePath):
     voxModels = []
@@ -249,7 +261,7 @@ def ParseVoxFile(filePath):
                 indexMap[x][y] = {}
             indexMap[x][y][z] = i
         # 剔除不必要的点
-        if (x - 1 in indexMap and y in indexMap[x - 1] and z in indexMap[x - 1][y]) and (x + 1 in indexMap and y in indexMap[x + 1] and z in indexMap[x + 1][y]) and (x in indexMap and y - 1 in indexMap[x] and z in indexMap[x][y - 1]) and (x in indexMap and y + 1 in indexMap[x] and z in indexMap[x][y + 1]) and (x in indexMap and y in indexMap[x] and z - 1 in indexMap[x][y]) and (x in indexMap and y in indexMap[x] and z + 1 in indexMap[x][y]):
+        if(isSurrounded(x,y,z,indexMap)):
             continue
         # 计算法线
         SetNormals(voxModel, indexMap)
