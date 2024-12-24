@@ -367,7 +367,7 @@ function engine.Start()
         end
     end
     local directionalLight = {
-        color = { 0.3, 0.3, 0.8, 0.618 },
+        color = { 0.3, 0.3, 0.8, 1 },
         direction = { -0.618, -0.618, -1 },
     }
     engine.UpdateLightsUniformBuffer(directionalLight, pointLights)

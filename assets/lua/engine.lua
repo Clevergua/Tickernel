@@ -222,7 +222,7 @@ function engine.DrawModel(instances, model)
         end
         -- print("normal:" .. normals[i][1], normals[i][2], normals[i][3]);
     end
-    SetNormals()
+    local voxelMap = {}
     local modelIndex = engine.AddModel(vertices, colors, normals)
     engine.UpdateInstances(modelIndex, instances)
     return modelIndex

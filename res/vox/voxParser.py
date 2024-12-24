@@ -260,12 +260,11 @@ def ParseVoxFile(filePath):
             if y not in indexMap[x]:
                 indexMap[x][y] = {}
             indexMap[x][y][z] = i
-        # 剔除不必要的点
-        if(isSurrounded(x,y,z,indexMap)):
-            continue
-        # 计算法线
+        
         SetNormals(voxModel, indexMap)
         for voxel in voxModel.voxels:
+            if(isSurrounded(voxel[0], voxel[1], voxel[2], indexMap)):
+                continue
             tickernelVoxelModel.indexToProperties[0].append(voxel[0])
             tickernelVoxelModel.indexToProperties[1].append(voxel[1])
             tickernelVoxelModel.indexToProperties[2].append(voxel[2])
