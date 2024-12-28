@@ -54,19 +54,19 @@ static void CreateVkRenderPass(DeferredRenderPass *pDeferredRenderPass, VkDevice
         normalAttachmentDescription,
     };
 
-    VkAttachmentReference opaqueGeometryDepthAttachmentReference = {
+    VkAttachmentReference geometryDepthAttachmentReference = {
         .attachment = 1,
         .layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
     };
-    VkAttachmentReference opaqueGeometryAlbedoAttachmentReference = {
+    VkAttachmentReference geometryAlbedoAttachmentReference = {
         .attachment = 2,
         .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
     };
-    VkAttachmentReference opaqueGeometryNormalAttachmentReference = {
+    VkAttachmentReference geometryNormalAttachmentReference = {
         .attachment = 3,
         .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
     };
-    VkAttachmentReference colorAttachments[] = {opaqueGeometryAlbedoAttachmentReference, opaqueGeometryNormalAttachmentReference};
+    VkAttachmentReference colorAttachments[] = {geometryAlbedoAttachmentReference, geometryNormalAttachmentReference};
     VkSubpassDescription geometrySubpassDescription = {
         .flags = 0,
         .pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
@@ -75,11 +75,23 @@ static void CreateVkRenderPass(DeferredRenderPass *pDeferredRenderPass, VkDevice
         .colorAttachmentCount = 2,
         .pColorAttachments = colorAttachments,
         .pResolveAttachments = NULL,
-        .pDepthStencilAttachment = &opaqueGeometryDepthAttachmentReference,
+        .pDepthStencilAttachment = &geometryDepthAttachmentReference,
         .preserveAttachmentCount = 0,
         .pPreserveAttachments = NULL,
     };
 
+    VkSubpassDescription waterSubpassDescription = {
+        .flags = 0,
+        .pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
+        .inputAttachmentCount = 0,
+        .pInputAttachments = NULL,
+        .colorAttachmentCount = 2,
+        .pColorAttachments = colorAttachments,
+        .pResolveAttachments = NULL,
+        .pDepthStencilAttachment = &geometryDepthAttachmentReference,
+        .preserveAttachmentCount = 0,
+        .pPreserveAttachments = NULL,
+    };
     VkAttachmentReference opaqueLightingColorAttachmentReference = {
         .attachment = 0,
         .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
@@ -109,9 +121,10 @@ static void CreateVkRenderPass(DeferredRenderPass *pDeferredRenderPass, VkDevice
         .pPreserveAttachments = NULL,
     };
 
-    uint32_t subpassCount = 2;
+    uint32_t subpassCount = 3;
     VkSubpassDescription vkSubpassDescriptions[] = {
         geometrySubpassDescription,
+        waterSubpassDescription,
         ligthtingSubpassDescription,
     };
     uint32_t dependencyCount = subpassCount - 1;
@@ -119,11 +132,11 @@ static void CreateVkRenderPass(DeferredRenderPass *pDeferredRenderPass, VkDevice
     for (uint32_t i = 0; i < dependencyCount; i++)
     {
         subpassDependencies[i].srcSubpass = i;
-        subpassDependencies[i].dstSubpass = i + 1;
-        subpassDependencies[i].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-        subpassDependencies[i].dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-        subpassDependencies[i].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-        subpassDependencies[i].dstAccessMask = VK_ACCESS_INPUT_ATTACHMENT_READ_BIT;
+        subpassDependencies[i].dstSubpass = dependencyCount;
+        subpassDependencies[i].srcStageMask = VK_PIPELINE_STAGE_GEOMETRY_SHADER_BIT;
+        subpassDependencies[i].dstStageMask = VK_PIPELINE_STAGE_GEOMETRY_SHADER_BIT;
+        subpassDependencies[i].srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
+        subpassDependencies[i].dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
         subpassDependencies[i].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
     }
 
@@ -169,11 +182,14 @@ void CreateDeferredRenderPass(DeferredRenderPass *pDeferredRenderPass, const cha
     uint32_t subpassIndex = 0;
     CreateOpaqueGeometrySubpass(&pDeferredRenderPass->opaqueGeometrySubpass, shadersPath, pDeferredRenderPass->vkRenderPass, subpassIndex, vkDevice, viewport, scissor);
     subpassIndex++;
+    CreateWaterGeometrySubpass(&pDeferredRenderPass->waterGeometrySubpass, shadersPath, pDeferredRenderPass->vkRenderPass, subpassIndex, vkDevice, viewport, scissor);
+    subpassIndex++;
     CreateOpaqueLightingSubpass(&pDeferredRenderPass->opaqueLightingSubpass, shadersPath, pDeferredRenderPass->vkRenderPass, subpassIndex, vkDevice, viewport, scissor, globalUniformBuffer, lightsUniformBuffer, depthGraphicImage.vkImageView, albedoGraphicImage.vkImageView, normalGraphicImage.vkImageView);
 }
 void DestroyDeferredRenderPass(DeferredRenderPass *pDeferredRenderPass, VkDevice vkDevice)
 {
     DestroyOpaqueGeometrySubpass(&pDeferredRenderPass->opaqueGeometrySubpass, vkDevice);
+    DestroyWaterGeometrySubpass(&pDeferredRenderPass->waterGeometrySubpass, vkDevice);
     DestroyOpaqueLightingSubpass(&pDeferredRenderPass->opaqueLightingSubpass, vkDevice);
     vkDestroyFramebuffer(vkDevice, pDeferredRenderPass->vkFramebuffer, NULL);
     DestroyVkRenderPass(pDeferredRenderPass, vkDevice);
@@ -250,6 +266,23 @@ void RecordDeferredRenderPass(DeferredRenderPass *pDeferredRenderPass, VkCommand
             vkCmdSetViewport(vkCommandBuffer, 0, 1, &viewport);
             vkCmdSetScissor(vkCommandBuffer, 0, 1, &scissor);
             vkCmdBindDescriptorSets(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pOpaqueGeometrySubpass->vkPipelineLayout, 0, 1, &pSubpassModel->vkDescriptorSet, 0, NULL);
+            VkBuffer vertexBuffers[] = {pSubpassModel->vertexBuffer, pSubpassModel->instanceBuffer};
+            VkDeviceSize offsets[] = {0, 0};
+            vkCmdBindVertexBuffers(vkCommandBuffer, 0, 2, vertexBuffers, offsets);
+            vkCmdDraw(vkCommandBuffer, pSubpassModel->vertexCount, pSubpassModel->instanceCount, 0, 0);
+        }
+    }
+    vkCmdNextSubpass(vkCommandBuffer, VK_SUBPASS_CONTENTS_INLINE);
+    Subpass *pWaterGeometrySubpass = &pDeferredRenderPass->waterGeometrySubpass;
+    vkCmdBindPipeline(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pWaterGeometrySubpass->vkPipeline);
+    for (uint32_t modelIndex = 0; modelIndex < pWaterGeometrySubpass->modelCollection.length; modelIndex++)
+    {
+        SubpassModel *pSubpassModel = pWaterGeometrySubpass->modelCollection.array[modelIndex];
+        if (NULL != pSubpassModel)
+        {
+            vkCmdSetViewport(vkCommandBuffer, 0, 1, &viewport);
+            vkCmdSetScissor(vkCommandBuffer, 0, 1, &scissor);
+            vkCmdBindDescriptorSets(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pWaterGeometrySubpass->vkPipelineLayout, 0, 1, &pSubpassModel->vkDescriptorSet, 0, NULL);
             VkBuffer vertexBuffers[] = {pSubpassModel->vertexBuffer, pSubpassModel->instanceBuffer};
             VkDeviceSize offsets[] = {0, 0};
             vkCmdBindVertexBuffers(vkCommandBuffer, 0, 2, vertexBuffers, offsets);

@@ -64,7 +64,7 @@ add_dependencies(${PROJECT_NAME} CopyDLL)
 
 # Compile shaders
 find_program(GLSLC_EXECUTABLE glslc)
-set(SHADER_SOURCES_DIR ${CMAKE_SOURCE_DIR}/resources/glsl)
+set(SHADER_SOURCES_DIR ${CMAKE_SOURCE_DIR}/res/glsl)
 set(SHADER_SOURCES)
 file(GLOB_RECURSE SHADER_SOURCES ${SHADER_SOURCES_DIR}/*.vert ${SHADER_SOURCES_DIR}/*.frag)
 

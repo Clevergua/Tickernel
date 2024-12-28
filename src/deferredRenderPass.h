@@ -1,13 +1,14 @@
 #pragma once
 #include <opaqueGeometrySubpass.h>
 #include <opaqueLightingSubpass.h>
-
+#include <waterGeometrySubpass.h>
 typedef struct DeferredRenderPassStruct
 {
     VkRenderPass vkRenderPass;
     VkFramebuffer vkFramebuffer;
 
     Subpass opaqueGeometrySubpass;
+    Subpass waterGeometrySubpass;
     Subpass opaqueLightingSubpass;
 } DeferredRenderPass;
 

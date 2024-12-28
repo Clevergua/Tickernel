@@ -9,6 +9,7 @@ layout(binding = 3) uniform GlobalUniform {
     mat4 proj;
     mat4 inv_view_proj;
     float pointSizeFactor;
+    float time;
 } globalUniform;
 
 struct DirectionalLight {

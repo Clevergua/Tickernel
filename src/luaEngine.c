@@ -31,15 +31,11 @@ static void AssertLuaType(int type, int targetType)
     }
 }
 
-static int AddModel(lua_State *pLuaState)
+static int LuaAddModelToOpaqueGeometrySubpass(lua_State *pLuaState)
 {
-    lua_len(pLuaState, -2);
-    //  vertices colors length
-
+    lua_len(pLuaState, -3);
     lua_Integer vertexCount = luaL_checkinteger(pLuaState, -1);
     lua_pop(pLuaState, 1);
-    //  vertices colors
-
     if (vertexCount > 0)
     {
         OpaqueGeometrySubpassVertex *opaqueGeometrySubpassVertices = TickernelMalloc(sizeof(OpaqueGeometrySubpassVertex) * vertexCount);
@@ -108,8 +104,7 @@ static int AddModel(lua_State *pLuaState)
         return 0;
     }
 }
-
-static int RemoveModel(lua_State *pLuaState)
+static int LuaRemoveModelFromOpaqueGeometrySubpass(lua_State *pLuaState)
 {
     lua_Integer index = luaL_checkinteger(pLuaState, -1);
     lua_pop(pLuaState, 1);
@@ -124,8 +119,7 @@ static int RemoveModel(lua_State *pLuaState)
     RemoveModelFromOpaqueGeometrySubpass(&pGraphicEngine->deferredRenderPass.opaqueGeometrySubpass, pGraphicEngine->vkDevice, (uint32_t)index);
     return 0;
 }
-
-static int UpdateInstances(lua_State *pLuaState)
+static int LuaUpdateInstancesInOpaqueGeometrySubpass(lua_State *pLuaState)
 {
     //  index modelMatrix
 
@@ -164,7 +158,140 @@ static int UpdateInstances(lua_State *pLuaState)
     AssertLuaType(pGraphicEngineTpye, LUA_TLIGHTUSERDATA);
     GraphicEngine *pGraphicEngine = lua_touserdata(pLuaState, -1);
     lua_pop(pLuaState, 2);
-    UpdateInstancesToOpaqueGeometrySubpass(&pGraphicEngine->deferredRenderPass.opaqueGeometrySubpass, (uint32_t)modelIndex, pGraphicEngine->vkDevice, pGraphicEngine->vkPhysicalDevice, pGraphicEngine->graphicVkCommandPool, pGraphicEngine->vkGraphicQueue, pGraphicEngine->globalUniformBuffer, instances, (uint32_t)instanceCount);
+    UpdateInstancesInOpaqueGeometrySubpass(&pGraphicEngine->deferredRenderPass.opaqueGeometrySubpass, (uint32_t)modelIndex, pGraphicEngine->vkDevice, pGraphicEngine->vkPhysicalDevice, pGraphicEngine->graphicVkCommandPool, pGraphicEngine->vkGraphicQueue, pGraphicEngine->globalUniformBuffer, instances, (uint32_t)instanceCount);
+    return 0;
+}
+
+static int LuaAddModelToWaterGeometrySubpass(lua_State *pLuaState)
+{
+    lua_len(pLuaState, -2);
+    //  vertices colors length
+
+    lua_Integer vertexCount = luaL_checkinteger(pLuaState, -1);
+    lua_pop(pLuaState, 1);
+    //  vertices colors
+
+    if (vertexCount > 0)
+    {
+        WaterGeometrySubpassVertex *waterGeometrySubpassVertices = TickernelMalloc(sizeof(WaterGeometrySubpassVertex) * vertexCount);
+        for (uint32_t i = 0; i < vertexCount; i++)
+        {
+            int vertexType = lua_geti(pLuaState, -3, i + 1);
+            AssertLuaType(vertexType, LUA_TTABLE);
+            uint32_t vertexLength = 3;
+            for (uint32_t j = 0; j < vertexLength; j++)
+            {
+                int vertexValueType = lua_geti(pLuaState, -1, j + 1);
+                AssertLuaType(vertexValueType, LUA_TNUMBER);
+                waterGeometrySubpassVertices[i].position[j] = luaL_checknumber(pLuaState, -1);
+                lua_pop(pLuaState, 1);
+            }
+            lua_pop(pLuaState, 1);
+
+            int colorType = lua_geti(pLuaState, -2, i + 1);
+            AssertLuaType(colorType, LUA_TTABLE);
+            uint32_t colorLength = 4;
+            for (uint32_t j = 0; j < colorLength; j++)
+            {
+                int colorValueType = lua_geti(pLuaState, -1, j + 1);
+                AssertLuaType(colorValueType, LUA_TNUMBER);
+                waterGeometrySubpassVertices[i].color[j] = luaL_checknumber(pLuaState, -1) / 255.0f;
+                lua_pop(pLuaState, 1);
+            }
+            lua_pop(pLuaState, 1);
+
+            int normalType = lua_geti(pLuaState, -1, i + 1);
+            AssertLuaType(normalType, LUA_TTABLE);
+            uint32_t normalLength = 3;
+            for (uint32_t j = 0; j < normalLength; j++)
+            {
+                int normalValueType = lua_geti(pLuaState, -1, j + 1);
+                AssertLuaType(normalValueType, LUA_TNUMBER);
+                waterGeometrySubpassVertices[i].normal[j] = luaL_checknumber(pLuaState, -1);
+                lua_pop(pLuaState, 1);
+            }
+            lua_pop(pLuaState, 1);
+        }
+        lua_pop(pLuaState, 2);
+
+        uint32_t outputIndex;
+
+        int engineTpye = lua_getglobal(pLuaState, "engine");
+        AssertLuaType(engineTpye, LUA_TTABLE);
+        int pGraphicEngineTpye = lua_getfield(pLuaState, -1, "pGraphicEngine");
+        AssertLuaType(pGraphicEngineTpye, LUA_TLIGHTUSERDATA);
+        GraphicEngine *pGraphicEngine = lua_touserdata(pLuaState, -1);
+        lua_pop(pLuaState, 2);
+
+        AddModelToWaterGeometrySubpass(&pGraphicEngine->deferredRenderPass.waterGeometrySubpass, pGraphicEngine->vkDevice, pGraphicEngine->vkPhysicalDevice, pGraphicEngine->graphicVkCommandPool, pGraphicEngine->vkGraphicQueue, pGraphicEngine->globalUniformBuffer, (uint32_t)vertexCount, waterGeometrySubpassVertices, &outputIndex);
+
+        TickernelFree(waterGeometrySubpassVertices);
+
+        lua_pushinteger(pLuaState, outputIndex);
+
+        return 1;
+    }
+    else
+    {
+        //  vertices colors
+        lua_pop(pLuaState, 2);
+        //
+        return 0;
+    }
+}
+static int LuaRemoveModelFromWaterGeometrySubpass(lua_State *pLuaState)
+{
+    lua_Integer index = luaL_checkinteger(pLuaState, -1);
+    lua_pop(pLuaState, 1);
+
+    int engineTpye = lua_getglobal(pLuaState, "engine");
+    AssertLuaType(engineTpye, LUA_TTABLE);
+    int pGraphicEngineTpye = lua_getfield(pLuaState, -1, "pGraphicEngine");
+    AssertLuaType(pGraphicEngineTpye, LUA_TLIGHTUSERDATA);
+    GraphicEngine *pGraphicEngine = lua_touserdata(pLuaState, -1);
+    lua_pop(pLuaState, 2);
+
+    RemoveModelFromWaterGeometrySubpass(&pGraphicEngine->deferredRenderPass.waterGeometrySubpass, pGraphicEngine->vkDevice, (uint32_t)index);
+    return 0;
+}
+static int LuaUpdateInstancesInWaterGeometrySubpass(lua_State *pLuaState)
+{
+    lua_len(pLuaState, -1);
+    lua_Integer instanceCount = luaL_checkinteger(pLuaState, -1);
+    lua_pop(pLuaState, 1);
+    WaterGeometrySubpassInstance instances[instanceCount];
+    for (uint32_t i = 0; i < instanceCount; i++)
+    {
+        int instanceType = lua_geti(pLuaState, -1, i + 1);
+        AssertLuaType(instanceType, LUA_TTABLE);
+        for (uint32_t row = 0; row < 4; row++)
+        {
+            int rowValueType = lua_geti(pLuaState, -1, row + 1);
+            AssertLuaType(rowValueType, LUA_TTABLE);
+            for (uint32_t column = 0; column < 4; column++)
+            {
+                int columnValueType = lua_geti(pLuaState, -1, column + 1);
+                AssertLuaType(columnValueType, LUA_TNUMBER);
+                instances[i].model[column][row] = luaL_checknumber(pLuaState, -1);
+                lua_pop(pLuaState, 1);
+            }
+            lua_pop(pLuaState, 1);
+        }
+        lua_pop(pLuaState, 1);
+    }
+    lua_pop(pLuaState, 1);
+
+    // index
+    lua_Integer modelIndex = luaL_checkinteger(pLuaState, -1);
+    lua_pop(pLuaState, 1);
+
+    int engineTpye = lua_getglobal(pLuaState, "engine");
+    AssertLuaType(engineTpye, LUA_TTABLE);
+    int pGraphicEngineTpye = lua_getfield(pLuaState, -1, "pGraphicEngine");
+    AssertLuaType(pGraphicEngineTpye, LUA_TLIGHTUSERDATA);
+    GraphicEngine *pGraphicEngine = lua_touserdata(pLuaState, -1);
+    lua_pop(pLuaState, 2);
+    UpdateInstancesInWaterGeometrySubpass(&pGraphicEngine->deferredRenderPass.waterGeometrySubpass, (uint32_t)modelIndex, pGraphicEngine->vkDevice, pGraphicEngine->vkPhysicalDevice, pGraphicEngine->graphicVkCommandPool, pGraphicEngine->vkGraphicQueue, pGraphicEngine->globalUniformBuffer, instances, (uint32_t)instanceCount);
     return 0;
 }
 
@@ -176,6 +303,10 @@ static int UpdateGlobalUniformBuffer(lua_State *pLuaState)
     AssertLuaType(pGraphicEngineTpye, LUA_TLIGHTUSERDATA);
     GraphicEngine *pGraphicEngine = lua_touserdata(pLuaState, -1);
     lua_pop(pLuaState, 2);
+
+    lua_Number time = luaL_checknumber(pLuaState, -1);
+    lua_pop(pLuaState, 1);
+
     vec3 targetPosition;
     vec3 cameraPosition;
     for (uint32_t i = 0; i < 3; i++)
@@ -200,7 +331,7 @@ static int UpdateGlobalUniformBuffer(lua_State *pLuaState)
     mat4 view_proj;
     glm_mat4_mul(ubo.proj, ubo.view, view_proj);
     glm_mat4_inv(view_proj, ubo.inv_view_proj);
-
+    ubo.time = time;
     lua_pop(pLuaState, 2);
     pGraphicEngine->inputGlobalUniformBuffer = ubo;
     pGraphicEngine->canUpdateGlobalUniformBuffer = true;
@@ -412,14 +543,23 @@ void StartLua(LuaEngine *pLuaEngine)
     lua_pushstring(pLuaState, TickernelGetPathSeparator());
     lua_setfield(pLuaState, -2, "pathSeparator");
 
-    lua_pushcfunction(pLuaState, AddModel);
-    lua_setfield(pLuaState, -2, "AddModel");
+    lua_pushcfunction(pLuaState, LuaAddModelToOpaqueGeometrySubpass);
+    lua_setfield(pLuaState, -2, "AddModelToOpaqueGeometrySubpass");
 
-    lua_pushcfunction(pLuaState, RemoveModel);
-    lua_setfield(pLuaState, -2, "RemoveModel");
+    lua_pushcfunction(pLuaState, LuaRemoveModelFromOpaqueGeometrySubpass);
+    lua_setfield(pLuaState, -2, "RemoveModelFromOpaqueGeometrySubpass");
 
-    lua_pushcfunction(pLuaState, UpdateInstances);
-    lua_setfield(pLuaState, -2, "UpdateInstances");
+    lua_pushcfunction(pLuaState, LuaUpdateInstancesInOpaqueGeometrySubpass);
+    lua_setfield(pLuaState, -2, "UpdateInstancesInOpaqueGeometrySubpass");
+
+    lua_pushcfunction(pLuaState, LuaAddModelToWaterGeometrySubpass);
+    lua_setfield(pLuaState, -2, "AddModelToWaterGeometrySubpass");
+
+    lua_pushcfunction(pLuaState, LuaRemoveModelFromWaterGeometrySubpass);
+    lua_setfield(pLuaState, -2, "RemoveModelFromWaterGeometrySubpass");
+
+    lua_pushcfunction(pLuaState, LuaUpdateInstancesInWaterGeometrySubpass);
+    lua_setfield(pLuaState, -2, "UpdateInstancesInWaterGeometrySubpass");
 
     lua_pushcfunction(pLuaState, UpdateGlobalUniformBuffer);
     lua_setfield(pLuaState, -2, "UpdateGlobalUniformBuffer");

@@ -303,6 +303,12 @@ function engine.Start()
                         for z = maxHeight + 1, snowHeight do
                             voxelHeightMap[z] = voxel.snow
                         end
+                    elseif voxelViewData.terrain == terrain.water then
+                        for z = maxHeight + 1, maxHeight + 4 do
+                            if z < 6 then
+                                voxelMap[(x - 1) * voxelCount + px][(y - 1) * voxelCount + py][z] = voxel.water
+                            end
+                        end
                     end
                 end
             end
@@ -313,27 +319,37 @@ function engine.Start()
     local vertices = {}
     local colors = {}
     local normals = {}
+
+    local waterVertices = {}
+    local waterColors = {}
+    local waterNormals = {}
     for x = 1, length * voxelCount do
         for y = 1, width * voxelCount do
             for z = 1, height do
                 if voxelMap[x][y][z] ~= nil then
-                    local isSurrounded = true
-                    for dx = -1, 1 do
-                        for dy = -1, 1 do
-                            for dz = -1, 1 do
-                                if dx ~= 0 or dy ~= 0 or dz ~= 0 and voxelMap[x + dx][y + dy][z + dz] == nil then
-                                    isSurrounded = false
-                                    break
+                    if voxelMap[x][y][z] == voxel.water then
+                        table.insert(waterVertices, { x, y, z })
+                        table.insert(waterColors, voxelMap[x][y][z])
+                        table.insert(waterNormals, { 0, 0, 0 })
+                    else
+                        local isSurrounded = true
+                        for dx = -1, 1 do
+                            for dy = -1, 1 do
+                                for dz = -1, 1 do
+                                    if dx ~= 0 or dy ~= 0 or dz ~= 0 and voxelMap[x + dx][y + dy][z + dz] == nil then
+                                        isSurrounded = false
+                                        break
+                                    end
                                 end
                             end
                         end
-                    end
-                    if isSurrounded then
-                        -- continue
-                    else
-                        table.insert(vertices, { x, y, z })
-                        table.insert(colors, voxelMap[x][y][z])
-                        table.insert(normals, { 0, 0, 0 })
+                        if isSurrounded then
+                            -- continue
+                        else
+                            table.insert(vertices, { x, y, z })
+                            table.insert(colors, voxelMap[x][y][z])
+                            table.insert(normals, { 0, 0, 0 })
+                        end
                     end
                 end
             end
@@ -342,7 +358,9 @@ function engine.Start()
 
     print("Drawing models..")
     engine.SetNormals(vertices, normals, voxelMap)
-    local index = engine.AddModel(vertices, colors, normals)
+    engine.SetNormals(waterVertices, waterNormals, voxelMap)
+    local index = engine.AddModelToOpaqueGeometrySubpass(vertices, colors, normals)
+    local waterIndex = engine.AddModelToWaterGeometrySubpass(waterVertices, waterColors, waterNormals)
     local modelMatrix = {
         {
             { modelScale, 0,          0,          0 },
@@ -351,7 +369,8 @@ function engine.Start()
             { 0,          0,          0,          1 },
         },
     }
-    engine.UpdateInstances(index, modelMatrix)
+    engine.UpdateInstancesInOpaqueGeometrySubpass(index, modelMatrix)
+    engine.UpdateInstancesInWaterGeometrySubpass(waterIndex, modelMatrix)
     print("Generating lightings..")
     local pointLights = {}
     for x = 1, length do
@@ -377,7 +396,7 @@ function engine.End()
     print("Lua Start")
 end
 
-local cameraPosition = { 0, 4, 10 }
+local cameraPosition = { 0, 0, 5 }
 local targetPosition = { 0, 8, 0 }
 local t = 0
 
@@ -393,7 +412,7 @@ function engine.Update()
     -- collectgarbage("collect")
     local memoryUsage = collectgarbage("count")
     print("Current memory usage: ", memoryUsage, "KB")
-    engine.UpdateGlobalUniformBuffer(cameraPosition, targetPosition)
+    engine.UpdateGlobalUniformBuffer(cameraPosition, targetPosition, t * 100)
     engine.frameCount = engine.frameCount + 1
 end
 
