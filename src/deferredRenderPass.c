@@ -129,20 +129,10 @@ static void CreateVkRenderPass(DeferredRenderPass *pDeferredRenderPass, VkDevice
     };
     uint32_t dependencyCount = subpassCount - 1;
     VkSubpassDependency subpassDependencies[dependencyCount];
-    // for (uint32_t i = 0; i < dependencyCount; i++)
-    // {
-    //     subpassDependencies[i].srcSubpass = i;
-    //     subpassDependencies[i].dstSubpass = dependencyCount;
-    //     subpassDependencies[i].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    //     subpassDependencies[i].dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-    //     subpassDependencies[i].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-    //     subpassDependencies[i].dstAccessMask = VK_ACCESS_INPUT_ATTACHMENT_READ_BIT;
-    //     subpassDependencies[i].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
-    // }
     for (uint32_t i = 0; i < dependencyCount; i++)
     {
         subpassDependencies[i].srcSubpass = i;
-        subpassDependencies[i].dstSubpass = i + 1;
+        subpassDependencies[i].dstSubpass = dependencyCount;
         subpassDependencies[i].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
         subpassDependencies[i].dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
         subpassDependencies[i].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
