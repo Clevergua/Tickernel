@@ -386,6 +386,7 @@ static void CreateLogicalDevice(GraphicEngine *pGraphicEngine)
         {
             .fillModeNonSolid = VK_TRUE,
             .sampleRateShading = VK_TRUE,
+            .independentBlend = VK_TRUE,
         };
     char **enabledLayerNames;
     uint32_t enabledLayerCount;

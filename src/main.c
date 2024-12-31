@@ -23,7 +23,7 @@ int main(int argc, const char *argv[])
     TickernelEngine *pTickernelEngine = TickernelMalloc(sizeof(TickernelEngine));
     *pTickernelEngine = (TickernelEngine){
         .targetFrameRate = 60,
-        // .frameCount = 4294967294,
+        // .frameCount = 4294967295,
         .frameCount = 0,
         .canUpdate = true,
         .pGraphicEngine = NULL,
