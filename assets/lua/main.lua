@@ -47,9 +47,9 @@ local terrainViewMap = {
         {
             terrain = terrain.sand,
             foundationRoughnessNoiseScale = 0.96,
-            foundationRoughnessStep = 0.41,
+            foundationRoughnessStep = 0.31,
             foundationVoxel = voxel.sand,
-            foundationDeltaHeight = 0,
+            foundationDeltaHeight = 2,
         },
         {
             terrain = terrain.grass,
@@ -79,14 +79,14 @@ local terrainViewMap = {
             foundationRoughnessNoiseScale = 4.96,
             foundationRoughnessStep = 0.2,
             foundationVoxel = voxel.volcanicRock,
-            foundationDeltaHeight = 0,
+            foundationDeltaHeight = 2,
         },
         {
             terrain = terrain.volcanic,
             foundationRoughnessNoiseScale = 4.96,
             foundationRoughnessStep = 0.2,
             foundationVoxel = voxel.volcanicRock,
-            foundationDeltaHeight = 0,
+            foundationDeltaHeight = 2,
         },
     },
 }
@@ -94,6 +94,8 @@ local terrainViewMap = {
 local foundationSeed = 124321
 local stoneNoiseSeed = 63548
 local surfaceNoiseSeed = 213456
+local grassNoiseSeed = 56123
+local lavaNoiseSeed = 321412
 function GetVoxelInterpolation(temperature, humidity)
     local x0, x1, y0, y1
     local dx = 0
@@ -184,34 +186,34 @@ local width = 32
 function engine.Start()
     print("Lua Start")
 
-    local modelsPath = engine.assetsPath ..
-        engine.pathSeparator .. "models" .. engine.pathSeparator
-    print("Loading models..")
-    local models = {
-        engine.LoadModel(modelsPath .. "LargeBuilding01_0.tknvox"),
-        engine.LoadModel(modelsPath .. "SmallBuilding01_0.tknvox"),
-        engine.LoadModel(modelsPath .. "SmallBuilding02_0.tknvox"),
-        engine.LoadModel(modelsPath .. "SmallBuilding03_0.tknvox"),
-        engine.LoadModel(modelsPath .. "SmallBuilding04_0.tknvox"),
-        engine.LoadModel(modelsPath .. "TallBuilding01_0.tknvox"),
-        engine.LoadModel(modelsPath .. "TallBuilding02_0.tknvox"),
-        engine.LoadModel(modelsPath .. "TallBuilding03_0.tknvox"),
-    }
-    for index, model in ipairs(models) do
-        local count = 6
-        local instances = {}
-        for i = 1, count do
-            local x = math.abs(gameMath.LCGRandom((index + 13251) * 525234532 + i * 42342345)) % length
-            local y = math.abs(gameMath.LCGRandom((x - 2317831) * 431513511 + index * 24141312 - i * 2131204)) % width
-            instances[i] = {
-                { modelScale, 0,          0,          x },
-                { 0,          modelScale, 0,          y },
-                { 0,          0,          modelScale, 4 * modelScale },
-                { 0,          0,          0,          1 },
-            }
-        end
-        engine.DrawModel(instances, model)
-    end
+    -- local modelsPath = engine.assetsPath ..
+    --     engine.pathSeparator .. "models" .. engine.pathSeparator
+    -- print("Loading models..")
+    -- local models = {
+    --     engine.LoadModel(modelsPath .. "LargeBuilding01_0.tknvox"),
+    --     engine.LoadModel(modelsPath .. "SmallBuilding01_0.tknvox"),
+    --     engine.LoadModel(modelsPath .. "SmallBuilding02_0.tknvox"),
+    --     engine.LoadModel(modelsPath .. "SmallBuilding03_0.tknvox"),
+    --     engine.LoadModel(modelsPath .. "SmallBuilding04_0.tknvox"),
+    --     engine.LoadModel(modelsPath .. "TallBuilding01_0.tknvox"),
+    --     engine.LoadModel(modelsPath .. "TallBuilding02_0.tknvox"),
+    --     engine.LoadModel(modelsPath .. "TallBuilding03_0.tknvox"),
+    -- }
+    -- for index, model in ipairs(models) do
+    --     local count = 6
+    --     local instances = {}
+    --     for i = 1, count do
+    --         local x = math.abs(gameMath.LCGRandom((index + 13251) * 525234532 + i * 42342345)) % length
+    --         local y = math.abs(gameMath.LCGRandom((x - 2317831) * 431513511 + index * 24141312 - i * 2131204)) % width
+    --         instances[i] = {
+    --             { modelScale, 0,          0,          x },
+    --             { 0,          modelScale, 0,          y },
+    --             { 0,          0,          modelScale, 4 * modelScale },
+    --             { 0,          0,          0,          1 },
+    --         }
+    --     end
+    --     engine.DrawModel(instances, model)
+    -- end
 
 
     local seed = 6345
@@ -242,7 +244,7 @@ function engine.Start()
                     local dx = (px - (voxelCount + 1) / 2) / voxelCount
                     local dy = (py - (voxelCount + 1) / 2) / voxelCount
                     local deltaNoise = math.max(math.abs(dx), math.abs(dy)) * 2
-                    deltaNoise = deltaNoise ^ 4
+                    deltaNoise = deltaNoise ^ 5
                     local voxelTemperature = game.GetTemperature((x + dx), (y + dy))
                     local voxelHumidity = game.GetHumidity((x + dx), (y + dy))
                     voxelTemperature = gameMath.Lerp(temperature, voxelTemperature,
@@ -281,7 +283,7 @@ function engine.Start()
                     local maxHeight
                     if stoneNoise > stoneNoiseStep then
                         maxHeight = 6 + deltaHeight + foundationDeltaHeight
-                        for z = 5 + deltaHeight + foundationDeltaHeight, 6 + deltaHeight + foundationDeltaHeight do
+                        for z = 5, 6 do
                             voxelHeightMap[z] = voxel.stone
                         end
                     else
@@ -307,6 +309,50 @@ function engine.Start()
                         for z = maxHeight + 1, maxHeight + 4 do
                             if z < 6 then
                                 voxelMap[(x - 1) * voxelCount + px][(y - 1) * voxelCount + py][z] = voxel.water
+                            end
+                        end
+                    elseif voxelViewData.terrain == terrain.ice then
+                        for z = maxHeight + 1, maxHeight + 5 do
+                            if z < 7 then
+                                voxelMap[(x - 1) * voxelCount + px][(y - 1) * voxelCount + py][z] = voxel.ice
+                            end
+                        end
+                    elseif voxelViewData.terrain == terrain.grass then
+                        local grassNoiseScale = 2.71
+                        local grassNoise = gameMath.PerlinNoise2D(grassNoiseSeed, grassNoiseScale * (x + dx),
+                            grassNoiseScale * (y + dy))
+                        if grassNoise < -0.27 then
+
+                        elseif grassNoise < 0.27 then
+                            for z = maxHeight + 1, maxHeight + 1 do
+                                if z < 7 then
+                                    voxelMap[(x - 1) * voxelCount + px][(y - 1) * voxelCount + py][z] = voxel.grass
+                                end
+                            end
+                        else
+                            for z = maxHeight + 1, maxHeight + 2 do
+                                if z < 7 then
+                                    voxelMap[(x - 1) * voxelCount + px][(y - 1) * voxelCount + py][z] = voxel.grass
+                                end
+                            end
+                        end
+                    elseif voxelViewData.terrain == terrain.lava then
+                        local lavaNoiseScale = 0.71
+                        local lavaNoise = gameMath.PerlinNoise2D(lavaNoiseSeed, lavaNoiseScale * (x + dx),
+                            lavaNoiseScale * (y + dy))
+                        if lavaNoise < -0.31 then
+
+                        elseif lavaNoise < 0.31 then
+                            for z = maxHeight + 1, maxHeight + 1 do
+                                if z < 7 then
+                                    voxelMap[(x - 1) * voxelCount + px][(y - 1) * voxelCount + py][z] = voxel.lava
+                                end
+                            end
+                        else
+                            for z = maxHeight + 1, maxHeight + 2 do
+                                if z < 7 then
+                                    voxelMap[(x - 1) * voxelCount + px][(y - 1) * voxelCount + py][z] = voxel.lava
+                                end
                             end
                         end
                     end
@@ -396,7 +442,7 @@ function engine.End()
     print("Lua Start")
 end
 
-local cameraPosition = { 0, 0, 5 }
+local cameraPosition = { 0, 0, 12 }
 local targetPosition = { 0, 8, 0 }
 local t = 0
 

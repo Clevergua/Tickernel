@@ -29,7 +29,7 @@ float waveFunction(vec3 position, float time) {
 }
 
 void main(void) {
-    float wave = waveFunction(i_position, globalUniform.time);
+    float wave = waveFunction(i_position, globalUniform.time * 0.01);
     vec3 modifiedPosition = vec3(i_position.x, i_position.y, i_position.z + wave);
 
     vec4 worldPosition = i_model * vec4(modifiedPosition, 1);
