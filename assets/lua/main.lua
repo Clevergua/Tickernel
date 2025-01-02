@@ -2,7 +2,7 @@ local engine = require("engine")
 local gameMath = require("gameMath")
 local game = require("game")
 -- local profiler = require("profiler")
-local voxelCount = 16
+local voxelCount = 32
 local modelScale = 1 / voxelCount;
 local voxel = {
     dirt = { 210, 150, 95, 255 },
@@ -22,21 +22,21 @@ local terrainViewMap = {
     {
         {
             terrain = terrain.snow,
-            foundationRoughnessNoiseScale = 3.68,
+            foundationRoughnessNoiseScale = 1.84,
             foundationRoughnessStep = 0.27,
             foundationVoxel = voxel.dirt,
             foundationDeltaHeight = 0,
         },
         {
             terrain = terrain.snow,
-            foundationRoughnessNoiseScale = 3.68,
+            foundationRoughnessNoiseScale = 1.84,
             foundationRoughnessStep = 0.27,
             foundationVoxel = voxel.dirt,
             foundationDeltaHeight = 0,
         },
         {
             terrain = terrain.ice,
-            foundationRoughnessNoiseScale = 0.96,
+            foundationRoughnessNoiseScale = 0.48,
             foundationRoughnessStep = 0.41,
             foundationVoxel = voxel.sand,
             foundationDeltaHeight = -3,
@@ -46,7 +46,7 @@ local terrainViewMap = {
     {
         {
             terrain = terrain.sand,
-            foundationRoughnessNoiseScale = 0.96,
+            foundationRoughnessNoiseScale = 0.48,
             foundationRoughnessStep = 0.31,
             foundationVoxel = voxel.sand,
             foundationDeltaHeight = 2,
@@ -60,7 +60,7 @@ local terrainViewMap = {
         },
         {
             terrain = terrain.water,
-            foundationRoughnessNoiseScale = 0.96,
+            foundationRoughnessNoiseScale = 0.48,
             foundationRoughnessStep = 0.41,
             foundationVoxel = voxel.sand,
             foundationDeltaHeight = -3,
@@ -69,21 +69,21 @@ local terrainViewMap = {
     {
         {
             terrain = terrain.lava,
-            foundationRoughnessNoiseScale = 4.96,
+            foundationRoughnessNoiseScale = 2.48,
             foundationRoughnessStep = 0.2,
             foundationVoxel = voxel.volcanicRock,
             foundationDeltaHeight = -3,
         },
         {
             terrain = terrain.volcanic,
-            foundationRoughnessNoiseScale = 4.96,
+            foundationRoughnessNoiseScale = 2.48,
             foundationRoughnessStep = 0.2,
             foundationVoxel = voxel.volcanicRock,
             foundationDeltaHeight = 2,
         },
         {
             terrain = terrain.volcanic,
-            foundationRoughnessNoiseScale = 4.96,
+            foundationRoughnessNoiseScale = 2.48,
             foundationRoughnessStep = 0.2,
             foundationVoxel = voxel.volcanicRock,
             foundationDeltaHeight = 2,
@@ -276,7 +276,7 @@ function engine.Start()
                         voxelHeightMap[z] = voxelViewData.foundationVoxel
                     end
 
-                    local stoneNoiseScale = 1.71
+                    local stoneNoiseScale = 3.86
                     local stoneNoise = gameMath.PerlinNoise2D(stoneNoiseSeed, stoneNoiseScale * (x + dx),
                         stoneNoiseScale * (y + dy))
                     local stoneNoiseStep = 0.618
@@ -290,7 +290,7 @@ function engine.Start()
                         maxHeight = 5 + deltaHeight + foundationDeltaHeight
                     end
                     if voxelViewData.terrain == terrain.snow then
-                        local snowNoiseScale = 0.96
+                        local snowNoiseScale = 0.48
                         local snowNoise = gameMath.PerlinNoise2D(surfaceNoiseSeed,
                             snowNoiseScale * (x + dx),
                             snowNoiseScale * (y + dy))
@@ -318,7 +318,7 @@ function engine.Start()
                             end
                         end
                     elseif voxelViewData.terrain == terrain.grass then
-                        local grassNoiseScale = 2.71
+                        local grassNoiseScale = 1.35
                         local grassNoise = gameMath.PerlinNoise2D(grassNoiseSeed, grassNoiseScale * (x + dx),
                             grassNoiseScale * (y + dy))
                         if grassNoise < -0.27 then
@@ -337,7 +337,7 @@ function engine.Start()
                             end
                         end
                     elseif voxelViewData.terrain == terrain.lava then
-                        local lavaNoiseScale = 0.71
+                        local lavaNoiseScale = 0.35
                         local lavaNoise = gameMath.PerlinNoise2D(lavaNoiseSeed, lavaNoiseScale * (x + dx),
                             lavaNoiseScale * (y + dy))
                         if lavaNoise < -0.31 then
@@ -442,8 +442,8 @@ function engine.End()
     print("Lua Start")
 end
 
-local cameraPosition = { 0, 0, 12 }
-local targetPosition = { 0, 8, 0 }
+local cameraPosition = { 0, 0, 6 }
+local targetPosition = { 0, 3, 0 }
 local t = 0
 
 function engine.Update()
