@@ -1,4 +1,7 @@
 local gameMath = {}
+function gameMath.Round(v)
+    return math.floor(0.5 + v)
+end
 
 function gameMath.Clamp(v, min, max)
     if v < min then

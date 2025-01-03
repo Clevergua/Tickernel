@@ -19,25 +19,15 @@ local voxel = {
 }
 
 local terrain = game.terrain
-local temperatureMap = {
-    { -1, -1, -1 },
-    { 0,  0,  0 },
-    { 1,  1,  1 },
-}
-local humidityMap = {
-    { -1, 0, 1 },
-    { -1, 0, 1 },
-    { -1, 0, 1 },
-}
 local foundationRoughnessNoiseScaleMap = {
-    { 1.7,  1.7, 0.47 },
-    { 0.47, 1.7, 0.47 },
-    { 3.3,  3.3, 3.3 },
+    { 2.7, 2.7, 1.6 },
+    { 1.6, 2.7, 1.6 },
+    { 3.3, 3.3, 3.3 },
 }
 local foundationHeightMap = {
-    { 5, 5, 3 },
-    { 5, 5, 3 },
-    { 3, 3, 5 },
+    { 7, 7, 4 },
+    { 7, 7, 4 },
+    { 4, 4, 7 },
 }
 local foundationMap = {
     { voxel.dirt,         voxel.dirt,         voxel.sand },
@@ -45,169 +35,11 @@ local foundationMap = {
     { voxel.volcanicRock, voxel.volcanicRock, voxel.volcanicRock },
 }
 
--- local terrainViewMap = {
---     {
---         {
---             terrain = terrain.snow,
---             foundationRoughnessNoiseScale = 1.84,
---             foundationRoughnessStep = 0.27,
---             foundationVoxel = voxel.dirt,
---             foundationDeltaHeight = 0,
---         },
---         {
---             terrain = terrain.snow,
---             foundationRoughnessNoiseScale = 1.84,
---             foundationRoughnessStep = 0.27,
---             foundationVoxel = voxel.dirt,
---             foundationDeltaHeight = 0,
---         },
---         {
---             terrain = terrain.ice,
---             foundationRoughnessNoiseScale = 0.48,
---             foundationRoughnessStep = 0.41,
---             foundationVoxel = voxel.sand,
---             foundationDeltaHeight = -3,
-
---         },
---     },
---     {
---         {
---             terrain = terrain.sand,
---             foundationRoughnessNoiseScale = 0.48,
---             foundationRoughnessStep = 0.31,
---             foundationVoxel = voxel.sand,
---             foundationDeltaHeight = 2,
---         },
---         {
---             terrain = terrain.grass,
---             foundationRoughnessNoiseScale = 3.68,
---             foundationRoughnessStep = 0.27,
---             foundationVoxel = voxel.dirt,
---             foundationDeltaHeight = 0,
---         },
---         {
---             terrain = terrain.water,
---             foundationRoughnessNoiseScale = 0.48,
---             foundationRoughnessStep = 0.41,
---             foundationVoxel = voxel.sand,
---             foundationDeltaHeight = -3,
---         },
---     },
---     {
---         {
---             terrain = terrain.lava,
---             foundationRoughnessNoiseScale = 2.48,
---             foundationRoughnessStep = 0.2,
---             foundationVoxel = voxel.volcanicRock,
---             foundationDeltaHeight = -3,
---         },
---         {
---             terrain = terrain.volcanic,
---             foundationRoughnessNoiseScale = 2.48,
---             foundationRoughnessStep = 0.2,
---             foundationVoxel = voxel.volcanicRock,
---             foundationDeltaHeight = 2,
---         },
---         {
---             terrain = terrain.volcanic,
---             foundationRoughnessNoiseScale = 2.48,
---             foundationRoughnessStep = 0.2,
---             foundationVoxel = voxel.volcanicRock,
---             foundationDeltaHeight = 2,
---         },
---     },
--- }
-
-local foundationSeed = 124321
+local foundationSeed = 12432
 local stoneNoiseSeed = 63548
 local surfaceNoiseSeed = 213456
 local grassNoiseSeed = 56123
 local lavaNoiseSeed = 321412
-
--- function GetVoxelInterpolation(temperature, humidity)
---     local x0, x1, y0, y1
---     local dx = 0
---     local dy = 0
---     local delta = 0.05
---     if temperature < -game.temperatureStep - delta then
---         x0 = 1
---         x1 = 1
---     elseif temperature < -game.temperatureStep then
---         x0 = 1
---         x1 = 2
---         dx = (temperature - (-game.temperatureStep - delta)) / delta
---     elseif temperature < game.temperatureStep then
---         x0 = 2
---         x1 = 2
---     elseif temperature < game.temperatureStep + delta then
---         x0 = 2
---         x1 = 3
---         dx = (temperature - game.temperatureStep) / delta
---     else
---         x0 = 3
---         x1 = 3
---     end
---     if humidity < -game.humidityStep - delta then
---         y0 = 1
---         y1 = 1
---     elseif humidity < -game.humidityStep then
---         y0 = 1
---         y1 = 2
---         dy = (humidity - (-game.humidityStep - delta)) / delta
---     elseif humidity < game.humidityStep then
---         y0 = 2
---         y1 = 2
---     elseif humidity < game.humidityStep + delta then
---         y0 = 2
---         y1 = 3
---         dy = (humidity - game.humidityStep) / delta
---     else
---         y0 = 3
---         y1 = 3
---     end
-
---     local r00 = terrainViewMap[x0][y0]
---     local r01 = terrainViewMap[x0][y1]
---     local r10 = terrainViewMap[x1][y0]
---     local r11 = terrainViewMap[x1][y1]
-
---     return r00, r01, r10, r11, dx, dy
--- end
-
--- function GetVoxelViewInterpolatdData(r00, r01, r10, r11, dx, dy, key)
---     local tx = gameMath.SmoothLerp(r00[key], r01[key], dx)
---     local ty = gameMath.SmoothLerp(r10[key], r11[key], dx)
---     local result = gameMath.SmoothLerp(tx, ty, dy)
---     return result
--- end
-
--- function GetVoxelViewData(temperature, humidity)
---     if temperature < -game.temperatureStep then
---         if humidity < -game.humidityStep then
---             return terrainViewMap[1][1]
---         elseif humidity < game.humidityStep then
---             return terrainViewMap[1][2]
---         else
---             return terrainViewMap[1][3]
---         end
---     elseif temperature < game.temperatureStep then
---         if humidity < -game.humidityStep then
---             return terrainViewMap[2][1]
---         elseif humidity < game.humidityStep then
---             return terrainViewMap[2][2]
---         else
---             return terrainViewMap[2][3]
---         end
---     else
---         if humidity < -game.humidityStep then
---             return terrainViewMap[3][1]
---         elseif humidity < game.humidityStep then
---             return terrainViewMap[3][2]
---         else
---             return terrainViewMap[3][3]
---         end
---     end
--- end
 
 function GetInterpolationValue(value, step, delta)
     if value < -step - delta then
@@ -325,7 +157,7 @@ function engine.Start()
                     local dx = (px - (voxelCount + 1) / 2) / voxelCount
                     local dy = (py - (voxelCount + 1) / 2) / voxelCount
                     local deltaNoise = math.max(math.abs(dx), math.abs(dy)) * 2
-                    deltaNoise = deltaNoise ^ 1
+                    deltaNoise = deltaNoise ^ 4
                     local voxelTemperature = game.GetTemperature((x + dx), (y + dy))
                     local voxelHumidity = game.GetHumidity((x + dx), (y + dy))
                     voxelTemperature = gameMath.Lerp(temperature, voxelTemperature, deltaNoise)
@@ -336,117 +168,80 @@ function engine.Start()
                         foundationRoughnessNoiseScale * (x + dx),
                         foundationRoughnessNoiseScale * (y + dy))
                     local foundationRoughnessStep = 0.27
-                    local foundationHeight = GetVoxelInterpolation(voxelTemperature, voxelHumidity,
-                        foundationHeightMap)
+                    local foundationHeight = gameMath.Round(GetVoxelInterpolation(voxelTemperature, voxelHumidity,
+                        foundationHeightMap))
+
                     foundationHeight = foundationHeight +
-                        gameMath.Clamp(foundationRoughnessNoise // foundationRoughnessStep, -1, 1)
-                    -- local foundationVoxel = foundationMap
+                        gameMath.Round(gameMath.Clamp(foundationRoughnessNoise // foundationRoughnessStep, -2, 2))
+                    local foundationVoxel = GetVoxel(voxelTemperature, voxelHumidity, foundationMap)
+                    local voxelHeightMap = voxelMap[(x - 1) * voxelCount + px][(y - 1) * voxelCount + py]
                     for z = 1, foundationHeight do
-                        voxelMap[(x - 1) * voxelCount + px][(y - 1) * voxelCount + py][z] = GetVoxel(temperature,
-                        humidity, foundationMap)
+                        voxelHeightMap[z] = foundationVoxel
                     end
-                    -- local r00, r01, r10, r11, tx, ty = GetVoxelInterpolation(voxelTemperature, voxelHumidity)
-                    -- local foundationRoughnessNoiseScale = GetVoxelViewInterpolatdData(r00, r01, r10, r11, tx, ty,
-                    --     "foundationRoughnessNoiseScale")
-                    -- local foundationRoughnessNoise = gameMath.PerlinNoise2D(foundationSeed,
-                    --     foundationRoughnessNoiseScale * (x + dx),
-                    --     foundationRoughnessNoiseScale * (y + dy))
-                    -- local foundationRoughnessStep = GetVoxelViewInterpolatdData(r00, r01, r10, r11, tx, ty,
-                    --     "foundationRoughnessStep")
-                    -- local foundationDeltaHeight = GetVoxelViewInterpolatdData(r00, r01, r10, r11, tx, ty,
-                    --     "foundationDeltaHeight")
-                    -- local deltaHeight = gameMath.Clamp(foundationRoughnessNoise // -foundationRoughnessStep, -2, 2)
+                    local stoneNoiseScale = 3.17
+                    local stoneNoise = gameMath.PerlinNoise2D(stoneNoiseSeed, stoneNoiseScale * (x + dx),
+                        stoneNoiseScale * (y + dy))
+                    if stoneNoise < 0.6 then
 
-                    -- if foundationRoughnessNoise < -foundationRoughnessStep then
-                    --     deltaHeight = -1
-                    -- elseif foundationRoughnessNoise < foundationRoughnessStep then
-                    --     deltaHeight = 0
-                    -- else
-                    --     deltaHeight = 1
-                    -- end
+                    elseif stoneNoise < 0.65 then
+                        voxelHeightMap[foundationHeight + 1] = voxel
+                            .stone
+                        foundationHeight = foundationHeight + 1
+                    else
+                        voxelHeightMap[foundationHeight + 1] = voxel
+                            .stone
+                        voxelHeightMap[foundationHeight + 2] = voxel
+                            .stone
+                        foundationHeight = foundationHeight + 2
+                    end
+                    local voxelTerrain = game.GetTerrain(voxelTemperature, voxelHumidity)
+                    if voxelTerrain == terrain.snow then
+                        local snowNoiseScale = 0.48
+                        local snowNoise = gameMath.PerlinNoise2D(surfaceNoiseSeed,
+                            snowNoiseScale * (x + dx),
+                            snowNoiseScale * (y + dy))
+                        local snowHeight = foundationHeight + gameMath.Round(gameMath.Clamp(snowNoise // 0.33, -1, 1)) +
+                            1
+                        for z = foundationHeight + 1, snowHeight do
+                            voxelHeightMap[z] = voxel.snow
+                        end
+                    elseif voxelTerrain == terrain.water then
+                        for z = foundationHeight + 1, foundationHeight + 4 do
+                            voxelHeightMap[z] = voxel.water
+                        end
+                    elseif voxelTerrain == terrain.ice then
+                        for z = foundationHeight + 1, foundationHeight + 5 do
+                            voxelHeightMap[z] = voxel.ice
+                        end
+                    elseif voxelTerrain == terrain.grass then
+                        local grassNoiseScale = 1.35
+                        local grassNoise = gameMath.PerlinNoise2D(grassNoiseSeed, grassNoiseScale * (x + dx),
+                            grassNoiseScale * (y + dy))
+                        if grassNoise < -0.27 then
 
-                    -- local voxelHeightMap = voxelMap[(x - 1) * voxelCount + px][(y - 1) * voxelCount + py]
-                    -- local voxelViewData = GetVoxelViewData(voxelTemperature, voxelHumidity);
-                    -- for z = 1, 5 + deltaHeight + foundationDeltaHeight do
-                    --     voxelHeightMap[z] = voxelViewData.foundationVoxel
-                    -- end
+                        elseif grassNoise < 0.27 then
+                            for z = foundationHeight + 1, foundationHeight + 1 do
+                                voxelHeightMap[z] = voxel.grass
+                            end
+                        else
 
-                    -- local stoneNoiseScale = 3.86
-                    -- local stoneNoise = gameMath.PerlinNoise2D(stoneNoiseSeed, stoneNoiseScale * (x + dx),
-                    --     stoneNoiseScale * (y + dy))
-                    -- local stoneNoiseStep = 0.618
-                    -- local maxHeight
-                    -- if stoneNoise > stoneNoiseStep then
-                    --     maxHeight = 6 + deltaHeight + foundationDeltaHeight
-                    --     for z = 5, 6 do
-                    --         voxelHeightMap[z] = voxel.stone
-                    --     end
-                    -- else
-                    --     maxHeight = 5 + deltaHeight + foundationDeltaHeight
-                    -- end
-                    -- if voxelViewData.terrain == terrain.snow then
-                    --     local snowNoiseScale = 0.48
-                    --     local snowNoise = gameMath.PerlinNoise2D(surfaceNoiseSeed,
-                    --         snowNoiseScale * (x + dx),
-                    --         snowNoiseScale * (y + dy))
-                    --     local snowHeight = maxHeight + snowNoise // 0.33
-                    --     -- if snowNoise < -0.66 then
-                    --     --     snowHeight = 5 + deltaHeight + foundationDeltaHeight
-                    --     -- elseif snowNoise < -0.33 then
-                    --     --     snowHeight = 6 + deltaHeight + foundationDeltaHeight
-                    --     -- else
-                    --     --     snowHeight = 7 + deltaHeight + foundationDeltaHeight
-                    --     -- end
-                    --     for z = maxHeight + 1, snowHeight do
-                    --         voxelHeightMap[z] = voxel.snow
-                    --     end
-                    -- elseif voxelViewData.terrain == terrain.water then
-                    --     for z = maxHeight + 1, maxHeight + 4 do
-                    --         if z < 6 then
-                    --             voxelMap[(x - 1) * voxelCount + px][(y - 1) * voxelCount + py][z] = voxel.water
-                    --         end
-                    --     end
-                    -- elseif voxelViewData.terrain == terrain.ice then
-                    --     for z = maxHeight + 1, maxHeight + 5 do
-                    --         if z < 7 then
-                    --             voxelMap[(x - 1) * voxelCount + px][(y - 1) * voxelCount + py][z] = voxel.ice
-                    --         end
-                    --     end
-                    -- elseif voxelViewData.terrain == terrain.grass then
-                    --     local grassNoiseScale = 1.35
-                    --     local grassNoise = gameMath.PerlinNoise2D(grassNoiseSeed, grassNoiseScale * (x + dx),
-                    --         grassNoiseScale * (y + dy))
-                    --     if grassNoise < -0.27 then
+                        end
+                    elseif voxelTerrain == terrain.lava then
+                        local lavaNoiseScale = 0.35
+                        local lavaNoise = gameMath.PerlinNoise2D(lavaNoiseSeed, lavaNoiseScale * (x + dx),
+                            lavaNoiseScale * (y + dy))
+                        if lavaNoise < -0.31 then
 
-                    --     elseif grassNoise < 0.27 then
-                    --         for z = maxHeight + 1, maxHeight + 1 do
-                    --             if z < 7 then
-                    --                 voxelMap[(x - 1) * voxelCount + px][(y - 1) * voxelCount + py][z] = voxel.grass
-                    --             end
-                    --         end
-                    --     else
-
-                    --     end
-                    -- elseif voxelViewData.terrain == terrain.lava then
-                    --     local lavaNoiseScale = 0.35
-                    --     local lavaNoise = gameMath.PerlinNoise2D(lavaNoiseSeed, lavaNoiseScale * (x + dx),
-                    --         lavaNoiseScale * (y + dy))
-                    --     if lavaNoise < -0.31 then
-
-                    --     elseif lavaNoise < 0.31 then
-                    --         for z = maxHeight + 1, maxHeight + 1 do
-                    --             if z < 7 then
-                    --                 voxelMap[(x - 1) * voxelCount + px][(y - 1) * voxelCount + py][z] = voxel.lava
-                    --             end
-                    --         end
-                    --     else
-                    --         for z = maxHeight + 1, maxHeight + 2 do
-                    --             if z < 7 then
-                    --                 voxelMap[(x - 1) * voxelCount + px][(y - 1) * voxelCount + py][z] = voxel.lava
-                    --             end
-                    --         end
-                    --     end
-                    -- end
+                        elseif lavaNoise < 0.31 then
+                            for z = foundationHeight + 1, foundationHeight + 1 do
+                                voxelHeightMap[z] = voxel.lava
+                            end
+                        else
+                            for z = foundationHeight + 1, foundationHeight + 2 do
+                                voxelHeightMap[z] = voxel.lava
+                            end
+                        end
+                    end
                 end
             end
         end
@@ -464,6 +259,7 @@ function engine.Start()
     for x = 1, length * voxelCount do
         for y = 1, width * voxelCount do
             for z = 1, height do
+                print(voxelMap[x][y][z], voxel.water)
                 if voxelMap[x][y][z] ~= nil then
                     if voxelMap[x][y][z] == voxel.water then
                         table.insert(waterVertices, { x, y, z })
@@ -498,7 +294,7 @@ function engine.Start()
     engine.SetNormals(vertices, normals, voxelMap)
     engine.SetNormals(waterVertices, waterNormals, voxelMap)
     local index = engine.AddModelToOpaqueGeometrySubpass(vertices, colors, normals)
-    -- local waterIndex = engine.AddModelToWaterGeometrySubpass(waterVertices, waterColors, waterNormals)
+    local waterIndex = engine.AddModelToWaterGeometrySubpass(waterVertices, waterColors, waterNormals)
     local modelMatrix = {
         {
             { modelScale, 0,          0,          0 },
@@ -508,7 +304,7 @@ function engine.Start()
         },
     }
     engine.UpdateInstancesInOpaqueGeometrySubpass(index, modelMatrix)
-    -- engine.UpdateInstancesInWaterGeometrySubpass(waterIndex, modelMatrix)
+    engine.UpdateInstancesInWaterGeometrySubpass(waterIndex, modelMatrix)
     print("Generating lightings..")
     local pointLights = {}
     for x = 1, length do
