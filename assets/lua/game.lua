@@ -10,6 +10,24 @@ local game = {
         lava = 6,
         volcanic = 7,
     },
+    terrainToTemperature = {
+        -1,
+        -1,
+        0,
+        0,
+        0,
+        1,
+        1,
+    },
+    terrainToHumidity = {
+        0,
+        1,
+        -1,
+        0,
+        1,
+        -1,
+        0,
+    },
     seed = 0,
     temperatureSeed = 0,
     humiditySeed = 0,
@@ -21,9 +39,8 @@ local game = {
     temperatureStep = 0.23,
 }
 
-
-local temperatureNoiseScale = 0.23
-local humidityNoiseScale = 0.23
+local temperatureNoiseScale = 0.17
+local humidityNoiseScale = 0.17
 
 function game.GetTerrain(temperature, humidity)
     local terrain
@@ -99,6 +116,9 @@ function game.GenerateWorld(seed, length, width)
             game.terrainMap[x][y] = game.GetTerrain(temperature, humidity)
         end
     end
+    -- 生成石头
+
+
 end
 
 return game

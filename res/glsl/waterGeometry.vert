@@ -37,6 +37,5 @@ void main(void) {
     gl_Position = globalUniform.proj * viewPosition;
     o_albedo = i_color;
     o_normal = i_normal;
-    float scale = (i_model[0][0] + i_model[1][1] + i_model[2][2]) / 3.0;
-    gl_PointSize = scale * globalUniform.pointSizeFactor / -viewPosition.z;
+    gl_PointSize = globalUniform.pointSizeFactor / -viewPosition.z;
 }

@@ -35,8 +35,6 @@ void main() {
     vec4 clip = vec4(in_uv * 2.0 - 1.0, subpassLoad(i_depth).x, 1.0);
     vec4 world_w = globalUniform.inv_view_proj * clip;
     vec3 position = world_w.xyz / world_w.w;
-    // o_color = vec4(position, 1);
-    // return;
     vec3 normal = normalize((subpassLoad(i_normal).xyz - 0.5) * 2);
     float ndl = max(dot(normal, -normalize(lightsUniform.directionalLight.direction)), 0.0);
     float halfLambert = ndl * 0.5 + 0.5;
