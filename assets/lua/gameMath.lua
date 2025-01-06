@@ -41,16 +41,108 @@ function gameMath.SmoothLerp(a, b, t)
     return a + (b - a) * t
 end
 
--- local gradients = {
---     { 1, 1 }, { -1, 1 }, { 1, -1 }, { -1, -1 },
---     { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 }
--- }
--- local Grad2D = function(hash, x, y)
---     local gradIndex = hash % 8 + 1
---     local grad = gradients[gradIndex]
---     return grad[1] * x + grad[2] * y
--- end
+local rotationMatrix = {
+    { 0, 0, 0, 0 },
+    { 0, 0, 0, 0 },
+    { 0, 0, 0, 0 },
+    { 0, 0, 0, 0 }
+}
 
+local scaleMatrix = {
+    { 0, 0, 0, 0 },
+    { 0, 0, 0, 0 },
+    { 0, 0, 0, 0 },
+    { 0, 0, 0, 0 }
+}
+
+local translateMatrix = {
+    { 1, 0, 0, 0 },
+    { 0, 1, 0, 0 },
+    { 0, 0, 1, 0 },
+    { 0, 0, 0, 1 }
+}
+
+local modelMatrix = {
+    { 0, 0, 0, 0 },
+    { 0, 0, 0, 0 },
+    { 0, 0, 0, 0 },
+    { 0, 0, 0, 0 }
+}
+
+function RotateAroundZ(angle)
+    local rad = math.rad(angle)
+    rotationMatrix[1][1] = math.cos(rad)
+    rotationMatrix[1][2] = -math.sin(rad)
+    rotationMatrix[1][3] = 0
+    rotationMatrix[1][4] = 0
+
+    rotationMatrix[2][1] = math.sin(rad)
+    rotationMatrix[2][2] = math.cos(rad)
+    rotationMatrix[2][3] = 0
+    rotationMatrix[2][4] = 0
+
+    rotationMatrix[3][1] = 0
+    rotationMatrix[3][2] = 0
+    rotationMatrix[3][3] = 1
+    rotationMatrix[3][4] = 0
+
+    rotationMatrix[4][1] = 0
+    rotationMatrix[4][2] = 0
+    rotationMatrix[4][3] = 0
+    rotationMatrix[4][4] = 1
+
+    return rotationMatrix
+end
+
+function ScaleModel(scale)
+    scaleMatrix[1][1] = scale
+    scaleMatrix[1][2] = 0
+    scaleMatrix[1][3] = 0
+    scaleMatrix[1][4] = 0
+
+    scaleMatrix[2][1] = 0
+    scaleMatrix[2][2] = scale
+    scaleMatrix[2][3] = 0
+    scaleMatrix[2][4] = 0
+
+    scaleMatrix[3][1] = 0
+    scaleMatrix[3][2] = 0
+    scaleMatrix[3][3] = scale
+    scaleMatrix[3][4] = 0
+
+    scaleMatrix[4][1] = 0
+    scaleMatrix[4][2] = 0
+    scaleMatrix[4][3] = 0
+    scaleMatrix[4][4] = 1
+
+    return scaleMatrix
+end
+
+function TranslateModel(x, y, z)
+    translateMatrix[1][4] = x
+    translateMatrix[2][4] = y
+    translateMatrix[3][4] = z
+    return translateMatrix
+end
+
+function MatrixMultiply(A, B, result)
+    for i = 1, 4 do
+        for j = 1, 4 do
+            result[i][j] = 0
+            for k = 1, 4 do
+                result[i][j] = result[i][j] + A[i][k] * B[k][j]
+            end
+        end
+    end
+    return result
+end
+
+function ApplyTransformations(scale, x, y, z, angle)
+    local rotationMatrix = RotateAroundZ(angle)
+    local scaleMatrix = ScaleModel(scale)
+    local translateMatrix = TranslateModel(x, y, z)
+    return MatrixMultiply(translateMatrix, MatrixMultiply(rotationMatrix, scaleMatrix, modelMatrix), modelMatrix)
+end
 
 local Grad2D = function(hash, x, y)
     local h = hash & 7 -- 仅保留哈希的低三位
@@ -194,6 +286,131 @@ end
 -- -- 计算并打印执行耗时
 -- local elapsedTime = endTime - startTime
 -- print(string.format("执行耗时: %.4f 秒", elapsedTime))
+local rotationMatrix = {
+    { 0, 0, 0, 0 },
+    { 0, 0, 0, 0 },
+    { 0, 0, 0, 0 },
+    { 0, 0, 0, 0 }
+}
 
+local scaleMatrix = {
+    { 0, 0, 0, 0 },
+    { 0, 0, 0, 0 },
+    { 0, 0, 0, 0 },
+    { 0, 0, 0, 0 }
+}
+
+local translateMatrix = {
+    { 1, 0, 0, 0 },
+    { 0, 1, 0, 0 },
+    { 0, 0, 1, 0 },
+    { 0, 0, 0, 1 }
+}
+
+function RotateAroundZ(angle)
+    local rad = math.rad(angle)
+    rotationMatrix[1][1] = math.cos(rad)
+    rotationMatrix[1][2] = -math.sin(rad)
+    rotationMatrix[1][3] = 0
+    rotationMatrix[1][4] = 0
+
+    rotationMatrix[2][1] = math.sin(rad)
+    rotationMatrix[2][2] = math.cos(rad)
+    rotationMatrix[2][3] = 0
+    rotationMatrix[2][4] = 0
+
+    rotationMatrix[3][1] = 0
+    rotationMatrix[3][2] = 0
+    rotationMatrix[3][3] = 1
+    rotationMatrix[3][4] = 0
+
+    rotationMatrix[4][1] = 0
+    rotationMatrix[4][2] = 0
+    rotationMatrix[4][3] = 0
+    rotationMatrix[4][4] = 1
+
+    return rotationMatrix
+end
+
+function ScaleModel(scale)
+    scaleMatrix[1][1] = scale
+    scaleMatrix[1][2] = 0
+    scaleMatrix[1][3] = 0
+    scaleMatrix[1][4] = 0
+
+    scaleMatrix[2][1] = 0
+    scaleMatrix[2][2] = scale
+    scaleMatrix[2][3] = 0
+    scaleMatrix[2][4] = 0
+
+    scaleMatrix[3][1] = 0
+    scaleMatrix[3][2] = 0
+    scaleMatrix[3][3] = scale
+    scaleMatrix[3][4] = 0
+
+    scaleMatrix[4][1] = 0
+    scaleMatrix[4][2] = 0
+    scaleMatrix[4][3] = 0
+    scaleMatrix[4][4] = 1
+
+    return scaleMatrix
+end
+
+function TranslateModel(x, y, z)
+    translateMatrix[1][1] = 1
+    translateMatrix[1][2] = 0
+    translateMatrix[1][3] = 0
+    translateMatrix[1][4] = x
+
+    translateMatrix[2][1] = 0
+    translateMatrix[2][2] = 1
+    translateMatrix[2][3] = 0
+    translateMatrix[2][4] = y
+
+    translateMatrix[3][1] = 0
+    translateMatrix[3][2] = 0
+    translateMatrix[3][3] = 1
+    translateMatrix[3][4] = z
+
+    translateMatrix[4][1] = 0
+    translateMatrix[4][2] = 0
+    translateMatrix[4][3] = 0
+    translateMatrix[4][4] = 1
+    return translateMatrix
+end
+
+function MatrixMultiply(A, B, result)
+    for i = 1, 4 do
+        for j = 1, 4 do
+            result[i][j] = 0
+            for k = 1, 4 do
+                result[i][j] = result[i][j] + A[i][k] * B[k][j]
+            end
+        end
+    end
+end
+
+local modelMatrix = {
+    { 0, 0, 0, 0 },
+    { 0, 0, 0, 0 },
+    { 0, 0, 0, 0 },
+    { 0, 0, 0, 0 }
+}
+function gameMath.ApplyTransformations(scale, x, y, z, angle, matrix)
+    local rotationMatrix = RotateAroundZ(angle)
+    local scaleMatrix = ScaleModel(scale)
+    local translateMatrix = TranslateModel(x, y, z)
+    MatrixMultiply(rotationMatrix, scaleMatrix, modelMatrix)
+    MatrixMultiply(translateMatrix, modelMatrix, matrix)
+end
+
+function gameMath.CreateMatrix()
+    return {
+        { 0, 0, 0, 0 },
+        { 0, 0, 0, 0 },
+        { 0, 0, 0, 0 },
+        { 0, 0, 0, 0 },
+    }
+end
 
 return gameMath

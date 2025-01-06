@@ -1,4 +1,4 @@
-local min, max = 0, 0
+local min, max = 9999, -9999
 local engine = require("engine")
 local gameMath = require("gameMath")
 local game = require("game")
@@ -6,7 +6,7 @@ local length = 64
 local width = 16
 -- local profiler = require("profiler")
 local voxelCount = 16
-local modelScale = 1 / voxelCount;
+local scale = 1 / voxelCount;
 local voxel = {
     dirt = { 210, 150, 95, 255 },
     snow = { 250, 250, 250, 255 },
@@ -22,14 +22,14 @@ local voxel = {
 
 local terrain = game.terrain
 local foundationRoughnessNoiseScaleMap = {
-    { 2.7, 2.7, 1.6 },
-    { 1.6, 2.7, 1.6 },
-    { 3.3, 3.3, 3.3 },
+    { 1.7, 1.7, 0.6 },
+    { 0.6, 1.7, 0.6 },
+    { 2.3, 2.3, 2.3 },
 }
 local foundationHeightMap = {
-    { 7, 7, 5 },
-    { 7, 7, 4 },
-    { 4, 4, 7 },
+    { 6, 6, 3 },
+    { 6, 6, 3 },
+    { 3, 3, 6 },
 }
 local foundationMap = {
     { voxel.dirt,         voxel.dirt,         voxel.sand },
@@ -46,63 +46,7 @@ local stoneNoiseSeed = 63548
 local surfaceNoiseSeed = 213456
 local grassNoiseSeed = 56123
 local lavaNoiseSeed = 321412
--- 定义旋转矩阵函数
-function RotateAroundZ(angle)
-    local rad = math.rad(angle)
-    return {
-        { math.cos(rad), -math.sin(rad), 0, 0 },
-        { math.sin(rad), math.cos(rad),  0, 0 },
-        { 0,             0,              1, 0 },
-        { 0,             0,              0, 1 }
-    }
-end
 
--- 定义缩放矩阵函数
-function ScaleModel(modelScale)
-    return {
-        { modelScale, 0,          0,          0 },
-        { 0,          modelScale, 0,          0 },
-        { 0,          0,          modelScale, 0 },
-        { 0,          0,          0,          1 }
-    }
-end
-
--- 定义平移矩阵函数
-function TranslateModel(x, y, z)
-    return {
-        { 1, 0, 0, x },
-        { 0, 1, 0, y },
-        { 0, 0, 1, z },
-        { 0, 0, 0, 1 }
-    }
-end
-
--- 矩阵相乘函数
-function MatrixMultiply(A, B)
-    local result = {}
-    for i = 1, 4 do
-        result[i] = {}
-        for j = 1, 4 do
-            result[i][j] = 0
-            for k = 1, 4 do
-                result[i][j] = result[i][j] + A[i][k] * B[k][j]
-            end
-        end
-    end
-    return result
-end
-
--- 应用变换：缩放、旋转和移动
-function ApplyTransformations(modelScale, x, y, z, angle)
-    local rotationMatrix = RotateAroundZ(angle)
-    local scaleMatrix = ScaleModel(modelScale)
-    local translateMatrix = TranslateModel(x, y, z)
-
-    -- 首先应用缩放，然后旋转，最后平移
-    local modelMatrix = MatrixMultiply(translateMatrix, MatrixMultiply(rotationMatrix, scaleMatrix))
-
-    return modelMatrix
-end
 
 function GetInterpolationValue(value, step, delta)
     if value < -step - delta then
@@ -159,7 +103,6 @@ function GetVoxel(temperature, humidity, map)
     end
 end
 
-
 function engine.Start()
     print("Lua Start")
 
@@ -186,9 +129,10 @@ function engine.Start()
         for i = 1, count do
             local x = math.abs(gameMath.LCGRandom((index + 13251) * 525234532 + i * 42342345)) % length
             local y = math.abs(gameMath.LCGRandom((x - 2317831) * 431513511 + index * 24141312 - i * 2131204)) % width
-            local z = 6 * modelScale
+            local z = 0 * scale
             local angle = 180
-            instances[i] = ApplyTransformations(modelScale, x, y, z, angle)
+            instances[i] = gameMath.CreateMatrix()
+            gameMath.ApplyTransformations(scale, x, y, z, angle, instances[i])
         end
         engine.DrawModel(instances, model)
     end
@@ -236,21 +180,26 @@ function engine.Start()
                     local foundationRoughnessNoise = gameMath.PerlinNoise2D(foundationSeed,
                         foundationRoughnessNoiseScale * (x + dx),
                         foundationRoughnessNoiseScale * (y + dy))
-                    local foundationRoughnessStep = 0.27
+                    local foundationRoughnessStep = 0.17
                     local foundationHeight = gameMath.Round(GetVoxelInterpolation(voxelTemperature, voxelHumidity,
                         foundationHeightMap))
                     foundationHeight = foundationHeight +
-                        gameMath.Round(gameMath.Clamp(foundationRoughnessNoise // foundationRoughnessStep, -2, 2))
+                        gameMath.Round(gameMath.Clamp(foundationRoughnessNoise // foundationRoughnessStep, -1, 1))
                     local foundationVoxel = GetVoxel(voxelTemperature, voxelHumidity, foundationMap)
                     local voxelHeightMap = voxelMap[(x - 1) * voxelCount + px][(y - 1) * voxelCount + py]
                     for z = 1, foundationHeight do
                         voxelHeightMap[z] = foundationVoxel
                     end
-                    local stoneNoiseScale = 3.17
+                    if foundationHeight < min then
+                        min = foundationHeight
+                    elseif foundationHeight > max then
+                        max = foundationHeight
+                    end
+                    local stoneNoiseScale = 2.77
                     local stoneNoise = gameMath.PerlinNoise2D(stoneNoiseSeed, stoneNoiseScale * (x + dx),
                         stoneNoiseScale * (y + dy))
                     if stoneNoise < 0.6 then
-                    elseif stoneNoise < 0.65 then
+                    elseif stoneNoise < 0.6 then
                         voxelHeightMap[foundationHeight + 1] = voxel
                             .stone
                         foundationHeight = foundationHeight + 1
@@ -263,7 +212,7 @@ function engine.Start()
                     end
 
                     if targetVoxelTerrain == terrain.snow then
-                        local snowNoiseScale = 0.48
+                        local snowNoiseScale = 0.38
                         local snowNoise = gameMath.PerlinNoise2D(surfaceNoiseSeed,
                             snowNoiseScale * (x + dx),
                             snowNoiseScale * (y + dy))
@@ -273,15 +222,15 @@ function engine.Start()
                             voxelHeightMap[z] = voxel.snow
                         end
                     elseif targetVoxelTerrain == terrain.water then
-                        for z = foundationHeight + 1, 6 do
+                        for z = foundationHeight + 1, 7 do
                             voxelHeightMap[z] = voxel.water
                         end
                     elseif targetVoxelTerrain == terrain.ice then
-                        for z = foundationHeight + 1, 7 do
+                        for z = foundationHeight + 1, 8 do
                             voxelHeightMap[z] = voxel.ice
                         end
                     elseif targetVoxelTerrain == terrain.grass then
-                        local grassNoiseScale = 3.35
+                        local grassNoiseScale = 2.35
                         local grassNoise = gameMath.PerlinNoise2D(grassNoiseSeed, grassNoiseScale * (x + dx),
                             grassNoiseScale * (y + dy))
                         if grassNoise < -0.27 then
@@ -317,7 +266,6 @@ function engine.Start()
     end
     -- profiler.stop()
     print("Generating terrain surface..")
-    print(min, max);
     local vertices = {}
     local colors = {}
     local normals = {}
@@ -365,10 +313,10 @@ function engine.Start()
     local waterIndex = engine.AddModelToWaterGeometrySubpass(waterVertices, waterColors, waterNormals)
     local modelMatrix = {
         {
-            { modelScale, 0,          0,          0 },
-            { 0,          modelScale, 0,          0 },
-            { 0,          0,          modelScale, 0 },
-            { 0,          0,          0,          1 },
+            { scale, 0,     0,     0 },
+            { 0,     scale, 0,     0 },
+            { 0,     0,     scale, -6 * scale },
+            { 0,     0,     0,     1 },
         },
     }
     engine.UpdateInstancesInOpaqueGeometrySubpass(index, modelMatrix)
@@ -398,8 +346,8 @@ function engine.End()
     print("Lua Start")
 end
 
-local cameraPosition = { 0, 0, 10 }
-local targetPosition = { 0, 7, 0 }
+local cameraPosition = { 0, 0, 4 }
+local targetPosition = { 0, 6, 0 }
 local t = 0
 
 function engine.Update()
@@ -411,7 +359,6 @@ function engine.Update()
     local distance = gameMath.PingPong(0, length, t * 0.2)
     cameraPosition[1] = distance
     targetPosition[1] = distance
-    -- collectgarbage("collect")
     local memoryUsage = collectgarbage("count")
     print("Current memory usage: ", memoryUsage, "KB")
     engine.UpdateGlobalUniformBuffer(cameraPosition, targetPosition, t * 100)
