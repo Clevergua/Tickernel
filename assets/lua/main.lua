@@ -22,14 +22,14 @@ local voxel = {
 
 local terrain = game.terrain
 local foundationRoughnessNoiseScaleMap = {
-    { 1.7, 1.7, 0.6 },
-    { 0.6, 1.7, 0.6 },
+    { 1.6, 1.6, 0.6 },
+    { 0.6, 1.6, 0.6 },
     { 2.3, 2.3, 2.3 },
 }
 local foundationHeightMap = {
     { 6, 6, 3 },
-    { 6, 6, 3 },
-    { 3, 3, 6 },
+    { 7, 6, 3 },
+    { 3, 7, 7 },
 }
 local foundationMap = {
     { voxel.dirt,         voxel.dirt,         voxel.sand },
@@ -180,11 +180,11 @@ function engine.Start()
                     local foundationRoughnessNoise = gameMath.PerlinNoise2D(foundationSeed,
                         foundationRoughnessNoiseScale * (x + dx),
                         foundationRoughnessNoiseScale * (y + dy))
-                    local foundationRoughnessStep = 0.17
+                    local foundationRoughnessStep = 0.9
                     local foundationHeight = gameMath.Round(GetVoxelInterpolation(voxelTemperature, voxelHumidity,
                         foundationHeightMap))
                     foundationHeight = foundationHeight +
-                        gameMath.Round(gameMath.Clamp(foundationRoughnessNoise // foundationRoughnessStep, -1, 1))
+                        gameMath.Round(gameMath.Clamp(foundationRoughnessNoise / foundationRoughnessStep, -1, 1))
                     local foundationVoxel = GetVoxel(voxelTemperature, voxelHumidity, foundationMap)
                     local voxelHeightMap = voxelMap[(x - 1) * voxelCount + px][(y - 1) * voxelCount + py]
                     for z = 1, foundationHeight do
@@ -198,8 +198,8 @@ function engine.Start()
                     local stoneNoiseScale = 2.77
                     local stoneNoise = gameMath.PerlinNoise2D(stoneNoiseSeed, stoneNoiseScale * (x + dx),
                         stoneNoiseScale * (y + dy))
-                    if stoneNoise < 0.6 then
-                    elseif stoneNoise < 0.6 then
+                    if stoneNoise < 0.7 then
+                    elseif stoneNoise < 0.75 then
                         voxelHeightMap[foundationHeight + 1] = voxel
                             .stone
                         foundationHeight = foundationHeight + 1
@@ -216,7 +216,7 @@ function engine.Start()
                         local snowNoise = gameMath.PerlinNoise2D(surfaceNoiseSeed,
                             snowNoiseScale * (x + dx),
                             snowNoiseScale * (y + dy))
-                        local snowHeight = foundationHeight + gameMath.Round(gameMath.Clamp(snowNoise // 0.33, -1, 1)) +
+                        local snowHeight = foundationHeight + gameMath.Round(gameMath.Clamp(snowNoise / 0.5, -1, 1)) +
                             2
                         for z = foundationHeight + 1, snowHeight do
                             voxelHeightMap[z] = voxel.snow
@@ -226,7 +226,7 @@ function engine.Start()
                             voxelHeightMap[z] = voxel.water
                         end
                     elseif targetVoxelTerrain == terrain.ice then
-                        for z = foundationHeight + 1, 8 do
+                        for z = foundationHeight + 1, 7 do
                             voxelHeightMap[z] = voxel.ice
                         end
                     elseif targetVoxelTerrain == terrain.grass then
@@ -315,7 +315,7 @@ function engine.Start()
         {
             { scale, 0,     0,     0 },
             { 0,     scale, 0,     0 },
-            { 0,     0,     scale, -6 * scale },
+            { 0,     0,     scale, -7 * scale },
             { 0,     0,     0,     1 },
         },
     }
@@ -346,8 +346,8 @@ function engine.End()
     print("Lua Start")
 end
 
-local cameraPosition = { 0, 0, 4 }
-local targetPosition = { 0, 6, 0 }
+local cameraPosition = { 0, 0, 8 }
+local targetPosition = { 0, 4, 0 }
 local t = 0
 
 function engine.Update()

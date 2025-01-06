@@ -28,7 +28,6 @@ void main(void)
     vec2 screenCenter = vec2(0.0, 0.0);
     vec2 position2D = viewPosition.xy / viewPosition.w;
     float distanceFromCenter = length(position2D - screenCenter);
-
     float sizeFactor = 1.0 + distanceFromCenter * 0.1;
     gl_PointSize = globalUniform.pointSizeFactor / -viewPosition.z * sizeFactor;
 
