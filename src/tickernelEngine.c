@@ -7,24 +7,24 @@ static void TickernelStart(TickernelEngine *pTickernelEngine)
 {
     printf("Tickernel Start!\n");
 
-    pTickernelEngine->pGraphicEngine = TickernelMalloc(sizeof(GraphicEngine));
-    GraphicEngine *pGraphicEngine = pTickernelEngine->pGraphicEngine;
-    pGraphicEngine->enableValidationLayers = true;
-    pGraphicEngine->name = "Tickernel Engine";
-    pGraphicEngine->targetPresentMode = VK_PRESENT_MODE_FIFO_KHR;
-    pGraphicEngine->windowWidth = 256;
-    pGraphicEngine->windowHeight = 256;
-    pGraphicEngine->targetSwapchainImageCount = 2;
-    pGraphicEngine->shadersPath = TickernelMalloc(sizeof(char) * FILENAME_MAX);
-    pGraphicEngine->canUpdateGlobalUniformBuffer = false;
-    pGraphicEngine->canUpdateLightsUniformBuffer = false;
-    strcpy(pGraphicEngine->shadersPath, pTickernelEngine->assetsPath);
-    TickernelCombinePaths(pGraphicEngine->shadersPath, FILENAME_MAX, "shaders");
-    StartGraphicEngine(pGraphicEngine);
+    pTickernelEngine->pGraphicContext = TickernelMalloc(sizeof(GraphicContext));
+    GraphicContext *pGraphicContext = pTickernelEngine->pGraphicContext;
+    pGraphicContext->enableValidationLayers = true;
+    pGraphicContext->name = "Tickernel Engine";
+    pGraphicContext->targetPresentMode = VK_PRESENT_MODE_FIFO_KHR;
+    pGraphicContext->windowWidth = 256;
+    pGraphicContext->windowHeight = 256;
+    pGraphicContext->targetSwapchainImageCount = 2;
+    pGraphicContext->shadersPath = TickernelMalloc(sizeof(char) * FILENAME_MAX);
+    pGraphicContext->canUpdateGlobalUniformBuffer = false;
+    pGraphicContext->canUpdateLightsUniformBuffer = false;
+    strcpy(pGraphicContext->shadersPath, pTickernelEngine->assetsPath);
+    TickernelCombinePaths(pGraphicContext->shadersPath, FILENAME_MAX, "shaders");
+    StartGraphicContext(pGraphicContext);
 
     pTickernelEngine->pLuaEngine = TickernelMalloc(sizeof(char) * sizeof(LuaEngine));
     LuaEngine *pLuaEngine = pTickernelEngine->pLuaEngine;
-    pLuaEngine->pGraphicEngine = pTickernelEngine->pGraphicEngine;
+    pLuaEngine->pGraphicContext = pTickernelEngine->pGraphicContext;
 
     pLuaEngine->shadersPath = TickernelMalloc(FILENAME_MAX);
     strcpy(pLuaEngine->shadersPath, pTickernelEngine->assetsPath);
@@ -42,7 +42,7 @@ static void TickernelUpdate(TickernelEngine *pTickernelEngine, bool *pCanUpdate)
     printf("Lua Cost Time: %u ms\n", luaDeltaTime);
 
     timespec_get(&startTime, TIME_UTC);
-    UpdateGraphicEngine(pTickernelEngine->pGraphicEngine, pCanUpdate);
+    UpdateGraphicContext(pTickernelEngine->pGraphicContext, pCanUpdate);
     timespec_get(&endTime, TIME_UTC);
     uint32_t graphicDeltaTime = (uint32_t)(endTime.tv_sec - startTime.tv_sec) * MILLISECONDS_PER_SECOND + (endTime.tv_nsec - startTime.tv_nsec) / NANOSECONDS_PER_MILLISECOND;
     printf("Graphic Cost Time: %u ms\n", graphicDeltaTime);
@@ -54,10 +54,10 @@ static void TickernelEnd(TickernelEngine *pTickernelEngine)
     EndLua(pLuaEngine);
     TickernelFree(pLuaEngine->shadersPath);
     TickernelFree(pLuaEngine);
-    GraphicEngine *pGraphicEngine = pTickernelEngine->pGraphicEngine;
-    EndGraphicEngine(pGraphicEngine);
-    TickernelFree(pGraphicEngine->shadersPath);
-    TickernelFree(pGraphicEngine);
+    GraphicContext *pGraphicContext = pTickernelEngine->pGraphicContext;
+    EndGraphicContext(pGraphicContext);
+    TickernelFree(pGraphicContext->shadersPath);
+    TickernelFree(pGraphicContext);
     printf("Tickernel End!\n");
 }
 

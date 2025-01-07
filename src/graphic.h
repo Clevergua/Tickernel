@@ -1,7 +1,7 @@
 #pragma once
 #include <deferredRenderPass.h>
 #include <postProcessRenderPass.h>
-typedef struct GraphicEngineStruct
+typedef struct
 {
     // Config
     bool enableValidationLayers;
@@ -60,7 +60,7 @@ typedef struct GraphicEngineStruct
     DeferredRenderPass deferredRenderPass;
     PostProcessRenderPass postProcessRenderPass;
     uint32_t fullScreenTriangleModelIndex;
-} GraphicEngine;
-void StartGraphicEngine(GraphicEngine *pGraphicEngine);
-void UpdateGraphicEngine(GraphicEngine *pGraphicEngine, bool *pCanUpdate);
-void EndGraphicEngine(GraphicEngine *pGraphicEngine);
+} GraphicContext;
+void StartGraphicContext(GraphicContext *pGraphicContext);
+void UpdateGraphicContext(GraphicContext *pGraphicContext, bool *pCanUpdate);
+void EndGraphicContext(GraphicContext *pGraphicContext);

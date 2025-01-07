@@ -1,6 +1,6 @@
 #pragma once
-#include <graphicEngine.h>
-#include <lua.h>
+#include <graphic.h>
+#include <luaBinding.h>
 #include <lauxlib.h>
 #include <lualib.h>
 
@@ -8,7 +8,7 @@ typedef struct LuaEngineStruct
 {
     lua_State *pLuaState;
     char *shadersPath;
-    GraphicEngine *pGraphicEngine;
+    GraphicContext *pGraphicContext;
 } LuaEngine;
 
 void StartLua(LuaEngine *pLuaEngine);

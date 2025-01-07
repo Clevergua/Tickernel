@@ -1,5 +1,5 @@
 #pragma once
-#include <graphicEngineCore.h>
+#include <graphicCore.h>
 
 typedef struct
 {

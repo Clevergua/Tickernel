@@ -1,5 +1,5 @@
 #pragma once
-#include <luaEngine.h>
+#include <luaBinding.h>
 typedef struct TickernelEngineStruct
 {
     int targetFrameRate;
@@ -7,7 +7,7 @@ typedef struct TickernelEngineStruct
     bool canUpdate;
     char *assetsPath;
 
-    GraphicEngine *pGraphicEngine;
+    GraphicContext *pGraphicContext;
     LuaEngine *pLuaEngine;
 } TickernelEngine;
 

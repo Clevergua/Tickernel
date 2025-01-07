@@ -1,4 +1,4 @@
-#include <graphicEngine.h>
+#include <graphic.h>
 
 #define GET_ARRAY_COUNT(array) (NULL == array) ? 0 : (sizeof(array) / sizeof(array[0]))
 void TryThrowVulkanError(VkResult vkResult)
@@ -27,7 +27,7 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL LogMessenger(VkDebugUtilsMessageSeverityFl
     return VK_TRUE;
 }
 
-static void CreateVkInstance(GraphicEngine *pGraphicEngine)
+static void CreateVkInstance(GraphicContext *pGraphicContext)
 {
     char **enabledLayerNames;
     char **engineExtensionNames;
@@ -42,7 +42,7 @@ static void CreateVkInstance(GraphicEngine *pGraphicEngine)
         VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME,
 #endif
     };
-    if (pGraphicEngine->enableValidationLayers)
+    if (pGraphicContext->enableValidationLayers)
     {
         char *enabledLayerNamesInStack[] = {
             "VK_LAYER_KHRONOS_validation",
@@ -100,7 +100,7 @@ static void CreateVkInstance(GraphicEngine *pGraphicEngine)
         {
             .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
             .pNext = NULL,
-            .pApplicationName = pGraphicEngine->name,
+            .pApplicationName = pGraphicContext->name,
             .applicationVersion = 0,
             .pEngineName = NULL,
             .engineVersion = 0,
@@ -123,27 +123,27 @@ static void CreateVkInstance(GraphicEngine *pGraphicEngine)
             .enabledExtensionCount = extensionCount,
             .ppEnabledExtensionNames = (const char *const *)extensionNames,
         };
-    VkResult result = vkCreateInstance(&vkInstanceCreateInfo, NULL, &pGraphicEngine->vkInstance);
+    VkResult result = vkCreateInstance(&vkInstanceCreateInfo, NULL, &pGraphicContext->vkInstance);
     TickernelFree(windowExtensionNames);
     TickernelFree(extensionNames);
 }
-static void DestroyVKInstance(GraphicEngine *pGraphicEngine)
+static void DestroyVKInstance(GraphicContext *pGraphicContext)
 {
-    vkDestroyInstance(pGraphicEngine->vkInstance, NULL);
+    vkDestroyInstance(pGraphicContext->vkInstance, NULL);
 }
 
-static void CreateVKSurface(GraphicEngine *pGraphicEngine)
+static void CreateVKSurface(GraphicContext *pGraphicContext)
 {
-    VkResult result = CreateWindowVkSurface(pGraphicEngine->pTickernelWindow, pGraphicEngine->vkInstance, NULL, &pGraphicEngine->vkSurface);
+    VkResult result = CreateWindowVkSurface(pGraphicContext->pTickernelWindow, pGraphicContext->vkInstance, NULL, &pGraphicContext->vkSurface);
     TryThrowVulkanError(result);
 }
 
-static void DestroyVKSurface(GraphicEngine *pGraphicEngine)
+static void DestroyVKSurface(GraphicContext *pGraphicContext)
 {
-    vkDestroySurfaceKHR(pGraphicEngine->vkInstance, pGraphicEngine->vkSurface, NULL);
+    vkDestroySurfaceKHR(pGraphicContext->vkInstance, pGraphicContext->vkSurface, NULL);
 }
 
-static void HasAllRequiredExtensions(GraphicEngine *pGraphicEngine, VkPhysicalDevice vkPhysicalDevice, bool *pHasAllRequiredExtensions)
+static void HasAllRequiredExtensions(GraphicContext *pGraphicContext, VkPhysicalDevice vkPhysicalDevice, bool *pHasAllRequiredExtensions)
 {
     VkResult result = VK_SUCCESS;
     char *requiredExtensionNames[] = {
@@ -180,11 +180,11 @@ static void HasAllRequiredExtensions(GraphicEngine *pGraphicEngine, VkPhysicalDe
     TickernelFree(extensionProperties);
 }
 
-static void HasGraphicsAndPresentQueueFamilies(GraphicEngine *pGraphicEngine, VkPhysicalDevice vkPhysicalDevice, bool *pHasGraphicsAndPresentQueueFamilies, uint32_t *pGraphicsQueueFamilyIndex, uint32_t *pPresentQueueFamilyIndex)
+static void HasGraphicsAndPresentQueueFamilies(GraphicContext *pGraphicContext, VkPhysicalDevice vkPhysicalDevice, bool *pHasGraphicsAndPresentQueueFamilies, uint32_t *pGraphicsQueueFamilyIndex, uint32_t *pPresentQueueFamilyIndex)
 {
 
-    VkSurfaceKHR vkSurface = pGraphicEngine->vkSurface;
-    uint32_t *pQueueFamilyPropertyCount = &pGraphicEngine->queueFamilyPropertyCount;
+    VkSurfaceKHR vkSurface = pGraphicContext->vkSurface;
+    uint32_t *pQueueFamilyPropertyCount = &pGraphicContext->queueFamilyPropertyCount;
 
     VkResult result = VK_SUCCESS;
 
@@ -229,12 +229,12 @@ static void HasGraphicsAndPresentQueueFamilies(GraphicEngine *pGraphicEngine, Vk
     TickernelFree(vkQueueFamilyPropertiesList);
 }
 
-static void PickPhysicalDevice(GraphicEngine *pGraphicEngine)
+static void PickPhysicalDevice(GraphicContext *pGraphicContext)
 {
 
     VkResult result = VK_SUCCESS;
     uint32_t deviceCount = -1;
-    result = vkEnumeratePhysicalDevices(pGraphicEngine->vkInstance, &deviceCount, NULL);
+    result = vkEnumeratePhysicalDevices(pGraphicContext->vkInstance, &deviceCount, NULL);
     TryThrowVulkanError(result);
 
     if (deviceCount <= 0)
@@ -244,7 +244,7 @@ static void PickPhysicalDevice(GraphicEngine *pGraphicEngine)
     else
     {
         VkPhysicalDevice *devices = TickernelMalloc(deviceCount * sizeof(VkPhysicalDevice));
-        result = vkEnumeratePhysicalDevices(pGraphicEngine->vkInstance, &deviceCount, devices);
+        result = vkEnumeratePhysicalDevices(pGraphicContext->vkInstance, &deviceCount, devices);
         TryThrowVulkanError(result);
 
         uint32_t graphicQueueFamilyIndex = -1;
@@ -253,7 +253,7 @@ static void PickPhysicalDevice(GraphicEngine *pGraphicEngine)
         uint32_t maxScore = 0;
         char *targetDeviceName;
 
-        VkSurfaceKHR vkSurface = pGraphicEngine->vkSurface;
+        VkSurfaceKHR vkSurface = pGraphicContext->vkSurface;
         for (uint32_t i = 0; i < deviceCount; i++)
         {
             VkPhysicalDevice vkPhysicalDevice = devices[i];
@@ -262,10 +262,10 @@ static void PickPhysicalDevice(GraphicEngine *pGraphicEngine)
             vkGetPhysicalDeviceProperties(vkPhysicalDevice, &deviceProperties);
 
             bool hasAllRequiredExtensions;
-            HasAllRequiredExtensions(pGraphicEngine, vkPhysicalDevice, &hasAllRequiredExtensions);
+            HasAllRequiredExtensions(pGraphicContext, vkPhysicalDevice, &hasAllRequiredExtensions);
             TryThrowVulkanError(result);
             bool hasGraphicsAndPresentQueueFamilies;
-            HasGraphicsAndPresentQueueFamilies(pGraphicEngine, vkPhysicalDevice, &hasGraphicsAndPresentQueueFamilies, &graphicQueueFamilyIndex, &presentQueueFamilyIndex);
+            HasGraphicsAndPresentQueueFamilies(pGraphicContext, vkPhysicalDevice, &hasGraphicsAndPresentQueueFamilies, &graphicQueueFamilyIndex, &presentQueueFamilyIndex);
 
             uint32_t surfaceFormatCount;
             result = vkGetPhysicalDeviceSurfaceFormatsKHR(vkPhysicalDevice, vkSurface, &surfaceFormatCount, NULL);
@@ -323,21 +323,21 @@ static void PickPhysicalDevice(GraphicEngine *pGraphicEngine)
         }
         else
         {
-            pGraphicEngine->vkPhysicalDevice = targetDevice;
-            pGraphicEngine->graphicQueueFamilyIndex = graphicQueueFamilyIndex;
-            pGraphicEngine->presentQueueFamilyIndex = presentQueueFamilyIndex;
+            pGraphicContext->vkPhysicalDevice = targetDevice;
+            pGraphicContext->graphicQueueFamilyIndex = graphicQueueFamilyIndex;
+            pGraphicContext->presentQueueFamilyIndex = presentQueueFamilyIndex;
             printf("Selected target physical device named %s\n", targetDeviceName);
         }
     }
 }
 
-static void CreateLogicalDevice(GraphicEngine *pGraphicEngine)
+static void CreateLogicalDevice(GraphicContext *pGraphicContext)
 {
     VkResult result = VK_SUCCESS;
 
-    VkPhysicalDevice vkPhysicalDevice = pGraphicEngine->vkPhysicalDevice;
-    uint32_t graphicQueueFamilyIndex = pGraphicEngine->graphicQueueFamilyIndex;
-    uint32_t presentQueueFamilyIndex = pGraphicEngine->presentQueueFamilyIndex;
+    VkPhysicalDevice vkPhysicalDevice = pGraphicContext->vkPhysicalDevice;
+    uint32_t graphicQueueFamilyIndex = pGraphicContext->graphicQueueFamilyIndex;
+    uint32_t presentQueueFamilyIndex = pGraphicContext->presentQueueFamilyIndex;
     float queuePriority = 1.0f;
     VkDeviceQueueCreateInfo *queueCreateInfos;
     uint32_t queueCount;
@@ -390,7 +390,7 @@ static void CreateLogicalDevice(GraphicEngine *pGraphicEngine)
     char **enabledLayerNames;
     uint32_t enabledLayerCount;
 
-    if (pGraphicEngine->enableValidationLayers)
+    if (pGraphicContext->enableValidationLayers)
     {
         char *enabledLayerNamesInStack[] = {
             "VK_LAYER_KHRONOS_validation",
@@ -423,16 +423,16 @@ static void CreateLogicalDevice(GraphicEngine *pGraphicEngine)
             .ppEnabledExtensionNames = (const char *const *)extensionNames,
             .pEnabledFeatures = &deviceFeatures,
         };
-    result = vkCreateDevice(vkPhysicalDevice, &vkDeviceCreateInfo, NULL, &pGraphicEngine->vkDevice);
+    result = vkCreateDevice(vkPhysicalDevice, &vkDeviceCreateInfo, NULL, &pGraphicContext->vkDevice);
     TryThrowVulkanError(result);
-    vkGetDeviceQueue(pGraphicEngine->vkDevice, graphicQueueFamilyIndex, 0, &pGraphicEngine->vkGraphicQueue);
-    vkGetDeviceQueue(pGraphicEngine->vkDevice, presentQueueFamilyIndex, 0, &pGraphicEngine->vkPresentQueue);
+    vkGetDeviceQueue(pGraphicContext->vkDevice, graphicQueueFamilyIndex, 0, &pGraphicContext->vkGraphicQueue);
+    vkGetDeviceQueue(pGraphicContext->vkDevice, presentQueueFamilyIndex, 0, &pGraphicContext->vkPresentQueue);
     TickernelFree(queueCreateInfos);
 }
 
-static void DestroyLogicalDevice(GraphicEngine *pGraphicEngine)
+static void DestroyLogicalDevice(GraphicContext *pGraphicContext)
 {
-    vkDestroyDevice(pGraphicEngine->vkDevice, NULL);
+    vkDestroyDevice(pGraphicContext->vkDevice, NULL);
 }
 
 static void ChooseSurfaceFormat(VkSurfaceFormatKHR *surfaceFormats, uint32_t surfaceFormatCount, VkSurfaceFormatKHR *pSurfaceFormat)
@@ -481,15 +481,15 @@ static void ChoosePresentMode(VkPresentModeKHR *supportPresentModes, uint32_t su
     }
 }
 
-static void CreateSwapchain(GraphicEngine *pGraphicEngine)
+static void CreateSwapchain(GraphicContext *pGraphicContext)
 {
     VkResult result = VK_SUCCESS;
 
-    VkPhysicalDevice vkPhysicalDevice = pGraphicEngine->vkPhysicalDevice;
-    VkSurfaceKHR vkSurface = pGraphicEngine->vkSurface;
-    VkDevice vkDevice = pGraphicEngine->vkDevice;
-    uint32_t graphicQueueFamilyIndex = pGraphicEngine->graphicQueueFamilyIndex;
-    uint32_t presentQueueFamilyIndex = pGraphicEngine->presentQueueFamilyIndex;
+    VkPhysicalDevice vkPhysicalDevice = pGraphicContext->vkPhysicalDevice;
+    VkSurfaceKHR vkSurface = pGraphicContext->vkSurface;
+    VkDevice vkDevice = pGraphicContext->vkDevice;
+    uint32_t graphicQueueFamilyIndex = pGraphicContext->graphicQueueFamilyIndex;
+    uint32_t presentQueueFamilyIndex = pGraphicContext->presentQueueFamilyIndex;
 
     VkSurfaceCapabilitiesKHR vkSurfaceCapabilities;
     uint32_t supportSurfaceFormatCount;
@@ -509,9 +509,9 @@ static void CreateSwapchain(GraphicEngine *pGraphicEngine)
     TryThrowVulkanError(result);
 
     VkPresentModeKHR presentMode;
-    ChooseSurfaceFormat(supportSurfaceFormats, supportSurfaceFormatCount, &pGraphicEngine->surfaceFormat);
-    ChoosePresentMode(supportPresentModes, supportPresentModeCount, pGraphicEngine->targetPresentMode, &presentMode);
-    uint32_t swapchainImageCount = pGraphicEngine->targetSwapchainImageCount;
+    ChooseSurfaceFormat(supportSurfaceFormats, supportSurfaceFormatCount, &pGraphicContext->surfaceFormat);
+    ChoosePresentMode(supportPresentModes, supportPresentModeCount, pGraphicContext->targetPresentMode, &presentMode);
+    uint32_t swapchainImageCount = pGraphicContext->targetSwapchainImageCount;
     if (swapchainImageCount < vkSurfaceCapabilities.minImageCount)
     {
         swapchainImageCount = vkSurfaceCapabilities.minImageCount;
@@ -525,38 +525,38 @@ static void CreateSwapchain(GraphicEngine *pGraphicEngine)
         // Do nothing.
     }
 
-    TickernelGetWindowFramebufferSize(pGraphicEngine->pTickernelWindow, &pGraphicEngine->swapchainWidth, &pGraphicEngine->swapchainHeight);
+    TickernelGetWindowFramebufferSize(pGraphicContext->pTickernelWindow, &pGraphicContext->swapchainWidth, &pGraphicContext->swapchainHeight);
 
     VkExtent2D swapchainExtent;
-    if (pGraphicEngine->swapchainWidth > vkSurfaceCapabilities.maxImageExtent.width)
+    if (pGraphicContext->swapchainWidth > vkSurfaceCapabilities.maxImageExtent.width)
     {
         swapchainExtent.width = vkSurfaceCapabilities.maxImageExtent.width;
     }
     else
     {
-        if (pGraphicEngine->swapchainWidth < vkSurfaceCapabilities.minImageExtent.width)
+        if (pGraphicContext->swapchainWidth < vkSurfaceCapabilities.minImageExtent.width)
         {
             swapchainExtent.width = vkSurfaceCapabilities.minImageExtent.width;
         }
         else
         {
-            swapchainExtent.width = pGraphicEngine->swapchainWidth;
+            swapchainExtent.width = pGraphicContext->swapchainWidth;
         }
     }
 
-    if (pGraphicEngine->swapchainHeight > vkSurfaceCapabilities.maxImageExtent.height)
+    if (pGraphicContext->swapchainHeight > vkSurfaceCapabilities.maxImageExtent.height)
     {
         swapchainExtent.height = vkSurfaceCapabilities.maxImageExtent.height;
     }
     else
     {
-        if (pGraphicEngine->swapchainHeight < vkSurfaceCapabilities.minImageExtent.height)
+        if (pGraphicContext->swapchainHeight < vkSurfaceCapabilities.minImageExtent.height)
         {
             swapchainExtent.height = vkSurfaceCapabilities.minImageExtent.height;
         }
         else
         {
-            swapchainExtent.height = pGraphicEngine->swapchainHeight;
+            swapchainExtent.height = pGraphicContext->swapchainHeight;
         }
     }
     VkSharingMode imageSharingMode;
@@ -582,8 +582,8 @@ static void CreateSwapchain(GraphicEngine *pGraphicEngine)
             .flags = 0,
             .surface = vkSurface,
             .minImageCount = swapchainImageCount,
-            .imageFormat = pGraphicEngine->surfaceFormat.format,
-            .imageColorSpace = pGraphicEngine->surfaceFormat.colorSpace,
+            .imageFormat = pGraphicContext->surfaceFormat.format,
+            .imageColorSpace = pGraphicContext->surfaceFormat.colorSpace,
             .imageExtent = swapchainExtent,
             .imageArrayLayers = 1,
             .imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
@@ -597,35 +597,35 @@ static void CreateSwapchain(GraphicEngine *pGraphicEngine)
             .oldSwapchain = VK_NULL_HANDLE,
         };
 
-    result = vkCreateSwapchainKHR(vkDevice, &swapchainCreateInfo, NULL, &pGraphicEngine->vkSwapchain);
+    result = vkCreateSwapchainKHR(vkDevice, &swapchainCreateInfo, NULL, &pGraphicContext->vkSwapchain);
     TryThrowVulkanError(result);
 
     TickernelFree(supportSurfaceFormats);
     TickernelFree(supportPresentModes);
 
-    result = vkGetSwapchainImagesKHR(vkDevice, pGraphicEngine->vkSwapchain, &pGraphicEngine->swapchainImageCount, NULL);
+    result = vkGetSwapchainImagesKHR(vkDevice, pGraphicContext->vkSwapchain, &pGraphicContext->swapchainImageCount, NULL);
     TryThrowVulkanError(result);
-    pGraphicEngine->swapchainImages = TickernelMalloc(swapchainImageCount * sizeof(VkImage));
-    result = vkGetSwapchainImagesKHR(vkDevice, pGraphicEngine->vkSwapchain, &pGraphicEngine->swapchainImageCount, pGraphicEngine->swapchainImages);
+    pGraphicContext->swapchainImages = TickernelMalloc(swapchainImageCount * sizeof(VkImage));
+    result = vkGetSwapchainImagesKHR(vkDevice, pGraphicContext->vkSwapchain, &pGraphicContext->swapchainImageCount, pGraphicContext->swapchainImages);
     TryThrowVulkanError(result);
-    pGraphicEngine->swapchainImageViews = TickernelMalloc(swapchainImageCount * sizeof(VkImageView));
+    pGraphicContext->swapchainImageViews = TickernelMalloc(swapchainImageCount * sizeof(VkImageView));
     for (uint32_t i = 0; i < swapchainImageCount; i++)
     {
-        CreateImageView(pGraphicEngine->vkDevice, pGraphicEngine->swapchainImages[i], pGraphicEngine->surfaceFormat.format, VK_IMAGE_ASPECT_COLOR_BIT, &pGraphicEngine->swapchainImageViews[i]);
+        CreateImageView(pGraphicContext->vkDevice, pGraphicContext->swapchainImages[i], pGraphicContext->surfaceFormat.format, VK_IMAGE_ASPECT_COLOR_BIT, &pGraphicContext->swapchainImageViews[i]);
     }
 }
-static void DestroySwapchain(GraphicEngine *pGraphicEngine)
+static void DestroySwapchain(GraphicContext *pGraphicContext)
 {
-    for (uint32_t i = 0; i < pGraphicEngine->swapchainImageCount; i++)
+    for (uint32_t i = 0; i < pGraphicContext->swapchainImageCount; i++)
     {
-        vkDestroyImageView(pGraphicEngine->vkDevice, pGraphicEngine->swapchainImageViews[i], NULL);
+        vkDestroyImageView(pGraphicContext->vkDevice, pGraphicContext->swapchainImageViews[i], NULL);
     }
-    TickernelFree(pGraphicEngine->swapchainImageViews);
-    TickernelFree(pGraphicEngine->swapchainImages);
-    vkDestroySwapchainKHR(pGraphicEngine->vkDevice, pGraphicEngine->vkSwapchain, NULL);
+    TickernelFree(pGraphicContext->swapchainImageViews);
+    TickernelFree(pGraphicContext->swapchainImages);
+    vkDestroySwapchainKHR(pGraphicContext->vkDevice, pGraphicContext->vkSwapchain, NULL);
 }
 
-static void CreateSignals(GraphicEngine *pGraphicEngine)
+static void CreateSignals(GraphicContext *pGraphicContext)
 {
     VkResult result = VK_SUCCESS;
 
@@ -634,7 +634,7 @@ static void CreateSignals(GraphicEngine *pGraphicEngine)
         .pNext = NULL,
         .flags = 0,
     };
-    VkDevice vkDevice = pGraphicEngine->vkDevice;
+    VkDevice vkDevice = pGraphicContext->vkDevice;
 
     VkFenceCreateInfo fenceCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
@@ -642,145 +642,145 @@ static void CreateSignals(GraphicEngine *pGraphicEngine)
         .flags = VK_FENCE_CREATE_SIGNALED_BIT,
     };
 
-    result = vkCreateSemaphore(vkDevice, &semaphoreCreateInfo, NULL, &pGraphicEngine->imageAvailableSemaphore);
+    result = vkCreateSemaphore(vkDevice, &semaphoreCreateInfo, NULL, &pGraphicContext->imageAvailableSemaphore);
     TryThrowVulkanError(result);
-    result = vkCreateSemaphore(vkDevice, &semaphoreCreateInfo, NULL, &pGraphicEngine->renderFinishedSemaphore);
+    result = vkCreateSemaphore(vkDevice, &semaphoreCreateInfo, NULL, &pGraphicContext->renderFinishedSemaphore);
     TryThrowVulkanError(result);
-    result = vkCreateFence(vkDevice, &fenceCreateInfo, NULL, &pGraphicEngine->renderFinishedFence);
+    result = vkCreateFence(vkDevice, &fenceCreateInfo, NULL, &pGraphicContext->renderFinishedFence);
     TryThrowVulkanError(result);
 }
 
-static void DestroySignals(GraphicEngine *pGraphicEngine)
+static void DestroySignals(GraphicContext *pGraphicContext)
 {
-    VkDevice vkDevice = pGraphicEngine->vkDevice;
-    vkDestroySemaphore(vkDevice, pGraphicEngine->imageAvailableSemaphore, NULL);
-    vkDestroySemaphore(vkDevice, pGraphicEngine->renderFinishedSemaphore, NULL);
-    vkDestroyFence(vkDevice, pGraphicEngine->renderFinishedFence, NULL);
+    VkDevice vkDevice = pGraphicContext->vkDevice;
+    vkDestroySemaphore(vkDevice, pGraphicContext->imageAvailableSemaphore, NULL);
+    vkDestroySemaphore(vkDevice, pGraphicContext->renderFinishedSemaphore, NULL);
+    vkDestroyFence(vkDevice, pGraphicContext->renderFinishedFence, NULL);
 }
 
-static void CreateGraphicImages(GraphicEngine *pGraphicEngine)
+static void CreateGraphicImages(GraphicContext *pGraphicContext)
 {
     VkExtent3D vkExtent3D = {
-        .width = pGraphicEngine->swapchainWidth,
-        .height = pGraphicEngine->swapchainHeight,
+        .width = pGraphicContext->swapchainWidth,
+        .height = pGraphicContext->swapchainHeight,
         .depth = 1,
     };
     VkFormat depthVkFormat;
-    FindDepthFormat(pGraphicEngine->vkPhysicalDevice, &depthVkFormat);
-    CreateGraphicImage(pGraphicEngine->vkDevice, pGraphicEngine->vkPhysicalDevice, vkExtent3D, depthVkFormat, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_IMAGE_ASPECT_DEPTH_BIT, &pGraphicEngine->depthGraphicImage);
-    CreateGraphicImage(pGraphicEngine->vkDevice, pGraphicEngine->vkPhysicalDevice, vkExtent3D, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_IMAGE_ASPECT_COLOR_BIT, &pGraphicEngine->albedoGraphicImage);
-    CreateGraphicImage(pGraphicEngine->vkDevice, pGraphicEngine->vkPhysicalDevice, vkExtent3D, VK_FORMAT_A2R10G10B10_UNORM_PACK32, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_IMAGE_ASPECT_COLOR_BIT, &pGraphicEngine->normalGraphicImage);
-    CreateGraphicImage(pGraphicEngine->vkDevice, pGraphicEngine->vkPhysicalDevice, vkExtent3D, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_IMAGE_ASPECT_COLOR_BIT, &pGraphicEngine->colorGraphicImage);
+    FindDepthFormat(pGraphicContext->vkPhysicalDevice, &depthVkFormat);
+    CreateGraphicImage(pGraphicContext->vkDevice, pGraphicContext->vkPhysicalDevice, vkExtent3D, depthVkFormat, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_IMAGE_ASPECT_DEPTH_BIT, &pGraphicContext->depthGraphicImage);
+    CreateGraphicImage(pGraphicContext->vkDevice, pGraphicContext->vkPhysicalDevice, vkExtent3D, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_IMAGE_ASPECT_COLOR_BIT, &pGraphicContext->albedoGraphicImage);
+    CreateGraphicImage(pGraphicContext->vkDevice, pGraphicContext->vkPhysicalDevice, vkExtent3D, VK_FORMAT_A2R10G10B10_UNORM_PACK32, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_IMAGE_ASPECT_COLOR_BIT, &pGraphicContext->normalGraphicImage);
+    CreateGraphicImage(pGraphicContext->vkDevice, pGraphicContext->vkPhysicalDevice, vkExtent3D, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_IMAGE_ASPECT_COLOR_BIT, &pGraphicContext->colorGraphicImage);
 }
 
-static void DestroyGraphicImages(GraphicEngine *pGraphicEngine)
+static void DestroyGraphicImages(GraphicContext *pGraphicContext)
 {
-    DestroyGraphicImage(pGraphicEngine->vkDevice, pGraphicEngine->normalGraphicImage);
-    DestroyGraphicImage(pGraphicEngine->vkDevice, pGraphicEngine->albedoGraphicImage);
-    DestroyGraphicImage(pGraphicEngine->vkDevice, pGraphicEngine->depthGraphicImage);
-    DestroyGraphicImage(pGraphicEngine->vkDevice, pGraphicEngine->colorGraphicImage);
+    DestroyGraphicImage(pGraphicContext->vkDevice, pGraphicContext->normalGraphicImage);
+    DestroyGraphicImage(pGraphicContext->vkDevice, pGraphicContext->albedoGraphicImage);
+    DestroyGraphicImage(pGraphicContext->vkDevice, pGraphicContext->depthGraphicImage);
+    DestroyGraphicImage(pGraphicContext->vkDevice, pGraphicContext->colorGraphicImage);
 }
 
-static void RecreateSwapchain(GraphicEngine *pGraphicEngine)
+static void RecreateSwapchain(GraphicContext *pGraphicContext)
 {
     VkResult result = VK_SUCCESS;
     uint32_t width, height;
-    TickernelGetWindowFramebufferSize(pGraphicEngine->pTickernelWindow, &width, &height);
+    TickernelGetWindowFramebufferSize(pGraphicContext->pTickernelWindow, &width, &height);
     while (0 == width || 0 == height)
     {
-        TickernelGetWindowFramebufferSize(pGraphicEngine->pTickernelWindow, &width, &height);
+        TickernelGetWindowFramebufferSize(pGraphicContext->pTickernelWindow, &width, &height);
         TickernelWaitWindowEvent();
     }
     bool hasSizeChanged = false;
-    if (width != pGraphicEngine->swapchainWidth || height != pGraphicEngine->swapchainHeight)
+    if (width != pGraphicContext->swapchainWidth || height != pGraphicContext->swapchainHeight)
     {
-        printf("Swapchain's width and height have changed! (%d, %d) to (%d, %d)", pGraphicEngine->swapchainWidth, pGraphicEngine->swapchainHeight, width, height);
+        printf("Swapchain's width and height have changed! (%d, %d) to (%d, %d)", pGraphicContext->swapchainWidth, pGraphicContext->swapchainHeight, width, height);
         hasSizeChanged = true;
-        pGraphicEngine->swapchainWidth = width;
-        pGraphicEngine->swapchainHeight = height;
+        pGraphicContext->swapchainWidth = width;
+        pGraphicContext->swapchainHeight = height;
     }
     else
     {
         // Do nothing
     }
-    result = vkDeviceWaitIdle(pGraphicEngine->vkDevice);
+    result = vkDeviceWaitIdle(pGraphicContext->vkDevice);
     TryThrowVulkanError(result);
 
-    DestroySwapchain(pGraphicEngine);
-    CreateSwapchain(pGraphicEngine);
+    DestroySwapchain(pGraphicContext);
+    CreateSwapchain(pGraphicContext);
 
-    DestroyGraphicImages(pGraphicEngine);
-    CreateGraphicImages(pGraphicEngine);
+    DestroyGraphicImages(pGraphicContext);
+    CreateGraphicImages(pGraphicContext);
 
-    UpdateDeferredRenderPass(&pGraphicEngine->deferredRenderPass, pGraphicEngine->vkDevice, pGraphicEngine->colorGraphicImage, pGraphicEngine->depthGraphicImage, pGraphicEngine->albedoGraphicImage, pGraphicEngine->normalGraphicImage, width, height, pGraphicEngine->globalUniformBuffer, pGraphicEngine->lightsUniformBuffer);
-    UpdatePostProcessRenderPass(&pGraphicEngine->postProcessRenderPass, pGraphicEngine->vkDevice, pGraphicEngine->colorGraphicImage, width, height, pGraphicEngine->swapchainImageViews);
+    UpdateDeferredRenderPass(&pGraphicContext->deferredRenderPass, pGraphicContext->vkDevice, pGraphicContext->colorGraphicImage, pGraphicContext->depthGraphicImage, pGraphicContext->albedoGraphicImage, pGraphicContext->normalGraphicImage, width, height, pGraphicContext->globalUniformBuffer, pGraphicContext->lightsUniformBuffer);
+    UpdatePostProcessRenderPass(&pGraphicContext->postProcessRenderPass, pGraphicContext->vkDevice, pGraphicContext->colorGraphicImage, width, height, pGraphicContext->swapchainImageViews);
 }
 
-static void CreateCommandPools(GraphicEngine *pGraphicEngine)
+static void CreateCommandPools(GraphicContext *pGraphicContext)
 {
     VkCommandPoolCreateInfo vkCommandPoolCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
         .pNext = NULL,
         .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
-        .queueFamilyIndex = pGraphicEngine->graphicQueueFamilyIndex,
+        .queueFamilyIndex = pGraphicContext->graphicQueueFamilyIndex,
     };
-    VkResult result = vkCreateCommandPool(pGraphicEngine->vkDevice, &vkCommandPoolCreateInfo, NULL, &pGraphicEngine->graphicVkCommandPool);
+    VkResult result = vkCreateCommandPool(pGraphicContext->vkDevice, &vkCommandPoolCreateInfo, NULL, &pGraphicContext->graphicVkCommandPool);
     TryThrowVulkanError(result);
 }
 
-static void DestroyCommandPools(GraphicEngine *pGraphicEngine)
+static void DestroyCommandPools(GraphicContext *pGraphicContext)
 {
-    vkDestroyCommandPool(pGraphicEngine->vkDevice, pGraphicEngine->graphicVkCommandPool, NULL);
+    vkDestroyCommandPool(pGraphicContext->vkDevice, pGraphicContext->graphicVkCommandPool, NULL);
 }
 
-static void WaitForGPU(GraphicEngine *pGraphicEngine)
+static void WaitForGPU(GraphicContext *pGraphicContext)
 {
     VkResult result = VK_SUCCESS;
     // Wait for gpu
-    result = vkWaitForFences(pGraphicEngine->vkDevice, 1, &pGraphicEngine->renderFinishedFence, VK_TRUE, UINT64_MAX);
+    result = vkWaitForFences(pGraphicContext->vkDevice, 1, &pGraphicContext->renderFinishedFence, VK_TRUE, UINT64_MAX);
     TryThrowVulkanError(result);
-    result = vkResetFences(pGraphicEngine->vkDevice, 1, &pGraphicEngine->renderFinishedFence);
+    result = vkResetFences(pGraphicContext->vkDevice, 1, &pGraphicContext->renderFinishedFence);
     TryThrowVulkanError(result);
 }
 
-static void SubmitCommandBuffer(GraphicEngine *pGraphicEngine)
+static void SubmitCommandBuffer(GraphicContext *pGraphicContext)
 {
     VkResult result = VK_SUCCESS;
 
-    VkDevice vkDevice = pGraphicEngine->vkDevice;
-    uint32_t frameIndex = pGraphicEngine->frameIndex;
+    VkDevice vkDevice = pGraphicContext->vkDevice;
+    uint32_t frameIndex = pGraphicContext->frameIndex;
     // Submit workflow...
     VkSubmitInfo submitInfo = {
         .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
         .pNext = NULL,
         .waitSemaphoreCount = 1,
-        .pWaitSemaphores = (VkSemaphore[]){pGraphicEngine->imageAvailableSemaphore},
+        .pWaitSemaphores = (VkSemaphore[]){pGraphicContext->imageAvailableSemaphore},
         .pWaitDstStageMask = (VkPipelineStageFlags[]){VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT},
         .commandBufferCount = 1,
-        .pCommandBuffers = &pGraphicEngine->graphicVkCommandBuffers[frameIndex],
+        .pCommandBuffers = &pGraphicContext->graphicVkCommandBuffers[frameIndex],
         .signalSemaphoreCount = 1,
-        .pSignalSemaphores = (VkSemaphore[]){pGraphicEngine->renderFinishedSemaphore},
+        .pSignalSemaphores = (VkSemaphore[]){pGraphicContext->renderFinishedSemaphore},
     };
 
-    result = vkQueueSubmit(pGraphicEngine->vkGraphicQueue, 1, &submitInfo, pGraphicEngine->renderFinishedFence);
+    result = vkQueueSubmit(pGraphicContext->vkGraphicQueue, 1, &submitInfo, pGraphicContext->renderFinishedFence);
     TryThrowVulkanError(result);
 }
 
-static void Present(GraphicEngine *pGraphicEngine)
+static void Present(GraphicContext *pGraphicContext)
 {
     VkResult result = VK_SUCCESS;
-    uint32_t frameIndex = pGraphicEngine->frameIndex;
+    uint32_t frameIndex = pGraphicContext->frameIndex;
     VkPresentInfoKHR presentInfo = {
         .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
         .pNext = NULL,
         .waitSemaphoreCount = 1,
-        .pWaitSemaphores = (VkSemaphore[]){pGraphicEngine->renderFinishedSemaphore},
+        .pWaitSemaphores = (VkSemaphore[]){pGraphicContext->renderFinishedSemaphore},
         .swapchainCount = 1,
-        .pSwapchains = (VkSwapchainKHR[]){pGraphicEngine->vkSwapchain},
-        .pImageIndices = &pGraphicEngine->acquiredImageIndex,
+        .pSwapchains = (VkSwapchainKHR[]){pGraphicContext->vkSwapchain},
+        .pImageIndices = &pGraphicContext->acquiredImageIndex,
         .pResults = NULL,
     };
-    result = vkQueuePresentKHR(pGraphicEngine->vkPresentQueue, &presentInfo);
+    result = vkQueuePresentKHR(pGraphicContext->vkPresentQueue, &presentInfo);
     if (result == VK_SUCCESS)
     {
         // continue
@@ -789,7 +789,7 @@ static void Present(GraphicEngine *pGraphicEngine)
     {
         if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
         {
-            RecreateSwapchain(pGraphicEngine);
+            RecreateSwapchain(pGraphicContext);
         }
         else
         {
@@ -798,50 +798,50 @@ static void Present(GraphicEngine *pGraphicEngine)
     }
 }
 
-static void CreateVkCommandBuffers(GraphicEngine *pGraphicEngine)
+static void CreateVkCommandBuffers(GraphicContext *pGraphicContext)
 {
     VkResult result = VK_SUCCESS;
-    pGraphicEngine->graphicVkCommandBuffers = TickernelMalloc(sizeof(VkCommandBuffer) * pGraphicEngine->swapchainImageCount);
+    pGraphicContext->graphicVkCommandBuffers = TickernelMalloc(sizeof(VkCommandBuffer) * pGraphicContext->swapchainImageCount);
     VkCommandBufferAllocateInfo vkCommandBufferAllocateInfo = {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
         .pNext = NULL,
-        .commandPool = pGraphicEngine->graphicVkCommandPool,
+        .commandPool = pGraphicContext->graphicVkCommandPool,
         .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
-        .commandBufferCount = pGraphicEngine->swapchainImageCount,
+        .commandBufferCount = pGraphicContext->swapchainImageCount,
     };
-    result = vkAllocateCommandBuffers(pGraphicEngine->vkDevice, &vkCommandBufferAllocateInfo, pGraphicEngine->graphicVkCommandBuffers);
+    result = vkAllocateCommandBuffers(pGraphicContext->vkDevice, &vkCommandBufferAllocateInfo, pGraphicContext->graphicVkCommandBuffers);
     TryThrowVulkanError(result);
 }
 
-static void CreateUniformBuffers(GraphicEngine *pGraphicEngine)
+static void CreateUniformBuffers(GraphicContext *pGraphicContext)
 {
     VkResult result = VK_SUCCESS;
     size_t bufferSize = sizeof(GlobalUniformBuffer);
-    CreateBuffer(pGraphicEngine->vkDevice, pGraphicEngine->vkPhysicalDevice, bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &pGraphicEngine->globalUniformBuffer, &pGraphicEngine->globalUniformBufferMemory);
-    result = vkMapMemory(pGraphicEngine->vkDevice, pGraphicEngine->globalUniformBufferMemory, 0, bufferSize, 0, &pGraphicEngine->globalUniformBufferMapped);
+    CreateBuffer(pGraphicContext->vkDevice, pGraphicContext->vkPhysicalDevice, bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &pGraphicContext->globalUniformBuffer, &pGraphicContext->globalUniformBufferMemory);
+    result = vkMapMemory(pGraphicContext->vkDevice, pGraphicContext->globalUniformBufferMemory, 0, bufferSize, 0, &pGraphicContext->globalUniformBufferMapped);
     TryThrowVulkanError(result);
 
     bufferSize = sizeof(LightsUniformBuffer);
-    CreateBuffer(pGraphicEngine->vkDevice, pGraphicEngine->vkPhysicalDevice, bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &pGraphicEngine->lightsUniformBuffer, &pGraphicEngine->lightsUniformBufferMemory);
-    result = vkMapMemory(pGraphicEngine->vkDevice, pGraphicEngine->lightsUniformBufferMemory, 0, bufferSize, 0, &pGraphicEngine->lightsUniformBufferMapped);
+    CreateBuffer(pGraphicContext->vkDevice, pGraphicContext->vkPhysicalDevice, bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &pGraphicContext->lightsUniformBuffer, &pGraphicContext->lightsUniformBufferMemory);
+    result = vkMapMemory(pGraphicContext->vkDevice, pGraphicContext->lightsUniformBufferMemory, 0, bufferSize, 0, &pGraphicContext->lightsUniformBufferMapped);
     TryThrowVulkanError(result);
 }
 
-static void DestroyUniformBuffers(GraphicEngine *pGraphicEngine)
+static void DestroyUniformBuffers(GraphicContext *pGraphicContext)
 {
-    vkUnmapMemory(pGraphicEngine->vkDevice, pGraphicEngine->lightsUniformBufferMemory);
-    DestroyBuffer(pGraphicEngine->vkDevice, pGraphicEngine->lightsUniformBuffer, pGraphicEngine->lightsUniformBufferMemory);
+    vkUnmapMemory(pGraphicContext->vkDevice, pGraphicContext->lightsUniformBufferMemory);
+    DestroyBuffer(pGraphicContext->vkDevice, pGraphicContext->lightsUniformBuffer, pGraphicContext->lightsUniformBufferMemory);
 
-    vkUnmapMemory(pGraphicEngine->vkDevice, pGraphicEngine->globalUniformBufferMemory);
-    DestroyBuffer(pGraphicEngine->vkDevice, pGraphicEngine->globalUniformBuffer, pGraphicEngine->globalUniformBufferMemory);
+    vkUnmapMemory(pGraphicContext->vkDevice, pGraphicContext->globalUniformBufferMemory);
+    DestroyBuffer(pGraphicContext->vkDevice, pGraphicContext->globalUniformBuffer, pGraphicContext->globalUniformBufferMemory);
 }
 
-static void UpdateGlobalUniformBuffer(GraphicEngine *pGraphicEngine)
+static void UpdateGlobalUniformBuffer(GraphicContext *pGraphicContext)
 {
-    if (pGraphicEngine->canUpdateGlobalUniformBuffer)
+    if (pGraphicContext->canUpdateGlobalUniformBuffer)
     {
-        memcpy(pGraphicEngine->globalUniformBufferMapped, &pGraphicEngine->inputGlobalUniformBuffer, sizeof(pGraphicEngine->inputGlobalUniformBuffer));
-        pGraphicEngine->canUpdateGlobalUniformBuffer = false;
+        memcpy(pGraphicContext->globalUniformBufferMapped, &pGraphicContext->inputGlobalUniformBuffer, sizeof(pGraphicContext->inputGlobalUniformBuffer));
+        pGraphicContext->canUpdateGlobalUniformBuffer = false;
     }
     else
     {
@@ -849,12 +849,12 @@ static void UpdateGlobalUniformBuffer(GraphicEngine *pGraphicEngine)
     }
 }
 
-static void UpdateLightsUniformBuffer(GraphicEngine *pGraphicEngine)
+static void UpdateLightsUniformBuffer(GraphicContext *pGraphicContext)
 {
-    if (pGraphicEngine->canUpdateLightsUniformBuffer)
+    if (pGraphicContext->canUpdateLightsUniformBuffer)
     {
-        memcpy(pGraphicEngine->lightsUniformBufferMapped, &pGraphicEngine->inputLightsUniformBuffer, sizeof(pGraphicEngine->inputLightsUniformBuffer));
-        pGraphicEngine->canUpdateLightsUniformBuffer = false;
+        memcpy(pGraphicContext->lightsUniformBufferMapped, &pGraphicContext->inputLightsUniformBuffer, sizeof(pGraphicContext->inputLightsUniformBuffer));
+        pGraphicContext->canUpdateLightsUniformBuffer = false;
     }
     else
     {
@@ -862,21 +862,21 @@ static void UpdateLightsUniformBuffer(GraphicEngine *pGraphicEngine)
     }
 }
 
-static void DestroyVkCommandBuffers(GraphicEngine *pGraphicEngine)
+static void DestroyVkCommandBuffers(GraphicContext *pGraphicContext)
 {
-    vkFreeCommandBuffers(pGraphicEngine->vkDevice, pGraphicEngine->graphicVkCommandPool, pGraphicEngine->swapchainImageCount, pGraphicEngine->graphicVkCommandBuffers);
-    TickernelFree(pGraphicEngine->graphicVkCommandBuffers);
+    vkFreeCommandBuffers(pGraphicContext->vkDevice, pGraphicContext->graphicVkCommandPool, pGraphicContext->swapchainImageCount, pGraphicContext->graphicVkCommandBuffers);
+    TickernelFree(pGraphicContext->graphicVkCommandBuffers);
 }
 
-static void RecordCommandBuffer(GraphicEngine *pGraphicEngine)
+static void RecordCommandBuffer(GraphicContext *pGraphicContext)
 {
-    VkCommandBuffer vkCommandBuffer = pGraphicEngine->graphicVkCommandBuffers[pGraphicEngine->frameIndex];
+    VkCommandBuffer vkCommandBuffer = pGraphicContext->graphicVkCommandBuffers[pGraphicContext->frameIndex];
 
     VkViewport viewport = {
         .x = 0.0f,
         .y = 0.0f,
-        .width = pGraphicEngine->swapchainWidth,
-        .height = pGraphicEngine->swapchainHeight,
+        .width = pGraphicContext->swapchainWidth,
+        .height = pGraphicContext->swapchainHeight,
         .minDepth = 0.0f,
         .maxDepth = 1.0f,
     };
@@ -885,8 +885,8 @@ static void RecordCommandBuffer(GraphicEngine *pGraphicEngine)
         .y = 0,
     };
     VkExtent2D extent = {
-        .width = pGraphicEngine->swapchainWidth,
-        .height = pGraphicEngine->swapchainHeight,
+        .width = pGraphicContext->swapchainWidth,
+        .height = pGraphicContext->swapchainHeight,
     };
     VkRect2D scissor = {
         .offset = offset,
@@ -902,43 +902,43 @@ static void RecordCommandBuffer(GraphicEngine *pGraphicEngine)
     VkResult result = vkBeginCommandBuffer(vkCommandBuffer, &vkCommandBufferBeginInfo);
     TryThrowVulkanError(result);
 
-    RecordDeferredRenderPass(&pGraphicEngine->deferredRenderPass, vkCommandBuffer, viewport, scissor, pGraphicEngine->vkDevice);
-    RecordPostProcessRenderPass(&pGraphicEngine->postProcessRenderPass, vkCommandBuffer, viewport, scissor, pGraphicEngine->vkDevice, pGraphicEngine->frameIndex);
+    RecordDeferredRenderPass(&pGraphicContext->deferredRenderPass, vkCommandBuffer, viewport, scissor, pGraphicContext->vkDevice);
+    RecordPostProcessRenderPass(&pGraphicContext->postProcessRenderPass, vkCommandBuffer, viewport, scissor, pGraphicContext->vkDevice, pGraphicContext->frameIndex);
 
     result = vkEndCommandBuffer(vkCommandBuffer);
     TryThrowVulkanError(result);
 }
 
-static void SetUpGraphicEngine(GraphicEngine *pGraphicEngine)
+static void SetUpGraphicContext(GraphicContext *pGraphicContext)
 {
-    pGraphicEngine->frameCount = 0;
-    pGraphicEngine->pTickernelWindow = TickernelCreateWindow(pGraphicEngine->windowWidth, pGraphicEngine->windowHeight, "Tickernel Engine");
+    pGraphicContext->frameCount = 0;
+    pGraphicContext->pTickernelWindow = TickernelCreateWindow(pGraphicContext->windowWidth, pGraphicContext->windowHeight, "Tickernel Engine");
 }
-static void TearDownGraphicEngine(GraphicEngine *pGraphicEngine)
+static void TearDownGraphicContext(GraphicContext *pGraphicContext)
 {
-    // TickernelFree(pGraphicEngine->deferredRenderPass.shadersPath);
-    TickernelDestroyWindow(pGraphicEngine->pTickernelWindow);
+    // TickernelFree(pGraphicContext->deferredRenderPass.shadersPath);
+    TickernelDestroyWindow(pGraphicContext->pTickernelWindow);
 }
 
-void StartGraphicEngine(GraphicEngine *pGraphicEngine)
+void StartGraphicContext(GraphicContext *pGraphicContext)
 {
-    SetUpGraphicEngine(pGraphicEngine);
-    CreateVkInstance(pGraphicEngine);
-    CreateVKSurface(pGraphicEngine);
-    PickPhysicalDevice(pGraphicEngine);
-    CreateLogicalDevice(pGraphicEngine);
-    CreateSwapchain(pGraphicEngine);
-    CreateSignals(pGraphicEngine);
-    CreateCommandPools(pGraphicEngine);
-    CreateVkCommandBuffers(pGraphicEngine);
-    CreateUniformBuffers(pGraphicEngine);
-    CreateGraphicImages(pGraphicEngine);
+    SetUpGraphicContext(pGraphicContext);
+    CreateVkInstance(pGraphicContext);
+    CreateVKSurface(pGraphicContext);
+    PickPhysicalDevice(pGraphicContext);
+    CreateLogicalDevice(pGraphicContext);
+    CreateSwapchain(pGraphicContext);
+    CreateSignals(pGraphicContext);
+    CreateCommandPools(pGraphicContext);
+    CreateVkCommandBuffers(pGraphicContext);
+    CreateUniformBuffers(pGraphicContext);
+    CreateGraphicImages(pGraphicContext);
 
     VkViewport viewport = {
         .x = 0.0f,
         .y = 0.0f,
-        .width = pGraphicEngine->swapchainWidth,
-        .height = pGraphicEngine->swapchainHeight,
+        .width = pGraphicContext->swapchainWidth,
+        .height = pGraphicContext->swapchainHeight,
         .minDepth = 0.0f,
         .maxDepth = 1.0f,
     };
@@ -947,49 +947,49 @@ void StartGraphicEngine(GraphicEngine *pGraphicEngine)
         .y = 0,
     };
     VkExtent2D extent = {
-        .width = pGraphicEngine->swapchainWidth,
-        .height = pGraphicEngine->swapchainHeight,
+        .width = pGraphicContext->swapchainWidth,
+        .height = pGraphicContext->swapchainHeight,
     };
     VkRect2D scissor = {
         .offset = offset,
         .extent = extent,
     };
-    CreateDeferredRenderPass(&pGraphicEngine->deferredRenderPass, pGraphicEngine->shadersPath, pGraphicEngine->vkDevice, pGraphicEngine->colorGraphicImage, pGraphicEngine->depthGraphicImage, pGraphicEngine->albedoGraphicImage, pGraphicEngine->normalGraphicImage, viewport, scissor, pGraphicEngine->globalUniformBuffer, pGraphicEngine->lightsUniformBuffer);
-    CreatePostProcessRenderPass(&pGraphicEngine->postProcessRenderPass, pGraphicEngine->shadersPath, pGraphicEngine->vkDevice, pGraphicEngine->colorGraphicImage, viewport, scissor, pGraphicEngine->swapchainImageCount, pGraphicEngine->swapchainImageViews, pGraphicEngine->surfaceFormat.format);
+    CreateDeferredRenderPass(&pGraphicContext->deferredRenderPass, pGraphicContext->shadersPath, pGraphicContext->vkDevice, pGraphicContext->colorGraphicImage, pGraphicContext->depthGraphicImage, pGraphicContext->albedoGraphicImage, pGraphicContext->normalGraphicImage, viewport, scissor, pGraphicContext->globalUniformBuffer, pGraphicContext->lightsUniformBuffer);
+    CreatePostProcessRenderPass(&pGraphicContext->postProcessRenderPass, pGraphicContext->shadersPath, pGraphicContext->vkDevice, pGraphicContext->colorGraphicImage, viewport, scissor, pGraphicContext->swapchainImageCount, pGraphicContext->swapchainImageViews, pGraphicContext->surfaceFormat.format);
 }
 
-void UpdateGraphicEngine(GraphicEngine *pGraphicEngine, bool *pCanUpdate)
+void UpdateGraphicContext(GraphicContext *pGraphicContext, bool *pCanUpdate)
 {
-    if (TickernelWindowShouldClose(pGraphicEngine->pTickernelWindow))
+    if (TickernelWindowShouldClose(pGraphicContext->pTickernelWindow))
     {
-        VkResult vkResult = vkDeviceWaitIdle(pGraphicEngine->vkDevice);
+        VkResult vkResult = vkDeviceWaitIdle(pGraphicContext->vkDevice);
         TryThrowVulkanError(vkResult);
         *pCanUpdate = false;
     }
     else
     {
-        pGraphicEngine->frameIndex = pGraphicEngine->frameCount % pGraphicEngine->swapchainImageCount;
+        pGraphicContext->frameIndex = pGraphicContext->frameCount % pGraphicContext->swapchainImageCount;
         TickernelPollWindowEvents();
-        WaitForGPU(pGraphicEngine);
+        WaitForGPU(pGraphicContext);
         VkResult result = VK_SUCCESS;
-        VkDevice vkDevice = pGraphicEngine->vkDevice;
+        VkDevice vkDevice = pGraphicContext->vkDevice;
         // Acquire next image
-        result = vkAcquireNextImageKHR(vkDevice, pGraphicEngine->vkSwapchain, UINT64_MAX, pGraphicEngine->imageAvailableSemaphore, VK_NULL_HANDLE, &pGraphicEngine->acquiredImageIndex);
+        result = vkAcquireNextImageKHR(vkDevice, pGraphicContext->vkSwapchain, UINT64_MAX, pGraphicContext->imageAvailableSemaphore, VK_NULL_HANDLE, &pGraphicContext->acquiredImageIndex);
         if (VK_SUCCESS == result || VK_SUBOPTIMAL_KHR == result)
         {
-            UpdateGlobalUniformBuffer(pGraphicEngine);
-            UpdateLightsUniformBuffer(pGraphicEngine);
-            RecordCommandBuffer(pGraphicEngine);
-            SubmitCommandBuffer(pGraphicEngine);
-            Present(pGraphicEngine);
-            pGraphicEngine->frameCount++;
+            UpdateGlobalUniformBuffer(pGraphicContext);
+            UpdateLightsUniformBuffer(pGraphicContext);
+            RecordCommandBuffer(pGraphicContext);
+            SubmitCommandBuffer(pGraphicContext);
+            Present(pGraphicContext);
+            pGraphicContext->frameCount++;
         }
         else
         {
             if (VK_ERROR_OUT_OF_DATE_KHR == result || VK_SUBOPTIMAL_KHR == result)
             {
-                RecreateSwapchain(pGraphicEngine);
-                // pGraphicEngine->frameCount++;
+                RecreateSwapchain(pGraphicContext);
+                // pGraphicContext->frameCount++;
                 return;
             }
             else
@@ -1000,24 +1000,24 @@ void UpdateGraphicEngine(GraphicEngine *pGraphicEngine, bool *pCanUpdate)
     }
 }
 
-void EndGraphicEngine(GraphicEngine *pGraphicEngine)
+void EndGraphicContext(GraphicContext *pGraphicContext)
 {
-    VkResult result = vkDeviceWaitIdle(pGraphicEngine->vkDevice);
+    VkResult result = vkDeviceWaitIdle(pGraphicContext->vkDevice);
     TryThrowVulkanError(result);
 
-    DestroyPostProcessRenderPass(&pGraphicEngine->postProcessRenderPass, pGraphicEngine->vkDevice);
-    DestroyDeferredRenderPass(&pGraphicEngine->deferredRenderPass, pGraphicEngine->vkDevice);
+    DestroyPostProcessRenderPass(&pGraphicContext->postProcessRenderPass, pGraphicContext->vkDevice);
+    DestroyDeferredRenderPass(&pGraphicContext->deferredRenderPass, pGraphicContext->vkDevice);
 
-    DestroyGraphicImages(pGraphicEngine);
-    DestroyUniformBuffers(pGraphicEngine);
-    DestroyVkCommandBuffers(pGraphicEngine);
-    DestroyCommandPools(pGraphicEngine);
-    DestroySignals(pGraphicEngine);
-    // DestroyDepthResources(pGraphicEngine);
-    DestroySwapchain(pGraphicEngine);
-    DestroyLogicalDevice(pGraphicEngine);
+    DestroyGraphicImages(pGraphicContext);
+    DestroyUniformBuffers(pGraphicContext);
+    DestroyVkCommandBuffers(pGraphicContext);
+    DestroyCommandPools(pGraphicContext);
+    DestroySignals(pGraphicContext);
+    // DestroyDepthResources(pGraphicContext);
+    DestroySwapchain(pGraphicContext);
+    DestroyLogicalDevice(pGraphicContext);
     // Destroy vkPhysicsDevice
-    DestroyVKSurface(pGraphicEngine);
-    DestroyVKInstance(pGraphicEngine);
-    TearDownGraphicEngine(pGraphicEngine);
+    DestroyVKSurface(pGraphicContext);
+    DestroyVKInstance(pGraphicContext);
+    TearDownGraphicContext(pGraphicContext);
 }

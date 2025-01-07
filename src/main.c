@@ -26,7 +26,7 @@ int main(int argc, const char *argv[])
         // .frameCount = 4294967294,
         .frameCount = 0,
         .canUpdate = true,
-        .pGraphicEngine = NULL,
+        .pGraphicContext = NULL,
         .pLuaEngine = NULL,
         .assetsPath = assetsPath,
     };
