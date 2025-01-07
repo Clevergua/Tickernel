@@ -4,13 +4,13 @@
 #include <lauxlib.h>
 #include <lualib.h>
 
-typedef struct LuaEngineStruct
+typedef struct
 {
     lua_State *pLuaState;
-    char *shadersPath;
+    char *assetPath;
     GraphicContext *pGraphicContext;
-} LuaEngine;
+} LuaContext;
 
-void StartLua(LuaEngine *pLuaEngine);
-void UpdateLua(LuaEngine *pLuaEngine);
-void EndLua(LuaEngine *pLuaEngine);
+void StartLua(LuaContext *pLuaContext);
+void UpdateLua(LuaContext *pLuaContext);
+void EndLua(LuaContext *pLuaContext);

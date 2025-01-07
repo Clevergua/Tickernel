@@ -21,14 +21,21 @@ int main(int argc, const char *argv[])
     TickernelCombinePaths(assetsPath, FILENAME_MAX, "assets");
 
     TickernelEngine *pTickernelEngine = TickernelMalloc(sizeof(TickernelEngine));
-    *pTickernelEngine = (TickernelEngine){
+    *pTickernelEngine = (TickernelEngine)
+    {
         .targetFrameRate = 60,
         // .frameCount = 4294967294,
         .frameCount = 0,
         .canUpdate = true,
         .pGraphicContext = NULL,
-        .pLuaEngine = NULL,
+        .pLuaContext = NULL,
         .assetsPath = assetsPath,
+        .enableValidationLayers = true,
+        .applicationName = "Tickernel Engine",
+        .targetPresentMode = VK_PRESENT_MODE_FIFO_KHR,
+        .windowWidth = 256,
+        .windowHeight = 256,
+        .targetSwapchainImageCount = 2,
     };
     RunTickernelEngine(pTickernelEngine);
     TickernelFree(pTickernelEngine);

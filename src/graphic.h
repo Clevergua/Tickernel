@@ -5,7 +5,7 @@ typedef struct
 {
     // Config
     bool enableValidationLayers;
-    char *name;
+    char *applicationName;
     int windowHeight;
     int windowWidth;
     int targetSwapchainImageCount;
@@ -61,6 +61,6 @@ typedef struct
     PostProcessRenderPass postProcessRenderPass;
     uint32_t fullScreenTriangleModelIndex;
 } GraphicContext;
-void StartGraphicContext(GraphicContext *pGraphicContext);
-void UpdateGraphicContext(GraphicContext *pGraphicContext, bool *pCanUpdate);
-void EndGraphicContext(GraphicContext *pGraphicContext);
+void StartGraphic(GraphicContext *pGraphicContext);
+void UpdateGraphic(GraphicContext *pGraphicContext, bool *pCanUpdate);
+void EndGraphic(GraphicContext *pGraphicContext);

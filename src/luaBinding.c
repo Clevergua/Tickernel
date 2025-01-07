@@ -508,16 +508,16 @@ static int LoadModel(lua_State *pLuaState)
     return 1;
 }
 
-void StartLua(LuaEngine *pLuaEngine)
+void StartLua(LuaContext *pLuaContext)
 {
     // New lua state
-    pLuaEngine->pLuaState = luaL_newstate();
-    lua_State *pLuaState = pLuaEngine->pLuaState;
+    pLuaContext->pLuaState = luaL_newstate();
+    lua_State *pLuaState = pLuaContext->pLuaState;
     luaL_openlibs(pLuaState);
 
     // Set package path
     char packagePath[FILENAME_MAX];
-    strcpy(packagePath, pLuaEngine->shadersPath);
+    strcpy(packagePath, pLuaContext->assetPath);
     TickernelCombinePaths(packagePath, FILENAME_MAX, "lua");
     TickernelCombinePaths(packagePath, FILENAME_MAX, "?.lua;");
     lua_getglobal(pLuaState, "package");
@@ -527,17 +527,17 @@ void StartLua(LuaEngine *pLuaEngine)
 
     // Do file main.lua
     char luaMainFilePath[FILENAME_MAX];
-    strcpy(luaMainFilePath, pLuaEngine->shadersPath);
+    strcpy(luaMainFilePath, pLuaContext->assetPath);
     TickernelCombinePaths(luaMainFilePath, FILENAME_MAX, "lua");
     TickernelCombinePaths(luaMainFilePath, FILENAME_MAX, "main.lua");
     // Put engine state on the stack
     int luaResult = luaL_dofile(pLuaState, luaMainFilePath);
     TryThrowLuaError(pLuaState, luaResult);
 
-    lua_pushlightuserdata(pLuaState, pLuaEngine->pGraphicContext);
+    lua_pushlightuserdata(pLuaState, pLuaContext->pGraphicContext);
     lua_setfield(pLuaState, -2, "pGraphicContext");
 
-    lua_pushstring(pLuaState, pLuaEngine->shadersPath);
+    lua_pushstring(pLuaState, pLuaContext->assetPath);
     lua_setfield(pLuaState, -2, "assetsPath");
 
     lua_pushstring(pLuaState, TickernelGetPathSeparator());
@@ -577,9 +577,9 @@ void StartLua(LuaEngine *pLuaEngine)
     TryThrowLuaError(pLuaState, luaResult);
 }
 
-void UpdateLua(LuaEngine *pLuaEngine)
+void UpdateLua(LuaContext *pLuaContext)
 {
-    lua_State *pLuaState = pLuaEngine->pLuaState;
+    lua_State *pLuaState = pLuaContext->pLuaState;
 
     int startFunctionType = lua_getfield(pLuaState, -1, "Update");
     AssertLuaType(startFunctionType, LUA_TFUNCTION);
@@ -587,10 +587,10 @@ void UpdateLua(LuaEngine *pLuaEngine)
     TryThrowLuaError(pLuaState, luaResult);
 }
 
-void EndLua(LuaEngine *pLuaEngine)
+void EndLua(LuaContext *pLuaContext)
 {
     // Call End
-    lua_State *pLuaState = pLuaEngine->pLuaState;
+    lua_State *pLuaState = pLuaContext->pLuaState;
     int startFunctionType = lua_getfield(pLuaState, -1, "End");
     AssertLuaType(startFunctionType, LUA_TFUNCTION);
     int luaResult = lua_pcall(pLuaState, 0, 0, 0);
@@ -599,5 +599,5 @@ void EndLua(LuaEngine *pLuaEngine)
     //  Pop engine state off the stack
     lua_pop(pLuaState, 1);
 
-    lua_close(pLuaEngine->pLuaState);
+    lua_close(pLuaContext->pLuaState);
 }

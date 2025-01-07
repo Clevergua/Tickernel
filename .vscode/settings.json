@@ -9,6 +9,14 @@
         "opaquelightingsubpass.h": "c",
         "opaquegeometrysubpass.h": "c",
         "lua.h": "c",
-        "tickernelvoxel.h": "c"
+        "tickernelvoxel.h": "c",
+        "__config": "cpp",
+        "__locale": "cpp",
+        "cstdlib": "cpp",
+        "locale": "cpp",
+        "ostream": "cpp",
+        "system_error": "cpp",
+        "typeinfo": "cpp",
+        "version": "cpp"
     }
 }

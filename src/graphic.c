@@ -100,7 +100,7 @@ static void CreateVkInstance(GraphicContext *pGraphicContext)
         {
             .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
             .pNext = NULL,
-            .pApplicationName = pGraphicContext->name,
+            .pApplicationName = pGraphicContext->applicationName,
             .applicationVersion = 0,
             .pEngineName = NULL,
             .engineVersion = 0,
@@ -909,20 +909,21 @@ static void RecordCommandBuffer(GraphicContext *pGraphicContext)
     TryThrowVulkanError(result);
 }
 
-static void SetUpGraphicContext(GraphicContext *pGraphicContext)
+static void SetUpGraphic(GraphicContext *pGraphicContext)
 {
     pGraphicContext->frameCount = 0;
+    pGraphicContext->canUpdateGlobalUniformBuffer = false;
+    pGraphicContext->canUpdateLightsUniformBuffer = false;
     pGraphicContext->pTickernelWindow = TickernelCreateWindow(pGraphicContext->windowWidth, pGraphicContext->windowHeight, "Tickernel Engine");
 }
-static void TearDownGraphicContext(GraphicContext *pGraphicContext)
+static void TearDownGraphic(GraphicContext *pGraphicContext)
 {
-    // TickernelFree(pGraphicContext->deferredRenderPass.shadersPath);
     TickernelDestroyWindow(pGraphicContext->pTickernelWindow);
 }
 
-void StartGraphicContext(GraphicContext *pGraphicContext)
+void StartGraphic(GraphicContext *pGraphicContext)
 {
-    SetUpGraphicContext(pGraphicContext);
+    SetUpGraphic(pGraphicContext);
     CreateVkInstance(pGraphicContext);
     CreateVKSurface(pGraphicContext);
     PickPhysicalDevice(pGraphicContext);
@@ -958,7 +959,7 @@ void StartGraphicContext(GraphicContext *pGraphicContext)
     CreatePostProcessRenderPass(&pGraphicContext->postProcessRenderPass, pGraphicContext->shadersPath, pGraphicContext->vkDevice, pGraphicContext->colorGraphicImage, viewport, scissor, pGraphicContext->swapchainImageCount, pGraphicContext->swapchainImageViews, pGraphicContext->surfaceFormat.format);
 }
 
-void UpdateGraphicContext(GraphicContext *pGraphicContext, bool *pCanUpdate)
+void UpdateGraphic(GraphicContext *pGraphicContext, bool *pCanUpdate)
 {
     if (TickernelWindowShouldClose(pGraphicContext->pTickernelWindow))
     {
@@ -1000,7 +1001,7 @@ void UpdateGraphicContext(GraphicContext *pGraphicContext, bool *pCanUpdate)
     }
 }
 
-void EndGraphicContext(GraphicContext *pGraphicContext)
+void EndGraphic(GraphicContext *pGraphicContext)
 {
     VkResult result = vkDeviceWaitIdle(pGraphicContext->vkDevice);
     TryThrowVulkanError(result);
@@ -1019,5 +1020,5 @@ void EndGraphicContext(GraphicContext *pGraphicContext)
     // Destroy vkPhysicsDevice
     DestroyVKSurface(pGraphicContext);
     DestroyVKInstance(pGraphicContext);
-    TearDownGraphicContext(pGraphicContext);
+    TearDownGraphic(pGraphicContext);
 }

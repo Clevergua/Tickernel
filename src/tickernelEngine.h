@@ -7,8 +7,15 @@ typedef struct TickernelEngineStruct
     bool canUpdate;
     char *assetsPath;
 
+    bool enableValidationLayers;
+    char *applicationName;
+    int windowHeight;
+    int windowWidth;
+    int targetSwapchainImageCount;
+    VkPresentModeKHR targetPresentMode;
+
     GraphicContext *pGraphicContext;
-    LuaEngine *pLuaEngine;
+    LuaContext *pLuaContext;
 } TickernelEngine;
 
 void RunTickernelEngine(TickernelEngine *pTickernelEngine);
