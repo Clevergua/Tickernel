@@ -1,6 +1,5 @@
-#include <luaBinding.h>
-#include <tickernelVoxel.h>
-static int top;
+#include "luaBinding.h"
+#include "tickernelVoxel.h"
 #define LUA_PEEK_TOP(L)      \
     {                        \
         top = lua_gettop(L); \

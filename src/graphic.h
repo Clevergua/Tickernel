@@ -1,21 +1,14 @@
 #pragma once
-#include <deferredRenderPass.h>
-#include <postProcessRenderPass.h>
+#include "deferredRenderPass.h"
+#include "postProcessRenderPass.h"
 typedef struct
 {
-    // Config
-    bool enableValidationLayers;
     char *applicationName;
-    int windowHeight;
-    int windowWidth;
     int targetSwapchainImageCount;
     VkPresentModeKHR targetPresentMode;
     char *shadersPath;
-
-    // Runtime
     uint32_t swapchainHeight;
     uint32_t swapchainWidth;
-    TickernelWindow *pTickernelWindow;
     VkInstance vkInstance;
     VkSurfaceKHR vkSurface;
     VkPhysicalDevice vkPhysicalDevice;
@@ -25,13 +18,11 @@ typedef struct
     VkDevice vkDevice;
     VkQueue vkGraphicQueue;
     VkQueue vkPresentQueue;
-
     VkSwapchainKHR vkSwapchain;
     VkSurfaceFormatKHR surfaceFormat;
     uint32_t swapchainImageCount;
     VkImage *swapchainImages;
     VkImageView *swapchainImageViews;
-
     VkCommandPool graphicVkCommandPool;
     VkCommandBuffer *graphicVkCommandBuffers;
     uint32_t acquiredImageIndex;
@@ -40,19 +31,16 @@ typedef struct
     VkFence renderFinishedFence;
     uint32_t frameCount;
     uint32_t frameIndex;
-
     VkBuffer globalUniformBuffer;
     VkDeviceMemory globalUniformBufferMemory;
     void *globalUniformBufferMapped;
     VkBuffer lightsUniformBuffer;
     VkDeviceMemory lightsUniformBufferMemory;
     void *lightsUniformBufferMapped;
-
     bool canUpdateGlobalUniformBuffer;
     bool canUpdateLightsUniformBuffer;
     GlobalUniformBuffer inputGlobalUniformBuffer;
     LightsUniformBuffer inputLightsUniformBuffer;
-
     GraphicImage colorGraphicImage;
     GraphicImage depthGraphicImage;
     GraphicImage albedoGraphicImage;
@@ -62,5 +50,5 @@ typedef struct
     uint32_t fullScreenTriangleModelIndex;
 } GraphicContext;
 void StartGraphic(GraphicContext *pGraphicContext);
-void UpdateGraphic(GraphicContext *pGraphicContext, bool *pCanUpdate);
+void UpdateGraphic(GraphicContext *pGraphicContext);
 void EndGraphic(GraphicContext *pGraphicContext);

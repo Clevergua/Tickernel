@@ -17,6 +17,16 @@
         "ostream": "cpp",
         "system_error": "cpp",
         "typeinfo": "cpp",
-        "version": "cpp"
+        "version": "cpp",
+        "graphic.h": "c",
+        "graphiccore.h": "c",
+        "tickernelwindow.h": "c",
+        "string.h": "c",
+        "stdlib.h": "c",
+        "cglm.h": "c",
+        "vulkan.h": "c",
+        "tickernelcore.h": "c",
+        "stdio.h": "c",
+        "assert.h": "c"
     }
 }

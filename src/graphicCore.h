@@ -3,8 +3,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <cglm.h>
-#include <tickernelWindow.h>
+#include "cglm.h"
+#include <vulkan/vulkan.h>
+#include "tickernelCore.h"
+
 #define INVALID_VKFRAMEBUFFER 0
 #define MAX_VK_DESCRIPTOR_TPYE 11
 #define MAX_POINT_LIGHT_COUNT 256

@@ -3,18 +3,12 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <stdint.h>
-#include <tickernelPlatform.h>
+#include <vulkan/vulkan.h>
 #include <time.h>
 #include <stdarg.h>
 #include <string.h>
 #include <assert.h>
-#if PLATFORM_POSIX
 #include <unistd.h>
-#elif PLATFORM_WINDOWS
-#include <windows.h>
-#else
-#error "Unknown platform"
-#endif
 
 typedef struct TickernelNodeStruct
 {
@@ -52,7 +46,7 @@ void TickernelFree(void *block);
 void TickernelCombinePaths(char *dstPath, size_t size, const char *srcPath);
 bool TickernelStartsWith(const char *str, const char *prefix);
 bool TickernelEndsWith(const char *str, const char *suffix);
-const char *TickernelGetPathSeparator();
+const char *TickernelGetPathSeparator(void);
 
 void TickernelCreateLinkedList(TickernelLinkedList *pLinkedList, size_t dataSize);
 void TickernelDestroyLinkedList(TickernelLinkedList *pLinkedList);

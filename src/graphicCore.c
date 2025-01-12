@@ -1,4 +1,4 @@
-#include <graphicCore.h>
+#include "graphicCore.h"
 
 static void CreateImage(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkExtent3D vkExtent3D, VkFormat vkFormat, VkImageTiling vkImageTiling, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImage *pVkImage, VkDeviceMemory *pVkDeviceMemory)
 {
@@ -43,7 +43,6 @@ static void CreateImage(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, Vk
 
 static void FindSupportedFormat(VkPhysicalDevice vkPhysicalDevice, VkFormat *candidates, uint32_t candidatesCount, VkImageTiling tiling, VkFormatFeatureFlags features, VkFormat *vkFormat)
 {
-    VkResult result = VK_SUCCESS;
 
     for (uint32_t i = 0; i < candidatesCount; i++)
     {
@@ -264,7 +263,6 @@ void CreateVkShaderModule(VkDevice vkDevice, const char *filePath, VkShaderModul
                 .codeSize = codeSize,
                 .pCode = pCode,
             };
-            VkShaderModule shaderModule;
             VkResult result = vkCreateShaderModule(vkDevice, &shaderModuleCreateInfo, NULL, pVkShaderModule);
             TryThrowVulkanError(result);
             TickernelFree(pCode);

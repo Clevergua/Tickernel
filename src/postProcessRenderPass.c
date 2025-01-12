@@ -1,4 +1,4 @@
-#include <postProcessRenderPass.h>
+#include "postProcessRenderPass.h"
 static void CreateVkRenderPass(PostProcessRenderPass *pPostProcessRenderPass, VkDevice vkDevice, VkFormat colorVkFormat, VkFormat swapchainVkFormat)
 {
     VkAttachmentDescription colorAttachmentDescription = {
@@ -136,7 +136,6 @@ void UpdatePostProcessRenderPass(PostProcessRenderPass *pPostProcessRenderPass, 
 }
 void RecordPostProcessRenderPass(PostProcessRenderPass *pPostProcessRenderPass, VkCommandBuffer vkCommandBuffer, VkViewport viewport, VkRect2D scissor, VkDevice vkDevice, uint32_t frameIndex)
 {
-    VkResult result;
     vkCmdSetScissor(vkCommandBuffer, 0, 1, &scissor);
     VkOffset2D offset =
         {

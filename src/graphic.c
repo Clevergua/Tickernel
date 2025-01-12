@@ -1,4 +1,4 @@
-#include <graphic.h>
+#include "graphic.h"
 
 #define GET_ARRAY_COUNT(array) (NULL == array) ? 0 : (sizeof(array) / sizeof(array[0]))
 void TryThrowVulkanError(VkResult vkResult)
@@ -11,7 +11,6 @@ void TryThrowVulkanError(VkResult vkResult)
 
 static VKAPI_ATTR VkBool32 VKAPI_CALL LogMessenger(VkDebugUtilsMessageSeverityFlagBitsEXT severity, VkDebugUtilsMessageTypeFlagsEXT type, const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData, void *pUserData)
 {
-    FILE *logStream = pUserData;
     if (severity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
     {
         printf("Vulkan Error:%s\n", pCallbackData->pMessage);
@@ -27,116 +26,109 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL LogMessenger(VkDebugUtilsMessageSeverityFl
     return VK_TRUE;
 }
 
-static void CreateVkInstance(GraphicContext *pGraphicContext)
-{
-    char **enabledLayerNames;
-    char **engineExtensionNames;
-    PFN_vkDebugUtilsMessengerCallbackEXT pfnUserCallback;
-
-    uint32_t enabledLayerNamesCountInStack;
-    uint32_t engineExtensionNamesCountInStack;
-    void *pVkInstanceCreateInfoNext;
-    char *engineExtensionNamesInStack[] = {
-        VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
-#if PLATFORM_OSX
-        VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME,
-#endif
-    };
-    if (pGraphicContext->enableValidationLayers)
-    {
-        char *enabledLayerNamesInStack[] = {
-            "VK_LAYER_KHRONOS_validation",
-        };
-        enabledLayerNamesCountInStack = GET_ARRAY_COUNT(enabledLayerNamesInStack);
-        engineExtensionNamesCountInStack = GET_ARRAY_COUNT(engineExtensionNamesInStack);
-        enabledLayerNames = enabledLayerNamesInStack;
-        engineExtensionNames = engineExtensionNamesInStack;
-        pfnUserCallback = LogMessenger;
-
-        VkDebugUtilsMessengerCreateInfoEXT messengerCreateInfo =
-            {
-                .sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT,
-                .pNext = NULL,
-                .flags = 0,
-                .messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT,
-                .messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT,
-                .pfnUserCallback = pfnUserCallback,
-                .pUserData = NULL,
-            };
-        pVkInstanceCreateInfoNext = &messengerCreateInfo;
-    }
-    else
-    {
-        enabledLayerNamesCountInStack = 0;
-        enabledLayerNames = NULL;
-
-        engineExtensionNamesCountInStack = GET_ARRAY_COUNT(engineExtensionNamesInStack);
-        engineExtensionNames = engineExtensionNamesInStack;
-
-        pfnUserCallback = NULL;
-        pVkInstanceCreateInfoNext = NULL;
-    }
-
-    uint32_t enabledLayerCount = enabledLayerNamesCountInStack;
-    uint32_t engineExtensionCount = engineExtensionNamesCountInStack;
-
-    uint32_t extensionCount = 0;
-    extensionCount += engineExtensionCount;
-
-    uint32_t windowExtensionCount;
-    TickernelGetWindowExtensionCount(&windowExtensionCount);
-    char **windowExtensionNames = TickernelMalloc(sizeof(char *) * windowExtensionCount);
-    TickernelGetWindowExtensions(windowExtensionNames);
-    extensionCount += windowExtensionCount;
-
-    char **extensionNames = TickernelMalloc(sizeof(char *) * extensionCount);
-    memcpy(extensionNames, engineExtensionNames, engineExtensionCount * sizeof(char *));
-    memcpy(extensionNames + engineExtensionCount, windowExtensionNames, windowExtensionCount * sizeof(char *));
-    for (int i = 0; i < extensionCount; i++)
-    {
-        printf("Add extension: %s\n", extensionNames[i]);
-    }
-    VkApplicationInfo appInfo =
-        {
-            .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
-            .pNext = NULL,
-            .pApplicationName = pGraphicContext->applicationName,
-            .applicationVersion = 0,
-            .pEngineName = NULL,
-            .engineVersion = 0,
-            .apiVersion = VK_API_VERSION_1_3,
-        };
-
-    VkInstanceCreateInfo vkInstanceCreateInfo =
-        {
-            .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
-            .pNext = pVkInstanceCreateInfoNext,
-#if PLATFORM_OSX
-            .flags = VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR,
-#else
-            .flags = 0,
-
-#endif
-            .pApplicationInfo = &appInfo,
-            .enabledLayerCount = enabledLayerCount,
-            .ppEnabledLayerNames = (const char *const *)enabledLayerNames,
-            .enabledExtensionCount = extensionCount,
-            .ppEnabledExtensionNames = (const char *const *)extensionNames,
-        };
-    VkResult result = vkCreateInstance(&vkInstanceCreateInfo, NULL, &pGraphicContext->vkInstance);
-    TickernelFree(windowExtensionNames);
-    TickernelFree(extensionNames);
-}
-static void DestroyVKInstance(GraphicContext *pGraphicContext)
-{
-    vkDestroyInstance(pGraphicContext->vkInstance, NULL);
-}
-
-static void CreateVKSurface(GraphicContext *pGraphicContext)
-{
-    VkResult result = CreateWindowVkSurface(pGraphicContext->pTickernelWindow, pGraphicContext->vkInstance, NULL, &pGraphicContext->vkSurface);
-    TryThrowVulkanError(result);
-}
+//static void CreateVkInstance(GraphicContext *pGraphicContext)
+//{
+//    char **enabledLayerNames;
+//    char **engineExtensionNames;
+//    PFN_vkDebugUtilsMessengerCallbackEXT pfnUserCallback;
+//
+//    uint32_t enabledLayerNamesCountInStack;
+//    uint32_t engineExtensionNamesCountInStack;
+//    void *pVkInstanceCreateInfoNext;
+//    char *engineExtensionNamesInStack[] = {
+//        VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
+//    };
+//    if (pGraphicContext->enableValidationLayers)
+//    {
+//        char *enabledLayerNamesInStack[] = {
+//            "VK_LAYER_KHRONOS_validation",
+//        };
+//        enabledLayerNamesCountInStack = GET_ARRAY_COUNT(enabledLayerNamesInStack);
+//        engineExtensionNamesCountInStack = GET_ARRAY_COUNT(engineExtensionNamesInStack);
+//        enabledLayerNames = enabledLayerNamesInStack;
+//        engineExtensionNames = engineExtensionNamesInStack;
+//        pfnUserCallback = LogMessenger;
+//
+//        VkDebugUtilsMessengerCreateInfoEXT messengerCreateInfo =
+//        {
+//            .sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT,
+//            .pNext = NULL,
+//            .flags = 0,
+//            .messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT,
+//            .messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT,
+//            .pfnUserCallback = pfnUserCallback,
+//            .pUserData = NULL,
+//        };
+//        pVkInstanceCreateInfoNext = &messengerCreateInfo;
+//    }
+//    else
+//    {
+//        enabledLayerNamesCountInStack = 0;
+//        enabledLayerNames = NULL;
+//
+//        engineExtensionNamesCountInStack = GET_ARRAY_COUNT(engineExtensionNamesInStack);
+//        engineExtensionNames = engineExtensionNamesInStack;
+//
+//        pfnUserCallback = NULL;
+//        pVkInstanceCreateInfoNext = NULL;
+//    }
+//
+//    uint32_t enabledLayerCount = enabledLayerNamesCountInStack;
+//    uint32_t engineExtensionCount = engineExtensionNamesCountInStack;
+//
+//    uint32_t extensionCount = 0;
+//    extensionCount += engineExtensionCount;
+//
+//    uint32_t windowExtensionCount;
+//    TickernelGetWindowExtensionCount(&windowExtensionCount);
+//    char **windowExtensionNames = TickernelMalloc(sizeof(char *) * windowExtensionCount);
+//    TickernelGetWindowExtensions(windowExtensionNames);
+//    extensionCount += windowExtensionCount;
+//
+//    char **extensionNames = TickernelMalloc(sizeof(char *) * extensionCount);
+//    memcpy(extensionNames, engineExtensionNames, engineExtensionCount * sizeof(char *));
+//    memcpy(extensionNames + engineExtensionCount, windowExtensionNames, windowExtensionCount * sizeof(char *));
+//    for (int i = 0; i < extensionCount; i++)
+//    {
+//        printf("Add extension: %s\n", extensionNames[i]);
+//    }
+//    VkApplicationInfo appInfo =
+//    {
+//        .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
+//        .pNext = NULL,
+//        .pApplicationName = pGraphicContext->applicationName,
+//        .applicationVersion = 0,
+//        .pEngineName = NULL,
+//        .engineVersion = 0,
+//        .apiVersion = VK_API_VERSION_1_3,
+//    };
+//
+//    VkInstanceCreateInfo vkInstanceCreateInfo =
+//    {
+//        .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
+//        .pNext = pVkInstanceCreateInfoNext,
+//        .flags = 0,
+//        .pApplicationInfo = &appInfo,
+//        .enabledLayerCount = enabledLayerCount,
+//        .ppEnabledLayerNames = (const char *const *)enabledLayerNames,
+//        .enabledExtensionCount = extensionCount,
+//        .ppEnabledExtensionNames = (const char *const *)extensionNames,
+//    };
+//    VkResult result = vkCreateInstance(&vkInstanceCreateInfo, NULL, &pGraphicContext->vkInstance);
+//    TryThrowVulkanError(result);
+//    TickernelFree(windowExtensionNames);
+//    TickernelFree(extensionNames);
+//}
+//static void DestroyVKInstance(GraphicContext *pGraphicContext)
+//{
+//    vkDestroyInstance(pGraphicContext->vkInstance, NULL);
+//}
+//
+//static void CreateVKSurface(GraphicContext *pGraphicContext)
+//{
+//    VkResult result = CreateWindowVkSurface(pGraphicContext->pTickernelWindow, pGraphicContext->vkInstance, NULL, &pGraphicContext->vkSurface);
+//    TryThrowVulkanError(result);
+//}
 
 static void DestroyVKSurface(GraphicContext *pGraphicContext)
 {
@@ -150,14 +142,14 @@ static void HasAllRequiredExtensions(GraphicContext *pGraphicContext, VkPhysical
         VK_KHR_SWAPCHAIN_EXTENSION_NAME,
     };
     uint32_t requiredExtensionCount = GET_ARRAY_COUNT(requiredExtensionNames);
-
+    
     uint32_t extensionCount = 0;
     result = vkEnumerateDeviceExtensionProperties(vkPhysicalDevice, NULL, &extensionCount, NULL);
     TryThrowVulkanError(result);
     VkExtensionProperties *extensionProperties = TickernelMalloc(extensionCount * sizeof(VkExtensionProperties));
     result = vkEnumerateDeviceExtensionProperties(vkPhysicalDevice, NULL, &extensionCount, extensionProperties);
     TryThrowVulkanError(result);
-
+    
     uint32_t foundCount = 0;
     for (uint32_t i = 0; i < extensionCount; i++)
     {
@@ -182,16 +174,16 @@ static void HasAllRequiredExtensions(GraphicContext *pGraphicContext, VkPhysical
 
 static void HasGraphicsAndPresentQueueFamilies(GraphicContext *pGraphicContext, VkPhysicalDevice vkPhysicalDevice, bool *pHasGraphicsAndPresentQueueFamilies, uint32_t *pGraphicsQueueFamilyIndex, uint32_t *pPresentQueueFamilyIndex)
 {
-
+    
     VkSurfaceKHR vkSurface = pGraphicContext->vkSurface;
     uint32_t *pQueueFamilyPropertyCount = &pGraphicContext->queueFamilyPropertyCount;
-
+    
     VkResult result = VK_SUCCESS;
-
+    
     vkGetPhysicalDeviceQueueFamilyProperties(vkPhysicalDevice, pQueueFamilyPropertyCount, NULL);
     VkQueueFamilyProperties *vkQueueFamilyPropertiesList = TickernelMalloc(*pQueueFamilyPropertyCount * sizeof(VkQueueFamilyProperties));
     vkGetPhysicalDeviceQueueFamilyProperties(vkPhysicalDevice, pQueueFamilyPropertyCount, vkQueueFamilyPropertiesList);
-
+    
     int graphicIndexCount = 0;
     int presentIndexCount = 0;
     *pHasGraphicsAndPresentQueueFamilies = false;
@@ -219,7 +211,7 @@ static void HasGraphicsAndPresentQueueFamilies(GraphicContext *pGraphicContext, 
         {
             // continue;
         }
-
+        
         if (graphicIndexCount > 0 && presentIndexCount > 0)
         {
             *pHasGraphicsAndPresentQueueFamilies = true;
@@ -231,12 +223,12 @@ static void HasGraphicsAndPresentQueueFamilies(GraphicContext *pGraphicContext, 
 
 static void PickPhysicalDevice(GraphicContext *pGraphicContext)
 {
-
+    
     VkResult result = VK_SUCCESS;
     uint32_t deviceCount = -1;
     result = vkEnumeratePhysicalDevices(pGraphicContext->vkInstance, &deviceCount, NULL);
     TryThrowVulkanError(result);
-
+    
     if (deviceCount <= 0)
     {
         printf("failed to find GPUs with Vulkan support!");
@@ -246,27 +238,27 @@ static void PickPhysicalDevice(GraphicContext *pGraphicContext)
         VkPhysicalDevice *devices = TickernelMalloc(deviceCount * sizeof(VkPhysicalDevice));
         result = vkEnumeratePhysicalDevices(pGraphicContext->vkInstance, &deviceCount, devices);
         TryThrowVulkanError(result);
-
+        
         uint32_t graphicQueueFamilyIndex = -1;
         uint32_t presentQueueFamilyIndex = -1;
         VkPhysicalDevice targetDevice = NULL;
         uint32_t maxScore = 0;
-        char *targetDeviceName;
-
+        char *targetDeviceName = NULL;
+        
         VkSurfaceKHR vkSurface = pGraphicContext->vkSurface;
         for (uint32_t i = 0; i < deviceCount; i++)
         {
             VkPhysicalDevice vkPhysicalDevice = devices[i];
-
+            
             VkPhysicalDeviceProperties deviceProperties;
             vkGetPhysicalDeviceProperties(vkPhysicalDevice, &deviceProperties);
-
+            
             bool hasAllRequiredExtensions;
             HasAllRequiredExtensions(pGraphicContext, vkPhysicalDevice, &hasAllRequiredExtensions);
             TryThrowVulkanError(result);
             bool hasGraphicsAndPresentQueueFamilies;
             HasGraphicsAndPresentQueueFamilies(pGraphicContext, vkPhysicalDevice, &hasGraphicsAndPresentQueueFamilies, &graphicQueueFamilyIndex, &presentQueueFamilyIndex);
-
+            
             uint32_t surfaceFormatCount;
             result = vkGetPhysicalDeviceSurfaceFormatsKHR(vkPhysicalDevice, vkSurface, &surfaceFormatCount, NULL);
             TryThrowVulkanError(result);
@@ -283,7 +275,7 @@ static void PickPhysicalDevice(GraphicContext *pGraphicContext)
                 TryThrowVulkanError(result);
                 result = vkGetPhysicalDeviceSurfacePresentModesKHR(vkPhysicalDevice, vkSurface, &modeCount, NULL);
                 TryThrowVulkanError(result);
-
+                
                 if (formatCount > 0 && modeCount > 0)
                 {
                     uint32_t score = 0;
@@ -334,7 +326,7 @@ static void PickPhysicalDevice(GraphicContext *pGraphicContext)
 static void CreateLogicalDevice(GraphicContext *pGraphicContext)
 {
     VkResult result = VK_SUCCESS;
-
+    
     VkPhysicalDevice vkPhysicalDevice = pGraphicContext->vkPhysicalDevice;
     uint32_t graphicQueueFamilyIndex = pGraphicContext->graphicQueueFamilyIndex;
     uint32_t presentQueueFamilyIndex = pGraphicContext->presentQueueFamilyIndex;
@@ -346,14 +338,14 @@ static void CreateLogicalDevice(GraphicContext *pGraphicContext)
         queueCount = 1;
         queueCreateInfos = TickernelMalloc(sizeof(VkDeviceQueueCreateInfo) * queueCount);
         VkDeviceQueueCreateInfo graphicCreateInfo =
-            {
-                .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
-                .pNext = NULL,
-                .flags = 0,
-                .queueFamilyIndex = graphicQueueFamilyIndex,
-                .queueCount = 1,
-                .pQueuePriorities = &queuePriority,
-            };
+        {
+            .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+            .pNext = NULL,
+            .flags = 0,
+            .queueFamilyIndex = graphicQueueFamilyIndex,
+            .queueCount = 1,
+            .pQueuePriorities = &queuePriority,
+        };
         queueCreateInfos[0] = graphicCreateInfo;
     }
     else
@@ -361,16 +353,16 @@ static void CreateLogicalDevice(GraphicContext *pGraphicContext)
         queueCount = 2;
         queueCreateInfos = TickernelMalloc(sizeof(VkDeviceQueueCreateInfo) * queueCount);
         VkDeviceQueueCreateInfo graphicCreateInfo =
-            {
-                .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
-                .pNext = NULL,
-                .flags = 0,
-                .queueFamilyIndex = graphicQueueFamilyIndex,
-                .queueCount = 1,
-                .pQueuePriorities = &queuePriority,
-            };
+        {
+            .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+            .pNext = NULL,
+            .flags = 0,
+            .queueFamilyIndex = graphicQueueFamilyIndex,
+            .queueCount = 1,
+            .pQueuePriorities = &queuePriority,
+        };
         queueCreateInfos[0] = graphicCreateInfo;
-
+        
         VkDeviceQueueCreateInfo presentCreateInfo = {
             .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
             .pNext = NULL,
@@ -381,48 +373,33 @@ static void CreateLogicalDevice(GraphicContext *pGraphicContext)
         };
         queueCreateInfos[1] = presentCreateInfo;
     }
-
+    
     VkPhysicalDeviceFeatures deviceFeatures =
-        {
-            .fillModeNonSolid = VK_TRUE,
-            .sampleRateShading = VK_TRUE,
-        };
-    char **enabledLayerNames;
-    uint32_t enabledLayerCount;
-
-    if (pGraphicContext->enableValidationLayers)
     {
-        char *enabledLayerNamesInStack[] = {
-            "VK_LAYER_KHRONOS_validation",
-        };
-        enabledLayerCount = GET_ARRAY_COUNT(enabledLayerNamesInStack);
-        enabledLayerNames = enabledLayerNamesInStack;
-    }
-    else
-    {
-        enabledLayerNames = NULL;
-        enabledLayerCount = 0;
-    }
+        .fillModeNonSolid = VK_TRUE,
+        .sampleRateShading = VK_TRUE,
+    };
+    char **enabledLayerNames= NULL;
+    uint32_t enabledLayerCount= 0;
+    
     char *extensionNames[] = {
         VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-#if PLATFORM_OSX
         "VK_KHR_portability_subset",
-#endif
     };
     uint32_t extensionCount = GET_ARRAY_COUNT(extensionNames);
     VkDeviceCreateInfo vkDeviceCreateInfo =
-        {
-            .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
-            .pNext = NULL,
-            .flags = 0,
-            .queueCreateInfoCount = queueCount,
-            .pQueueCreateInfos = queueCreateInfos,
-            .enabledLayerCount = enabledLayerCount,
-            .ppEnabledLayerNames = (const char *const *)enabledLayerNames,
-            .enabledExtensionCount = extensionCount,
-            .ppEnabledExtensionNames = (const char *const *)extensionNames,
-            .pEnabledFeatures = &deviceFeatures,
-        };
+    {
+        .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
+        .pNext = NULL,
+        .flags = 0,
+        .queueCreateInfoCount = queueCount,
+        .pQueueCreateInfos = queueCreateInfos,
+        .enabledLayerCount = enabledLayerCount,
+        .ppEnabledLayerNames = (const char *const *)enabledLayerNames,
+        .enabledExtensionCount = extensionCount,
+        .ppEnabledExtensionNames = (const char *const *)extensionNames,
+        .pEnabledFeatures = &deviceFeatures,
+    };
     result = vkCreateDevice(vkPhysicalDevice, &vkDeviceCreateInfo, NULL, &pGraphicContext->vkDevice);
     TryThrowVulkanError(result);
     vkGetDeviceQueue(pGraphicContext->vkDevice, graphicQueueFamilyIndex, 0, &pGraphicContext->vkGraphicQueue);
@@ -444,10 +421,10 @@ static void ChooseSurfaceFormat(VkSurfaceFormatKHR *surfaceFormats, uint32_t sur
         if (VK_FORMAT_UNDEFINED == surfaceFormat.format)
         {
             VkSurfaceFormatKHR format =
-                {
-                    .format = VK_FORMAT_R8G8B8A8_SRGB,
-                    .colorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR,
-                };
+            {
+                .format = VK_FORMAT_R8G8B8A8_SRGB,
+                .colorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR,
+            };
             *pSurfaceFormat = format;
         }
         else
@@ -484,13 +461,13 @@ static void ChoosePresentMode(VkPresentModeKHR *supportPresentModes, uint32_t su
 static void CreateSwapchain(GraphicContext *pGraphicContext)
 {
     VkResult result = VK_SUCCESS;
-
+    
     VkPhysicalDevice vkPhysicalDevice = pGraphicContext->vkPhysicalDevice;
     VkSurfaceKHR vkSurface = pGraphicContext->vkSurface;
     VkDevice vkDevice = pGraphicContext->vkDevice;
     uint32_t graphicQueueFamilyIndex = pGraphicContext->graphicQueueFamilyIndex;
     uint32_t presentQueueFamilyIndex = pGraphicContext->presentQueueFamilyIndex;
-
+    
     VkSurfaceCapabilitiesKHR vkSurfaceCapabilities;
     uint32_t supportSurfaceFormatCount;
     uint32_t supportPresentModeCount;
@@ -502,12 +479,12 @@ static void CreateSwapchain(GraphicContext *pGraphicContext)
     TryThrowVulkanError(result);
     VkSurfaceFormatKHR *supportSurfaceFormats = TickernelMalloc(supportSurfaceFormatCount * sizeof(VkSurfaceFormatKHR));
     VkPresentModeKHR *supportPresentModes = TickernelMalloc(supportPresentModeCount * sizeof(VkPresentModeKHR));
-
+    
     result = vkGetPhysicalDeviceSurfaceFormatsKHR(vkPhysicalDevice, vkSurface, &supportSurfaceFormatCount, supportSurfaceFormats);
     TryThrowVulkanError(result);
     result = vkGetPhysicalDeviceSurfacePresentModesKHR(vkPhysicalDevice, vkSurface, &supportPresentModeCount, supportPresentModes);
     TryThrowVulkanError(result);
-
+    
     VkPresentModeKHR presentMode;
     ChooseSurfaceFormat(supportSurfaceFormats, supportSurfaceFormatCount, &pGraphicContext->surfaceFormat);
     ChoosePresentMode(supportPresentModes, supportPresentModeCount, pGraphicContext->targetPresentMode, &presentMode);
@@ -524,9 +501,9 @@ static void CreateSwapchain(GraphicContext *pGraphicContext)
     {
         // Do nothing.
     }
-
+    
     TickernelGetWindowFramebufferSize(pGraphicContext->pTickernelWindow, &pGraphicContext->swapchainWidth, &pGraphicContext->swapchainHeight);
-
+    
     VkExtent2D swapchainExtent;
     if (pGraphicContext->swapchainWidth > vkSurfaceCapabilities.maxImageExtent.width)
     {
@@ -543,7 +520,7 @@ static void CreateSwapchain(GraphicContext *pGraphicContext)
             swapchainExtent.width = pGraphicContext->swapchainWidth;
         }
     }
-
+    
     if (pGraphicContext->swapchainHeight > vkSurfaceCapabilities.maxImageExtent.height)
     {
         swapchainExtent.height = vkSurfaceCapabilities.maxImageExtent.height;
@@ -562,11 +539,16 @@ static void CreateSwapchain(GraphicContext *pGraphicContext)
     VkSharingMode imageSharingMode;
     uint32_t queueFamilyIndexCount;
     uint32_t *pQueueFamilyIndices;
+    
+    
+    
     if (graphicQueueFamilyIndex != presentQueueFamilyIndex)
     {
         imageSharingMode = VK_SHARING_MODE_CONCURRENT;
-        queueFamilyIndexCount = 2;
-        pQueueFamilyIndices = (uint32_t[]){graphicQueueFamilyIndex, presentQueueFamilyIndex};
+        
+        uint32_t queueFamilyIndices[] = {graphicQueueFamilyIndex, presentQueueFamilyIndex};
+        pQueueFamilyIndices = queueFamilyIndices;
+        queueFamilyIndexCount = GET_ARRAY_COUNT(queueFamilyIndices);
     }
     else
     {
@@ -574,35 +556,35 @@ static void CreateSwapchain(GraphicContext *pGraphicContext)
         queueFamilyIndexCount = 0;
         pQueueFamilyIndices = NULL;
     }
-
+    
     VkSwapchainCreateInfoKHR swapchainCreateInfo =
-        {
-            .sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
-            .pNext = NULL,
-            .flags = 0,
-            .surface = vkSurface,
-            .minImageCount = swapchainImageCount,
-            .imageFormat = pGraphicContext->surfaceFormat.format,
-            .imageColorSpace = pGraphicContext->surfaceFormat.colorSpace,
-            .imageExtent = swapchainExtent,
-            .imageArrayLayers = 1,
-            .imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
-            .imageSharingMode = imageSharingMode,
-            .queueFamilyIndexCount = queueFamilyIndexCount,
-            .pQueueFamilyIndices = pQueueFamilyIndices,
-            .preTransform = vkSurfaceCapabilities.currentTransform,
-            .compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
-            .presentMode = presentMode,
-            .clipped = VK_TRUE,
-            .oldSwapchain = VK_NULL_HANDLE,
-        };
-
+    {
+        .sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
+        .pNext = NULL,
+        .flags = 0,
+        .surface = vkSurface,
+        .minImageCount = swapchainImageCount,
+        .imageFormat = pGraphicContext->surfaceFormat.format,
+        .imageColorSpace = pGraphicContext->surfaceFormat.colorSpace,
+        .imageExtent = swapchainExtent,
+        .imageArrayLayers = 1,
+        .imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+        .imageSharingMode = imageSharingMode,
+        .queueFamilyIndexCount = queueFamilyIndexCount,
+        .pQueueFamilyIndices = pQueueFamilyIndices,
+        .preTransform = vkSurfaceCapabilities.currentTransform,
+        .compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
+        .presentMode = presentMode,
+        .clipped = VK_TRUE,
+        .oldSwapchain = VK_NULL_HANDLE,
+    };
+    
     result = vkCreateSwapchainKHR(vkDevice, &swapchainCreateInfo, NULL, &pGraphicContext->vkSwapchain);
     TryThrowVulkanError(result);
-
+    
     TickernelFree(supportSurfaceFormats);
     TickernelFree(supportPresentModes);
-
+    
     result = vkGetSwapchainImagesKHR(vkDevice, pGraphicContext->vkSwapchain, &pGraphicContext->swapchainImageCount, NULL);
     TryThrowVulkanError(result);
     pGraphicContext->swapchainImages = TickernelMalloc(swapchainImageCount * sizeof(VkImage));
@@ -628,20 +610,20 @@ static void DestroySwapchain(GraphicContext *pGraphicContext)
 static void CreateSignals(GraphicContext *pGraphicContext)
 {
     VkResult result = VK_SUCCESS;
-
+    
     VkSemaphoreCreateInfo semaphoreCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
         .pNext = NULL,
         .flags = 0,
     };
     VkDevice vkDevice = pGraphicContext->vkDevice;
-
+    
     VkFenceCreateInfo fenceCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
         .pNext = NULL,
         .flags = VK_FENCE_CREATE_SIGNALED_BIT,
     };
-
+    
     result = vkCreateSemaphore(vkDevice, &semaphoreCreateInfo, NULL, &pGraphicContext->imageAvailableSemaphore);
     TryThrowVulkanError(result);
     result = vkCreateSemaphore(vkDevice, &semaphoreCreateInfo, NULL, &pGraphicContext->renderFinishedSemaphore);
@@ -705,13 +687,13 @@ static void RecreateSwapchain(GraphicContext *pGraphicContext)
     }
     result = vkDeviceWaitIdle(pGraphicContext->vkDevice);
     TryThrowVulkanError(result);
-
+    
     DestroySwapchain(pGraphicContext);
     CreateSwapchain(pGraphicContext);
-
+    
     DestroyGraphicImages(pGraphicContext);
     CreateGraphicImages(pGraphicContext);
-
+    
     UpdateDeferredRenderPass(&pGraphicContext->deferredRenderPass, pGraphicContext->vkDevice, pGraphicContext->colorGraphicImage, pGraphicContext->depthGraphicImage, pGraphicContext->albedoGraphicImage, pGraphicContext->normalGraphicImage, width, height, pGraphicContext->globalUniformBuffer, pGraphicContext->lightsUniformBuffer);
     UpdatePostProcessRenderPass(&pGraphicContext->postProcessRenderPass, pGraphicContext->vkDevice, pGraphicContext->colorGraphicImage, width, height, pGraphicContext->swapchainImageViews);
 }
@@ -746,8 +728,6 @@ static void WaitForGPU(GraphicContext *pGraphicContext)
 static void SubmitCommandBuffer(GraphicContext *pGraphicContext)
 {
     VkResult result = VK_SUCCESS;
-
-    VkDevice vkDevice = pGraphicContext->vkDevice;
     uint32_t frameIndex = pGraphicContext->frameIndex;
     // Submit workflow...
     VkSubmitInfo submitInfo = {
@@ -761,7 +741,7 @@ static void SubmitCommandBuffer(GraphicContext *pGraphicContext)
         .signalSemaphoreCount = 1,
         .pSignalSemaphores = (VkSemaphore[]){pGraphicContext->renderFinishedSemaphore},
     };
-
+    
     result = vkQueueSubmit(pGraphicContext->vkGraphicQueue, 1, &submitInfo, pGraphicContext->renderFinishedFence);
     TryThrowVulkanError(result);
 }
@@ -769,7 +749,6 @@ static void SubmitCommandBuffer(GraphicContext *pGraphicContext)
 static void Present(GraphicContext *pGraphicContext)
 {
     VkResult result = VK_SUCCESS;
-    uint32_t frameIndex = pGraphicContext->frameIndex;
     VkPresentInfoKHR presentInfo = {
         .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
         .pNext = NULL,
@@ -820,7 +799,7 @@ static void CreateUniformBuffers(GraphicContext *pGraphicContext)
     CreateBuffer(pGraphicContext->vkDevice, pGraphicContext->vkPhysicalDevice, bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &pGraphicContext->globalUniformBuffer, &pGraphicContext->globalUniformBufferMemory);
     result = vkMapMemory(pGraphicContext->vkDevice, pGraphicContext->globalUniformBufferMemory, 0, bufferSize, 0, &pGraphicContext->globalUniformBufferMapped);
     TryThrowVulkanError(result);
-
+    
     bufferSize = sizeof(LightsUniformBuffer);
     CreateBuffer(pGraphicContext->vkDevice, pGraphicContext->vkPhysicalDevice, bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &pGraphicContext->lightsUniformBuffer, &pGraphicContext->lightsUniformBufferMemory);
     result = vkMapMemory(pGraphicContext->vkDevice, pGraphicContext->lightsUniformBufferMemory, 0, bufferSize, 0, &pGraphicContext->lightsUniformBufferMapped);
@@ -831,7 +810,7 @@ static void DestroyUniformBuffers(GraphicContext *pGraphicContext)
 {
     vkUnmapMemory(pGraphicContext->vkDevice, pGraphicContext->lightsUniformBufferMemory);
     DestroyBuffer(pGraphicContext->vkDevice, pGraphicContext->lightsUniformBuffer, pGraphicContext->lightsUniformBufferMemory);
-
+    
     vkUnmapMemory(pGraphicContext->vkDevice, pGraphicContext->globalUniformBufferMemory);
     DestroyBuffer(pGraphicContext->vkDevice, pGraphicContext->globalUniformBuffer, pGraphicContext->globalUniformBufferMemory);
 }
@@ -871,7 +850,7 @@ static void DestroyVkCommandBuffers(GraphicContext *pGraphicContext)
 static void RecordCommandBuffer(GraphicContext *pGraphicContext)
 {
     VkCommandBuffer vkCommandBuffer = pGraphicContext->graphicVkCommandBuffers[pGraphicContext->frameIndex];
-
+    
     VkViewport viewport = {
         .x = 0.0f,
         .y = 0.0f,
@@ -893,18 +872,18 @@ static void RecordCommandBuffer(GraphicContext *pGraphicContext)
         .extent = extent,
     };
     VkCommandBufferBeginInfo vkCommandBufferBeginInfo =
-        {
-            .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
-            .pNext = NULL,
-            .flags = 0,
-            .pInheritanceInfo = NULL,
-        };
+    {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+        .pNext = NULL,
+        .flags = 0,
+        .pInheritanceInfo = NULL,
+    };
     VkResult result = vkBeginCommandBuffer(vkCommandBuffer, &vkCommandBufferBeginInfo);
     TryThrowVulkanError(result);
-
+    
     RecordDeferredRenderPass(&pGraphicContext->deferredRenderPass, vkCommandBuffer, viewport, scissor, pGraphicContext->vkDevice);
     RecordPostProcessRenderPass(&pGraphicContext->postProcessRenderPass, vkCommandBuffer, viewport, scissor, pGraphicContext->vkDevice, pGraphicContext->frameIndex);
-
+    
     result = vkEndCommandBuffer(vkCommandBuffer);
     TryThrowVulkanError(result);
 }
@@ -924,8 +903,8 @@ static void TearDownGraphic(GraphicContext *pGraphicContext)
 void StartGraphic(GraphicContext *pGraphicContext)
 {
     SetUpGraphic(pGraphicContext);
-    CreateVkInstance(pGraphicContext);
-    CreateVKSurface(pGraphicContext);
+    //    CreateVkInstance(pGraphicContext);
+    //    CreateVKSurface(pGraphicContext);
     PickPhysicalDevice(pGraphicContext);
     CreateLogicalDevice(pGraphicContext);
     CreateSwapchain(pGraphicContext);
@@ -934,7 +913,7 @@ void StartGraphic(GraphicContext *pGraphicContext)
     CreateVkCommandBuffers(pGraphicContext);
     CreateUniformBuffers(pGraphicContext);
     CreateGraphicImages(pGraphicContext);
-
+    
     VkViewport viewport = {
         .x = 0.0f,
         .y = 0.0f,
@@ -959,44 +938,35 @@ void StartGraphic(GraphicContext *pGraphicContext)
     CreatePostProcessRenderPass(&pGraphicContext->postProcessRenderPass, pGraphicContext->shadersPath, pGraphicContext->vkDevice, pGraphicContext->colorGraphicImage, viewport, scissor, pGraphicContext->swapchainImageCount, pGraphicContext->swapchainImageViews, pGraphicContext->surfaceFormat.format);
 }
 
-void UpdateGraphic(GraphicContext *pGraphicContext, bool *pCanUpdate)
+void UpdateGraphic(GraphicContext *pGraphicContext)
 {
-    if (TickernelWindowShouldClose(pGraphicContext->pTickernelWindow))
+    pGraphicContext->frameIndex = pGraphicContext->frameCount % pGraphicContext->swapchainImageCount;
+    TickernelPollWindowEvents();
+    WaitForGPU(pGraphicContext);
+    VkResult result = VK_SUCCESS;
+    VkDevice vkDevice = pGraphicContext->vkDevice;
+    // Acquire next image
+    result = vkAcquireNextImageKHR(vkDevice, pGraphicContext->vkSwapchain, UINT64_MAX, pGraphicContext->imageAvailableSemaphore, VK_NULL_HANDLE, &pGraphicContext->acquiredImageIndex);
+    if (VK_SUCCESS == result || VK_SUBOPTIMAL_KHR == result)
     {
-        VkResult vkResult = vkDeviceWaitIdle(pGraphicContext->vkDevice);
-        TryThrowVulkanError(vkResult);
-        *pCanUpdate = false;
+        UpdateGlobalUniformBuffer(pGraphicContext);
+        UpdateLightsUniformBuffer(pGraphicContext);
+        RecordCommandBuffer(pGraphicContext);
+        SubmitCommandBuffer(pGraphicContext);
+        Present(pGraphicContext);
+        pGraphicContext->frameCount++;
     }
     else
     {
-        pGraphicContext->frameIndex = pGraphicContext->frameCount % pGraphicContext->swapchainImageCount;
-        TickernelPollWindowEvents();
-        WaitForGPU(pGraphicContext);
-        VkResult result = VK_SUCCESS;
-        VkDevice vkDevice = pGraphicContext->vkDevice;
-        // Acquire next image
-        result = vkAcquireNextImageKHR(vkDevice, pGraphicContext->vkSwapchain, UINT64_MAX, pGraphicContext->imageAvailableSemaphore, VK_NULL_HANDLE, &pGraphicContext->acquiredImageIndex);
-        if (VK_SUCCESS == result || VK_SUBOPTIMAL_KHR == result)
+        if (VK_ERROR_OUT_OF_DATE_KHR == result || VK_SUBOPTIMAL_KHR == result)
         {
-            UpdateGlobalUniformBuffer(pGraphicContext);
-            UpdateLightsUniformBuffer(pGraphicContext);
-            RecordCommandBuffer(pGraphicContext);
-            SubmitCommandBuffer(pGraphicContext);
-            Present(pGraphicContext);
-            pGraphicContext->frameCount++;
+            RecreateSwapchain(pGraphicContext);
+            // pGraphicContext->frameCount++;
+            return;
         }
         else
         {
-            if (VK_ERROR_OUT_OF_DATE_KHR == result || VK_SUBOPTIMAL_KHR == result)
-            {
-                RecreateSwapchain(pGraphicContext);
-                // pGraphicContext->frameCount++;
-                return;
-            }
-            else
-            {
-                TryThrowVulkanError(result);
-            }
+            TryThrowVulkanError(result);
         }
     }
 }
@@ -1005,20 +975,17 @@ void EndGraphic(GraphicContext *pGraphicContext)
 {
     VkResult result = vkDeviceWaitIdle(pGraphicContext->vkDevice);
     TryThrowVulkanError(result);
-
     DestroyPostProcessRenderPass(&pGraphicContext->postProcessRenderPass, pGraphicContext->vkDevice);
     DestroyDeferredRenderPass(&pGraphicContext->deferredRenderPass, pGraphicContext->vkDevice);
-
     DestroyGraphicImages(pGraphicContext);
     DestroyUniformBuffers(pGraphicContext);
     DestroyVkCommandBuffers(pGraphicContext);
     DestroyCommandPools(pGraphicContext);
     DestroySignals(pGraphicContext);
-    // DestroyDepthResources(pGraphicContext);
     DestroySwapchain(pGraphicContext);
     DestroyLogicalDevice(pGraphicContext);
     // Destroy vkPhysicsDevice
-    DestroyVKSurface(pGraphicContext);
-    DestroyVKInstance(pGraphicContext);
+    //    DestroyVKSurface(pGraphicContext);
+    //    DestroyVKInstance(pGraphicContext);
     TearDownGraphic(pGraphicContext);
 }

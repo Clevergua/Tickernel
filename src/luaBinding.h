@@ -1,8 +1,8 @@
 #pragma once
-#include <graphic.h>
-#include <luaBinding.h>
-#include <lauxlib.h>
-#include <lualib.h>
+#include "graphic.h"
+#include "luaBinding.h"
+#include "lauxlib.h"
+#include "lualib.h"
 
 typedef struct
 {

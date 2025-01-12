@@ -1,5 +1,5 @@
 #pragma once
-#include <luaBinding.h>
+#include "luaBinding.h"
 typedef struct TickernelEngineStruct
 {
     int targetFrameRate;
@@ -18,4 +18,6 @@ typedef struct TickernelEngineStruct
     LuaContext *pLuaContext;
 } TickernelEngine;
 
-void RunTickernelEngine(TickernelEngine *pTickernelEngine);
+void TickernelStart(TickernelEngine *pTickernelEngine);
+void TickernelUpdate(TickernelEngine *pTickernelEngine);
+void TickernelEnd(TickernelEngine *pTickernelEngine);

@@ -1,16 +1,9 @@
-#include <tickernelCore.h>
+#include "tickernelCore.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
-#if PLATFORM_POSIX
 #include <execinfo.h>
-#elif PLATFORM_WINDOWS
-#include <dbghelp.h>
-#include <windows.h>
-#include <windows.h>
-#include <dbghelp.h>
-#pragma comment(lib, "dbghelp.lib")
-#endif
+
 
 void TickernelError(char const *const _Format, ...)
 {
@@ -19,7 +12,6 @@ void TickernelError(char const *const _Format, ...)
     vfprintf(stderr, _Format, args);
     va_end(args);
 
-#if PLATFORM_POSIX
     void *buffer[100];
     int nptrs = backtrace(buffer, 100);
     char **symbols = backtrace_symbols(buffer, nptrs);
@@ -36,38 +28,13 @@ void TickernelError(char const *const _Format, ...)
     }
 
     TickernelFree(symbols);
-#elif PLATFORM_WINDOWS
-    void *stack[100];
-    HANDLE process = GetCurrentProcess();
-    SymInitialize(process, NULL, TRUE);
-    WORD frames = CaptureStackBackTrace(0, 100, stack, NULL);
-    SYMBOL_INFO *symbol = (SYMBOL_INFO *)TickernelMalloc(sizeof(SYMBOL_INFO) + 256 * sizeof(char));
-    symbol->MaxNameLen = 255;
-    symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
 
-    for (int i = 0; i < frames; i++)
-    {
-        SymFromAddr(process, (DWORD64)(stack[i]), 0, symbol);
-        printf("%i: %s - 0x%0llX\n", frames - i - 1, symbol->Name, symbol->Address);
-    }
-
-    TickernelFree(symbol);
-    SymCleanup(process);
-#else
-#error "Unknown platform"
-#endif
     abort();
 }
 
 void TickernelSleep(uint32_t milliseconds)
 {
-#if PLATFORM_POSIX
     usleep(milliseconds * 1000);
-#elif PLATFORM_WINDOWS
-    Sleep(milliseconds);
-#else
-#error "Unknown platform"
-#endif
 }
 
 void *TickernelMalloc(size_t size)
@@ -120,7 +87,6 @@ void TickernelCombinePaths(char *dstPath, size_t dstPathSize, const char *srcPat
 {
     const char *pathSeparator = TickernelGetPathSeparator();
     size_t dstPathLength = strlen(dstPath);
-    size_t srcPathLength = strlen(srcPath);
     if (TickernelEndsWith(dstPath, pathSeparator))
     {
         if (TickernelStartsWith(srcPath, pathSeparator))
@@ -145,15 +111,9 @@ void TickernelCombinePaths(char *dstPath, size_t dstPathSize, const char *srcPat
     }
 }
 
-const char *TickernelGetPathSeparator()
+const char *TickernelGetPathSeparator(void)
 {
-#if PLATFORM_POSIX
     return "/";
-#elif PLATFORM_WINDOWS
-    return "\\";
-#else
-#error "Unknown platform"
-#endif
 }
 
 void TickernelCreateLinkedList(TickernelLinkedList *pLinkedList, size_t dataSize)
