@@ -45,6 +45,8 @@
 # Kernel Module Compile Results
 *.mod*
 *.cmd
+
+
 .tmp_versions/
 modules.order
 Module.symvers
@@ -54,3 +56,5 @@ dkms.conf
 #Project build dir
 build/
 out/
+
+*.DS_Store
