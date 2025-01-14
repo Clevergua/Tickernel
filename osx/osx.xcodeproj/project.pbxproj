@@ -7,32 +7,19 @@
 	objects = {
 
 /* Begin PBXFileReference section */
-		DEA3F77B2D34E4930024E167 /* osx.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = osx.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		DE021A4A2D36886000281D75 /* osx.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = osx.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
-/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		DE9CCCD42D35614F00FA6DEC /* Exceptions for "osx" folder in "osx" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				temp.txt,
-			);
-			target = DEA3F77A2D34E4930024E167 /* osx */;
-		};
-/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
-
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		DEA3F77D2D34E4930024E167 /* osx */ = {
+		DE021A4C2D36886000281D75 /* osx */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				DE9CCCD42D35614F00FA6DEC /* Exceptions for "osx" folder in "osx" target */,
-			);
 			path = osx;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		DEA3F7782D34E4930024E167 /* Frameworks */ = {
+		DE021A472D36886000281D75 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -42,18 +29,18 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		DEA3F7722D34E4930024E167 = {
+		DE021A412D36886000281D75 = {
 			isa = PBXGroup;
 			children = (
-				DEA3F77D2D34E4930024E167 /* osx */,
-				DEA3F77C2D34E4930024E167 /* Products */,
+				DE021A4C2D36886000281D75 /* osx */,
+				DE021A4B2D36886000281D75 /* Products */,
 			);
 			sourceTree = "<group>";
 		};
-		DEA3F77C2D34E4930024E167 /* Products */ = {
+		DE021A4B2D36886000281D75 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				DEA3F77B2D34E4930024E167 /* osx.app */,
+				DE021A4A2D36886000281D75 /* osx.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -61,64 +48,63 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		DEA3F77A2D34E4930024E167 /* osx */ = {
+		DE021A492D36886000281D75 /* osx */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = DEA3F78A2D34E4950024E167 /* Build configuration list for PBXNativeTarget "osx" */;
+			buildConfigurationList = DE021A5D2D36886100281D75 /* Build configuration list for PBXNativeTarget "osx" */;
 			buildPhases = (
-				DEA3F7772D34E4930024E167 /* Sources */,
-				DEA3F7782D34E4930024E167 /* Frameworks */,
-				DEA3F7792D34E4930024E167 /* Resources */,
+				DE021A462D36886000281D75 /* Sources */,
+				DE021A472D36886000281D75 /* Frameworks */,
+				DE021A482D36886000281D75 /* Resources */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				DEA3F77D2D34E4930024E167 /* osx */,
+				DE021A4C2D36886000281D75 /* osx */,
 			);
 			name = osx;
 			packageProductDependencies = (
 			);
 			productName = osx;
-			productReference = DEA3F77B2D34E4930024E167 /* osx.app */;
+			productReference = DE021A4A2D36886000281D75 /* osx.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
-		DEA3F7732D34E4930024E167 /* Project object */ = {
+		DE021A422D36886000281D75 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastSwiftUpdateCheck = 1620;
 				LastUpgradeCheck = 1620;
 				TargetAttributes = {
-					DEA3F77A2D34E4930024E167 = {
+					DE021A492D36886000281D75 = {
 						CreatedOnToolsVersion = 16.2;
 					};
 				};
 			};
-			buildConfigurationList = DEA3F7762D34E4930024E167 /* Build configuration list for PBXProject "osx" */;
+			buildConfigurationList = DE021A452D36886000281D75 /* Build configuration list for PBXProject "osx" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
 				Base,
 			);
-			mainGroup = DEA3F7722D34E4930024E167;
+			mainGroup = DE021A412D36886000281D75;
 			minimizedProjectReferenceProxies = 1;
 			preferredProjectObjectVersion = 77;
-			productRefGroup = DEA3F77C2D34E4930024E167 /* Products */;
+			productRefGroup = DE021A4B2D36886000281D75 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				DEA3F77A2D34E4930024E167 /* osx */,
+				DE021A492D36886000281D75 /* osx */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		DEA3F7792D34E4930024E167 /* Resources */ = {
+		DE021A482D36886000281D75 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -128,7 +114,7 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		DEA3F7772D34E4930024E167 /* Sources */ = {
+		DE021A462D36886000281D75 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -138,7 +124,7 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
-		DEA3F7882D34E4950024E167 /* Debug */ = {
+		DE021A5B2D36886100281D75 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -191,20 +177,16 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				HEADER_SEARCH_PATHS = "/usr/local/include/**";
-				LIBRARY_SEARCH_PATHS = "/usr/local/lib/**";
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MACOSX_DEPLOYMENT_TARGET = 15.1;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
-				OTHER_LDFLAGS = "-lvulkan";
 				SDKROOT = macosx;
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
-				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
 			name = Debug;
 		};
-		DEA3F7892D34E4950024E167 /* Release */ = {
+		DE021A5C2D36886100281D75 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -251,24 +233,20 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				HEADER_SEARCH_PATHS = "/usr/local/include/**";
-				LIBRARY_SEARCH_PATHS = "/usr/local/lib/**";
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MACOSX_DEPLOYMENT_TARGET = 15.1;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
-				OTHER_LDFLAGS = "-lvulkan";
 				SDKROOT = macosx;
-				SWIFT_COMPILATION_MODE = wholemodule;
 			};
 			name = Release;
 		};
-		DEA3F78B2D34E4950024E167 /* Debug */ = {
+		DE021A5E2D36886100281D75 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = osx/osx.entitlements;
-				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
@@ -283,23 +261,20 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
+				LIBRARY_SEARCH_PATHS = "/usr/local/bin/**";
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.tickernel.osx;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_OBJC_BRIDGING_HEADER = osx/bridge.h;
-				SWIFT_VERSION = 5.0;
-				SYSTEM_HEADER_SEARCH_PATHS = "";
 			};
 			name = Debug;
 		};
-		DEA3F78C2D34E4950024E167 /* Release */ = {
+		DE021A5F2D36886100281D75 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = osx/osx.entitlements;
-				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
@@ -314,38 +289,36 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
+				LIBRARY_SEARCH_PATHS = "/usr/local/bin/**";
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.tickernel.osx;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_OBJC_BRIDGING_HEADER = osx/bridge.h;
-				SWIFT_VERSION = 5.0;
-				SYSTEM_HEADER_SEARCH_PATHS = "";
 			};
 			name = Release;
 		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		DEA3F7762D34E4930024E167 /* Build configuration list for PBXProject "osx" */ = {
+		DE021A452D36886000281D75 /* Build configuration list for PBXProject "osx" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				DEA3F7882D34E4950024E167 /* Debug */,
-				DEA3F7892D34E4950024E167 /* Release */,
+				DE021A5B2D36886100281D75 /* Debug */,
+				DE021A5C2D36886100281D75 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		DEA3F78A2D34E4950024E167 /* Build configuration list for PBXNativeTarget "osx" */ = {
+		DE021A5D2D36886100281D75 /* Build configuration list for PBXNativeTarget "osx" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				DEA3F78B2D34E4950024E167 /* Debug */,
-				DEA3F78C2D34E4950024E167 /* Release */,
+				DE021A5E2D36886100281D75 /* Debug */,
+				DE021A5F2D36886100281D75 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
-	rootObject = DEA3F7732D34E4930024E167 /* Project object */;
+	rootObject = DE021A422D36886000281D75 /* Project object */;
 }
