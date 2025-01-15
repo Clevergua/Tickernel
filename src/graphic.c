@@ -9,22 +9,22 @@ void TryThrowVulkanError(VkResult vkResult)
     }
 }
 
-static VKAPI_ATTR VkBool32 VKAPI_CALL LogMessenger(VkDebugUtilsMessageSeverityFlagBitsEXT severity, VkDebugUtilsMessageTypeFlagsEXT type, const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData, void *pUserData)
-{
-    if (severity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
-    {
-        printf("Vulkan Error:%s\n", pCallbackData->pMessage);
-    }
-    else if (severity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT)
-    {
-        printf("Vulkan Warning:%s\n", pCallbackData->pMessage);
-    }
-    else
-    {
-        printf("Vulkan Log:%s\n", pCallbackData->pMessage);
-    }
-    return VK_TRUE;
-}
+//static VKAPI_ATTR VkBool32 VKAPI_CALL LogMessenger(VkDebugUtilsMessageSeverityFlagBitsEXT severity, VkDebugUtilsMessageTypeFlagsEXT type, const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData, void *pUserData)
+//{
+//    if (severity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
+//    {
+//        printf("Vulkan Error:%s\n", pCallbackData->pMessage);
+//    }
+//    else if (severity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT)
+//    {
+//        printf("Vulkan Warning:%s\n", pCallbackData->pMessage);
+//    }
+//    else
+//    {
+//        printf("Vulkan Log:%s\n", pCallbackData->pMessage);
+//    }
+//    return VK_TRUE;
+//}
 
 //static void CreateVkInstance(GraphicContext *pGraphicContext)
 //{

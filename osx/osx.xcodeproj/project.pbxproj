@@ -7,10 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		DE043A322D37A21E0021DB31 /* libvulkan.1.3.290.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = DE043A302D37A21E0021DB31 /* libvulkan.1.3.290.dylib */; };
 		DE043A332D37A21E0021DB31 /* libvulkan.1.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = DE043A312D37A21E0021DB31 /* libvulkan.1.dylib */; };
 		DE043A3A2D37A8220021DB31 /* libvulkan.1.dylib in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE043A312D37A21E0021DB31 /* libvulkan.1.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
-		DE043A3B2D37A8220021DB31 /* libvulkan.1.3.290.dylib in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE043A302D37A21E0021DB31 /* libvulkan.1.3.290.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		DED78BD32D37EAFD007D5FDA /* libvulkan.1.3.296.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = DED78BD22D37EAFD007D5FDA /* libvulkan.1.3.296.dylib */; };
+		DED78BD42D37EB1B007D5FDA /* libvulkan.1.3.296.dylib in CopyFiles */ = {isa = PBXBuildFile; fileRef = DED78BD22D37EAFD007D5FDA /* libvulkan.1.3.296.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -20,8 +20,8 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
+				DED78BD42D37EB1B007D5FDA /* libvulkan.1.3.296.dylib in CopyFiles */,
 				DE043A3A2D37A8220021DB31 /* libvulkan.1.dylib in CopyFiles */,
-				DE043A3B2D37A8220021DB31 /* libvulkan.1.3.290.dylib in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -29,15 +29,27 @@
 
 /* Begin PBXFileReference section */
 		DE043A102D378F210021DB31 /* osx.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = osx.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		DE043A302D37A21E0021DB31 /* libvulkan.1.3.290.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libvulkan.1.3.290.dylib; path = ../../../../../../usr/local/lib/libvulkan.1.3.290.dylib; sourceTree = "<group>"; };
 		DE043A312D37A21E0021DB31 /* libvulkan.1.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libvulkan.1.dylib; path = ../../../../../../usr/local/lib/libvulkan.1.dylib; sourceTree = "<group>"; };
+		DED78BD22D37EAFD007D5FDA /* libvulkan.1.3.296.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libvulkan.1.3.296.dylib; path = ../../../../../../usr/local/lib/libvulkan.1.3.296.dylib; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		DE043A122D378F210021DB31 /* osx */ = {
+		DED78CAB2D38086D007D5FDA /* osx */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = osx;
 			sourceTree = "<group>";
+		};
+		DED78D592D380A8A007D5FDA /* include */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			name = include;
+			path = ../include;
+			sourceTree = SOURCE_ROOT;
+		};
+		DED78D722D380A8A007D5FDA /* src */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			name = src;
+			path = ../src;
+			sourceTree = SOURCE_ROOT;
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
@@ -46,8 +58,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				DE043A322D37A21E0021DB31 /* libvulkan.1.3.290.dylib in Frameworks */,
 				DE043A332D37A21E0021DB31 /* libvulkan.1.dylib in Frameworks */,
+				DED78BD32D37EAFD007D5FDA /* libvulkan.1.3.296.dylib in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -57,7 +69,9 @@
 		DE043A072D378F210021DB31 = {
 			isa = PBXGroup;
 			children = (
-				DE043A122D378F210021DB31 /* osx */,
+				DED78D592D380A8A007D5FDA /* include */,
+				DED78D722D380A8A007D5FDA /* src */,
+				DED78CAB2D38086D007D5FDA /* osx */,
 				DE043A2B2D379C1F0021DB31 /* Frameworks */,
 				DE043A112D378F210021DB31 /* Products */,
 			);
@@ -74,8 +88,8 @@
 		DE043A2B2D379C1F0021DB31 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				DED78BD22D37EAFD007D5FDA /* libvulkan.1.3.296.dylib */,
 				DE043A312D37A21E0021DB31 /* libvulkan.1.dylib */,
-				DE043A302D37A21E0021DB31 /* libvulkan.1.3.290.dylib */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -97,7 +111,9 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				DE043A122D378F210021DB31 /* osx */,
+				DED78CAB2D38086D007D5FDA /* osx */,
+				DED78D592D380A8A007D5FDA /* include */,
+				DED78D722D380A8A007D5FDA /* src */,
 			);
 			name = osx;
 			packageProductDependencies = (
