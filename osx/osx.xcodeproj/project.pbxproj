@@ -7,72 +7,49 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		DE043A332D37A21E0021DB31 /* libvulkan.1.dylib in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE043A312D37A21E0021DB31 /* libvulkan.1.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
-		DE1E78CE2D38E08200B5B7D3 /* liblua.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = DE1E78CD2D38E08200B5B7D3 /* liblua.dylib */; };
-		DEC476442D38FB7A007BBCBD /* libvulkan.1.3.290.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = DEC476432D38FB7A007BBCBD /* libvulkan.1.3.290.dylib */; };
-		DEC476472D38FC52007BBCBD /* libvulkan.1.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = DE043A312D37A21E0021DB31 /* libvulkan.1.dylib */; };
-		DEC476482D38FC6D007BBCBD /* libvulkan.1.3.290.dylib in CopyFiles */ = {isa = PBXBuildFile; fileRef = DEC476432D38FB7A007BBCBD /* libvulkan.1.3.290.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		DE0648FE2D390B980010E1D5 /* libvulkan.1.3.296.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = DE0648FB2D390B980010E1D5 /* libvulkan.1.3.296.dylib */; };
+		DE0649002D390B980010E1D5 /* libvulkan.1.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = DE0648FD2D390B980010E1D5 /* libvulkan.1.dylib */; };
+		DE0649022D390BC20010E1D5 /* libvulkan.1.dylib in Copy Files */ = {isa = PBXBuildFile; fileRef = DE0648FD2D390B980010E1D5 /* libvulkan.1.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		DE0649032D390BC50010E1D5 /* libvulkan.1.3.296.dylib in Copy Files */ = {isa = PBXBuildFile; fileRef = DE0648FB2D390B980010E1D5 /* libvulkan.1.3.296.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		DE0649D82D390E410010E1D5 /* liblua.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = DE0649D72D390E410010E1D5 /* liblua.dylib */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
-		DE043A392D37A8190021DB31 /* CopyFiles */ = {
+		DE0648EE2D390AF30010E1D5 /* Copy Files */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 12;
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
-				DEC476482D38FC6D007BBCBD /* libvulkan.1.3.290.dylib in CopyFiles */,
-				DE043A332D37A21E0021DB31 /* libvulkan.1.dylib in CopyFiles */,
+				DE0649032D390BC50010E1D5 /* libvulkan.1.3.296.dylib in Copy Files */,
+				DE0649022D390BC20010E1D5 /* libvulkan.1.dylib in Copy Files */,
 			);
+			name = "Copy Files";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		DE043A102D378F210021DB31 /* osx.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = osx.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		DE043A312D37A21E0021DB31 /* libvulkan.1.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libvulkan.1.dylib; path = ../../../../../../usr/local/lib/libvulkan.1.dylib; sourceTree = "<group>"; };
-		DE1E78CD2D38E08200B5B7D3 /* liblua.dylib */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = liblua.dylib; path = ../lib/lua/liblua.dylib; sourceTree = "<group>"; };
-		DEC476432D38FB7A007BBCBD /* libvulkan.1.3.290.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libvulkan.1.3.290.dylib; path = ../../../../../../usr/local/lib/libvulkan.1.3.290.dylib; sourceTree = "<group>"; };
+		DE0648F02D390AF30010E1D5 /* osx */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = osx; sourceTree = BUILT_PRODUCTS_DIR; };
+		DE0648FB2D390B980010E1D5 /* libvulkan.1.3.296.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libvulkan.1.3.296.dylib; path = ../../../../../../usr/local/lib/libvulkan.1.3.296.dylib; sourceTree = "<group>"; };
+		DE0648FD2D390B980010E1D5 /* libvulkan.1.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libvulkan.1.dylib; path = ../../../../../../usr/local/lib/libvulkan.1.dylib; sourceTree = "<group>"; };
+		DE0649D72D390E410010E1D5 /* liblua.dylib */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = liblua.dylib; path = ../lib/lua/liblua.dylib; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
-/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		DEC4764C2D390049007BBCBD /* Exceptions for "src" folder in "osx" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				main.txt,
-			);
-			target = DE043A0F2D378F210021DB31 /* osx */;
-		};
-/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
-
-/* Begin PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
-		DEC4764D2D390049007BBCBD /* Exceptions for "src" folder in "Compile Sources" phase from "osx" target */ = {
-			isa = PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet;
-			buildPhase = DE043A0C2D378F210021DB31 /* Sources */;
-			membershipExceptions = (
-				main.txt,
-			);
-		};
-/* End PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
-
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		DED78CAB2D38086D007D5FDA /* osx */ = {
+		DE0648F22D390AF30010E1D5 /* osx */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = osx;
 			sourceTree = "<group>";
 		};
-		DED78D592D380A8A007D5FDA /* include */ = {
+		DE0649B22D390DF20010E1D5 /* include */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			name = include;
 			path = ../include;
 			sourceTree = SOURCE_ROOT;
 		};
-		DED78D722D380A8A007D5FDA /* src */ = {
+		DE0649CB2D390DF20010E1D5 /* src */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				DEC4764C2D390049007BBCBD /* Exceptions for "src" folder in "osx" target */,
-				DEC4764D2D390049007BBCBD /* Exceptions for "src" folder in "Compile Sources" phase from "osx" target */,
-			);
 			name = src;
 			path = ../src;
 			sourceTree = SOURCE_ROOT;
@@ -80,44 +57,44 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		DE043A0D2D378F210021DB31 /* Frameworks */ = {
+		DE0648ED2D390AF30010E1D5 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				DE1E78CE2D38E08200B5B7D3 /* liblua.dylib in Frameworks */,
-				DEC476472D38FC52007BBCBD /* libvulkan.1.dylib in Frameworks */,
-				DEC476442D38FB7A007BBCBD /* libvulkan.1.3.290.dylib in Frameworks */,
+				DE0648FE2D390B980010E1D5 /* libvulkan.1.3.296.dylib in Frameworks */,
+				DE0649D82D390E410010E1D5 /* liblua.dylib in Frameworks */,
+				DE0649002D390B980010E1D5 /* libvulkan.1.dylib in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		DE043A072D378F210021DB31 = {
+		DE0648E72D390AF30010E1D5 = {
 			isa = PBXGroup;
 			children = (
-				DED78D592D380A8A007D5FDA /* include */,
-				DED78D722D380A8A007D5FDA /* src */,
-				DED78CAB2D38086D007D5FDA /* osx */,
-				DE043A2B2D379C1F0021DB31 /* Frameworks */,
-				DE043A112D378F210021DB31 /* Products */,
+				DE0649B22D390DF20010E1D5 /* include */,
+				DE0649CB2D390DF20010E1D5 /* src */,
+				DE0648F22D390AF30010E1D5 /* osx */,
+				DE0648FA2D390B980010E1D5 /* Frameworks */,
+				DE0648F12D390AF30010E1D5 /* Products */,
 			);
 			sourceTree = "<group>";
 		};
-		DE043A112D378F210021DB31 /* Products */ = {
+		DE0648F12D390AF30010E1D5 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				DE043A102D378F210021DB31 /* osx.app */,
+				DE0648F02D390AF30010E1D5 /* osx */,
 			);
 			name = Products;
 			sourceTree = "<group>";
 		};
-		DE043A2B2D379C1F0021DB31 /* Frameworks */ = {
+		DE0648FA2D390B980010E1D5 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				DEC476432D38FB7A007BBCBD /* libvulkan.1.3.290.dylib */,
-				DE1E78CD2D38E08200B5B7D3 /* liblua.dylib */,
-				DE043A312D37A21E0021DB31 /* libvulkan.1.dylib */,
+				DE0649D72D390E410010E1D5 /* liblua.dylib */,
+				DE0648FD2D390B980010E1D5 /* libvulkan.1.dylib */,
+				DE0648FB2D390B980010E1D5 /* libvulkan.1.3.296.dylib */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -125,76 +102,65 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		DE043A0F2D378F210021DB31 /* osx */ = {
+		DE0648EF2D390AF30010E1D5 /* osx */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = DE043A232D378F240021DB31 /* Build configuration list for PBXNativeTarget "osx" */;
+			buildConfigurationList = DE0648F72D390AF30010E1D5 /* Build configuration list for PBXNativeTarget "osx" */;
 			buildPhases = (
-				DE043A0E2D378F210021DB31 /* Resources */,
-				DE043A0C2D378F210021DB31 /* Sources */,
-				DE043A0D2D378F210021DB31 /* Frameworks */,
-				DE043A392D37A8190021DB31 /* CopyFiles */,
+				DE0648EE2D390AF30010E1D5 /* Copy Files */,
+				DE0648EC2D390AF30010E1D5 /* Sources */,
+				DE0648ED2D390AF30010E1D5 /* Frameworks */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				DED78CAB2D38086D007D5FDA /* osx */,
-				DED78D592D380A8A007D5FDA /* include */,
-				DED78D722D380A8A007D5FDA /* src */,
+				DE0648F22D390AF30010E1D5 /* osx */,
+				DE0649B22D390DF20010E1D5 /* include */,
+				DE0649CB2D390DF20010E1D5 /* src */,
 			);
 			name = osx;
 			packageProductDependencies = (
 			);
 			productName = osx;
-			productReference = DE043A102D378F210021DB31 /* osx.app */;
-			productType = "com.apple.product-type.application";
+			productReference = DE0648F02D390AF30010E1D5 /* osx */;
+			productType = "com.apple.product-type.tool";
 		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
-		DE043A082D378F210021DB31 /* Project object */ = {
+		DE0648E82D390AF30010E1D5 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastUpgradeCheck = 1620;
 				TargetAttributes = {
-					DE043A0F2D378F210021DB31 = {
+					DE0648EF2D390AF30010E1D5 = {
 						CreatedOnToolsVersion = 16.2;
 					};
 				};
 			};
-			buildConfigurationList = DE043A0B2D378F210021DB31 /* Build configuration list for PBXProject "osx" */;
+			buildConfigurationList = DE0648EB2D390AF30010E1D5 /* Build configuration list for PBXProject "osx" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
 				Base,
 			);
-			mainGroup = DE043A072D378F210021DB31;
+			mainGroup = DE0648E72D390AF30010E1D5;
 			minimizedProjectReferenceProxies = 1;
 			preferredProjectObjectVersion = 77;
-			productRefGroup = DE043A112D378F210021DB31 /* Products */;
+			productRefGroup = DE0648F12D390AF30010E1D5 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				DE043A0F2D378F210021DB31 /* osx */,
+				DE0648EF2D390AF30010E1D5 /* osx */,
 			);
 		};
 /* End PBXProject section */
 
-/* Begin PBXResourcesBuildPhase section */
-		DE043A0E2D378F210021DB31 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXResourcesBuildPhase section */
-
 /* Begin PBXSourcesBuildPhase section */
-		DE043A0C2D378F210021DB31 /* Sources */ = {
+		DE0648EC2D390AF30010E1D5 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -204,7 +170,7 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
-		DE043A212D378F240021DB31 /* Debug */ = {
+		DE0648F52D390AF30010E1D5 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -256,19 +222,16 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				HEADER_SEARCH_PATHS = /usr/local/include;
-				LIBRARY_SEARCH_PATHS = /usr/local/lib;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MACOSX_DEPLOYMENT_TARGET = 15.1;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = macosx;
-				SYSTEM_HEADER_SEARCH_PATHS = /usr/local/include;
 			};
 			name = Debug;
 		};
-		DE043A222D378F240021DB31 /* Release */ = {
+		DE0648F62D390AF30010E1D5 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -314,97 +277,60 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				HEADER_SEARCH_PATHS = /usr/local/include;
-				LIBRARY_SEARCH_PATHS = /usr/local/lib;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MACOSX_DEPLOYMENT_TARGET = 15.1;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = macosx;
-				SYSTEM_HEADER_SEARCH_PATHS = /usr/local/include;
 			};
 			name = Release;
 		};
-		DE043A242D378F240021DB31 /* Debug */ = {
+		DE0648F82D390AF30010E1D5 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = osx/osx.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = K79RS75843;
 				ENABLE_HARDENED_RUNTIME = YES;
-				GENERATE_INFOPLIST_FILE = YES;
 				HEADER_SEARCH_PATHS = /usr/local/include;
-				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				INFOPLIST_KEY_NSMainStoryboardFile = Main;
-				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/../Frameworks",
-				);
 				LIBRARY_SEARCH_PATHS = /usr/local/lib;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.tickernel.osx;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SYSTEM_HEADER_SEARCH_PATHS = /usr/local/include;
 			};
 			name = Debug;
 		};
-		DE043A252D378F240021DB31 /* Release */ = {
+		DE0648F92D390AF30010E1D5 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = osx/osx.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = K79RS75843;
 				ENABLE_HARDENED_RUNTIME = YES;
-				GENERATE_INFOPLIST_FILE = YES;
 				HEADER_SEARCH_PATHS = /usr/local/include;
-				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				INFOPLIST_KEY_NSMainStoryboardFile = Main;
-				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/../Frameworks",
-				);
 				LIBRARY_SEARCH_PATHS = /usr/local/lib;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.tickernel.osx;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SYSTEM_HEADER_SEARCH_PATHS = /usr/local/include;
 			};
 			name = Release;
 		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		DE043A0B2D378F210021DB31 /* Build configuration list for PBXProject "osx" */ = {
+		DE0648EB2D390AF30010E1D5 /* Build configuration list for PBXProject "osx" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				DE043A212D378F240021DB31 /* Debug */,
-				DE043A222D378F240021DB31 /* Release */,
+				DE0648F52D390AF30010E1D5 /* Debug */,
+				DE0648F62D390AF30010E1D5 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Debug;
+			defaultConfigurationName = Release;
 		};
-		DE043A232D378F240021DB31 /* Build configuration list for PBXNativeTarget "osx" */ = {
+		DE0648F72D390AF30010E1D5 /* Build configuration list for PBXNativeTarget "osx" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				DE043A242D378F240021DB31 /* Debug */,
-				DE043A252D378F240021DB31 /* Release */,
+				DE0648F82D390AF30010E1D5 /* Debug */,
+				DE0648F92D390AF30010E1D5 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Debug;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
-	rootObject = DE043A082D378F210021DB31 /* Project object */;
+	rootObject = DE0648E82D390AF30010E1D5 /* Project object */;
 }

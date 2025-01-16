@@ -4,7 +4,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include "cglm.h"
-#include <vulkan/vulkan.h>
 #include "tickernelCore.h"
 
 #define INVALID_VKFRAMEBUFFER 0
