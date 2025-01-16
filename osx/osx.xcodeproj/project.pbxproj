@@ -7,22 +7,21 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		DE0648FE2D390B980010E1D5 /* libvulkan.1.3.296.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = DE0648FB2D390B980010E1D5 /* libvulkan.1.3.296.dylib */; };
-		DE0649002D390B980010E1D5 /* libvulkan.1.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = DE0648FD2D390B980010E1D5 /* libvulkan.1.dylib */; };
-		DE0649022D390BC20010E1D5 /* libvulkan.1.dylib in Copy Files */ = {isa = PBXBuildFile; fileRef = DE0648FD2D390B980010E1D5 /* libvulkan.1.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
-		DE0649032D390BC50010E1D5 /* libvulkan.1.3.296.dylib in Copy Files */ = {isa = PBXBuildFile; fileRef = DE0648FB2D390B980010E1D5 /* libvulkan.1.3.296.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
-		DE0649D82D390E410010E1D5 /* liblua.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = DE0649D72D390E410010E1D5 /* liblua.dylib */; };
+		DE6CC33C2D3950F500D80E9A /* libvulkan.1.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = DE6CC33A2D3950F500D80E9A /* libvulkan.1.dylib */; };
+		DE6CC33D2D3950F500D80E9A /* libvulkan.1.3.296.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = DE6CC33B2D3950F500D80E9A /* libvulkan.1.3.296.dylib */; };
+		DE6CC33F2D39510500D80E9A /* libvulkan.1.dylib in Copy Files */ = {isa = PBXBuildFile; fileRef = DE6CC33A2D3950F500D80E9A /* libvulkan.1.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		DE6CC3402D39510500D80E9A /* libvulkan.1.3.296.dylib in Copy Files */ = {isa = PBXBuildFile; fileRef = DE6CC33B2D3950F500D80E9A /* libvulkan.1.3.296.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
-		DE0648EE2D390AF30010E1D5 /* Copy Files */ = {
+		DE6CC33E2D3950FB00D80E9A /* Copy Files */ = {
 			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 12;
+			buildActionMask = 2147483647;
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
-				DE0649032D390BC50010E1D5 /* libvulkan.1.3.296.dylib in Copy Files */,
-				DE0649022D390BC20010E1D5 /* libvulkan.1.dylib in Copy Files */,
+				DE6CC33F2D39510500D80E9A /* libvulkan.1.dylib in Copy Files */,
+				DE6CC3402D39510500D80E9A /* libvulkan.1.3.296.dylib in Copy Files */,
 			);
 			name = "Copy Files";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -30,26 +29,38 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		DE0648F02D390AF30010E1D5 /* osx */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = osx; sourceTree = BUILT_PRODUCTS_DIR; };
-		DE0648FB2D390B980010E1D5 /* libvulkan.1.3.296.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libvulkan.1.3.296.dylib; path = ../../../../../../usr/local/lib/libvulkan.1.3.296.dylib; sourceTree = "<group>"; };
-		DE0648FD2D390B980010E1D5 /* libvulkan.1.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libvulkan.1.dylib; path = ../../../../../../usr/local/lib/libvulkan.1.dylib; sourceTree = "<group>"; };
-		DE0649D72D390E410010E1D5 /* liblua.dylib */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = liblua.dylib; path = ../lib/lua/liblua.dylib; sourceTree = "<group>"; };
+		DE6CC0952D39397000D80E9A /* osx.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = osx.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		DE6CC33A2D3950F500D80E9A /* libvulkan.1.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libvulkan.1.dylib; path = ../../../../../../usr/local/lib/libvulkan.1.dylib; sourceTree = "<group>"; };
+		DE6CC33B2D3950F500D80E9A /* libvulkan.1.3.296.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libvulkan.1.3.296.dylib; path = ../../../../../../usr/local/lib/libvulkan.1.3.296.dylib; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		DE6CC3462D3951E600D80E9A /* Exceptions for "src" folder in "osx" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				main.txt,
+			);
+			target = DE6CC0942D39397000D80E9A /* osx */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		DE0648F22D390AF30010E1D5 /* osx */ = {
+		DE6CC0972D39397000D80E9A /* osx */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = osx;
 			sourceTree = "<group>";
 		};
-		DE0649B22D390DF20010E1D5 /* include */ = {
+		DE6CC3132D394EF000D80E9A /* include */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			name = include;
 			path = ../include;
 			sourceTree = SOURCE_ROOT;
 		};
-		DE0649CB2D390DF20010E1D5 /* src */ = {
+		DE6CC32C2D394EF000D80E9A /* src */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				DE6CC3462D3951E600D80E9A /* Exceptions for "src" folder in "osx" target */,
+			);
 			name = src;
 			path = ../src;
 			sourceTree = SOURCE_ROOT;
@@ -57,44 +68,42 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		DE0648ED2D390AF30010E1D5 /* Frameworks */ = {
+		DE6CC0922D39397000D80E9A /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				DE0648FE2D390B980010E1D5 /* libvulkan.1.3.296.dylib in Frameworks */,
-				DE0649D82D390E410010E1D5 /* liblua.dylib in Frameworks */,
-				DE0649002D390B980010E1D5 /* libvulkan.1.dylib in Frameworks */,
+				DE6CC33C2D3950F500D80E9A /* libvulkan.1.dylib in Frameworks */,
+				DE6CC33D2D3950F500D80E9A /* libvulkan.1.3.296.dylib in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		DE0648E72D390AF30010E1D5 = {
+		DE6CC08C2D39397000D80E9A = {
 			isa = PBXGroup;
 			children = (
-				DE0649B22D390DF20010E1D5 /* include */,
-				DE0649CB2D390DF20010E1D5 /* src */,
-				DE0648F22D390AF30010E1D5 /* osx */,
-				DE0648FA2D390B980010E1D5 /* Frameworks */,
-				DE0648F12D390AF30010E1D5 /* Products */,
+				DE6CC3132D394EF000D80E9A /* include */,
+				DE6CC32C2D394EF000D80E9A /* src */,
+				DE6CC0972D39397000D80E9A /* osx */,
+				DE6CC3392D3950F500D80E9A /* Frameworks */,
+				DE6CC0962D39397000D80E9A /* Products */,
 			);
 			sourceTree = "<group>";
 		};
-		DE0648F12D390AF30010E1D5 /* Products */ = {
+		DE6CC0962D39397000D80E9A /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				DE0648F02D390AF30010E1D5 /* osx */,
+				DE6CC0952D39397000D80E9A /* osx.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
 		};
-		DE0648FA2D390B980010E1D5 /* Frameworks */ = {
+		DE6CC3392D3950F500D80E9A /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				DE0649D72D390E410010E1D5 /* liblua.dylib */,
-				DE0648FD2D390B980010E1D5 /* libvulkan.1.dylib */,
-				DE0648FB2D390B980010E1D5 /* libvulkan.1.3.296.dylib */,
+				DE6CC33A2D3950F500D80E9A /* libvulkan.1.dylib */,
+				DE6CC33B2D3950F500D80E9A /* libvulkan.1.3.296.dylib */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -102,65 +111,76 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		DE0648EF2D390AF30010E1D5 /* osx */ = {
+		DE6CC0942D39397000D80E9A /* osx */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = DE0648F72D390AF30010E1D5 /* Build configuration list for PBXNativeTarget "osx" */;
+			buildConfigurationList = DE6CC0A82D39397100D80E9A /* Build configuration list for PBXNativeTarget "osx" */;
 			buildPhases = (
-				DE0648EE2D390AF30010E1D5 /* Copy Files */,
-				DE0648EC2D390AF30010E1D5 /* Sources */,
-				DE0648ED2D390AF30010E1D5 /* Frameworks */,
+				DE6CC0912D39397000D80E9A /* Sources */,
+				DE6CC33E2D3950FB00D80E9A /* Copy Files */,
+				DE6CC0922D39397000D80E9A /* Frameworks */,
+				DE6CC0932D39397000D80E9A /* Resources */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				DE0648F22D390AF30010E1D5 /* osx */,
-				DE0649B22D390DF20010E1D5 /* include */,
-				DE0649CB2D390DF20010E1D5 /* src */,
+				DE6CC0972D39397000D80E9A /* osx */,
+				DE6CC3132D394EF000D80E9A /* include */,
+				DE6CC32C2D394EF000D80E9A /* src */,
 			);
 			name = osx;
 			packageProductDependencies = (
 			);
 			productName = osx;
-			productReference = DE0648F02D390AF30010E1D5 /* osx */;
-			productType = "com.apple.product-type.tool";
+			productReference = DE6CC0952D39397000D80E9A /* osx.app */;
+			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
-		DE0648E82D390AF30010E1D5 /* Project object */ = {
+		DE6CC08D2D39397000D80E9A /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastUpgradeCheck = 1620;
 				TargetAttributes = {
-					DE0648EF2D390AF30010E1D5 = {
+					DE6CC0942D39397000D80E9A = {
 						CreatedOnToolsVersion = 16.2;
 					};
 				};
 			};
-			buildConfigurationList = DE0648EB2D390AF30010E1D5 /* Build configuration list for PBXProject "osx" */;
+			buildConfigurationList = DE6CC0902D39397000D80E9A /* Build configuration list for PBXProject "osx" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
 				Base,
 			);
-			mainGroup = DE0648E72D390AF30010E1D5;
+			mainGroup = DE6CC08C2D39397000D80E9A;
 			minimizedProjectReferenceProxies = 1;
 			preferredProjectObjectVersion = 77;
-			productRefGroup = DE0648F12D390AF30010E1D5 /* Products */;
+			productRefGroup = DE6CC0962D39397000D80E9A /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				DE0648EF2D390AF30010E1D5 /* osx */,
+				DE6CC0942D39397000D80E9A /* osx */,
 			);
 		};
 /* End PBXProject section */
 
+/* Begin PBXResourcesBuildPhase section */
+		DE6CC0932D39397000D80E9A /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
-		DE0648EC2D390AF30010E1D5 /* Sources */ = {
+		DE6CC0912D39397000D80E9A /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -170,7 +190,7 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
-		DE0648F52D390AF30010E1D5 /* Debug */ = {
+		DE6CC0A62D39397100D80E9A /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -222,6 +242,8 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = /usr/local/include;
+				LIBRARY_SEARCH_PATHS = /usr/local/lib;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MACOSX_DEPLOYMENT_TARGET = 15.1;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
@@ -231,7 +253,7 @@
 			};
 			name = Debug;
 		};
-		DE0648F62D390AF30010E1D5 /* Release */ = {
+		DE6CC0A72D39397100D80E9A /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -277,6 +299,8 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = /usr/local/include;
+				LIBRARY_SEARCH_PATHS = /usr/local/lib;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MACOSX_DEPLOYMENT_TARGET = 15.1;
 				MTL_ENABLE_DEBUG_INFO = NO;
@@ -285,52 +309,84 @@
 			};
 			name = Release;
 		};
-		DE0648F82D390AF30010E1D5 /* Debug */ = {
+		DE6CC0A92D39397100D80E9A /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = osx/osx.entitlements;
 				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = K79RS75843;
 				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = YES;
 				HEADER_SEARCH_PATHS = /usr/local/include;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSMainStoryboardFile = Main;
+				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
 				LIBRARY_SEARCH_PATHS = /usr/local/lib;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.tickernel.osx;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
 			};
 			name = Debug;
 		};
-		DE0648F92D390AF30010E1D5 /* Release */ = {
+		DE6CC0AA2D39397100D80E9A /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = osx/osx.entitlements;
 				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = K79RS75843;
 				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = YES;
 				HEADER_SEARCH_PATHS = /usr/local/include;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSMainStoryboardFile = Main;
+				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
 				LIBRARY_SEARCH_PATHS = /usr/local/lib;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.tickernel.osx;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
 			};
 			name = Release;
 		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		DE0648EB2D390AF30010E1D5 /* Build configuration list for PBXProject "osx" */ = {
+		DE6CC0902D39397000D80E9A /* Build configuration list for PBXProject "osx" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				DE0648F52D390AF30010E1D5 /* Debug */,
-				DE0648F62D390AF30010E1D5 /* Release */,
+				DE6CC0A62D39397100D80E9A /* Debug */,
+				DE6CC0A72D39397100D80E9A /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		DE0648F72D390AF30010E1D5 /* Build configuration list for PBXNativeTarget "osx" */ = {
+		DE6CC0A82D39397100D80E9A /* Build configuration list for PBXNativeTarget "osx" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				DE0648F82D390AF30010E1D5 /* Debug */,
-				DE0648F92D390AF30010E1D5 /* Release */,
+				DE6CC0A92D39397100D80E9A /* Debug */,
+				DE6CC0AA2D39397100D80E9A /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
-	rootObject = DE0648E82D390AF30010E1D5 /* Project object */;
+	rootObject = DE6CC08D2D39397000D80E9A /* Project object */;
 }
