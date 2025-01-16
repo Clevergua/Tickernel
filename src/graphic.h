@@ -3,14 +3,14 @@
 #include "postProcessRenderPass.h"
 typedef struct
 {
-    char *applicationName;
+    const char *assetsPath;
     int targetSwapchainImageCount;
     VkPresentModeKHR targetPresentMode;
-    char *shadersPath;
-    uint32_t swapchainHeight;
-    uint32_t swapchainWidth;
     VkInstance vkInstance;
     VkSurfaceKHR vkSurface;
+
+    uint32_t swapchainHeight;
+    uint32_t swapchainWidth;
     VkPhysicalDevice vkPhysicalDevice;
     uint32_t queueFamilyPropertyCount;
     uint32_t graphicQueueFamilyIndex;
@@ -49,6 +49,7 @@ typedef struct
     PostProcessRenderPass postProcessRenderPass;
     uint32_t fullScreenTriangleModelIndex;
 } GraphicContext;
-void StartGraphic(GraphicContext *pGraphicContext);
-void UpdateGraphic(GraphicContext *pGraphicContext);
+
+GraphicContext *StartGraphic(const char *assetsPath, int targetSwapchainImageCount, VkPresentModeKHR targetPresentMode, VkInstance vkInstance, VkSurfaceKHR vkSurface, uint32_t swapchainWidth, uint32_t swapchainHeight);
+void UpdateGraphic(GraphicContext *pGraphicContext, uint32_t swapchainWidth, uint32_t swapchainHeight);
 void EndGraphic(GraphicContext *pGraphicContext);

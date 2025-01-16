@@ -1,7 +1,8 @@
-//#include "tickernelEngine.h"
-//
-//int main(int argc, const char *argv[])
-//{
+#include <vulkan/vulkan.h>
+#include <stdio.h>
+
+int main(int argc, const char *argv[])
+{
 //    const char *pathseparator = TickernelGetPathSeparator();
 //    char *assetsPath = TickernelMalloc(sizeof(char) * FILENAME_MAX);
 //    strcpy(assetsPath, argv[0]);
@@ -19,7 +20,7 @@
 //        }
 //    }
 //    TickernelCombinePaths(assetsPath, FILENAME_MAX, "assets");
-//
+
 //    TickernelEngine *pTickernelEngine = TickernelMalloc(sizeof(TickernelEngine));
 //    *pTickernelEngine = (TickernelEngine)
 //    {
@@ -60,9 +61,12 @@
 //        TickernelSleep(sleepMilliseconds);
 //        pTickernelEngine->frameCount++;
 //    }
-//
+
 //    TickernelEnd(pTickernelEngine);Ï
 //    TickernelFree(pTickernelEngine);
 //    TickernelFree(assetsPath);
-//    return EXIT_SUCCESS;
-//}
+   uint32_t count;
+   vkEnumerateInstanceLayerProperties(&count, NULL);
+   printf("%d!!",count);
+   return 0;
+}

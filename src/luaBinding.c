@@ -507,8 +507,11 @@ static int LoadModel(lua_State *pLuaState)
     return 1;
 }
 
-void StartLua(LuaContext *pLuaContext)
+LuaContext *StartLua(const char *assetPath, GraphicContext *pGraphicContext)
 {
+    LuaContext *pLuaContext = TickernelMalloc(sizeof(LuaContext));
+    pLuaContext->assetPath = assetPath;
+    pLuaContext->pGraphicContext = pGraphicContext;
     // New lua state
     pLuaContext->pLuaState = luaL_newstate();
     lua_State *pLuaState = pLuaContext->pLuaState;
@@ -574,6 +577,7 @@ void StartLua(LuaContext *pLuaContext)
     AssertLuaType(startFunctionType, LUA_TFUNCTION);
     luaResult = lua_pcall(pLuaState, 0, 0, 0);
     TryThrowLuaError(pLuaState, luaResult);
+    return pLuaContext;
 }
 
 void UpdateLua(LuaContext *pLuaContext)
@@ -599,4 +603,5 @@ void EndLua(LuaContext *pLuaContext)
     lua_pop(pLuaState, 1);
 
     lua_close(pLuaContext->pLuaState);
+    TickernelFree(pLuaContext);
 }

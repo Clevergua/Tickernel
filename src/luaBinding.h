@@ -7,10 +7,10 @@
 typedef struct
 {
     lua_State *pLuaState;
-    char *assetPath;
+    const char *assetPath;
     GraphicContext *pGraphicContext;
 } LuaContext;
 
-void StartLua(LuaContext *pLuaContext);
+LuaContext *StartLua(const char *assetPath, GraphicContext *pGraphicContext);
 void UpdateLua(LuaContext *pLuaContext);
 void EndLua(LuaContext *pLuaContext);

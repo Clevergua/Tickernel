@@ -7,21 +7,22 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		DE043A332D37A21E0021DB31 /* libvulkan.1.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = DE043A312D37A21E0021DB31 /* libvulkan.1.dylib */; };
-		DE043A3A2D37A8220021DB31 /* libvulkan.1.dylib in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE043A312D37A21E0021DB31 /* libvulkan.1.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
-		DED78BD32D37EAFD007D5FDA /* libvulkan.1.3.296.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = DED78BD22D37EAFD007D5FDA /* libvulkan.1.3.296.dylib */; };
-		DED78BD42D37EB1B007D5FDA /* libvulkan.1.3.296.dylib in CopyFiles */ = {isa = PBXBuildFile; fileRef = DED78BD22D37EAFD007D5FDA /* libvulkan.1.3.296.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		DE043A332D37A21E0021DB31 /* libvulkan.1.dylib in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE043A312D37A21E0021DB31 /* libvulkan.1.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		DE1E78CE2D38E08200B5B7D3 /* liblua.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = DE1E78CD2D38E08200B5B7D3 /* liblua.dylib */; };
+		DEC476442D38FB7A007BBCBD /* libvulkan.1.3.290.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = DEC476432D38FB7A007BBCBD /* libvulkan.1.3.290.dylib */; };
+		DEC476472D38FC52007BBCBD /* libvulkan.1.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = DE043A312D37A21E0021DB31 /* libvulkan.1.dylib */; };
+		DEC476482D38FC6D007BBCBD /* libvulkan.1.3.290.dylib in CopyFiles */ = {isa = PBXBuildFile; fileRef = DEC476432D38FB7A007BBCBD /* libvulkan.1.3.290.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
 		DE043A392D37A8190021DB31 /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
+			buildActionMask = 12;
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
-				DED78BD42D37EB1B007D5FDA /* libvulkan.1.3.296.dylib in CopyFiles */,
-				DE043A3A2D37A8220021DB31 /* libvulkan.1.dylib in CopyFiles */,
+				DEC476482D38FC6D007BBCBD /* libvulkan.1.3.290.dylib in CopyFiles */,
+				DE043A332D37A21E0021DB31 /* libvulkan.1.dylib in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -30,8 +31,29 @@
 /* Begin PBXFileReference section */
 		DE043A102D378F210021DB31 /* osx.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = osx.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		DE043A312D37A21E0021DB31 /* libvulkan.1.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libvulkan.1.dylib; path = ../../../../../../usr/local/lib/libvulkan.1.dylib; sourceTree = "<group>"; };
-		DED78BD22D37EAFD007D5FDA /* libvulkan.1.3.296.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libvulkan.1.3.296.dylib; path = ../../../../../../usr/local/lib/libvulkan.1.3.296.dylib; sourceTree = "<group>"; };
+		DE1E78CD2D38E08200B5B7D3 /* liblua.dylib */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = liblua.dylib; path = ../lib/lua/liblua.dylib; sourceTree = "<group>"; };
+		DEC476432D38FB7A007BBCBD /* libvulkan.1.3.290.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libvulkan.1.3.290.dylib; path = ../../../../../../usr/local/lib/libvulkan.1.3.290.dylib; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		DEC4764C2D390049007BBCBD /* Exceptions for "src" folder in "osx" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				main.txt,
+			);
+			target = DE043A0F2D378F210021DB31 /* osx */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
+		DEC4764D2D390049007BBCBD /* Exceptions for "src" folder in "Compile Sources" phase from "osx" target */ = {
+			isa = PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet;
+			buildPhase = DE043A0C2D378F210021DB31 /* Sources */;
+			membershipExceptions = (
+				main.txt,
+			);
+		};
+/* End PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		DED78CAB2D38086D007D5FDA /* osx */ = {
@@ -47,6 +69,10 @@
 		};
 		DED78D722D380A8A007D5FDA /* src */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				DEC4764C2D390049007BBCBD /* Exceptions for "src" folder in "osx" target */,
+				DEC4764D2D390049007BBCBD /* Exceptions for "src" folder in "Compile Sources" phase from "osx" target */,
+			);
 			name = src;
 			path = ../src;
 			sourceTree = SOURCE_ROOT;
@@ -58,8 +84,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				DE043A332D37A21E0021DB31 /* libvulkan.1.dylib in Frameworks */,
-				DED78BD32D37EAFD007D5FDA /* libvulkan.1.3.296.dylib in Frameworks */,
+				DE1E78CE2D38E08200B5B7D3 /* liblua.dylib in Frameworks */,
+				DEC476472D38FC52007BBCBD /* libvulkan.1.dylib in Frameworks */,
+				DEC476442D38FB7A007BBCBD /* libvulkan.1.3.290.dylib in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -88,7 +115,8 @@
 		DE043A2B2D379C1F0021DB31 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				DED78BD22D37EAFD007D5FDA /* libvulkan.1.3.296.dylib */,
+				DEC476432D38FB7A007BBCBD /* libvulkan.1.3.290.dylib */,
+				DE1E78CD2D38E08200B5B7D3 /* liblua.dylib */,
 				DE043A312D37A21E0021DB31 /* libvulkan.1.dylib */,
 			);
 			name = Frameworks;
@@ -365,7 +393,7 @@
 				DE043A222D378F240021DB31 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
+			defaultConfigurationName = Debug;
 		};
 		DE043A232D378F240021DB31 /* Build configuration list for PBXNativeTarget "osx" */ = {
 			isa = XCConfigurationList;
@@ -374,7 +402,7 @@
 				DE043A252D378F240021DB31 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
+			defaultConfigurationName = Debug;
 		};
 /* End XCConfigurationList section */
 	};

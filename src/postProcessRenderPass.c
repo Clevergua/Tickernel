@@ -76,7 +76,7 @@ static void DestroyVkRenderPass(PostProcessRenderPass *pPostProcessRenderPass, V
     vkDestroyRenderPass(vkDevice, pPostProcessRenderPass->vkRenderPass, NULL);
 }
 
-void CreatePostProcessRenderPass(PostProcessRenderPass *pPostProcessRenderPass, char *shadersPath, VkDevice vkDevice, GraphicImage colorGraphicImage, VkViewport viewport, VkRect2D scissor, uint32_t swapchainCount, VkImageView *swapchainImageViews, VkFormat swapchainVkFormat)
+void CreatePostProcessRenderPass(PostProcessRenderPass *pPostProcessRenderPass,const char *shadersPath, VkDevice vkDevice, GraphicImage colorGraphicImage, VkViewport viewport, VkRect2D scissor, uint32_t swapchainCount, VkImageView *swapchainImageViews, VkFormat swapchainVkFormat)
 {
     printf("CreatePostProcessRenderPass:\n");
     CreateVkRenderPass(pPostProcessRenderPass, vkDevice, colorGraphicImage.vkFormat, swapchainVkFormat);

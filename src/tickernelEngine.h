@@ -2,22 +2,16 @@
 #include "luaBinding.h"
 typedef struct TickernelEngineStruct
 {
-    int targetFrameRate;
     uint32_t frameCount;
-    bool canUpdate;
-    char *assetsPath;
-
-    bool enableValidationLayers;
-    char *applicationName;
-    int windowHeight;
-    int windowWidth;
-    int targetSwapchainImageCount;
+    const char *assetsPath;
+    uint32_t targetSwapchainImageCount;
     VkPresentModeKHR targetPresentMode;
-
+    VkInstance vkInstance;
+    VkSurfaceKHR vkSurface;
     GraphicContext *pGraphicContext;
     LuaContext *pLuaContext;
 } TickernelEngine;
 
-void TickernelStart(TickernelEngine *pTickernelEngine);
-void TickernelUpdate(TickernelEngine *pTickernelEngine);
+TickernelEngine *TickernelStart(const char *assetsPath, uint32_t targetSwapchainImageCount, VkPresentModeKHR targetPresentMode, VkInstance vkInstance, VkSurfaceKHR vkSurface, uint32_t swapchainWidth, uint32_t swapchainHeight);
+void TickernelUpdate(TickernelEngine *pTickernelEngine, uint32_t swapchainWidth, uint32_t swapchainHeight);
 void TickernelEnd(TickernelEngine *pTickernelEngine);
