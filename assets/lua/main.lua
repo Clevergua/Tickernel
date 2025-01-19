@@ -106,8 +106,7 @@ end
 function engine.Start()
     print("Lua Start")
 
-    local modelsPath = engine.assetsPath ..
-        engine.pathSeparator .. "models" .. engine.pathSeparator
+    local modelsPath = engine.assetsPath .. engine.pathSeparator
     print("Loading models..")
     local models = {
         engine.LoadModel(modelsPath .. "LargeBuilding01_0.tknvox"),

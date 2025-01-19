@@ -11,6 +11,8 @@
 		DE6CC33D2D3950F500D80E9A /* libvulkan.1.3.296.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = DE6CC33B2D3950F500D80E9A /* libvulkan.1.3.296.dylib */; };
 		DE6CC33F2D39510500D80E9A /* libvulkan.1.dylib in Copy Files */ = {isa = PBXBuildFile; fileRef = DE6CC33A2D3950F500D80E9A /* libvulkan.1.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		DE6CC3402D39510500D80E9A /* libvulkan.1.3.296.dylib in Copy Files */ = {isa = PBXBuildFile; fileRef = DE6CC33B2D3950F500D80E9A /* libvulkan.1.3.296.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		DEEA6FDD2D3A77140000E67F /* liblua.dylib in Copy Files */ = {isa = PBXBuildFile; fileRef = DEEA6FDB2D3A770D0000E67F /* liblua.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		DEEA6FDE2D3A8C250000E67F /* liblua.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = DEEA6FDB2D3A770D0000E67F /* liblua.dylib */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -22,6 +24,7 @@
 			files = (
 				DE6CC33F2D39510500D80E9A /* libvulkan.1.dylib in Copy Files */,
 				DE6CC3402D39510500D80E9A /* libvulkan.1.3.296.dylib in Copy Files */,
+				DEEA6FDD2D3A77140000E67F /* liblua.dylib in Copy Files */,
 			);
 			name = "Copy Files";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -32,6 +35,7 @@
 		DE6CC0952D39397000D80E9A /* osx.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = osx.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		DE6CC33A2D3950F500D80E9A /* libvulkan.1.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libvulkan.1.dylib; path = ../../../../../../usr/local/lib/libvulkan.1.dylib; sourceTree = "<group>"; };
 		DE6CC33B2D3950F500D80E9A /* libvulkan.1.3.296.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libvulkan.1.3.296.dylib; path = ../../../../../../usr/local/lib/libvulkan.1.3.296.dylib; sourceTree = "<group>"; };
+		DEEA6FDB2D3A770D0000E67F /* liblua.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = liblua.dylib; path = ../lib/lua/liblua.dylib; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -45,6 +49,12 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		DE04DEF72D3BCB0B00DB240A /* assets */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			name = assets;
+			path = ../assets;
+			sourceTree = SOURCE_ROOT;
+		};
 		DE6CC0972D39397000D80E9A /* osx */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = osx;
@@ -74,6 +84,7 @@
 			files = (
 				DE6CC33C2D3950F500D80E9A /* libvulkan.1.dylib in Frameworks */,
 				DE6CC33D2D3950F500D80E9A /* libvulkan.1.3.296.dylib in Frameworks */,
+				DEEA6FDE2D3A8C250000E67F /* liblua.dylib in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -83,6 +94,7 @@
 		DE6CC08C2D39397000D80E9A = {
 			isa = PBXGroup;
 			children = (
+				DE04DEF72D3BCB0B00DB240A /* assets */,
 				DE6CC3132D394EF000D80E9A /* include */,
 				DE6CC32C2D394EF000D80E9A /* src */,
 				DE6CC0972D39397000D80E9A /* osx */,
@@ -102,6 +114,7 @@
 		DE6CC3392D3950F500D80E9A /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				DEEA6FDB2D3A770D0000E67F /* liblua.dylib */,
 				DE6CC33A2D3950F500D80E9A /* libvulkan.1.dylib */,
 				DE6CC33B2D3950F500D80E9A /* libvulkan.1.3.296.dylib */,
 			);
@@ -115,16 +128,17 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = DE6CC0A82D39397100D80E9A /* Build configuration list for PBXNativeTarget "osx" */;
 			buildPhases = (
-				DE6CC0912D39397000D80E9A /* Sources */,
 				DE6CC33E2D3950FB00D80E9A /* Copy Files */,
-				DE6CC0922D39397000D80E9A /* Frameworks */,
 				DE6CC0932D39397000D80E9A /* Resources */,
+				DE6CC0922D39397000D80E9A /* Frameworks */,
+				DE6CC0912D39397000D80E9A /* Sources */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
+				DE04DEF72D3BCB0B00DB240A /* assets */,
 				DE6CC0972D39397000D80E9A /* osx */,
 				DE6CC3132D394EF000D80E9A /* include */,
 				DE6CC32C2D394EF000D80E9A /* src */,
@@ -315,6 +329,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = osx/osx.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
@@ -329,10 +344,14 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				LIBRARY_SEARCH_PATHS = /usr/local/lib;
+				LIBRARY_SEARCH_PATHS = (
+					/usr/local/lib,
+					"${SRCROOT}/../lib/lua",
+				);
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.tickernel.osx;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 			};
 			name = Debug;
@@ -343,6 +362,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = osx/osx.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
@@ -357,10 +377,14 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				LIBRARY_SEARCH_PATHS = /usr/local/lib;
+				LIBRARY_SEARCH_PATHS = (
+					/usr/local/lib,
+					"${SRCROOT}/../lib/lua",
+				);
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.tickernel.osx;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 			};
 			name = Release;

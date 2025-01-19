@@ -520,7 +520,6 @@ LuaContext *StartLua(const char *assetPath, GraphicContext *pGraphicContext)
     // Set package path
     char packagePath[FILENAME_MAX];
     strcpy(packagePath, pLuaContext->assetPath);
-    TickernelCombinePaths(packagePath, FILENAME_MAX, "lua");
     TickernelCombinePaths(packagePath, FILENAME_MAX, "?.lua;");
     lua_getglobal(pLuaState, "package");
     lua_pushstring(pLuaState, packagePath);
@@ -530,7 +529,6 @@ LuaContext *StartLua(const char *assetPath, GraphicContext *pGraphicContext)
     // Do file main.lua
     char luaMainFilePath[FILENAME_MAX];
     strcpy(luaMainFilePath, pLuaContext->assetPath);
-    TickernelCombinePaths(luaMainFilePath, FILENAME_MAX, "lua");
     TickernelCombinePaths(luaMainFilePath, FILENAME_MAX, "main.lua");
     // Put engine state on the stack
     int luaResult = luaL_dofile(pLuaState, luaMainFilePath);
