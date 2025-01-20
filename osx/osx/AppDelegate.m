@@ -105,7 +105,7 @@ VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
             NSLog(@"Tickernel Engine started successfully!");
         }
         
-        self.updateTimer = [NSTimer scheduledTimerWithTimeInterval:(1.0)
+        self.updateTimer = [NSTimer scheduledTimerWithTimeInterval:(1.0 / 60)
                                                             target:self
                                                           selector:@selector(update)
                                                           userInfo:nil

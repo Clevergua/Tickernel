@@ -780,19 +780,20 @@ void UpdateGraphic(GraphicContext *pGraphicContext, uint32_t swapchainWidth, uin
     {
         pGraphicContext->swapchainWidth = swapchainWidth;
         pGraphicContext->swapchainHeight = swapchainHeight;
+        printf("Recreate swapchain because of size.%d\n", result);
         RecreateSwapchain(pGraphicContext);
     }
     else
     {
         VkDevice vkDevice = pGraphicContext->vkDevice;
         result = vkAcquireNextImageKHR(vkDevice, pGraphicContext->vkSwapchain, UINT64_MAX, pGraphicContext->imageAvailableSemaphore, VK_NULL_HANDLE, &pGraphicContext->swapchainIndex);
+        printf("pGraphicContext->swapchainIndex: %d\n", pGraphicContext->swapchainIndex);
         if (result != VK_SUCCESS)
         {
             if (VK_ERROR_OUT_OF_DATE_KHR == result || VK_SUBOPTIMAL_KHR == result)
             {
                 printf("Recreate swapchain because of result: %d\n", result);
                 RecreateSwapchain(pGraphicContext);
-//                vkDeviceWaitIdle(vkDevice);
             }
             else
             {
@@ -802,7 +803,6 @@ void UpdateGraphic(GraphicContext *pGraphicContext, uint32_t swapchainWidth, uin
         }
         else
         {
-            pGraphicContext->swapchainIndex = pGraphicContext->swapchainIndex % pGraphicContext->swapchainImageCount;
             result = vkResetFences(pGraphicContext->vkDevice, 1, &pGraphicContext->renderFinishedFence);
             TryThrowVulkanError(result);
             
