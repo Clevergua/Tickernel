@@ -577,7 +577,6 @@ static void DestroyCommandPools(GraphicContext *pGraphicContext)
 static void SubmitCommandBuffer(GraphicContext *pGraphicContext)
 {
     VkResult result = VK_SUCCESS;
-    uint32_t frameIndex = pGraphicContext->frameIndex;
     // Submit workflow...
     VkSubmitInfo submitInfo = {
         .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
@@ -586,7 +585,7 @@ static void SubmitCommandBuffer(GraphicContext *pGraphicContext)
         .pWaitSemaphores = (VkSemaphore[]){pGraphicContext->imageAvailableSemaphore},
         .pWaitDstStageMask = (VkPipelineStageFlags[]){VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT},
         .commandBufferCount = 1,
-        .pCommandBuffers = &pGraphicContext->graphicVkCommandBuffers[frameIndex],
+        .pCommandBuffers = &pGraphicContext->graphicVkCommandBuffers[pGraphicContext->swapchainIndex],
         .signalSemaphoreCount = 1,
         .pSignalSemaphores = (VkSemaphore[]){pGraphicContext->renderFinishedSemaphore},
     };
@@ -605,7 +604,7 @@ static void Present(GraphicContext *pGraphicContext)
         .pWaitSemaphores = (VkSemaphore[]){pGraphicContext->renderFinishedSemaphore},
         .swapchainCount = 1,
         .pSwapchains = (VkSwapchainKHR[]){pGraphicContext->vkSwapchain},
-        .pImageIndices = &pGraphicContext->acquiredImageIndex,
+        .pImageIndices = &pGraphicContext->swapchainIndex,
         .pResults = NULL,
     };
     result = vkQueuePresentKHR(pGraphicContext->vkPresentQueue, &presentInfo);
@@ -684,7 +683,7 @@ static void DestroyVkCommandBuffers(GraphicContext *pGraphicContext)
 
 static void RecordCommandBuffer(GraphicContext *pGraphicContext)
 {
-    VkCommandBuffer vkCommandBuffer = pGraphicContext->graphicVkCommandBuffers[pGraphicContext->frameIndex];
+    VkCommandBuffer vkCommandBuffer = pGraphicContext->graphicVkCommandBuffers[pGraphicContext->swapchainIndex];
     
     VkViewport viewport = {
         .x = 0.0f,
@@ -717,7 +716,7 @@ static void RecordCommandBuffer(GraphicContext *pGraphicContext)
     TryThrowVulkanError(result);
     
     RecordDeferredRenderPass(&pGraphicContext->deferredRenderPass, vkCommandBuffer, viewport, scissor, pGraphicContext->vkDevice);
-    RecordPostProcessRenderPass(&pGraphicContext->postProcessRenderPass, vkCommandBuffer, viewport, scissor, pGraphicContext->vkDevice, pGraphicContext->frameIndex);
+    RecordPostProcessRenderPass(&pGraphicContext->postProcessRenderPass, vkCommandBuffer, viewport, scissor, pGraphicContext->vkDevice, pGraphicContext->swapchainIndex);
     
     result = vkEndCommandBuffer(vkCommandBuffer);
     TryThrowVulkanError(result);
@@ -731,7 +730,6 @@ GraphicContext *StartGraphic(const char *assetsPath, int targetSwapchainImageCou
     pGraphicContext->targetPresentMode = targetPresentMode;
     pGraphicContext->vkInstance = vkInstance;
     pGraphicContext->vkSurface = vkSurface;
-    pGraphicContext->frameCount = 0;
     pGraphicContext->canUpdateGlobalUniformBuffer = false;
     pGraphicContext->canUpdateLightsUniformBuffer = false;
     
@@ -771,7 +769,7 @@ GraphicContext *StartGraphic(const char *assetsPath, int targetSwapchainImageCou
 
 void UpdateGraphic(GraphicContext *pGraphicContext, uint32_t swapchainWidth, uint32_t swapchainHeight)
 {
-    pGraphicContext->frameIndex = pGraphicContext->frameCount % pGraphicContext->swapchainImageCount;
+    
     VkResult result = VK_SUCCESS;
     // Wait for gpu
     result = vkWaitForFences(pGraphicContext->vkDevice, 1, &pGraphicContext->renderFinishedFence, VK_TRUE, UINT64_MAX);
@@ -787,21 +785,24 @@ void UpdateGraphic(GraphicContext *pGraphicContext, uint32_t swapchainWidth, uin
     else
     {
         VkDevice vkDevice = pGraphicContext->vkDevice;
-        result = vkAcquireNextImageKHR(vkDevice, pGraphicContext->vkSwapchain, UINT64_MAX, pGraphicContext->imageAvailableSemaphore, VK_NULL_HANDLE, &pGraphicContext->acquiredImageIndex);
+        result = vkAcquireNextImageKHR(vkDevice, pGraphicContext->vkSwapchain, UINT64_MAX, pGraphicContext->imageAvailableSemaphore, VK_NULL_HANDLE, &pGraphicContext->swapchainIndex);
         if (result != VK_SUCCESS)
         {
             if (VK_ERROR_OUT_OF_DATE_KHR == result || VK_SUBOPTIMAL_KHR == result)
             {
+                printf("Recreate swapchain because of result: %d\n", result);
                 RecreateSwapchain(pGraphicContext);
+//                vkDeviceWaitIdle(vkDevice);
             }
             else
             {
                 TryThrowVulkanError(result);
             }
+            
         }
         else
         {
-
+            pGraphicContext->swapchainIndex = pGraphicContext->swapchainIndex % pGraphicContext->swapchainImageCount;
             result = vkResetFences(pGraphicContext->vkDevice, 1, &pGraphicContext->renderFinishedFence);
             TryThrowVulkanError(result);
             
@@ -810,10 +811,8 @@ void UpdateGraphic(GraphicContext *pGraphicContext, uint32_t swapchainWidth, uin
             RecordCommandBuffer(pGraphicContext);
             SubmitCommandBuffer(pGraphicContext);
             Present(pGraphicContext);
-            
         }
     }
-    pGraphicContext->frameCount++;
 }
 
 void EndGraphic(GraphicContext *pGraphicContext)

@@ -25,12 +25,10 @@ typedef struct
     VkImageView *swapchainImageViews;
     VkCommandPool graphicVkCommandPool;
     VkCommandBuffer *graphicVkCommandBuffers;
-    uint32_t acquiredImageIndex;
+    uint32_t swapchainIndex;
     VkSemaphore imageAvailableSemaphore;
     VkSemaphore renderFinishedSemaphore;
     VkFence renderFinishedFence;
-    uint32_t frameCount;
-    uint32_t frameIndex;
     VkBuffer globalUniformBuffer;
     VkDeviceMemory globalUniformBufferMemory;
     void *globalUniformBufferMapped;

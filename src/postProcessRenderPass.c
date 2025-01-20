@@ -134,7 +134,7 @@ void UpdatePostProcessRenderPass(PostProcessRenderPass *pPostProcessRenderPass, 
     }
     RecreatePostProcessSubpassModel(&pPostProcessRenderPass->postProcessSubpass, vkDevice, colorGraphicImage.vkImageView);
 }
-void RecordPostProcessRenderPass(PostProcessRenderPass *pPostProcessRenderPass, VkCommandBuffer vkCommandBuffer, VkViewport viewport, VkRect2D scissor, VkDevice vkDevice, uint32_t frameIndex)
+void RecordPostProcessRenderPass(PostProcessRenderPass *pPostProcessRenderPass, VkCommandBuffer vkCommandBuffer, VkViewport viewport, VkRect2D scissor, VkDevice vkDevice, uint32_t swapchainIndex)
 {
     vkCmdSetScissor(vkCommandBuffer, 0, 1, &scissor);
     VkOffset2D offset =
@@ -161,7 +161,7 @@ void RecordPostProcessRenderPass(PostProcessRenderPass *pPostProcessRenderPass, 
             .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
             .pNext = NULL,
             .renderPass = pPostProcessRenderPass->vkRenderPass,
-            .framebuffer = pPostProcessRenderPass->vkFramebuffers[frameIndex],
+            .framebuffer = pPostProcessRenderPass->vkFramebuffers[swapchainIndex],
             .renderArea = renderArea,
             .clearValueCount = clearValueCount,
             .pClearValues = clearValues,

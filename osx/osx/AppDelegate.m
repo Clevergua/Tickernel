@@ -139,17 +139,18 @@ VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
 }
 
 - (void)update {
+    NSRect frame = self.window.frame;
     while (true)
     {
         NSEvent *event = [NSApp nextEventMatchingMask:NSEventMaskAny untilDate:nil inMode:NSDefaultRunLoopMode dequeue:YES];
-        if (!event)
+        if (!event && frame.size.width > 0 && frame.size.height > 0)
         {
             break;
         }
         [NSApp sendEvent:event];
     }
-    if (self.pTickernelEngine != NULL) {
-        NSRect frame = self.window.frame;
+    if (self.pTickernelEngine != NULL)
+    {    
         TickernelUpdate(self.pTickernelEngine, frame.size.width, frame.size.height);
     }
 }

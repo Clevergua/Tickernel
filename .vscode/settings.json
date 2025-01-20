@@ -29,6 +29,8 @@
         "stdio.h": "c",
         "assert.h": "c",
         "ios": "c",
-        "tickernelengine.h": "c"
+        "tickernelengine.h": "c",
+        "luabinding.h": "c",
+        "stdexcept": "cpp"
     }
 }
