@@ -293,25 +293,14 @@ static void ChooseSurfaceFormat(VkSurfaceFormatKHR *surfaceFormats, uint32_t sur
     {
         // Return srgb & nonlinears
         VkSurfaceFormatKHR surfaceFormat = surfaceFormats[i];
-        if (VK_FORMAT_UNDEFINED == surfaceFormat.format)
+        if (VK_FORMAT_B8G8R8A8_SRGB == surfaceFormat.format && VK_COLOR_SPACE_SRGB_NONLINEAR_KHR == surfaceFormat.colorSpace)
         {
-            VkSurfaceFormatKHR format =
-            {
-                .format = VK_FORMAT_R8G8B8A8_SRGB,
-                .colorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR,
-            };
-            *pSurfaceFormat = format;
+            *pSurfaceFormat = surfaceFormat;
+            return;
         }
         else
         {
-            if (VK_FORMAT_R8G8B8A8_SRGB == surfaceFormat.format && VK_COLOR_SPACE_SRGB_NONLINEAR_KHR == surfaceFormat.colorSpace)
-            {
-                *pSurfaceFormat = surfaceFormat;
-            }
-            else
-            {
-                // continue;s
-            }
+            // continue;s
         }
     }
     *pSurfaceFormat = surfaceFormats[0];
@@ -541,7 +530,6 @@ static void RecreateSwapchain(GraphicContext *pGraphicContext)
     VkResult result = VK_SUCCESS;
     uint32_t swapchainWidth = pGraphicContext->swapchainWidth;
     uint32_t swapchainHeight = pGraphicContext->swapchainHeight;
-    printf("Recreate swapcahin with size: (%d, %d)", swapchainWidth, swapchainHeight);
     
     result = vkDeviceWaitIdle(pGraphicContext->vkDevice);
     TryThrowVulkanError(result);
@@ -608,7 +596,16 @@ static void Present(GraphicContext *pGraphicContext)
         .pResults = NULL,
     };
     result = vkQueuePresentKHR(pGraphicContext->vkPresentQueue, &presentInfo);
-    TryThrowVulkanError(result);
+    if (VK_ERROR_OUT_OF_DATE_KHR == result || VK_SUBOPTIMAL_KHR == result)
+    {
+        printf("Recreate swapchain because of the result: %d when presenting.\n", result);
+        RecreateSwapchain(pGraphicContext);
+    }
+    else
+    {
+        TryThrowVulkanError(result);
+    }
+    
 }
 
 static void CreateVkCommandBuffers(GraphicContext *pGraphicContext)
@@ -790,10 +787,22 @@ void UpdateGraphic(GraphicContext *pGraphicContext, uint32_t swapchainWidth, uin
         printf("pGraphicContext->swapchainIndex: %d\n", pGraphicContext->swapchainIndex);
         if (result != VK_SUCCESS)
         {
-            if (VK_ERROR_OUT_OF_DATE_KHR == result || VK_SUBOPTIMAL_KHR == result)
+            if (VK_ERROR_OUT_OF_DATE_KHR == result)
             {
                 printf("Recreate swapchain because of result: %d\n", result);
                 RecreateSwapchain(pGraphicContext);
+                
+            }
+            else if (VK_SUBOPTIMAL_KHR == result)
+            {
+                result = vkResetFences(pGraphicContext->vkDevice, 1, &pGraphicContext->renderFinishedFence);
+                TryThrowVulkanError(result);
+                
+                UpdateGlobalUniformBuffer(pGraphicContext);
+                UpdateLightsUniformBuffer(pGraphicContext);
+                RecordCommandBuffer(pGraphicContext);
+                SubmitCommandBuffer(pGraphicContext);
+                Present(pGraphicContext);
             }
             else
             {

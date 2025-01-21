@@ -15,7 +15,7 @@ VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
     @autoreleasepool {
-        self.window = [[NSWindow alloc] initWithContentRect:NSMakeRect(0, 0, 800, 600)
+        self.window = [[NSWindow alloc] initWithContentRect:NSMakeRect(0, 0, 400, 250)
                                                   styleMask:(NSWindowStyleMaskTitled |
                                                              NSWindowStyleMaskResizable |
                                                              NSWindowStyleMaskClosable)
@@ -28,7 +28,8 @@ VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
         [self.window setContentView:contentView];
         
         CAMetalLayer *metalLayer = [CAMetalLayer layer];
-        metalLayer.pixelFormat = MTLPixelFormatBGRA8Unorm;
+        metalLayer.pixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
+        metalLayer.colorspace = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
         metalLayer.framebufferOnly = YES;
         contentView.layer = metalLayer;
         contentView.wantsLayer = YES;
@@ -94,7 +95,7 @@ VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
         }
         
         NSLog(@"Vulkan surface created successfully!");
-        NSRect frame = self.window.frame;
+        NSRect frame = self.window.contentView.frame;
         
         NSString *resourcesPath = [[NSBundle mainBundle] resourcePath];
         
@@ -114,21 +115,21 @@ VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
 }
 
 - (void)applicationWillTerminate:(NSNotification *)aNotification {
+    [self.updateTimer invalidate];
+    self.updateTimer = nil;
+    
     if (self.pTickernelEngine != NULL) {
         TickernelEnd(self.pTickernelEngine);
         NSLog(@"Tickernel Engine terminated!");
     }
+    
     if (_vkSurface != VK_NULL_HANDLE) {
         vkDestroySurfaceKHR(_vkInstance, _vkSurface, NULL);
     }
     if (_vkInstance != VK_NULL_HANDLE) {
         vkDestroyInstance(_vkInstance, NULL);
     }
-    
-    [self.updateTimer invalidate];
-    self.updateTimer = nil;
 }
-
 
 - (BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication *)sender {
     return YES;
@@ -139,7 +140,7 @@ VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
 }
 
 - (void)update {
-    NSRect frame = self.window.frame;
+    NSRect frame = self.window.contentView.frame;
     while (true)
     {
         NSEvent *event = [NSApp nextEventMatchingMask:NSEventMaskAny untilDate:nil inMode:NSDefaultRunLoopMode dequeue:YES];
