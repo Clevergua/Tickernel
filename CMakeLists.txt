@@ -23,9 +23,33 @@ set(LIBRARYS
     ${LUA_LIBRARY}
     ${CGLM_LIBRARY}
 )
+if(WIN32)
+    # Windows paltform
+    # Collect library
+    add_definitions(-D_CRT_NO_MICROSOFT_JEDI_MIND_CONTROL=1 -D_CRT_SECURE_NO_WARNINGS=1)
+elseif(APPLE)
+    # Apple paltform
+    # Collect library
+    enable_language(OBJC)
+    find_library(COCOA_LIBRARY Cocoa)
+    find_library(QUARTZCORE_LIBRARY QuartzCore)
+    # find_library(MOLTENVK_LIBRARY MoltenVK)
+
+    list(APPEND LIBRARYS ${COCOA_LIBRARY})
+    list(APPEND LIBRARYS ${QUARTZCORE_LIBRARY})
+    # list(APPEND LIBRARYS ${MOLTENVK_LIBRARY})
+
+    file(GLOB_RECURSE OCSOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/*.m)
+    list(APPEND SOURCES ${OCSOURCES})
+
+    
+else()
+    # Ohter platform
+    message("Unknown platform!")
+endif()
 
 message("   SOURCES:${SOURCES}")
-add_library(${PROJECT_NAME} SHARED ${SOURCES})
+add_executable(${PROJECT_NAME} ${SOURCES})
 message("   HEADER_DIRS:${HEADER_DIRS}")
 target_include_directories(${PROJECT_NAME} PUBLIC ${HEADER_DIRS})
 message("   LIBRARYS:${LIBRARYS}")
@@ -58,7 +82,6 @@ foreach(SHADER ${SHADER_SOURCES})
 endforeach()
 add_custom_target(CompileShaders DEPENDS ${SPIRV_BINARIES})
 add_dependencies(${PROJECT_NAME} CompileShaders)
-
 # Copy assets
 add_custom_target(CopyAssets
     COMMAND ${CMAKE_COMMAND} -E copy_directory
@@ -66,3 +89,4 @@ add_custom_target(CopyAssets
     ${CMAKE_BINARY_DIR}/assets
 )
 add_dependencies(${PROJECT_NAME} CopyAssets)
+

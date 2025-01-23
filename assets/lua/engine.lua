@@ -53,276 +53,142 @@ function engine.LoadModel(path)
     return model
 end
 
--- function engine.SetNormals(vertices, normals, voxelMap)
---     local vertexCount = #vertices
---     for i = 1, vertexCount do
---         local x = vertices[i][1]
---         local y = vertices[i][2]
---         local z = vertices[i][3]
-
---         local centerValue = voxelMap[x][y][z]
---         -- if voxelMap[x - 1][y][z] ~= nil then
---         --     normals[i][1] = normals[i][1] + 1
---         -- end
---         -- if voxelMap[x + 1][y][z] ~= nil then
---         --     normals[i][1] = normals[i][1] - 1
---         -- end
---         -- if voxelMap[x][y - 1][z] ~= nil then
---         --     normals[i][2] = normals[i][2] + 1
---         -- end
---         -- if voxelMap[x][y + 1][z] ~= nil then
---         --     normals[i][2] = normals[i][2] - 1
---         -- end
---         -- if voxelMap[x][y][z - 1] ~= nil then
---         --     normals[i][3] = normals[i][3] + 1
---         -- end
---         -- if voxelMap[x][y][z + 1] ~= nil then
---         --     normals[i][3] = normals[i][3] - 1
---         -- end
---         if voxelMap[x - 1][y][z] ~= nil and voxelMap[x - 1][y][z] == centerValue then
---             normals[i][1] = normals[i][1] + 1
---         end
---         if voxelMap[x + 1][y][z] ~= nil and voxelMap[x + 1][y][z] == centerValue then
---             normals[i][1] = normals[i][1] - 1
---         end
---         if voxelMap[x][y - 1][z] ~= nil and voxelMap[x][y - 1][z] == centerValue then
---             normals[i][2] = normals[i][2] + 1
---         end
---         if voxelMap[x][y + 1][z] ~= nil and voxelMap[x][y + 1][z] == centerValue then
---             normals[i][2] = normals[i][2] - 1
---         end
---         if voxelMap[x][y][z - 1] ~= nil and voxelMap[x][y][z - 1] == centerValue then
---             normals[i][3] = normals[i][3] + 1
---         end
---         if voxelMap[x][y][z + 1] ~= nil and voxelMap[x][y][z + 1] == centerValue then
---             normals[i][3] = normals[i][3] - 1
---         end
-
---         local length = 1 / 1.414 / 1.414
---         if voxelMap[x - 1][y - 1][z - 1] ~= nil and voxelMap[x - 1][y - 1][z - 1] == centerValue then
---             normals[i][1] = normals[i][1] + length
---             normals[i][2] = normals[i][2] + length
---             normals[i][3] = normals[i][3] + length
---         end
---         if voxelMap[x - 1][y + 1][z - 1] ~= nil and voxelMap[x - 1][y + 1][z - 1] == centerValue then
---             normals[i][1] = normals[i][1] + length
---             normals[i][2] = normals[i][2] - length
---             normals[i][3] = normals[i][3] + length
---         end
---         if voxelMap[x - 1][y - 1][z + 1] ~= nil and voxelMap[x - 1][y - 1][z + 1] == centerValue then
---             normals[i][1] = normals[i][1] + length
---             normals[i][2] = normals[i][2] + length
---             normals[i][3] = normals[i][3] - length
---         end
---         if voxelMap[x - 1][y + 1][z + 1] ~= nil and voxelMap[x - 1][y + 1][z + 1] == centerValue then
---             normals[i][1] = normals[i][1] + length
---             normals[i][2] = normals[i][2] - length
---             normals[i][3] = normals[i][3] - length
---         end
-
---         if voxelMap[x + 1][y - 1][z - 1] ~= nil and voxelMap[x + 1][y - 1][z - 1] == centerValue then
---             normals[i][1] = normals[i][1] - length
---             normals[i][2] = normals[i][2] + length
---             normals[i][3] = normals[i][3] + length
---         end
---         if voxelMap[x + 1][y + 1][z - 1] ~= nil and voxelMap[x + 1][y + 1][z - 1] == centerValue then
---             normals[i][1] = normals[i][1] - length
---             normals[i][2] = normals[i][2] - length
---             normals[i][3] = normals[i][3] + length
---         end
---         if voxelMap[x + 1][y - 1][z + 1] ~= nil and voxelMap[x + 1][y - 1][z + 1] == centerValue then
---             normals[i][1] = normals[i][1] - length
---             normals[i][2] = normals[i][2] + length
---             normals[i][3] = normals[i][3] - length
---         end
---         if voxelMap[x + 1][y + 1][z + 1] ~= nil and voxelMap[x + 1][y + 1][z + 1] == centerValue then
---             normals[i][1] = normals[i][1] - length
---             normals[i][2] = normals[i][2] - length
---             normals[i][3] = normals[i][3] - length
---         end
-
---         length = 1 / 1.414
---         if voxelMap[x - 1][y - 1][z] ~= nil and voxelMap[x - 1][y - 1][z] == centerValue then
---             normals[i][1] = normals[i][1] + length
---             normals[i][2] = normals[i][2] + length
---         end
---         if voxelMap[x - 1][y + 1][z] ~= nil and voxelMap[x - 1][y + 1][z] == centerValue then
---             normals[i][1] = normals[i][1] + length
---             normals[i][2] = normals[i][2] - length
---         end
---         if voxelMap[x - 1][y][z - 1] ~= nil and voxelMap[x - 1][y][z - 1] == centerValue then
---             normals[i][1] = normals[i][1] + length
---             normals[i][3] = normals[i][3] + length
---         end
---         if voxelMap[x - 1][y][z + 1] ~= nil and voxelMap[x - 1][y][z + 1] == centerValue then
---             normals[i][1] = normals[i][1] + length
---             normals[i][3] = normals[i][3] - length
---         end
---         if voxelMap[x + 1][y - 1][z] ~= nil and voxelMap[x + 1][y - 1][z] == centerValue then
---             normals[i][1] = normals[i][1] - length
---             normals[i][2] = normals[i][2] + length
---         end
---         if voxelMap[x + 1][y + 1][z] ~= nil and voxelMap[x + 1][y + 1][z] == centerValue then
---             normals[i][1] = normals[i][1] - length
---             normals[i][2] = normals[i][2] - length
---         end
---         if voxelMap[x + 1][y][z - 1] ~= nil and voxelMap[x + 1][y][z - 1] == centerValue then
---             normals[i][1] = normals[i][1] - length
---             normals[i][3] = normals[i][3] + length
---         end
---         if voxelMap[x + 1][y][z + 1] ~= nil and voxelMap[x + 1][y][z + 1] == centerValue then
---             normals[i][1] = normals[i][1] - length
---             normals[i][3] = normals[i][3] - length
---         end
---         if voxelMap[x][y - 1][z - 1] ~= nil and voxelMap[x][y - 1][z - 1] == centerValue then
---             normals[i][2] = normals[i][2] + length
---             normals[i][3] = normals[i][3] + length
---         end
---         if voxelMap[x][y - 1][z + 1] ~= nil and voxelMap[x][y - 1][z + 1] == centerValue then
---             normals[i][2] = normals[i][2] + length
---             normals[i][3] = normals[i][3] - length
---         end
---         if voxelMap[x][y + 1][z - 1] ~= nil and voxelMap[x][y + 1][z - 1] == centerValue then
---             normals[i][2] = normals[i][2] - length
---             normals[i][3] = normals[i][3] + length
---         end
---         if voxelMap[x][y + 1][z + 1] ~= nil and voxelMap[x][y + 1][z + 1] == centerValue then
---             normals[i][2] = normals[i][2] - length
---             normals[i][3] = normals[i][3] - length
---         end
-
---         local nx = normals[i][1]
---         local ny = normals[i][2]
---         local nz = normals[i][3]
---         local len = math.sqrt(nx * nx + ny * ny + nz * nz)
---         if len > 0.001 then
---             normals[i][1] = nx / len
---             normals[i][2] = ny / len
---             normals[i][3] = nz / len
---         else
---             normals[i][1] = 0
---             normals[i][2] = 0
---             normals[i][3] = 0
---         end
---     end
--- end
-
 function engine.SetNormals(vertices, normals, voxelMap)
     local vertexCount = #vertices
     for i = 1, vertexCount do
         local x = vertices[i][1]
         local y = vertices[i][2]
         local z = vertices[i][3]
-        if voxelMap[x - 1][y][z] ~= nil then
-            normals[i][1] = normals[i][1] + 1;
+
+        local centerValue = voxelMap[x][y][z]
+        -- if voxelMap[x - 1][y][z] ~= nil then
+        --     normals[i][1] = normals[i][1] + 1
+        -- end
+        -- if voxelMap[x + 1][y][z] ~= nil then
+        --     normals[i][1] = normals[i][1] - 1
+        -- end
+        -- if voxelMap[x][y - 1][z] ~= nil then
+        --     normals[i][2] = normals[i][2] + 1
+        -- end
+        -- if voxelMap[x][y + 1][z] ~= nil then
+        --     normals[i][2] = normals[i][2] - 1
+        -- end
+        -- if voxelMap[x][y][z - 1] ~= nil then
+        --     normals[i][3] = normals[i][3] + 1
+        -- end
+        -- if voxelMap[x][y][z + 1] ~= nil then
+        --     normals[i][3] = normals[i][3] - 1
+        -- end
+        if voxelMap[x - 1][y][z] ~= nil and voxelMap[x - 1][y][z] == centerValue then
+            normals[i][1] = normals[i][1] + 1
         end
-        if voxelMap[x + 1][y][z] ~= nil then
-            normals[i][1] = normals[i][1] - 1;
+        if voxelMap[x + 1][y][z] ~= nil and voxelMap[x + 1][y][z] == centerValue then
+            normals[i][1] = normals[i][1] - 1
         end
-        if voxelMap[x][y - 1][z] ~= nil then
-            normals[i][2] = normals[i][2] + 1;
+        if voxelMap[x][y - 1][z] ~= nil and voxelMap[x][y - 1][z] == centerValue then
+            normals[i][2] = normals[i][2] + 1
         end
-        if voxelMap[x][y + 1][z] ~= nil then
-            normals[i][2] = normals[i][2] - 1;
+        if voxelMap[x][y + 1][z] ~= nil and voxelMap[x][y + 1][z] == centerValue then
+            normals[i][2] = normals[i][2] - 1
         end
-        if voxelMap[x][y][z - 1] ~= nil then
-            normals[i][3] = normals[i][3] + 1;
+        if voxelMap[x][y][z - 1] ~= nil and voxelMap[x][y][z - 1] == centerValue then
+            normals[i][3] = normals[i][3] + 1
         end
-        if voxelMap[x][y][z + 1] ~= nil then
-            normals[i][3] = normals[i][3] - 1;
+        if voxelMap[x][y][z + 1] ~= nil and voxelMap[x][y][z + 1] == centerValue then
+            normals[i][3] = normals[i][3] - 1
         end
 
         local length = 1 / 1.414 / 1.414
-        if voxelMap[x - 1][y - 1][z - 1] ~= nil then
-            normals[i][1] = normals[i][1] + length;
-            normals[i][2] = normals[i][2] + length;
-            normals[i][3] = normals[i][3] + length;
+        if voxelMap[x - 1][y - 1][z - 1] ~= nil and voxelMap[x - 1][y - 1][z - 1] == centerValue then
+            normals[i][1] = normals[i][1] + length
+            normals[i][2] = normals[i][2] + length
+            normals[i][3] = normals[i][3] + length
         end
-        if voxelMap[x - 1][y + 1][z - 1] ~= nil then
-            normals[i][1] = normals[i][1] + length;
-            normals[i][2] = normals[i][2] - length;
-            normals[i][3] = normals[i][3] + length;
+        if voxelMap[x - 1][y + 1][z - 1] ~= nil and voxelMap[x - 1][y + 1][z - 1] == centerValue then
+            normals[i][1] = normals[i][1] + length
+            normals[i][2] = normals[i][2] - length
+            normals[i][3] = normals[i][3] + length
         end
-        if voxelMap[x - 1][y - 1][z + 1] ~= nil then
-            normals[i][1] = normals[i][1] + length;
-            normals[i][2] = normals[i][2] + length;
-            normals[i][3] = normals[i][3] - length;
+        if voxelMap[x - 1][y - 1][z + 1] ~= nil and voxelMap[x - 1][y - 1][z + 1] == centerValue then
+            normals[i][1] = normals[i][1] + length
+            normals[i][2] = normals[i][2] + length
+            normals[i][3] = normals[i][3] - length
         end
-        if voxelMap[x - 1][y + 1][z + 1] ~= nil then
-            normals[i][1] = normals[i][1] + length;
-            normals[i][2] = normals[i][2] - length;
-            normals[i][3] = normals[i][3] - length;
-        end
-
-        if voxelMap[x + 1][y - 1][z - 1] ~= nil then
-            normals[i][1] = normals[i][1] - length;
-            normals[i][2] = normals[i][2] + length;
-            normals[i][3] = normals[i][3] + length;
-        end
-        if voxelMap[x + 1][y + 1][z - 1] ~= nil then
-            normals[i][1] = normals[i][1] - length;
-            normals[i][2] = normals[i][2] - length;
-            normals[i][3] = normals[i][3] + length;
-        end
-        if voxelMap[x + 1][y - 1][z + 1] ~= nil then
-            normals[i][1] = normals[i][1] - length;
-            normals[i][2] = normals[i][2] + length;
-            normals[i][3] = normals[i][3] - length;
-        end
-        if voxelMap[x + 1][y + 1][z + 1] ~= nil then
-            normals[i][1] = normals[i][1] - length;
-            normals[i][2] = normals[i][2] - length;
-            normals[i][3] = normals[i][3] - length;
+        if voxelMap[x - 1][y + 1][z + 1] ~= nil and voxelMap[x - 1][y + 1][z + 1] == centerValue then
+            normals[i][1] = normals[i][1] + length
+            normals[i][2] = normals[i][2] - length
+            normals[i][3] = normals[i][3] - length
         end
 
-        length = 1 / 1.414;
-        if voxelMap[x - 1][y - 1][z] ~= nil then
-            normals[i][1] = normals[i][1] + length;
-            normals[i][2] = normals[i][2] + length;
+        if voxelMap[x + 1][y - 1][z - 1] ~= nil and voxelMap[x + 1][y - 1][z - 1] == centerValue then
+            normals[i][1] = normals[i][1] - length
+            normals[i][2] = normals[i][2] + length
+            normals[i][3] = normals[i][3] + length
         end
-        if voxelMap[x - 1][y + 1][z] ~= nil then
-            normals[i][1] = normals[i][1] + length;
-            normals[i][2] = normals[i][2] - length;
+        if voxelMap[x + 1][y + 1][z - 1] ~= nil and voxelMap[x + 1][y + 1][z - 1] == centerValue then
+            normals[i][1] = normals[i][1] - length
+            normals[i][2] = normals[i][2] - length
+            normals[i][3] = normals[i][3] + length
         end
-        if voxelMap[x - 1][y][z - 1] ~= nil then
-            normals[i][1] = normals[i][1] + length;
-            normals[i][3] = normals[i][3] + length;
+        if voxelMap[x + 1][y - 1][z + 1] ~= nil and voxelMap[x + 1][y - 1][z + 1] == centerValue then
+            normals[i][1] = normals[i][1] - length
+            normals[i][2] = normals[i][2] + length
+            normals[i][3] = normals[i][3] - length
         end
-        if voxelMap[x - 1][y][z + 1] ~= nil then
-            normals[i][1] = normals[i][1] + length;
-            normals[i][3] = normals[i][3] - length;
+        if voxelMap[x + 1][y + 1][z + 1] ~= nil and voxelMap[x + 1][y + 1][z + 1] == centerValue then
+            normals[i][1] = normals[i][1] - length
+            normals[i][2] = normals[i][2] - length
+            normals[i][3] = normals[i][3] - length
         end
-        if voxelMap[x + 1][y - 1][z] ~= nil then
-            normals[i][1] = normals[i][1] - length;
-            normals[i][2] = normals[i][2] + length;
+
+        length = 1 / 1.414
+        if voxelMap[x - 1][y - 1][z] ~= nil and voxelMap[x - 1][y - 1][z] == centerValue then
+            normals[i][1] = normals[i][1] + length
+            normals[i][2] = normals[i][2] + length
         end
-        if voxelMap[x + 1][y + 1][z] ~= nil then
-            normals[i][1] = normals[i][1] - length;
-            normals[i][2] = normals[i][2] - length;
+        if voxelMap[x - 1][y + 1][z] ~= nil and voxelMap[x - 1][y + 1][z] == centerValue then
+            normals[i][1] = normals[i][1] + length
+            normals[i][2] = normals[i][2] - length
         end
-        if voxelMap[x + 1][y][z - 1] ~= nil then
-            normals[i][1] = normals[i][1] - length;
-            normals[i][3] = normals[i][3] + length;
+        if voxelMap[x - 1][y][z - 1] ~= nil and voxelMap[x - 1][y][z - 1] == centerValue then
+            normals[i][1] = normals[i][1] + length
+            normals[i][3] = normals[i][3] + length
         end
-        if voxelMap[x + 1][y][z + 1] ~= nil then
-            normals[i][1] = normals[i][1] - length;
-            normals[i][3] = normals[i][3] - length;
+        if voxelMap[x - 1][y][z + 1] ~= nil and voxelMap[x - 1][y][z + 1] == centerValue then
+            normals[i][1] = normals[i][1] + length
+            normals[i][3] = normals[i][3] - length
         end
-        if voxelMap[x][y - 1][z - 1] ~= nil then
-            normals[i][2] = normals[i][2] + length;
-            normals[i][3] = normals[i][3] + length;
+        if voxelMap[x + 1][y - 1][z] ~= nil and voxelMap[x + 1][y - 1][z] == centerValue then
+            normals[i][1] = normals[i][1] - length
+            normals[i][2] = normals[i][2] + length
         end
-        if voxelMap[x][y - 1][z + 1] ~= nil then
-            normals[i][2] = normals[i][2] + length;
-            normals[i][3] = normals[i][3] - length;
+        if voxelMap[x + 1][y + 1][z] ~= nil and voxelMap[x + 1][y + 1][z] == centerValue then
+            normals[i][1] = normals[i][1] - length
+            normals[i][2] = normals[i][2] - length
         end
-        if voxelMap[x][y + 1][z - 1] ~= nil then
-            normals[i][2] = normals[i][2] - length;
-            normals[i][3] = normals[i][3] + length;
+        if voxelMap[x + 1][y][z - 1] ~= nil and voxelMap[x + 1][y][z - 1] == centerValue then
+            normals[i][1] = normals[i][1] - length
+            normals[i][3] = normals[i][3] + length
         end
-        if voxelMap[x][y + 1][z + 1] ~= nil then
-            normals[i][2] = normals[i][2] - length;
-            normals[i][3] = normals[i][3] - length;
+        if voxelMap[x + 1][y][z + 1] ~= nil and voxelMap[x + 1][y][z + 1] == centerValue then
+            normals[i][1] = normals[i][1] - length
+            normals[i][3] = normals[i][3] - length
+        end
+        if voxelMap[x][y - 1][z - 1] ~= nil and voxelMap[x][y - 1][z - 1] == centerValue then
+            normals[i][2] = normals[i][2] + length
+            normals[i][3] = normals[i][3] + length
+        end
+        if voxelMap[x][y - 1][z + 1] ~= nil and voxelMap[x][y - 1][z + 1] == centerValue then
+            normals[i][2] = normals[i][2] + length
+            normals[i][3] = normals[i][3] - length
+        end
+        if voxelMap[x][y + 1][z - 1] ~= nil and voxelMap[x][y + 1][z - 1] == centerValue then
+            normals[i][2] = normals[i][2] - length
+            normals[i][3] = normals[i][3] + length
+        end
+        if voxelMap[x][y + 1][z + 1] ~= nil and voxelMap[x][y + 1][z + 1] == centerValue then
+            normals[i][2] = normals[i][2] - length
+            normals[i][3] = normals[i][3] - length
         end
 
         local nx = normals[i][1]
@@ -340,6 +206,140 @@ function engine.SetNormals(vertices, normals, voxelMap)
         end
     end
 end
+
+-- function engine.SetNormals(vertices, normals, voxelMap)
+--     local vertexCount = #vertices
+--     for i = 1, vertexCount do
+--         local x = vertices[i][1]
+--         local y = vertices[i][2]
+--         local z = vertices[i][3]
+--         if voxelMap[x - 1][y][z] ~= nil then
+--             normals[i][1] = normals[i][1] + 1;
+--         end
+--         if voxelMap[x + 1][y][z] ~= nil then
+--             normals[i][1] = normals[i][1] - 1;
+--         end
+--         if voxelMap[x][y - 1][z] ~= nil then
+--             normals[i][2] = normals[i][2] + 1;
+--         end
+--         if voxelMap[x][y + 1][z] ~= nil then
+--             normals[i][2] = normals[i][2] - 1;
+--         end
+--         if voxelMap[x][y][z - 1] ~= nil then
+--             normals[i][3] = normals[i][3] + 1;
+--         end
+--         if voxelMap[x][y][z + 1] ~= nil then
+--             normals[i][3] = normals[i][3] - 1;
+--         end
+
+--         local length = 1 / 1.414 / 1.414
+--         if voxelMap[x - 1][y - 1][z - 1] ~= nil then
+--             normals[i][1] = normals[i][1] + length;
+--             normals[i][2] = normals[i][2] + length;
+--             normals[i][3] = normals[i][3] + length;
+--         end
+--         if voxelMap[x - 1][y + 1][z - 1] ~= nil then
+--             normals[i][1] = normals[i][1] + length;
+--             normals[i][2] = normals[i][2] - length;
+--             normals[i][3] = normals[i][3] + length;
+--         end
+--         if voxelMap[x - 1][y - 1][z + 1] ~= nil then
+--             normals[i][1] = normals[i][1] + length;
+--             normals[i][2] = normals[i][2] + length;
+--             normals[i][3] = normals[i][3] - length;
+--         end
+--         if voxelMap[x - 1][y + 1][z + 1] ~= nil then
+--             normals[i][1] = normals[i][1] + length;
+--             normals[i][2] = normals[i][2] - length;
+--             normals[i][3] = normals[i][3] - length;
+--         end
+
+--         if voxelMap[x + 1][y - 1][z - 1] ~= nil then
+--             normals[i][1] = normals[i][1] - length;
+--             normals[i][2] = normals[i][2] + length;
+--             normals[i][3] = normals[i][3] + length;
+--         end
+--         if voxelMap[x + 1][y + 1][z - 1] ~= nil then
+--             normals[i][1] = normals[i][1] - length;
+--             normals[i][2] = normals[i][2] - length;
+--             normals[i][3] = normals[i][3] + length;
+--         end
+--         if voxelMap[x + 1][y - 1][z + 1] ~= nil then
+--             normals[i][1] = normals[i][1] - length;
+--             normals[i][2] = normals[i][2] + length;
+--             normals[i][3] = normals[i][3] - length;
+--         end
+--         if voxelMap[x + 1][y + 1][z + 1] ~= nil then
+--             normals[i][1] = normals[i][1] - length;
+--             normals[i][2] = normals[i][2] - length;
+--             normals[i][3] = normals[i][3] - length;
+--         end
+
+--         length = 1 / 1.414;
+--         if voxelMap[x - 1][y - 1][z] ~= nil then
+--             normals[i][1] = normals[i][1] + length;
+--             normals[i][2] = normals[i][2] + length;
+--         end
+--         if voxelMap[x - 1][y + 1][z] ~= nil then
+--             normals[i][1] = normals[i][1] + length;
+--             normals[i][2] = normals[i][2] - length;
+--         end
+--         if voxelMap[x - 1][y][z - 1] ~= nil then
+--             normals[i][1] = normals[i][1] + length;
+--             normals[i][3] = normals[i][3] + length;
+--         end
+--         if voxelMap[x - 1][y][z + 1] ~= nil then
+--             normals[i][1] = normals[i][1] + length;
+--             normals[i][3] = normals[i][3] - length;
+--         end
+--         if voxelMap[x + 1][y - 1][z] ~= nil then
+--             normals[i][1] = normals[i][1] - length;
+--             normals[i][2] = normals[i][2] + length;
+--         end
+--         if voxelMap[x + 1][y + 1][z] ~= nil then
+--             normals[i][1] = normals[i][1] - length;
+--             normals[i][2] = normals[i][2] - length;
+--         end
+--         if voxelMap[x + 1][y][z - 1] ~= nil then
+--             normals[i][1] = normals[i][1] - length;
+--             normals[i][3] = normals[i][3] + length;
+--         end
+--         if voxelMap[x + 1][y][z + 1] ~= nil then
+--             normals[i][1] = normals[i][1] - length;
+--             normals[i][3] = normals[i][3] - length;
+--         end
+--         if voxelMap[x][y - 1][z - 1] ~= nil then
+--             normals[i][2] = normals[i][2] + length;
+--             normals[i][3] = normals[i][3] + length;
+--         end
+--         if voxelMap[x][y - 1][z + 1] ~= nil then
+--             normals[i][2] = normals[i][2] + length;
+--             normals[i][3] = normals[i][3] - length;
+--         end
+--         if voxelMap[x][y + 1][z - 1] ~= nil then
+--             normals[i][2] = normals[i][2] - length;
+--             normals[i][3] = normals[i][3] + length;
+--         end
+--         if voxelMap[x][y + 1][z + 1] ~= nil then
+--             normals[i][2] = normals[i][2] - length;
+--             normals[i][3] = normals[i][3] - length;
+--         end
+
+--         local nx = normals[i][1]
+--         local ny = normals[i][2]
+--         local nz = normals[i][3]
+--         local len = math.sqrt(nx * nx + ny * ny + nz * nz)
+--         if len > 0.001 then
+--             normals[i][1] = nx / len
+--             normals[i][2] = ny / len
+--             normals[i][3] = nz / len
+--         else
+--             normals[i][1] = 0
+--             normals[i][2] = 0
+--             normals[i][3] = 0
+--         end
+--     end
+-- end
 
 function engine.DrawModel(instances, model)
     local vertices = {}

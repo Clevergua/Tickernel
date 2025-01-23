@@ -38,6 +38,16 @@
 		DEEA6FDB2D3A770D0000E67F /* liblua.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = liblua.dylib; path = ../lib/lua/liblua.dylib; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		DE6CC3462D3951E600D80E9A /* Exceptions for "src" folder in "osx" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				main.txt,
+			);
+			target = DE6CC0942D39397000D80E9A /* osx */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		DE04DEF72D3BCB0B00DB240A /* assets */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
@@ -58,6 +68,9 @@
 		};
 		DE6CC32C2D394EF000D80E9A /* src */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				DE6CC3462D3951E600D80E9A /* Exceptions for "src" folder in "osx" target */,
+			);
 			name = src;
 			path = ../src;
 			sourceTree = SOURCE_ROOT;

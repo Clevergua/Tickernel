@@ -31,7 +31,6 @@
         "ios": "c",
         "tickernelengine.h": "c",
         "luabinding.h": "c",
-        "stdexcept": "cpp",
-        "watergeometrysubpass.h": "c"
+        "stdexcept": "cpp"
     }
 }
