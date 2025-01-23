@@ -166,7 +166,7 @@ function engine.Start()
                     local dx = (px - (voxelCount + 1) / 2) / voxelCount
                     local dy = (py - (voxelCount + 1) / 2) / voxelCount
                     local deltaNoise = math.max(math.abs(dx), math.abs(dy)) * 2
-                    deltaNoise = deltaNoise ^ 3
+                    deltaNoise = deltaNoise ^ 2
                     local voxelTemperature = game.GetTemperature((x + dx), (y + dy))
                     local voxelHumidity = game.GetHumidity((x + dx), (y + dy))
                     local voxelTerrain = game.GetTerrain(voxelTemperature, voxelHumidity)
@@ -216,23 +216,23 @@ function engine.Start()
                             snowNoiseScale * (x + dx),
                             snowNoiseScale * (y + dy))
                         local snowHeight = foundationHeight + gameMath.Round(gameMath.Clamp(snowNoise / 0.5, -1, 1)) +
-                            2
+                            1
                         for z = foundationHeight + 1, snowHeight do
                             voxelHeightMap[z] = voxel.snow
                         end
                     elseif targetVoxelTerrain == terrain.water then
-                        for z = foundationHeight + 1, 7 do
+                        for z = foundationHeight + 1, 6 do
                             voxelHeightMap[z] = voxel.water
                         end
                     elseif targetVoxelTerrain == terrain.ice then
-                        for z = foundationHeight + 1, 7 do
+                        for z = foundationHeight + 1, 6 do
                             voxelHeightMap[z] = voxel.ice
                         end
                     elseif targetVoxelTerrain == terrain.grass then
-                        local grassNoiseScale = 2.35
+                        local grassNoiseScale = 4.35
                         local grassNoise = gameMath.PerlinNoise2D(grassNoiseSeed, grassNoiseScale * (x + dx),
                             grassNoiseScale * (y + dy))
-                        if grassNoise < -0.27 then
+                        if grassNoise < 0 then
 
                         elseif grassNoise < 0.27 then
                             for z = foundationHeight + 1, foundationHeight + 1 do
@@ -248,12 +248,12 @@ function engine.Start()
                         local lavaNoise = gameMath.PerlinNoise2D(lavaNoiseSeed, lavaNoiseScale * (x + dx),
                             lavaNoiseScale * (y + dy))
                         local lavaHeight
-                        if lavaNoise < -0.31 then
+                        if lavaNoise < -0.26 then
+                            lavaHeight = 4
+                        elseif lavaNoise < 0.26 then
                             lavaHeight = 5
-                        elseif lavaNoise < 0.31 then
-                            lavaHeight = 6
                         else
-                            lavaHeight = 7
+                            lavaHeight = 6
                         end
                         for z = foundationHeight + 1, lavaHeight do
                             voxelHeightMap[z] = voxel.lava
@@ -345,8 +345,8 @@ function engine.End()
     print("Lua Start")
 end
 
-local cameraPosition = { 0, 0, 8 }
-local targetPosition = { 0, 4, 0 }
+local cameraPosition = { 0, 4, 8 }
+local targetPosition = { 0, 6, 0 }
 local t = 0
 
 function engine.Update()
@@ -355,7 +355,7 @@ function engine.Update()
         collectgarbage("collect")
     end
     t = t + 0.001
-    local distance = gameMath.PingPong(0, length, t * 0.2)
+    local distance = gameMath.PingPong(5, length-5, t * 0.2)
     cameraPosition[1] = distance
     targetPosition[1] = distance
     local memoryUsage = collectgarbage("count")

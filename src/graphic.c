@@ -838,6 +838,5 @@ void EndGraphic(GraphicContext *pGraphicContext)
     DestroySwapchain(pGraphicContext);
     DestroyLogicalDevice(pGraphicContext);
     // Destroy vkPhysicsDevice
-    
     TickernelFree(pGraphicContext);
 }
