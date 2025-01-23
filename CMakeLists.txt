@@ -49,7 +49,7 @@ else()
 endif()
 
 message("   SOURCES:${SOURCES}")
-add_executable(${PROJECT_NAME} ${SOURCES})
+add_library(${PROJECT_NAME} SHARED ${SOURCES})
 message("   HEADER_DIRS:${HEADER_DIRS}")
 target_include_directories(${PROJECT_NAME} PUBLIC ${HEADER_DIRS})
 message("   LIBRARYS:${LIBRARYS}")

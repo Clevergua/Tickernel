@@ -35,7 +35,7 @@ void main(void) {
     vec4 worldPosition = i_model * vec4(modifiedPosition, 1);
     vec4 viewPosition = globalUniform.view * worldPosition;
     gl_Position = globalUniform.proj * viewPosition;
-    o_albedo = i_color;
-    o_normal = i_normal;
     gl_PointSize = globalUniform.pointSizeFactor / -viewPosition.z;
+    o_normal = normalize(mat3(i_model) * i_normal);
+    o_albedo = i_color;
 }

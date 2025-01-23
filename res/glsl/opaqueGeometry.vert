@@ -24,13 +24,7 @@ void main(void)
     vec4 worldPosition = i_model * vec4(i_position, 1);
     vec4 viewPosition = globalUniform.view * worldPosition;
     gl_Position = globalUniform.proj * viewPosition;
-
-    vec2 screenCenter = vec2(0.0, 0.0);
-    vec2 position2D = viewPosition.xy / viewPosition.w;
-    float distanceFromCenter = length(position2D - screenCenter);
-    float sizeFactor = 1.0 + distanceFromCenter * 0.1;
-    gl_PointSize = globalUniform.pointSizeFactor / -viewPosition.z * sizeFactor;
-
+    gl_PointSize = globalUniform.pointSizeFactor / -viewPosition.z;
+    o_normal = normalize(mat3(i_model) * i_normal);
     o_albedo = i_color;
-    o_normal = i_normal;
 }
