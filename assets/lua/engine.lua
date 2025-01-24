@@ -61,24 +61,6 @@ function engine.SetNormals(vertices, normals, voxelMap)
         local z = vertices[i][3]
 
         local centerValue = voxelMap[x][y][z]
-        -- if voxelMap[x - 1][y][z] ~= nil then
-        --     normals[i][1] = normals[i][1] + 1
-        -- end
-        -- if voxelMap[x + 1][y][z] ~= nil then
-        --     normals[i][1] = normals[i][1] - 1
-        -- end
-        -- if voxelMap[x][y - 1][z] ~= nil then
-        --     normals[i][2] = normals[i][2] + 1
-        -- end
-        -- if voxelMap[x][y + 1][z] ~= nil then
-        --     normals[i][2] = normals[i][2] - 1
-        -- end
-        -- if voxelMap[x][y][z - 1] ~= nil then
-        --     normals[i][3] = normals[i][3] + 1
-        -- end
-        -- if voxelMap[x][y][z + 1] ~= nil then
-        --     normals[i][3] = normals[i][3] - 1
-        -- end
         if voxelMap[x - 1][y][z] ~= nil and voxelMap[x - 1][y][z] == centerValue then
             normals[i][1] = normals[i][1] + 1
         end
@@ -202,7 +184,7 @@ function engine.SetNormals(vertices, normals, voxelMap)
         else
             normals[i][1] = 0
             normals[i][2] = 0
-            normals[i][3] = 0
+            normals[i][3] = 1
         end
     end
 end

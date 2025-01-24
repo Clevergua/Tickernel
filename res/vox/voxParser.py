@@ -129,7 +129,7 @@ def SetNormals(voxModel, indexMap):
         else:
             nx = 0
             ny = 0
-            nz = 0
+            nz = 1
         voxModel.voxels[i] = (x, y, z, colorIndex, nx, ny, nz)
 
 def WriteTickernelVoxelModel(filePath, tickernelVoxelModel):
@@ -168,7 +168,6 @@ def isSurrounded(x, y, z, indexMap):
     for dx in range(-1, 2):
         for dy in range(-1, 2):
             for dz in range(-1, 2):
-                # 跳过中心点
                 if dx == 0 and dy == 0 and dz == 0:
                     continue
                 nx, ny, nz = x + dx, y + dy, z + dz
