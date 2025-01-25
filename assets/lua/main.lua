@@ -27,7 +27,7 @@ local foundationRoughnessNoiseScaleMap = {
     { 2.3, 2.3, 2.3 },
 }
 local foundationHeightMap = {
-    { 6, 6, 3 },
+    { 5, 5, 3 },
     { 7, 6, 3 },
     { 3, 7, 7 },
 }
@@ -166,7 +166,7 @@ function engine.Start()
                     local dx = (px - (voxelCount + 1) / 2) / voxelCount
                     local dy = (py - (voxelCount + 1) / 2) / voxelCount
                     local deltaNoise = math.max(math.abs(dx), math.abs(dy)) * 2
-                    deltaNoise = deltaNoise ^ 2
+                    deltaNoise = deltaNoise ^ 3
                     local voxelTemperature = game.GetTemperature((x + dx), (y + dy))
                     local voxelHumidity = game.GetHumidity((x + dx), (y + dy))
                     local voxelTerrain = game.GetTerrain(voxelTemperature, voxelHumidity)
@@ -281,7 +281,7 @@ function engine.Start()
                         table.insert(waterColors, voxelMap[x][y][z])
                         table.insert(waterNormals, { 0, 0, 0 })
                     else
-                        local isSurrounded = true
+                        local isSurrounded =  true
                         for dx = -1, 1 do
                             for dy = -1, 1 do
                                 for dz = -1, 1 do
@@ -329,13 +329,13 @@ function engine.Start()
                 table.insert(pointLights, {
                     color = { 0.8, 0.4, 0, 1 },
                     position = { x, y, 0.5 },
-                    range = 4,
+                    range = 2,
                 })
             end
         end
     end
     local directionalLight = {
-        color = { 0.3, 0.3, 0.8, 0.618 },
+        color = { 0.3, 0.3, 0.8, 0.2 },
         direction = { -0.618, -0.618, -1 },
     }
     engine.UpdateLightsUniformBuffer(directionalLight, pointLights)
@@ -345,8 +345,8 @@ function engine.End()
     print("Lua Start")
 end
 
-local cameraPosition = { 0, 4, 8 }
-local targetPosition = { 0, 6, 0 }
+local cameraPosition = { 0, 0, 15 }
+local targetPosition = { 0, 8, 0 }
 local t = 0
 
 function engine.Update()

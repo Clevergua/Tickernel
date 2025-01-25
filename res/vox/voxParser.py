@@ -48,77 +48,77 @@ def SetNormals(voxModel, indexMap):
         if x in indexMap and y in indexMap[x] and z + 1 in indexMap[x][y]:
             nz -= 1
 
-        length = 1 / 1.414
-        if x - 1 in indexMap and y - 1 in indexMap[x - 1] and z in indexMap[x - 1][y - 1]:
-            nx += length
-            ny += length
-        if x - 1 in indexMap and y + 1 in indexMap[x - 1] and z in indexMap[x - 1][y + 1]:
-            nx += length
-            ny -= length
-        if x - 1 in indexMap and y in indexMap[x - 1] and z - 1 in indexMap[x - 1][y]:
-            nx += length
-            nz += length
-        if x - 1 in indexMap and y in indexMap[x - 1] and z + 1 in indexMap[x - 1][y]:
-            nx += length
-            nz -= length
-        if x + 1 in indexMap and y - 1 in indexMap[x + 1] and z in indexMap[x + 1][y - 1]:
-            nx -= length
-            ny += length
-        if x + 1 in indexMap and y + 1 in indexMap[x + 1] and z in indexMap[x + 1][y + 1]:
-            nx -= length
-            ny -= length
-        if x + 1 in indexMap and y in indexMap[x + 1] and z - 1 in indexMap[x + 1][y]:
-            nx -= length
-            nz += length
-        if x + 1 in indexMap and y in indexMap[x + 1] and z + 1 in indexMap[x + 1][y]:
-            nx -= length
-            nz -= length
-        if x in indexMap and y - 1 in indexMap[x] and z - 1 in indexMap[x][y - 1]:
-            ny += length
-            nz += length
-        if x in indexMap and y - 1 in indexMap[x] and z + 1 in indexMap[x][y - 1]:
-            ny += length
-            nz -= length
-        if x in indexMap and y + 1 in indexMap[x] and z - 1 in indexMap[x][y + 1]:
-            ny -= length
-            nz += length
-        if x in indexMap and y + 1 in indexMap[x] and z + 1 in indexMap[x][y + 1]:
-            ny -= length
-            nz -= length
-        length = 1 / 1.414 / 1.414
+        # length = 1 / 1.414
+        # if x - 1 in indexMap and y - 1 in indexMap[x - 1] and z in indexMap[x - 1][y - 1]:
+        #     nx += length
+        #     ny += length
+        # if x - 1 in indexMap and y + 1 in indexMap[x - 1] and z in indexMap[x - 1][y + 1]:
+        #     nx += length
+        #     ny -= length
+        # if x - 1 in indexMap and y in indexMap[x - 1] and z - 1 in indexMap[x - 1][y]:
+        #     nx += length
+        #     nz += length
+        # if x - 1 in indexMap and y in indexMap[x - 1] and z + 1 in indexMap[x - 1][y]:
+        #     nx += length
+        #     nz -= length
+        # if x + 1 in indexMap and y - 1 in indexMap[x + 1] and z in indexMap[x + 1][y - 1]:
+        #     nx -= length
+        #     ny += length
+        # if x + 1 in indexMap and y + 1 in indexMap[x + 1] and z in indexMap[x + 1][y + 1]:
+        #     nx -= length
+        #     ny -= length
+        # if x + 1 in indexMap and y in indexMap[x + 1] and z - 1 in indexMap[x + 1][y]:
+        #     nx -= length
+        #     nz += length
+        # if x + 1 in indexMap and y in indexMap[x + 1] and z + 1 in indexMap[x + 1][y]:
+        #     nx -= length
+        #     nz -= length
+        # if x in indexMap and y - 1 in indexMap[x] and z - 1 in indexMap[x][y - 1]:
+        #     ny += length
+        #     nz += length
+        # if x in indexMap and y - 1 in indexMap[x] and z + 1 in indexMap[x][y - 1]:
+        #     ny += length
+        #     nz -= length
+        # if x in indexMap and y + 1 in indexMap[x] and z - 1 in indexMap[x][y + 1]:
+        #     ny -= length
+        #     nz += length
+        # if x in indexMap and y + 1 in indexMap[x] and z + 1 in indexMap[x][y + 1]:
+        #     ny -= length
+        #     nz -= length
+        # length = 1 / 1.414 / 1.414
 
-        if x - 1 in indexMap and y - 1 in indexMap[x - 1] and z - 1 in indexMap[x - 1][y - 1]:
-            nx += length
-            ny += length
-            nz += length
-        if x - 1 in indexMap and y + 1 in indexMap[x - 1] and z - 1 in indexMap[x - 1][y + 1]:
-            nx += length
-            ny -= length
-            nz += length
-        if x - 1 in indexMap and y - 1 in indexMap[x - 1] and z + 1 in indexMap[x - 1][y - 1]:
-            nx += length
-            ny += length
-            nz -= length
-        if x - 1 in indexMap and y + 1 in indexMap[x - 1] and z + 1 in indexMap[x - 1][y + 1]:
-            nx += length
-            ny -= length
-            nz -= length
-        if x + 1 in indexMap and y - 1 in indexMap[x + 1] and z - 1 in indexMap[x + 1][y - 1]:
-            nx -= length
-            ny += length
-            nz += length
-        if x + 1 in indexMap and y + 1 in indexMap[x + 1] and z - 1 in indexMap[x + 1][y + 1]:
-            nx -= length
-            ny -= length
-            nz += length
-        if x + 1 in indexMap and y - 1 in indexMap[x + 1] and z + 1 in indexMap[x + 1][y - 1]:
-            nx -= length
-            ny += length
-            nz -= length
-        if x + 1 in indexMap and y + 1 in indexMap[x + 1] and z + 1 in indexMap[x + 1][y + 1]:
-            nx -= length
-            ny -= length
-            nz -= length
+        # if x - 1 in indexMap and y - 1 in indexMap[x - 1] and z - 1 in indexMap[x - 1][y - 1]:
+        #     nx += length
+        #     ny += length
+        #     nz += length
+        # if x - 1 in indexMap and y + 1 in indexMap[x - 1] and z - 1 in indexMap[x - 1][y + 1]:
+        #     nx += length
+        #     ny -= length
+        #     nz += length
+        # if x - 1 in indexMap and y - 1 in indexMap[x - 1] and z + 1 in indexMap[x - 1][y - 1]:
+        #     nx += length
+        #     ny += length
+        #     nz -= length
+        # if x - 1 in indexMap and y + 1 in indexMap[x - 1] and z + 1 in indexMap[x - 1][y + 1]:
+        #     nx += length
+        #     ny -= length
+        #     nz -= length
+        # if x + 1 in indexMap and y - 1 in indexMap[x + 1] and z - 1 in indexMap[x + 1][y - 1]:
+        #     nx -= length
+        #     ny += length
+        #     nz += length
+        # if x + 1 in indexMap and y + 1 in indexMap[x + 1] and z - 1 in indexMap[x + 1][y + 1]:
+        #     nx -= length
+        #     ny -= length
+        #     nz += length
+        # if x + 1 in indexMap and y - 1 in indexMap[x + 1] and z + 1 in indexMap[x + 1][y - 1]:
+        #     nx -= length
+        #     ny += length
+        #     nz -= length
+        # if x + 1 in indexMap and y + 1 in indexMap[x + 1] and z + 1 in indexMap[x + 1][y + 1]:
+        #     nx -= length
+        #     ny -= length
+        #     nz -= length
 
         
         length = math.sqrt(nx * nx + ny * ny + nz * nz)

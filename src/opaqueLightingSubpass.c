@@ -180,6 +180,7 @@ static void CreateVkPipeline(Subpass *pOpaqueLightingSubpass, const char *shader
     };
 
     VkResult result = vkCreateDescriptorSetLayout(vkDevice, &descriptorSetLayoutCreateInfo, NULL, &pOpaqueLightingSubpass->descriptorSetLayout);
+    TryThrowVulkanError(result);
     VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
         .pNext = NULL,

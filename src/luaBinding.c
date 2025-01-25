@@ -323,7 +323,7 @@ static int UpdateGlobalUniformBuffer(lua_State *pLuaState)
 
     GlobalUniformBuffer ubo;
     glm_lookat(cameraPosition, targetPosition, (vec3){0.0f, 0.0f, 1.0f}, ubo.view);
-    float deg = 45.0f;
+    float deg = 30.0f;
     ubo.pointSizeFactor = 0.618 * pGraphicContext->swapchainHeight / tanf(glm_rad(deg / 2)) / 16.0;
     glm_perspective(glm_rad(deg), pGraphicContext->swapchainWidth / (float)pGraphicContext->swapchainHeight, 1.0f, 2048.0f, ubo.proj);
     ubo.proj[1][1] *= -1;

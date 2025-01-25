@@ -35,12 +35,12 @@ local game = {
     width = 0,
     terrainMap = nil,
     blockMap = nil,
-    humidityStep = 0.15,
-    temperatureStep = 0.23,
+    humidityStep = 0.21,
+    temperatureStep = 0.27,
 }
 
-local temperatureNoiseScale = 0.17
-local humidityNoiseScale = 0.17
+local temperatureNoiseScale = 0.07
+local humidityNoiseScale = 0.07
 
 function game.GetTerrain(temperature, humidity)
     local terrain

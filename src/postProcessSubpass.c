@@ -152,6 +152,7 @@ static void CreateVkPipeline(Subpass *pPostProcessSubpass, const char *shadersPa
     };
 
     VkResult result = vkCreateDescriptorSetLayout(vkDevice, &descriptorSetLayoutCreateInfo, NULL, &pPostProcessSubpass->descriptorSetLayout);
+    TryThrowVulkanError(result);
     VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
         .pNext = NULL,
