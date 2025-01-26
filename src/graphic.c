@@ -303,7 +303,7 @@ static void ChooseSurfaceFormat(VkSurfaceFormatKHR *surfaceFormats, uint32_t sur
             // continue;s
         }
     }
-    *pSurfaceFormat = surfaceFormats[0];
+    TickernelError("Format not found!");
 }
 static void ChoosePresentMode(VkPresentModeKHR *supportPresentModes, uint32_t supportPresentModeCount, VkPresentModeKHR targetPresentMode, VkPresentModeKHR *pPresentMode)
 {
@@ -784,7 +784,7 @@ void UpdateGraphic(GraphicContext *pGraphicContext, uint32_t swapchainWidth, uin
     {
         VkDevice vkDevice = pGraphicContext->vkDevice;
         result = vkAcquireNextImageKHR(vkDevice, pGraphicContext->vkSwapchain, UINT64_MAX, pGraphicContext->imageAvailableSemaphore, VK_NULL_HANDLE, &pGraphicContext->swapchainIndex);
-        printf("pGraphicContext->swapchainIndex: %d\n", pGraphicContext->swapchainIndex);
+        // printf("pGraphicContext->swapchainIndex: %d\n", pGraphicContext->swapchainIndex);
         if (result != VK_SUCCESS)
         {
             if (VK_ERROR_OUT_OF_DATE_KHR == result)

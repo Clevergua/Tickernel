@@ -14,7 +14,7 @@ VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
 }
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
-    self.window = [[NSWindow alloc] initWithContentRect:NSMakeRect(0, 0, 16 * 20, 9 * 20)
+    self.window = [[NSWindow alloc] initWithContentRect:NSMakeRect(0, 0, 16 * 100, 9 * 100)
                                               styleMask:(NSWindowStyleMaskTitled |
                                                          NSWindowStyleMaskResizable |
                                                          NSWindowStyleMaskClosable)
@@ -90,11 +90,11 @@ VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
     }
     
     NSLog(@"Vulkan surface created successfully!");
-    NSRect frame = self.window.contentView.frame;
+    
     
     NSString *resourcesPath = [[NSBundle mainBundle] resourcePath];
     
-    self.pTickernelEngine = TickernelStart([resourcesPath UTF8String], 2, VK_PRESENT_MODE_FIFO_KHR, _vkInstance, _vkSurface, frame.size.width, frame.size.height);
+    self.pTickernelEngine = TickernelStart([resourcesPath UTF8String], 2, VK_PRESENT_MODE_FIFO_KHR, _vkInstance, _vkSurface, self.mtkView.drawableSize.width, self.mtkView.drawableSize.height);
     if (self.pTickernelEngine == NULL) {
         NSLog(@"Failed to start Tickernel Engine!");
     } else {
@@ -127,14 +127,13 @@ VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
 #pragma mark - MTKViewDelegate Methods
 
 - (void)mtkView:(MTKView *)view drawableSizeWillChange:(CGSize)size {
-    
 }
 
 - (void)drawInMTKView:(MTKView *)view {
-    NSRect frame = self.window.contentView.frame;
+    CGSize drawableSize = view.drawableSize;
     if (self.pTickernelEngine != NULL)
     {
-        TickernelUpdate(self.pTickernelEngine, frame.size.width, frame.size.height);
+        TickernelUpdate(self.pTickernelEngine, drawableSize.width, drawableSize.height);
     }
 }
 

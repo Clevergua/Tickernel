@@ -260,16 +260,17 @@ local targetPosition = { 0, 8, 0 }
 local t = 0
 
 function engine.Update()
-    print("Lua Update")
+    -- print("Lua Update")
     if engine.frameCount == 0 then
         collectgarbage("collect")
+        local memoryUsage = collectgarbage("count")
+        print("Current memory usage: ", memoryUsage, "KB")
     end
     t = t + 0.001
     local distance = gameMath.PingPong(5, length - 5, t * 0.2)
     cameraPosition[1] = distance
     targetPosition[1] = distance
-    local memoryUsage = collectgarbage("count")
-    print("Current memory usage: ", memoryUsage, "KB")
+
     engine.UpdateGlobalUniformBuffer(cameraPosition, targetPosition, t * 100)
     engine.frameCount = engine.frameCount + 1
 end
