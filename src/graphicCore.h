@@ -39,9 +39,7 @@ typedef struct
     PointLight pointLights[MAX_POINT_LIGHT_COUNT];
 } LightsUniformBuffer;
 
-// GlobalBuffer 世界场景中的数据
-// ModelBuffer 每种建筑的数据
-// InstanceBuffer 每个建筑实例的数据
+
 typedef struct SubpassModelStruct
 {
     uint32_t vertexCount;
