@@ -5,16 +5,16 @@ static NSString * const AppName = @"Tickernel";
 @implementation AppDelegate
 
 VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
-                                             VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-                                             VkDebugUtilsMessageTypeFlagsEXT messageType,
-                                             const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
-                                             void* pUserData) {
-    NSLog(@"validation layer msg: %s", pCallbackData->pMessage);
+    VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+    VkDebugUtilsMessageTypeFlagsEXT messageType,
+    const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
+    void* pUserData) {
+    NSLog(@"[Vulkan Validation] %s", pCallbackData->pMessage);
     return VK_FALSE;
 }
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
-    self.window = [[NSWindow alloc] initWithContentRect:NSMakeRect(0, 0, 16 * 100, 9 * 100)
+    self.window = [[NSWindow alloc] initWithContentRect:NSMakeRect(0, 0, 1920, 1080)
                                               styleMask:(NSWindowStyleMaskTitled |
                                                          NSWindowStyleMaskResizable |
                                                          NSWindowStyleMaskClosable)
@@ -22,13 +22,54 @@ VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
                                                   defer:NO];
     [self.window setTitle:AppName];
     [self.window makeKeyAndOrderFront:nil];
-    
-    self.mtkView = [[MTKView alloc] initWithFrame:[self.window contentRectForFrameRect:self.window.frame]];
-    self.mtkView.device = MTLCreateSystemDefaultDevice();
-    self.mtkView.colorPixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
-    self.mtkView.delegate = self;
-    [self.window setContentView:self.mtkView];
-    
+
+    if (![self createVulkanInstance]) {
+        [self cleanupVulkanResources];
+        return;
+    }
+
+    self.appView = [[AppView alloc] initWithFrame:self.window.contentView.bounds
+                                           device:MTLCreateSystemDefaultDevice()
+                                    vulkanInstance:_vkInstance];
+    [self.window setContentView:self.appView];
+
+    if (![self createVulkanSurface]) {
+        [self cleanupVulkanResources];
+        return;
+    }
+
+    NSString *resourcesPath = [[NSBundle mainBundle] resourcePath];
+    _pTickernelEngine = TickernelStart([resourcesPath UTF8String], 2, VK_PRESENT_MODE_FIFO_KHR,
+                                       _vkInstance, _vkSurface,
+                                       self.appView.drawableSize.width,
+                                       self.appView.drawableSize.height);
+    if (_pTickernelEngine == NULL) {
+        NSLog(@"Failed to start Tickernel Engine!");
+        [self cleanupVulkanResources];
+        return;
+    } else {
+        NSLog(@"Tickernel Engine started successfully!");
+        self.appView.pTickernelEngine = _pTickernelEngine;
+        self.appView.vkSurface = _vkSurface;
+    }
+
+    [self.window makeFirstResponder:self.appView];
+}
+
+- (void)applicationWillTerminate:(NSNotification *)aNotification {
+    if (_pTickernelEngine != NULL) {
+        TickernelEnd(_pTickernelEngine);
+        _pTickernelEngine = NULL;
+        NSLog(@"Tickernel Engine terminated!");
+    }
+    [self cleanupVulkanResources];
+}
+
+- (BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication *)sender {
+    return YES;
+}
+
+- (BOOL)createVulkanInstance {
     VkApplicationInfo appInfo = {};
     appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
     appInfo.pApplicationName = [AppName UTF8String];
@@ -36,27 +77,27 @@ VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
     appInfo.pEngineName = "Tickernel Engine";
     appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
     appInfo.apiVersion = VK_API_VERSION_1_3;
-    
+
     VkInstanceCreateInfo createInfo = {};
     createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
     createInfo.pApplicationInfo = &appInfo;
     createInfo.flags = VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
-    
+
 #ifdef DEBUG
     const char* layers[] = {
         "VK_LAYER_KHRONOS_validation",
     };
     createInfo.enabledLayerCount = sizeof(layers) / sizeof(layers[0]);
     createInfo.ppEnabledLayerNames = layers;
-    
+
     VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo = {};
     debugCreateInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
     debugCreateInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT |
-    VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
-    VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+                                      VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
+                                      VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
     debugCreateInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
-    VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
-    VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+                                  VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
+                                  VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
     debugCreateInfo.pfnUserCallback = debugCallback;
     createInfo.pNext = &debugCreateInfo;
 #else
@@ -64,76 +105,47 @@ VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
     createInfo.ppEnabledLayerNames = NULL;
     createInfo.pNext = NULL;
 #endif
-    
+
     const char* extensions[] = {
         "VK_KHR_surface",
         "VK_MVK_macos_surface",
         "VK_KHR_portability_enumeration",
+#ifdef DEBUG
         "VK_EXT_debug_utils",
+#endif
     };
     createInfo.enabledExtensionCount = sizeof(extensions) / sizeof(extensions[0]);
     createInfo.ppEnabledExtensionNames = extensions;
-    
+
     if (vkCreateInstance(&createInfo, NULL, &_vkInstance) != VK_SUCCESS) {
         NSLog(@"Failed to create Vulkan instance!");
-        return;
+        return NO;
     }
-    NSLog(@"Vulkan instance created successfully with validation layers enabled!");
-    
-    VkMacOSSurfaceCreateInfoMVK surfaceCreateInfo = {};
-    surfaceCreateInfo.sType = VK_STRUCTURE_TYPE_MACOS_SURFACE_CREATE_INFO_MVK;
-    surfaceCreateInfo.pView = (__bridge void*)self.mtkView.layer;
-    
-    if (vkCreateMacOSSurfaceMVK(_vkInstance, &surfaceCreateInfo, NULL, &_vkSurface) != VK_SUCCESS) {
-        NSLog(@"Failed to create Vulkan surface!");
-        return;
-    }
-    
-    NSLog(@"Vulkan surface created successfully!");
-    
-    
-    NSString *resourcesPath = [[NSBundle mainBundle] resourcePath];
-    
-    self.pTickernelEngine = TickernelStart([resourcesPath UTF8String], 2, VK_PRESENT_MODE_FIFO_KHR, _vkInstance, _vkSurface, self.mtkView.drawableSize.width, self.mtkView.drawableSize.height);
-    if (self.pTickernelEngine == NULL) {
-        NSLog(@"Failed to start Tickernel Engine!");
-    } else {
-        NSLog(@"Tickernel Engine started successfully!");
-    }
+    NSLog(@"Vulkan instance created successfully!");
+    return YES;
 }
 
-- (void)applicationWillTerminate:(NSNotification *)aNotification {
-    if (self.pTickernelEngine != NULL) {
-        TickernelEnd(self.pTickernelEngine);
-        NSLog(@"Tickernel Engine terminated!");
+- (BOOL)createVulkanSurface {
+    VkMacOSSurfaceCreateInfoMVK surfaceCreateInfo = {};
+    surfaceCreateInfo.sType = VK_STRUCTURE_TYPE_MACOS_SURFACE_CREATE_INFO_MVK;
+    surfaceCreateInfo.pView = (__bridge void*)self.appView;
+
+    if (vkCreateMacOSSurfaceMVK(_vkInstance, &surfaceCreateInfo, NULL, &_vkSurface) != VK_SUCCESS) {
+        NSLog(@"Failed to create Vulkan surface!");
+        return NO;
     }
-    
+    NSLog(@"Vulkan surface created successfully!");
+    return YES;
+}
+
+- (void)cleanupVulkanResources {
     if (_vkSurface != VK_NULL_HANDLE) {
         vkDestroySurfaceKHR(_vkInstance, _vkSurface, NULL);
+        _vkSurface = VK_NULL_HANDLE;
     }
     if (_vkInstance != VK_NULL_HANDLE) {
         vkDestroyInstance(_vkInstance, NULL);
-    }
-}
-
-- (BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication *)sender {
-    return YES;
-}
-
-- (BOOL)applicationSupportsSecureRestorableState:(NSApplication *)app {
-    return YES;
-}
-
-#pragma mark - MTKViewDelegate Methods
-
-- (void)mtkView:(MTKView *)view drawableSizeWillChange:(CGSize)size {
-}
-
-- (void)drawInMTKView:(MTKView *)view {
-    CGSize drawableSize = view.drawableSize;
-    if (self.pTickernelEngine != NULL)
-    {
-        TickernelUpdate(self.pTickernelEngine, drawableSize.width, drawableSize.height);
+        _vkInstance = VK_NULL_HANDLE;
     }
 }
 

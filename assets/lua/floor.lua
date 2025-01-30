@@ -1,7 +1,6 @@
 local gameMath = require("gameMath")
 
 local floor = {
-
     snow = {
         temperature = 0,
         humidity = 1,
@@ -27,12 +26,12 @@ local floor = {
         humidity = 2,
         fraction = 1,
     },
-    ice = {
+    volcan = {
         temperature = 0,
         humidity = 2,
         fraction = 1,
     },
-    ice = {
+    lava = {
         temperature = 0,
         humidity = 2,
         fraction = 1,

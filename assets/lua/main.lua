@@ -8,7 +8,7 @@ local width = 16
 local voxelCount = 16
 local scale = 1 / voxelCount;
 local voxel = {
-    dirt = { 180, 120, 70, 255 },
+    dirt = { 150, 90, 40, 255 },
     snow = { 250, 250, 250, 255 },
     ice = { 190, 190, 245, 255 },
     sand = { 245, 212, 163, 255 },
@@ -109,18 +109,18 @@ function engine.Start()
     local modelsPath = engine.assetsPath .. engine.pathSeparator
     print("Loading models..")
     local models = {
-        -- engine.LoadModel(modelsPath .. "LargeBuilding01_0.tknvox"),
-        -- engine.LoadModel(modelsPath .. "SmallBuilding01_0.tknvox"),
-        -- engine.LoadModel(modelsPath .. "SmallBuilding02_0.tknvox"),
-        -- engine.LoadModel(modelsPath .. "SmallBuilding03_0.tknvox"),
-        -- engine.LoadModel(modelsPath .. "SmallBuilding04_0.tknvox"),
-        -- engine.LoadModel(modelsPath .. "TallBuilding01_0.tknvox"),
-        -- engine.LoadModel(modelsPath .. "TallBuilding02_0.tknvox"),
-        -- engine.LoadModel(modelsPath .. "TallBuilding03_0.tknvox"),
+        engine.LoadModel(modelsPath .. "LargeBuilding01_0.tknvox"),
+        engine.LoadModel(modelsPath .. "SmallBuilding01_0.tknvox"),
+        engine.LoadModel(modelsPath .. "SmallBuilding02_0.tknvox"),
+        engine.LoadModel(modelsPath .. "SmallBuilding03_0.tknvox"),
+        engine.LoadModel(modelsPath .. "SmallBuilding04_0.tknvox"),
+        engine.LoadModel(modelsPath .. "TallBuilding01_0.tknvox"),
+        engine.LoadModel(modelsPath .. "TallBuilding02_0.tknvox"),
+        engine.LoadModel(modelsPath .. "TallBuilding03_0.tknvox"),
         engine.LoadModel(modelsPath .. "Stone_0.tknvox"),
     }
     for index, model in ipairs(models) do
-        local count = 100
+        local count = 15
         if index == 9 then
             count = 20
         end
@@ -160,11 +160,11 @@ function engine.Start()
                 for py = 1, voxelCount do
                     local dx = (px - (voxelCount + 1) / 2) / voxelCount
                     local dy = (py - (voxelCount + 1) / 2) / voxelCount
-                    local foundationHeightNoiseScale = 1.7
+                    local foundationHeightNoiseScale = 2.1
                     local foundationHeight = gameMath.PerlinNoise2D(foundationSeed,
                         foundationHeightNoiseScale * (x + dx),
                         foundationHeightNoiseScale * (y + dy))
-                    foundationHeight = 3 + gameMath.Round(gameMath.Clamp(foundationHeight / 0.9, -1, 1))
+                    foundationHeight = 3 + gameMath.Round(gameMath.Clamp(foundationHeight * 2, -1, 1))
                     local voxelHeightMap = voxelMap[(x - 1) * voxelCount + px][(y - 1) * voxelCount + py]
                     for z = 1, foundationHeight do
                         voxelHeightMap[z] = voxel.dirt

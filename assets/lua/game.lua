@@ -77,7 +77,7 @@ function game.GenerateWorld(seed, length, width)
     game.humiditySeed = seed + 2
     game.length = length
     game.width = width
-    floorMap = {}
+    local floorMap = {}
     game.blockMap = {}
     for x = 1, game.length do
         floorMap[x] = {}
