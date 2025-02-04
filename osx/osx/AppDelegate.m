@@ -5,7 +5,7 @@ static NSString * const AppName = @"Tickernel";
 @implementation AppDelegate
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
-    self.window = [[NSWindow alloc] initWithContentRect:NSMakeRect(0, 0, 1920, 1080)
+    self.window = [[NSWindow alloc] initWithContentRect:NSMakeRect(0, 0, 600, 400)
                                               styleMask:(NSWindowStyleMaskTitled |
                                                          NSWindowStyleMaskResizable |
                                                          NSWindowStyleMaskClosable)
