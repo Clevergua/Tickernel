@@ -37,12 +37,12 @@ typedef struct
 typedef void *(*TickernelVoxelMalloc)(size_t);
 typedef void (*TickernelVoxelFree)(void *);
 
-void SerializeTickernelVoxel(const char *filename, TickernelVoxel tickernelVoxel)
+void serializeTickernelVoxel(const char *filename, TickernelVoxel tickernelVoxel)
 {
     FILE *file = fopen(filename, "wb");
     if (file == NULL)
     {
-        TickernelError("Failed to open file with name :%s for writing!\n", filename);
+        tickernelError("Failed to open file with name :%s for writing!\n", filename);
     }
     else
     {
@@ -68,12 +68,12 @@ void SerializeTickernelVoxel(const char *filename, TickernelVoxel tickernelVoxel
     fclose(file);
 }
 
-void DeserializeTickernelVoxel(const char *filename, TickernelVoxel *pTickernelVoxel, TickernelVoxelMalloc tickernelVoxelMalloc)
+void deserializeTickernelVoxel(const char *filename, TickernelVoxel *pTickernelVoxel, TickernelVoxelMalloc tickernelVoxelMalloc)
 {
     FILE *file = fopen(filename, "rb");
     if (file == NULL)
     {
-        TickernelError("Failed to open file for reading");
+        tickernelError("Failed to open file for reading");
         return;
     }
     size_t freadResult;
@@ -129,13 +129,13 @@ void DeserializeTickernelVoxel(const char *filename, TickernelVoxel *pTickernelV
         }
         else
         {
-            TickernelError("Unknown type: %d\n", pTickernelVoxel->types[i]);
+            tickernelError("Unknown type: %d\n", pTickernelVoxel->types[i]);
         }
     }
     fclose(file);
 }
 
-void ReleaseTickernelVoxel(TickernelVoxel *pTickernelVoxel, TickernelVoxelFree tickernelFree)
+void releaseTickernelVoxel(TickernelVoxel *pTickernelVoxel, TickernelVoxelFree tickernelFree)
 {
     for (size_t i = 0; i < pTickernelVoxel->propertyCount; i++)
     {

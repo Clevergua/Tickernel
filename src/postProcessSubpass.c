@@ -1,12 +1,12 @@
 #include "postProcessSubpass.h"
 
-static void CreateVkPipeline(Subpass *pPostProcessSubpass, const char *shadersPath, VkRenderPass vkRenderPass, VkDevice vkDevice, VkViewport viewport, VkRect2D scissor)
+static void createVkPipeline(Subpass *pPostProcessSubpass, const char *shadersPath, VkRenderPass vkRenderPass, VkDevice vkDevice, VkViewport viewport, VkRect2D scissor)
 {
     VkShaderModule postProcessVertShaderModule;
     char postProcessVertShaderPath[FILENAME_MAX];
     strcpy(postProcessVertShaderPath, shadersPath);
-    TickernelCombinePaths(postProcessVertShaderPath, FILENAME_MAX, "postProcess.vert.spv");
-    CreateVkShaderModule(vkDevice, postProcessVertShaderPath, &postProcessVertShaderModule);
+    tickernelCombinePaths(postProcessVertShaderPath, FILENAME_MAX, "postProcess.vert.spv");
+    createVkShaderModule(vkDevice, postProcessVertShaderPath, &postProcessVertShaderModule);
     VkPipelineShaderStageCreateInfo vertShaderStageCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
         .pNext = NULL,
@@ -20,8 +20,8 @@ static void CreateVkPipeline(Subpass *pPostProcessSubpass, const char *shadersPa
     VkShaderModule postProcessFragShaderModule;
     char postProcessFragShaderPath[FILENAME_MAX];
     strcpy(postProcessFragShaderPath, shadersPath);
-    TickernelCombinePaths(postProcessFragShaderPath, FILENAME_MAX, "postProcess.frag.spv");
-    CreateVkShaderModule(vkDevice, postProcessFragShaderPath, &postProcessFragShaderModule);
+    tickernelCombinePaths(postProcessFragShaderPath, FILENAME_MAX, "postProcess.frag.spv");
+    createVkShaderModule(vkDevice, postProcessFragShaderPath, &postProcessFragShaderModule);
     VkPipelineShaderStageCreateInfo fragShaderStageCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
         .pNext = NULL,
@@ -152,7 +152,7 @@ static void CreateVkPipeline(Subpass *pPostProcessSubpass, const char *shadersPa
     };
 
     VkResult result = vkCreateDescriptorSetLayout(vkDevice, &descriptorSetLayoutCreateInfo, NULL, &pPostProcessSubpass->descriptorSetLayout);
-    TryThrowVulkanError(result);
+    tryThrowVulkanError(result);
     VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
         .pNext = NULL,
@@ -164,7 +164,7 @@ static void CreateVkPipeline(Subpass *pPostProcessSubpass, const char *shadersPa
     };
 
     result = vkCreatePipelineLayout(vkDevice, &pipelineLayoutCreateInfo, NULL, &pPostProcessSubpass->vkPipelineLayout);
-    TryThrowVulkanError(result);
+    tryThrowVulkanError(result);
     VkGraphicsPipelineCreateInfo postProcessPipelineCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
         .pNext = NULL,
@@ -189,18 +189,18 @@ static void CreateVkPipeline(Subpass *pPostProcessSubpass, const char *shadersPa
 
     VkPipelineCache pipelineCache = NULL;
     result = vkCreateGraphicsPipelines(vkDevice, pipelineCache, 1, &postProcessPipelineCreateInfo, NULL, &pPostProcessSubpass->vkPipeline);
-    TryThrowVulkanError(result);
-    DestroyVkShaderModule(vkDevice, postProcessVertShaderModule);
-    DestroyVkShaderModule(vkDevice, postProcessFragShaderModule);
+    tryThrowVulkanError(result);
+    destroyVkShaderModule(vkDevice, postProcessVertShaderModule);
+    destroyVkShaderModule(vkDevice, postProcessFragShaderModule);
 }
-static void DestroyVkPipeline(Subpass *pPostProcessSubpass, VkDevice vkDevice)
+static void destroyVkPipeline(Subpass *pPostProcessSubpass, VkDevice vkDevice)
 {
     vkDestroyDescriptorSetLayout(vkDevice, pPostProcessSubpass->descriptorSetLayout, NULL);
     vkDestroyPipelineLayout(vkDevice, pPostProcessSubpass->vkPipelineLayout, NULL);
     vkDestroyPipeline(vkDevice, pPostProcessSubpass->vkPipeline, NULL);
 }
 
-static void CreatePostProcessSubpassModel(Subpass *pPostProcessSubpass, VkDevice vkDevice, VkImageView colorVkImageView)
+static void createPostProcessSubpassModel(Subpass *pPostProcessSubpass, VkDevice vkDevice, VkImageView colorVkImageView)
 {
     SubpassModel subpassModel = {
         .vertexCount = 0,
@@ -229,7 +229,7 @@ static void CreatePostProcessSubpassModel(Subpass *pPostProcessSubpass, VkDevice
         .pPoolSizes = pPostProcessSubpass->vkDescriptorPoolSizes,
     };
     VkResult result = vkCreateDescriptorPool(vkDevice, &descriptorPoolCreateInfo, NULL, &subpassModel.vkDescriptorPool);
-    TryThrowVulkanError(result);
+    tryThrowVulkanError(result);
     VkDescriptorSetAllocateInfo descriptorSetAllocateInfo = {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
         .pNext = NULL,
@@ -239,7 +239,7 @@ static void CreatePostProcessSubpassModel(Subpass *pPostProcessSubpass, VkDevice
     };
 
     result = vkAllocateDescriptorSets(vkDevice, &descriptorSetAllocateInfo, &subpassModel.vkDescriptorSet);
-    TryThrowVulkanError(result);
+    tryThrowVulkanError(result);
     VkDescriptorImageInfo colorVkDescriptorImageInfo = {
         .sampler = NULL,
         .imageView = colorVkImageView,
@@ -261,41 +261,41 @@ static void CreatePostProcessSubpassModel(Subpass *pPostProcessSubpass, VkDevice
     };
     vkUpdateDescriptorSets(vkDevice, 1, descriptorWrites, 0, NULL);
     uint32_t index;
-    TickernelAddToCollection(&pPostProcessSubpass->modelCollection, &subpassModel, &index);
+    tickernelAddToCollection(&pPostProcessSubpass->modelCollection, &subpassModel, &index);
 }
-static void DestroyPostProcessSubpassModel(Subpass *pPostProcessSubpass, VkDevice vkDevice, uint32_t index)
+static void destroyPostProcessSubpassModel(Subpass *pPostProcessSubpass, VkDevice vkDevice, uint32_t index)
 {
     SubpassModel *pSubpassModel = pPostProcessSubpass->modelCollection.array[index];
     VkResult result = vkFreeDescriptorSets(vkDevice, pSubpassModel->vkDescriptorPool, 1, &pSubpassModel->vkDescriptorSet);
-    TryThrowVulkanError(result);
+    tryThrowVulkanError(result);
     vkDestroyDescriptorPool(vkDevice, pSubpassModel->vkDescriptorPool, NULL);
-    TickernelRemoveFromCollection(&pPostProcessSubpass->modelCollection, index);
+    tickernelRemoveFromCollection(&pPostProcessSubpass->modelCollection, index);
 }
 
-void CreatePostProcessSubpass(Subpass *pPostProcessSubpass, const char *shadersPath, VkRenderPass vkRenderPass, VkDevice vkDevice, VkViewport viewport, VkRect2D scissor, VkImageView colorVkImageView)
+void createPostProcessSubpass(Subpass *pPostProcessSubpass, const char *shadersPath, VkRenderPass vkRenderPass, VkDevice vkDevice, VkViewport viewport, VkRect2D scissor, VkImageView colorVkImageView)
 {
-    CreateVkPipeline(pPostProcessSubpass, shadersPath, vkRenderPass, vkDevice, viewport, scissor);
+    createVkPipeline(pPostProcessSubpass, shadersPath, vkRenderPass, vkDevice, viewport, scissor);
     pPostProcessSubpass->vkDescriptorPoolSizeCount = 1;
-    pPostProcessSubpass->vkDescriptorPoolSizes = TickernelMalloc(sizeof(VkDescriptorPoolSize) * pPostProcessSubpass->vkDescriptorPoolSizeCount);
+    pPostProcessSubpass->vkDescriptorPoolSizes = tickernelMalloc(sizeof(VkDescriptorPoolSize) * pPostProcessSubpass->vkDescriptorPoolSizeCount);
     pPostProcessSubpass->vkDescriptorPoolSizes[0] = (VkDescriptorPoolSize){
         .type = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT,
         .descriptorCount = 1,
     };
 
-    TickernelCreateCollection(&pPostProcessSubpass->modelCollection, sizeof(SubpassModel), 1);
-    CreatePostProcessSubpassModel(pPostProcessSubpass, vkDevice, colorVkImageView);
+    tickernelCreateCollection(&pPostProcessSubpass->modelCollection, sizeof(SubpassModel), 1);
+    createPostProcessSubpassModel(pPostProcessSubpass, vkDevice, colorVkImageView);
 }
 
-void DestroyPostProcessSubpass(Subpass *pPostProcessSubpass, VkDevice vkDevice)
+void destroyPostProcessSubpass(Subpass *pPostProcessSubpass, VkDevice vkDevice)
 {
-    DestroyPostProcessSubpassModel(pPostProcessSubpass, vkDevice, 0);
-    TickernelDestroyCollection(&pPostProcessSubpass->modelCollection);
-    TickernelFree(pPostProcessSubpass->vkDescriptorPoolSizes);
+    destroyPostProcessSubpassModel(pPostProcessSubpass, vkDevice, 0);
+    tickernelDestroyCollection(&pPostProcessSubpass->modelCollection);
+    tickernelFree(pPostProcessSubpass->vkDescriptorPoolSizes);
 
-    DestroyVkPipeline(pPostProcessSubpass, vkDevice);
+    destroyVkPipeline(pPostProcessSubpass, vkDevice);
 }
-void RecreatePostProcessSubpassModel(Subpass *pPostProcessSubpass, VkDevice vkDevice, VkImageView colorVkImageView)
+void recreatePostProcessSubpassModel(Subpass *pPostProcessSubpass, VkDevice vkDevice, VkImageView colorVkImageView)
 {
-    DestroyPostProcessSubpassModel(pPostProcessSubpass, vkDevice, 0);
-    CreatePostProcessSubpassModel(pPostProcessSubpass, vkDevice, colorVkImageView);
+    destroyPostProcessSubpassModel(pPostProcessSubpass, vkDevice, 0);
+    createPostProcessSubpassModel(pPostProcessSubpass, vkDevice, colorVkImageView);
 }

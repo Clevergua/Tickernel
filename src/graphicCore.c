@@ -1,6 +1,6 @@
 #include "graphicCore.h"
 
-static void CreateImage(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkExtent3D vkExtent3D, VkFormat vkFormat, VkImageTiling vkImageTiling, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImage *pVkImage, VkDeviceMemory *pVkDeviceMemory)
+static void createImage(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkExtent3D vkExtent3D, VkFormat vkFormat, VkImageTiling vkImageTiling, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImage *pVkImage, VkDeviceMemory *pVkDeviceMemory)
 {
     VkResult result = VK_SUCCESS;
 
@@ -22,11 +22,11 @@ static void CreateImage(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, Vk
         .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
     };
     result = vkCreateImage(vkDevice, &imageCreateInfo, NULL, pVkImage);
-    TryThrowVulkanError(result);
+    tryThrowVulkanError(result);
     VkMemoryRequirements memoryRequirements;
     vkGetImageMemoryRequirements(vkDevice, *pVkImage, &memoryRequirements);
     uint32_t memoryTypeIndex;
-    FindMemoryType(vkPhysicalDevice, memoryRequirements.memoryTypeBits, vkMemoryPropertyFlags, &memoryTypeIndex);
+    findMemoryType(vkPhysicalDevice, memoryRequirements.memoryTypeBits, vkMemoryPropertyFlags, &memoryTypeIndex);
 
     VkMemoryAllocateInfo memoryAllocateInfo = {
         .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
@@ -36,12 +36,12 @@ static void CreateImage(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, Vk
     };
 
     result = vkAllocateMemory(vkDevice, &memoryAllocateInfo, NULL, pVkDeviceMemory);
-    TryThrowVulkanError(result);
+    tryThrowVulkanError(result);
     result = vkBindImageMemory(vkDevice, *pVkImage, *pVkDeviceMemory, 0);
-    TryThrowVulkanError(result);
+    tryThrowVulkanError(result);
 }
 
-static void FindSupportedFormat(VkPhysicalDevice vkPhysicalDevice, VkFormat *candidates, uint32_t candidatesCount, VkImageTiling tiling, VkFormatFeatureFlags features, VkFormat *vkFormat)
+static void findSupportedFormat(VkPhysicalDevice vkPhysicalDevice, VkFormat *candidates, uint32_t candidatesCount, VkImageTiling tiling, VkFormatFeatureFlags features, VkFormat *vkFormat)
 {
 
     for (uint32_t i = 0; i < candidatesCount; i++)
@@ -65,7 +65,7 @@ static void FindSupportedFormat(VkPhysicalDevice vkPhysicalDevice, VkFormat *can
     printf("Target format not found!");
 }
 
-void CopyVkBuffer(VkCommandPool graphicVkCommandPool, VkDevice vkDevice, VkQueue vkGraphicQueue, VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize offset, VkDeviceSize size)
+void copyVkBuffer(VkCommandPool graphicVkCommandPool, VkDevice vkDevice, VkQueue vkGraphicQueue, VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize offset, VkDeviceSize size)
 {
     VkCommandBuffer vkCommandBuffer;
     VkCommandBufferAllocateInfo vkCommandBufferAllocateInfo = {
@@ -76,7 +76,7 @@ void CopyVkBuffer(VkCommandPool graphicVkCommandPool, VkDevice vkDevice, VkQueue
         .commandBufferCount = 1,
     };
     VkResult result = vkAllocateCommandBuffers(vkDevice, &vkCommandBufferAllocateInfo, &vkCommandBuffer);
-    TryThrowVulkanError(result);
+    tryThrowVulkanError(result);
 
     VkCommandBufferBeginInfo vkCommandBufferBeginInfo =
         {
@@ -86,7 +86,7 @@ void CopyVkBuffer(VkCommandPool graphicVkCommandPool, VkDevice vkDevice, VkQueue
             .pInheritanceInfo = NULL,
         };
     result = vkBeginCommandBuffer(vkCommandBuffer, &vkCommandBufferBeginInfo);
-    TryThrowVulkanError(result);
+    tryThrowVulkanError(result);
 
     VkBufferCopy copyRegion = {
         .srcOffset = 0,
@@ -112,7 +112,7 @@ void CopyVkBuffer(VkCommandPool graphicVkCommandPool, VkDevice vkDevice, VkQueue
     vkFreeCommandBuffers(vkDevice, graphicVkCommandPool, 1, &vkCommandBuffer);
 }
 
-void CreateBuffer(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkDeviceSize bufferSize, VkBufferUsageFlags bufferUsageFlags, VkMemoryPropertyFlags msemoryPropertyFlags, VkBuffer *pBuffer, VkDeviceMemory *pDeviceMemory)
+void createBuffer(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkDeviceSize bufferSize, VkBufferUsageFlags bufferUsageFlags, VkMemoryPropertyFlags msemoryPropertyFlags, VkBuffer *pBuffer, VkDeviceMemory *pDeviceMemory)
 {
     VkResult result = VK_SUCCESS;
     VkBufferCreateInfo bufferCreateInfo = {
@@ -126,11 +126,11 @@ void CreateBuffer(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkDevice
         .pQueueFamilyIndices = 0,
     };
     result = vkCreateBuffer(vkDevice, &bufferCreateInfo, NULL, pBuffer);
-    TryThrowVulkanError(result);
+    tryThrowVulkanError(result);
     VkMemoryRequirements memoryRequirements;
     vkGetBufferMemoryRequirements(vkDevice, *pBuffer, &memoryRequirements);
     uint32_t memoryTypeIndex;
-    FindMemoryType(vkPhysicalDevice, memoryRequirements.memoryTypeBits, msemoryPropertyFlags, &memoryTypeIndex);
+    findMemoryType(vkPhysicalDevice, memoryRequirements.memoryTypeBits, msemoryPropertyFlags, &memoryTypeIndex);
     VkMemoryAllocateInfo memoryAllocateInfo = {
         .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
         .pNext = NULL,
@@ -138,32 +138,32 @@ void CreateBuffer(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkDevice
         .memoryTypeIndex = memoryTypeIndex,
     };
     result = vkAllocateMemory(vkDevice, &memoryAllocateInfo, NULL, pDeviceMemory);
-    TryThrowVulkanError(result);
+    tryThrowVulkanError(result);
     result = vkBindBufferMemory(vkDevice, *pBuffer, *pDeviceMemory, 0);
-    TryThrowVulkanError(result);
+    tryThrowVulkanError(result);
 }
-void DestroyBuffer(VkDevice vkDevice, VkBuffer vkBuffer, VkDeviceMemory deviceMemory)
+void destroyBuffer(VkDevice vkDevice, VkBuffer vkBuffer, VkDeviceMemory deviceMemory)
 {
     vkFreeMemory(vkDevice, deviceMemory, NULL);
     vkDestroyBuffer(vkDevice, vkBuffer, NULL);
 }
 
-void UpdateBufferWithStagingBuffer(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkDeviceSize offset, VkDeviceSize bufferSize, void *bufferData, VkCommandPool graphicVkCommandPool, VkQueue vkGraphicQueue, VkBuffer vkBuffer)
+void updateBufferWithStagingBuffer(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkDeviceSize offset, VkDeviceSize bufferSize, void *bufferData, VkCommandPool graphicVkCommandPool, VkQueue vkGraphicQueue, VkBuffer vkBuffer)
 {
     VkBuffer stagingBuffer;
     VkDeviceMemory stagingBufferMemory;
-    CreateBuffer(vkDevice, vkPhysicalDevice, bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingBuffer, &stagingBufferMemory);
+    createBuffer(vkDevice, vkPhysicalDevice, bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingBuffer, &stagingBufferMemory);
 
     void *pData;
     VkResult result = vkMapMemory(vkDevice, stagingBufferMemory, offset, bufferSize, 0, &pData);
-    TryThrowVulkanError(result);
+    tryThrowVulkanError(result);
     memcpy(pData, bufferData, bufferSize);
     vkUnmapMemory(vkDevice, stagingBufferMemory);
 
-    CopyVkBuffer(graphicVkCommandPool, vkDevice, vkGraphicQueue, stagingBuffer, vkBuffer, 0, bufferSize);
-    DestroyBuffer(vkDevice, stagingBuffer, stagingBufferMemory);
+    copyVkBuffer(graphicVkCommandPool, vkDevice, vkGraphicQueue, stagingBuffer, vkBuffer, 0, bufferSize);
+    destroyBuffer(vkDevice, stagingBuffer, stagingBufferMemory);
 }
-void UpdateBuffer(VkDevice vkDevice, VkDeviceMemory bufferMemory, VkDeviceSize offset, VkDeviceSize bufferSize, void *bufferData)
+void updateBuffer(VkDevice vkDevice, VkDeviceMemory bufferMemory, VkDeviceSize offset, VkDeviceSize bufferSize, void *bufferData)
 {
     void *data;
     vkMapMemory(vkDevice, bufferMemory, offset, bufferSize, 0, &data);
@@ -171,7 +171,7 @@ void UpdateBuffer(VkDevice vkDevice, VkDeviceMemory bufferMemory, VkDeviceSize o
     vkUnmapMemory(vkDevice, bufferMemory);
 }
 
-void FindMemoryType(VkPhysicalDevice vkPhysicalDevice, uint32_t typeFilter, VkMemoryPropertyFlags memoryPropertyFlags, uint32_t *memoryTypeIndex)
+void findMemoryType(VkPhysicalDevice vkPhysicalDevice, uint32_t typeFilter, VkMemoryPropertyFlags memoryPropertyFlags, uint32_t *memoryTypeIndex)
 {
     VkPhysicalDeviceMemoryProperties physicalDeviceMemoryProperties;
     vkGetPhysicalDeviceMemoryProperties(vkPhysicalDevice, &physicalDeviceMemoryProperties);
@@ -186,14 +186,14 @@ void FindMemoryType(VkPhysicalDevice vkPhysicalDevice, uint32_t typeFilter, VkMe
     printf("Failed to find suitable memory type!");
 }
 
-void FindDepthFormat(VkPhysicalDevice vkPhysicalDevice, VkFormat *pDepthFormat)
+void findDepthFormat(VkPhysicalDevice vkPhysicalDevice, VkFormat *pDepthFormat)
 {
     uint32_t candidatesCount = 3;
     VkFormat *candidates = (VkFormat[]){VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT};
-    FindSupportedFormat(vkPhysicalDevice, candidates, candidatesCount, VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT, pDepthFormat);
+    findSupportedFormat(vkPhysicalDevice, candidates, candidatesCount, VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT, pDepthFormat);
 }
 
-void CreateImageView(VkDevice vkDevice, VkImage image, VkFormat format, VkImageAspectFlags imageAspectFlags, VkImageView *pImageView)
+void createImageView(VkDevice vkDevice, VkImage image, VkFormat format, VkImageAspectFlags imageAspectFlags, VkImageView *pImageView)
 {
     VkComponentMapping components = {
         .r = VK_COMPONENT_SWIZZLE_IDENTITY,
@@ -219,29 +219,29 @@ void CreateImageView(VkDevice vkDevice, VkImage image, VkFormat format, VkImageA
         .subresourceRange = subresourceRange,
     };
     VkResult result = vkCreateImageView(vkDevice, &imageViewCreateInfo, NULL, pImageView);
-    TryThrowVulkanError(result);
+    tryThrowVulkanError(result);
 }
 
-void CreateGraphicImage(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkExtent3D vkExtent3D, VkFormat vkFormat, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags, GraphicImage *pGraphicImage)
+void createGraphicImage(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkExtent3D vkExtent3D, VkFormat vkFormat, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags, GraphicImage *pGraphicImage)
 {
     pGraphicImage->vkFormat = vkFormat;
-    CreateImage(vkDevice, vkPhysicalDevice, vkExtent3D, vkFormat, VK_IMAGE_TILING_OPTIMAL, vkImageUsageFlags, vkMemoryPropertyFlags, &pGraphicImage->vkImage, &pGraphicImage->vkDeviceMemory);
-    CreateImageView(vkDevice, pGraphicImage->vkImage, pGraphicImage->vkFormat, vkImageAspectFlags, &pGraphicImage->vkImageView);
+    createImage(vkDevice, vkPhysicalDevice, vkExtent3D, vkFormat, VK_IMAGE_TILING_OPTIMAL, vkImageUsageFlags, vkMemoryPropertyFlags, &pGraphicImage->vkImage, &pGraphicImage->vkDeviceMemory);
+    createImageView(vkDevice, pGraphicImage->vkImage, pGraphicImage->vkFormat, vkImageAspectFlags, &pGraphicImage->vkImageView);
 }
 
-void DestroyGraphicImage(VkDevice vkDevice, GraphicImage graphicImage)
+void destroyGraphicImage(VkDevice vkDevice, GraphicImage graphicImage)
 {
     vkDestroyImageView(vkDevice, graphicImage.vkImageView, NULL);
     vkDestroyImage(vkDevice, graphicImage.vkImage, NULL);
     vkFreeMemory(vkDevice, graphicImage.vkDeviceMemory, NULL);
 }
 
-void CreateVkShaderModule(VkDevice vkDevice, const char *filePath, VkShaderModule *pVkShaderModule)
+void createVkShaderModule(VkDevice vkDevice, const char *filePath, VkShaderModule *pVkShaderModule)
 {
     FILE *pFile = fopen(filePath, "rb");
     if (NULL == pFile)
     {
-        TickernelError("Failed to read file with path: %s\n", filePath);
+        tickernelError("Failed to read file with path: %s\n", filePath);
     }
     else
     {
@@ -249,7 +249,7 @@ void CreateVkShaderModule(VkDevice vkDevice, const char *filePath, VkShaderModul
         size_t fileLength = ftell(pFile);
         rewind(pFile);
 
-        uint32_t *pCode = TickernelMalloc(fileLength);
+        uint32_t *pCode = tickernelMalloc(fileLength);
         size_t codeSize = fread(pCode, 1, fileLength, pFile);
 
         fclose(pFile);
@@ -264,8 +264,8 @@ void CreateVkShaderModule(VkDevice vkDevice, const char *filePath, VkShaderModul
                 .pCode = pCode,
             };
             VkResult result = vkCreateShaderModule(vkDevice, &shaderModuleCreateInfo, NULL, pVkShaderModule);
-            TryThrowVulkanError(result);
-            TickernelFree(pCode);
+            tryThrowVulkanError(result);
+            tickernelFree(pCode);
         }
         else
         {
@@ -274,7 +274,7 @@ void CreateVkShaderModule(VkDevice vkDevice, const char *filePath, VkShaderModul
     }
 }
 
-void DestroyVkShaderModule(VkDevice vkDevice, VkShaderModule vkShaderModule)
+void destroyVkShaderModule(VkDevice vkDevice, VkShaderModule vkShaderModule)
 {
     vkDestroyShaderModule(vkDevice, vkShaderModule, NULL);
 }

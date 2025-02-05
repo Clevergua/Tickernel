@@ -5,7 +5,7 @@
 #include <execinfo.h>
 
 
-void TickernelError(char const *const _Format, ...)
+void tickernelError(char const *const _Format, ...)
 {
     va_list args;
     va_start(args, _Format);
@@ -18,7 +18,7 @@ void TickernelError(char const *const _Format, ...)
 
     if (symbols == NULL)
     {
-        TickernelError("backtrace_symbols");
+        tickernelError("backtrace_symbols");
         exit(EXIT_FAILURE);
     }
 
@@ -27,27 +27,27 @@ void TickernelError(char const *const _Format, ...)
         printf("%s\n", symbols[i]);
     }
 
-    TickernelFree(symbols);
+    tickernelFree(symbols);
 
     abort();
 }
 
-void TickernelSleep(uint32_t milliseconds)
+void tickernelSleep(uint32_t milliseconds)
 {
     usleep(milliseconds * 1000);
 }
 
-void *TickernelMalloc(size_t size)
+void *tickernelMalloc(size_t size)
 {
     return malloc(size);
 }
 
-void TickernelFree(void *block)
+void tickernelFree(void *block)
 {
     free(block);
 }
 
-bool TickernelStartsWith(const char *str, const char *prefix)
+bool tickernelStartsWith(const char *str, const char *prefix)
 {
     size_t strLength = strlen(str);
     size_t prefixLength = strlen(prefix);
@@ -62,7 +62,7 @@ bool TickernelStartsWith(const char *str, const char *prefix)
     }
 }
 
-bool TickernelEndsWith(const char *str, const char *suffix)
+bool tickernelEndsWith(const char *str, const char *suffix)
 {
     size_t strLength = strlen(str);
     size_t suffixLength = strlen(suffix);
@@ -83,13 +83,13 @@ bool TickernelEndsWith(const char *str, const char *suffix)
     }
 }
 
-void TickernelCombinePaths(char *dstPath, size_t dstPathSize, const char *srcPath)
+void tickernelCombinePaths(char *dstPath, size_t dstPathSize, const char *srcPath)
 {
-    const char *pathSeparator = TickernelGetPathSeparator();
+    const char *pathSeparator = tickernelGetPathSeparator();
     size_t dstPathLength = strlen(dstPath);
-    if (TickernelEndsWith(dstPath, pathSeparator))
+    if (tickernelEndsWith(dstPath, pathSeparator))
     {
-        if (TickernelStartsWith(srcPath, pathSeparator))
+        if (tickernelStartsWith(srcPath, pathSeparator))
         {
             size_t separatorLength = strlen(pathSeparator);
             dstPath[dstPathLength - separatorLength] = '\0';
@@ -100,7 +100,7 @@ void TickernelCombinePaths(char *dstPath, size_t dstPathSize, const char *srcPat
             strcat(dstPath, srcPath);
         }
     }
-    else if (TickernelStartsWith(srcPath, pathSeparator))
+    else if (tickernelStartsWith(srcPath, pathSeparator))
     {
         strcat(dstPath, srcPath);
     }
@@ -111,78 +111,78 @@ void TickernelCombinePaths(char *dstPath, size_t dstPathSize, const char *srcPat
     }
 }
 
-const char *TickernelGetPathSeparator(void)
+const char *tickernelGetPathSeparator(void)
 {
     return "/";
 }
 
-void TickernelCreateLinkedList(TickernelLinkedList *pLinkedList, size_t dataSize)
+void tickernelCreateLinkedList(TickernelLinkedList *pLinkedList, size_t dataSize)
 {
     pLinkedList->dataSize = dataSize;
     pLinkedList->pHead = NULL;
 }
 
-void TickernelDestroyLinkedList(TickernelLinkedList *pLinkedList)
+void tickernelDestroyLinkedList(TickernelLinkedList *pLinkedList)
 {
-    TickernelClearLinkedList(pLinkedList);
+    tickernelClearLinkedList(pLinkedList);
 }
 
-void TickernelAddToLinkedList(TickernelLinkedList *pLinkedList, void *pData)
+void tickernelAddToLinkedList(TickernelLinkedList *pLinkedList, void *pData)
 {
-    TickernelNode *pNewNode = (TickernelNode *)TickernelMalloc(sizeof(TickernelNode));
-    pNewNode->pData = TickernelMalloc(pLinkedList->dataSize);
+    TickernelNode *pNewNode = (TickernelNode *)tickernelMalloc(sizeof(TickernelNode));
+    pNewNode->pData = tickernelMalloc(pLinkedList->dataSize);
     pNewNode->pNext = pLinkedList->pHead;
     memcpy(pNewNode->pData, pData, pLinkedList->dataSize);
     pLinkedList->pHead = pNewNode;
 }
 
-void TickernelRemoveFromLinkedList(TickernelLinkedList *pLinkedList)
+void tickernelRemoveFromLinkedList(TickernelLinkedList *pLinkedList)
 {
     TickernelNode *current = pLinkedList->pHead;
     pLinkedList->pHead = pLinkedList->pHead->pNext;
-    TickernelFree(current->pData);
-    TickernelFree(current);
+    tickernelFree(current->pData);
+    tickernelFree(current);
 }
 
-void TickernelClearLinkedList(TickernelLinkedList *pLinkedList)
+void tickernelClearLinkedList(TickernelLinkedList *pLinkedList)
 {
     while (NULL != pLinkedList->pHead)
     {
-        TickernelRemoveFromLinkedList(pLinkedList);
+        tickernelRemoveFromLinkedList(pLinkedList);
     }
 }
 
-void TickernelCreateCollection(TickernelCollection *pCollection, size_t dataSize, uint32_t maxLength)
+void tickernelCreateCollection(TickernelCollection *pCollection, size_t dataSize, uint32_t maxLength)
 {
     pCollection->dataSize = dataSize;
     pCollection->maxLength = maxLength;
     pCollection->length = 0;
-    pCollection->array = TickernelMalloc(dataSize * maxLength);
+    pCollection->array = tickernelMalloc(dataSize * maxLength);
     for (uint32_t i = 0; i < maxLength; i++)
     {
         pCollection->array[i] = NULL;
     }
-    TickernelCreateLinkedList(&pCollection->removedIndexLinkedList, sizeof(uint32_t));
+    tickernelCreateLinkedList(&pCollection->removedIndexLinkedList, sizeof(uint32_t));
 }
-void TickernelDestroyCollection(TickernelCollection *pCollection)
+void tickernelDestroyCollection(TickernelCollection *pCollection)
 {
-    TickernelClearLinkedList(&pCollection->removedIndexLinkedList);
-    TickernelDestroyLinkedList(&pCollection->removedIndexLinkedList);
-    TickernelFree(pCollection->array);
+    tickernelClearLinkedList(&pCollection->removedIndexLinkedList);
+    tickernelDestroyLinkedList(&pCollection->removedIndexLinkedList);
+    tickernelFree(pCollection->array);
 }
-void TickernelAddToCollection(TickernelCollection *pCollection, void *pData, uint32_t *pIndex)
+void tickernelAddToCollection(TickernelCollection *pCollection, void *pData, uint32_t *pIndex)
 {
     if (NULL != pCollection->removedIndexLinkedList.pHead)
     {
         uint32_t index = *(uint32_t *)pCollection->removedIndexLinkedList.pHead->pData;
-        TickernelRemoveFromLinkedList(&pCollection->removedIndexLinkedList);
-        pCollection->array[index] = TickernelMalloc(pCollection->dataSize);
+        tickernelRemoveFromLinkedList(&pCollection->removedIndexLinkedList);
+        pCollection->array[index] = tickernelMalloc(pCollection->dataSize);
         memcpy(pCollection->array[index], pData, pCollection->dataSize);
         *pIndex = index;
     }
     else if (pCollection->length < pCollection->maxLength)
     {
-        pCollection->array[pCollection->length] = TickernelMalloc(pCollection->dataSize);
+        pCollection->array[pCollection->length] = tickernelMalloc(pCollection->dataSize);
         memcpy(pCollection->array[pCollection->length], pData, pCollection->dataSize);
         *pIndex = pCollection->length;
         pCollection->length++;
@@ -190,24 +190,24 @@ void TickernelAddToCollection(TickernelCollection *pCollection, void *pData, uin
     else
     {
         pCollection->maxLength *= 2;
-        void **newArray = TickernelMalloc(pCollection->dataSize * pCollection->maxLength);
+        void **newArray = tickernelMalloc(pCollection->dataSize * pCollection->maxLength);
         for (uint32_t i = 0; i < pCollection->maxLength; i++)
         {
             newArray[i] = NULL;
         }
         memcpy(newArray, pCollection->array, pCollection->dataSize * pCollection->length);
-        TickernelFree(pCollection->array);
+        tickernelFree(pCollection->array);
         pCollection->array = newArray;
 
-        pCollection->array[pCollection->length] = TickernelMalloc(pCollection->dataSize);
+        pCollection->array[pCollection->length] = tickernelMalloc(pCollection->dataSize);
         memcpy(pCollection->array[pCollection->length], pData, pCollection->dataSize);
         *pIndex = pCollection->length;
         pCollection->length++;
     }
 }
-void TickernelRemoveFromCollection(TickernelCollection *pCollection, uint32_t index)
+void tickernelRemoveFromCollection(TickernelCollection *pCollection, uint32_t index)
 {
-    TickernelFree(pCollection->array[index]);
+    tickernelFree(pCollection->array[index]);
     pCollection->array[pCollection->length] = NULL;
     if (index == (pCollection->length - 1))
     {
@@ -215,17 +215,17 @@ void TickernelRemoveFromCollection(TickernelCollection *pCollection, uint32_t in
     }
     else
     {
-        TickernelAddToLinkedList(&pCollection->removedIndexLinkedList, &index);
+        tickernelAddToLinkedList(&pCollection->removedIndexLinkedList, &index);
     }
 }
 
-void TickernelClearCollection(TickernelCollection *pCollection)
+void tickernelClearCollection(TickernelCollection *pCollection)
 {
     for (uint32_t i = 0; i < pCollection->length; i++)
     {
         if (NULL != pCollection->array[i])
         {
-            TickernelFree(pCollection->array[i]);
+            tickernelFree(pCollection->array[i]);
             pCollection->array[i] = NULL;
         }
         else
@@ -233,59 +233,59 @@ void TickernelClearCollection(TickernelCollection *pCollection)
             // Skip null
         }
     }
-    TickernelClearLinkedList(&pCollection->removedIndexLinkedList);
+    tickernelClearLinkedList(&pCollection->removedIndexLinkedList);
     pCollection->length = 0;
 }
 
-void TickernelCreateDynamicArray(TickernelDynamicArray *pDynamicArray, size_t dataSize, uint32_t maxLength)
+void tickernelCreateDynamicArray(TickernelDynamicArray *pDynamicArray, size_t dataSize, uint32_t maxLength)
 {
     pDynamicArray->dataSize = dataSize;
     pDynamicArray->maxLength = maxLength;
     pDynamicArray->length = 0;
-    pDynamicArray->array = (void **)TickernelMalloc(dataSize * maxLength);
+    pDynamicArray->array = (void **)tickernelMalloc(dataSize * maxLength);
     for (uint32_t i = 0; i < maxLength; i++)
     {
         pDynamicArray->array[i] = NULL;
     }
 }
-void TickernelDestroyDynamicArray(TickernelDynamicArray *pDynamicArray)
+void tickernelDestroyDynamicArray(TickernelDynamicArray *pDynamicArray)
 {
-    TickernelClearDynamicArray(pDynamicArray);
-    TickernelFree(pDynamicArray->array);
+    tickernelClearDynamicArray(pDynamicArray);
+    tickernelFree(pDynamicArray->array);
 }
 
-void TickernelAddToDynamicArray(TickernelDynamicArray *pDynamicArray, void *pData)
+void tickernelAddToDynamicArray(TickernelDynamicArray *pDynamicArray, void *pData)
 {
     if (pDynamicArray->length >= pDynamicArray->maxLength)
     {
         pDynamicArray->maxLength *= 2;
-        void **newArray = (void **)TickernelMalloc(pDynamicArray->dataSize * pDynamicArray->maxLength);
+        void **newArray = (void **)tickernelMalloc(pDynamicArray->dataSize * pDynamicArray->maxLength);
         memcpy(newArray, pDynamicArray->array, pDynamicArray->dataSize * pDynamicArray->length);
-        TickernelFree(pDynamicArray->array);
+        tickernelFree(pDynamicArray->array);
         pDynamicArray->array = newArray;
     }
     else
     {
         // Do nothing.
     }
-    pDynamicArray->array[pDynamicArray->length] = TickernelMalloc(pDynamicArray->dataSize);
+    pDynamicArray->array[pDynamicArray->length] = tickernelMalloc(pDynamicArray->dataSize);
     memcpy(pDynamicArray->array[pDynamicArray->length], pData, pDynamicArray->dataSize);
     pDynamicArray->length++;
 }
 
-void TickernelRemoveFromDynamicArray(TickernelDynamicArray *pDynamicArray, uint32_t index)
+void tickernelRemoveFromDynamicArray(TickernelDynamicArray *pDynamicArray, uint32_t index)
 {
     if (index >= pDynamicArray->length)
     {
-        TickernelError("Index out of bounds!\n");
+        tickernelError("Index out of bounds!\n");
     }
 
     if (NULL == pDynamicArray->array[index])
     {
-        TickernelError("Try to remove NULL!\n");
+        tickernelError("Try to remove NULL!\n");
     }
 
-    TickernelFree(pDynamicArray->array[index]);
+    tickernelFree(pDynamicArray->array[index]);
     if (index < pDynamicArray->length - 1)
     {
         memmove(&pDynamicArray->array[index], &pDynamicArray->array[index + 1], (pDynamicArray->length - index - 1) * sizeof(void *));
@@ -297,13 +297,13 @@ void TickernelRemoveFromDynamicArray(TickernelDynamicArray *pDynamicArray, uint3
     pDynamicArray->array[pDynamicArray->length] = NULL;
 }
 
-void TickernelClearDynamicArray(TickernelDynamicArray *pDynamicArray)
+void tickernelClearDynamicArray(TickernelDynamicArray *pDynamicArray)
 {
     for (uint32_t i = 0; i < pDynamicArray->length; i++)
     {
         if (pDynamicArray->array[i] != NULL)
         {
-            TickernelFree(pDynamicArray->array[i]);
+            tickernelFree(pDynamicArray->array[i]);
             pDynamicArray->array[i] = NULL;
         }
     }

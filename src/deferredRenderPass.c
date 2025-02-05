@@ -1,6 +1,6 @@
 #include "deferredRenderPass.h"
 
-static void CreateVkRenderPass(DeferredRenderPass *pDeferredRenderPass, VkDevice vkDevice, VkFormat colorVkFormat, VkFormat depthVkFormat, VkFormat albedoVkFormat, VkFormat normalVkFormat)
+static void createVkRenderPass(DeferredRenderPass *pDeferredRenderPass, VkDevice vkDevice, VkFormat colorVkFormat, VkFormat depthVkFormat, VkFormat albedoVkFormat, VkFormat normalVkFormat)
 {
     VkAttachmentDescription colorAttachmentDescription = {
         .flags = 0,
@@ -152,17 +152,17 @@ static void CreateVkRenderPass(DeferredRenderPass *pDeferredRenderPass, VkDevice
     };
     VkResult result = VK_SUCCESS;
     result = vkCreateRenderPass(vkDevice, &vkRenderPassCreateInfo, NULL, &pDeferredRenderPass->vkRenderPass);
-    TryThrowVulkanError(result);
+    tryThrowVulkanError(result);
 }
-static void DestroyVkRenderPass(DeferredRenderPass *pDeferredRenderPass, VkDevice vkDevice)
+static void destroyVkRenderPass(DeferredRenderPass *pDeferredRenderPass, VkDevice vkDevice)
 {
     vkDestroyRenderPass(vkDevice, pDeferredRenderPass->vkRenderPass, NULL);
 }
 
-void CreateDeferredRenderPass(DeferredRenderPass *pDeferredRenderPass, const char *shadersPath, VkDevice vkDevice, GraphicImage colorGraphicImage, GraphicImage depthGraphicImage, GraphicImage albedoGraphicImage, GraphicImage normalGraphicImage, VkViewport viewport, VkRect2D scissor, VkBuffer globalUniformBuffer, VkBuffer lightsUniformBuffer)
+void createDeferredRenderPass(DeferredRenderPass *pDeferredRenderPass, const char *shadersPath, VkDevice vkDevice, GraphicImage colorGraphicImage, GraphicImage depthGraphicImage, GraphicImage albedoGraphicImage, GraphicImage normalGraphicImage, VkViewport viewport, VkRect2D scissor, VkBuffer globalUniformBuffer, VkBuffer lightsUniformBuffer)
 {
     printf("CreateDeferredRenderPass:\n");
-    CreateVkRenderPass(pDeferredRenderPass, vkDevice, colorGraphicImage.vkFormat, depthGraphicImage.vkFormat, albedoGraphicImage.vkFormat, normalGraphicImage.vkFormat);
+    createVkRenderPass(pDeferredRenderPass, vkDevice, colorGraphicImage.vkFormat, depthGraphicImage.vkFormat, albedoGraphicImage.vkFormat, normalGraphicImage.vkFormat);
     VkImageView attachments[] = {colorGraphicImage.vkImageView, depthGraphicImage.vkImageView, albedoGraphicImage.vkImageView, normalGraphicImage.vkImageView};
     VkFramebufferCreateInfo vkFramebufferCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
@@ -176,24 +176,24 @@ void CreateDeferredRenderPass(DeferredRenderPass *pDeferredRenderPass, const cha
         .layers = 1,
     };
     VkResult result = vkCreateFramebuffer(vkDevice, &vkFramebufferCreateInfo, NULL, &pDeferredRenderPass->vkFramebuffer);
-    TryThrowVulkanError(result);
+    tryThrowVulkanError(result);
 
     uint32_t subpassIndex = 0;
-    CreateOpaqueGeometrySubpass(&pDeferredRenderPass->opaqueGeometrySubpass, shadersPath, pDeferredRenderPass->vkRenderPass, subpassIndex, vkDevice, viewport, scissor);
+    createOpaqueGeometrySubpass(&pDeferredRenderPass->opaqueGeometrySubpass, shadersPath, pDeferredRenderPass->vkRenderPass, subpassIndex, vkDevice, viewport, scissor);
     subpassIndex++;
-    CreateWaterGeometrySubpass(&pDeferredRenderPass->waterGeometrySubpass, shadersPath, pDeferredRenderPass->vkRenderPass, subpassIndex, vkDevice, viewport, scissor);
+    createWaterGeometrySubpass(&pDeferredRenderPass->waterGeometrySubpass, shadersPath, pDeferredRenderPass->vkRenderPass, subpassIndex, vkDevice, viewport, scissor);
     subpassIndex++;
-    CreateOpaqueLightingSubpass(&pDeferredRenderPass->opaqueLightingSubpass, shadersPath, pDeferredRenderPass->vkRenderPass, subpassIndex, vkDevice, viewport, scissor, globalUniformBuffer, lightsUniformBuffer, depthGraphicImage.vkImageView, albedoGraphicImage.vkImageView, normalGraphicImage.vkImageView);
+    createOpaqueLightingSubpass(&pDeferredRenderPass->opaqueLightingSubpass, shadersPath, pDeferredRenderPass->vkRenderPass, subpassIndex, vkDevice, viewport, scissor, globalUniformBuffer, lightsUniformBuffer, depthGraphicImage.vkImageView, albedoGraphicImage.vkImageView, normalGraphicImage.vkImageView);
 }
-void DestroyDeferredRenderPass(DeferredRenderPass *pDeferredRenderPass, VkDevice vkDevice)
+void destroyDeferredRenderPass(DeferredRenderPass *pDeferredRenderPass, VkDevice vkDevice)
 {
-    DestroyOpaqueGeometrySubpass(&pDeferredRenderPass->opaqueGeometrySubpass, vkDevice);
-    DestroyWaterGeometrySubpass(&pDeferredRenderPass->waterGeometrySubpass, vkDevice);
-    DestroyOpaqueLightingSubpass(&pDeferredRenderPass->opaqueLightingSubpass, vkDevice);
+    destroyOpaqueGeometrySubpass(&pDeferredRenderPass->opaqueGeometrySubpass, vkDevice);
+    destroyWaterGeometrySubpass(&pDeferredRenderPass->waterGeometrySubpass, vkDevice);
+    destroyOpaqueLightingSubpass(&pDeferredRenderPass->opaqueLightingSubpass, vkDevice);
     vkDestroyFramebuffer(vkDevice, pDeferredRenderPass->vkFramebuffer, NULL);
-    DestroyVkRenderPass(pDeferredRenderPass, vkDevice);
+    destroyVkRenderPass(pDeferredRenderPass, vkDevice);
 }
-void UpdateDeferredRenderPass(DeferredRenderPass *pDeferredRenderPass, VkDevice vkDevice, GraphicImage colorGraphicImage, GraphicImage depthGraphicImage, GraphicImage albedoGraphicImage, GraphicImage normalGraphicImage, uint32_t width, uint32_t height, VkBuffer globalUniformBuffer, VkBuffer lightsUniformBuffer)
+void updateDeferredRenderPass(DeferredRenderPass *pDeferredRenderPass, VkDevice vkDevice, GraphicImage colorGraphicImage, GraphicImage depthGraphicImage, GraphicImage albedoGraphicImage, GraphicImage normalGraphicImage, uint32_t width, uint32_t height, VkBuffer globalUniformBuffer, VkBuffer lightsUniformBuffer)
 {
     vkDestroyFramebuffer(vkDevice, pDeferredRenderPass->vkFramebuffer, NULL);
     VkImageView attachments[] = {colorGraphicImage.vkImageView, depthGraphicImage.vkImageView, albedoGraphicImage.vkImageView, normalGraphicImage.vkImageView};
@@ -209,12 +209,12 @@ void UpdateDeferredRenderPass(DeferredRenderPass *pDeferredRenderPass, VkDevice 
         .layers = 1,
     };
     VkResult result = vkCreateFramebuffer(vkDevice, &vkFramebufferCreateInfo, NULL, &pDeferredRenderPass->vkFramebuffer);
-    TryThrowVulkanError(result);
+    tryThrowVulkanError(result);
 
     Subpass *pOpaqueLightingSubpass = &pDeferredRenderPass->opaqueLightingSubpass;
-    RecreateOpaqueLightingSubpassModel(pOpaqueLightingSubpass, vkDevice, globalUniformBuffer, lightsUniformBuffer, depthGraphicImage.vkImageView, albedoGraphicImage.vkImageView, normalGraphicImage.vkImageView);
+    recreateOpaqueLightingSubpassModel(pOpaqueLightingSubpass, vkDevice, globalUniformBuffer, lightsUniformBuffer, depthGraphicImage.vkImageView, albedoGraphicImage.vkImageView, normalGraphicImage.vkImageView);
 }
-void RecordDeferredRenderPass(DeferredRenderPass *pDeferredRenderPass, VkCommandBuffer vkCommandBuffer, VkViewport viewport, VkRect2D scissor, VkDevice vkDevice)
+void recordDeferredRenderPass(DeferredRenderPass *pDeferredRenderPass, VkCommandBuffer vkCommandBuffer, VkViewport viewport, VkRect2D scissor, VkDevice vkDevice)
 {
 
     vkCmdSetScissor(vkCommandBuffer, 0, 1, &scissor);

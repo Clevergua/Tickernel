@@ -100,28 +100,28 @@ VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
     [self createVkInstance];
     [self createVkSurface];
     NSString *resourcesPath = [[NSBundle mainBundle] resourcePath];
-    _pTickernelEngine = TickernelStart([resourcesPath UTF8String], 2, VK_PRESENT_MODE_FIFO_KHR,
+    _pTickernelEngine = tickernelStart([resourcesPath UTF8String], 2, VK_PRESENT_MODE_FIFO_KHR,
                                        _vkInstance, _vkSurface,
                                        self.drawableSize.width,
                                        self.drawableSize.height);
 }
 
 - (void)teardownView {
-    TickernelEnd(self.pTickernelEngine);
+    tickernelEnd(self.pTickernelEngine);
     [self destroyVkSurface];
     [self destroyVkInstance];
 }
 
 - (void)mtkView:(MTKView *)view drawableSizeWillChange:(CGSize)size {
     if (self.pTickernelEngine) {
-        TickernelUpdate(self.pTickernelEngine, (uint32_t)size.width, (uint32_t)size.height);
+        tickernelUpdate(self.pTickernelEngine, (uint32_t)size.width, (uint32_t)size.height);
     }
 }
 
 - (void)drawInMTKView:(MTKView *)view {
     NSCAssert([NSThread isMainThread], @"Rendering must be on main thread!");
     if (self.pTickernelEngine) {
-        TickernelUpdate(self.pTickernelEngine, (uint32_t)view.drawableSize.width, (uint32_t)view.drawableSize.height);
+        tickernelUpdate(self.pTickernelEngine, (uint32_t)view.drawableSize.width, (uint32_t)view.drawableSize.height);
     }
 }
 

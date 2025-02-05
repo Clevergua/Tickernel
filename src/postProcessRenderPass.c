@@ -1,5 +1,5 @@
 #include "postProcessRenderPass.h"
-static void CreateVkRenderPass(PostProcessRenderPass *pPostProcessRenderPass, VkDevice vkDevice, VkFormat colorVkFormat, VkFormat swapchainVkFormat)
+static void createVkRenderPass(PostProcessRenderPass *pPostProcessRenderPass, VkDevice vkDevice, VkFormat colorVkFormat, VkFormat swapchainVkFormat)
 {
     VkAttachmentDescription colorAttachmentDescription = {
         .flags = 0,
@@ -69,19 +69,19 @@ static void CreateVkRenderPass(PostProcessRenderPass *pPostProcessRenderPass, Vk
     };
     VkResult result = VK_SUCCESS;
     result = vkCreateRenderPass(vkDevice, &vkRenderPassCreateInfo, NULL, &pPostProcessRenderPass->vkRenderPass);
-    TryThrowVulkanError(result);
+    tryThrowVulkanError(result);
 }
-static void DestroyVkRenderPass(PostProcessRenderPass *pPostProcessRenderPass, VkDevice vkDevice)
+static void destroyVkRenderPass(PostProcessRenderPass *pPostProcessRenderPass, VkDevice vkDevice)
 {
     vkDestroyRenderPass(vkDevice, pPostProcessRenderPass->vkRenderPass, NULL);
 }
 
-void CreatePostProcessRenderPass(PostProcessRenderPass *pPostProcessRenderPass,const char *shadersPath, VkDevice vkDevice, GraphicImage colorGraphicImage, VkViewport viewport, VkRect2D scissor, uint32_t swapchainCount, VkImageView *swapchainImageViews, VkFormat swapchainVkFormat)
+void createPostProcessRenderPass(PostProcessRenderPass *pPostProcessRenderPass,const char *shadersPath, VkDevice vkDevice, GraphicImage colorGraphicImage, VkViewport viewport, VkRect2D scissor, uint32_t swapchainCount, VkImageView *swapchainImageViews, VkFormat swapchainVkFormat)
 {
-    printf("CreatePostProcessRenderPass:\n");
-    CreateVkRenderPass(pPostProcessRenderPass, vkDevice, colorGraphicImage.vkFormat, swapchainVkFormat);
+    printf("createPostProcessRenderPass:\n");
+    createVkRenderPass(pPostProcessRenderPass, vkDevice, colorGraphicImage.vkFormat, swapchainVkFormat);
     pPostProcessRenderPass->vkFramebufferCount = swapchainCount;
-    pPostProcessRenderPass->vkFramebuffers = TickernelMalloc(sizeof(VkFramebuffer) * swapchainCount);
+    pPostProcessRenderPass->vkFramebuffers = tickernelMalloc(sizeof(VkFramebuffer) * swapchainCount);
     for (size_t i = 0; i < swapchainCount; i++)
     {
         VkImageView attachments[] = {colorGraphicImage.vkImageView, swapchainImageViews[i]};
@@ -97,21 +97,21 @@ void CreatePostProcessRenderPass(PostProcessRenderPass *pPostProcessRenderPass,c
             .layers = 1,
         };
         VkResult result = vkCreateFramebuffer(vkDevice, &vkFramebufferCreateInfo, NULL, &pPostProcessRenderPass->vkFramebuffers[i]);
-        TryThrowVulkanError(result);
+        tryThrowVulkanError(result);
     }
-    CreatePostProcessSubpass(&pPostProcessRenderPass->postProcessSubpass, shadersPath, pPostProcessRenderPass->vkRenderPass, vkDevice, viewport, scissor, colorGraphicImage.vkImageView);
+    createPostProcessSubpass(&pPostProcessRenderPass->postProcessSubpass, shadersPath, pPostProcessRenderPass->vkRenderPass, vkDevice, viewport, scissor, colorGraphicImage.vkImageView);
 }
-void DestroyPostProcessRenderPass(PostProcessRenderPass *pPostProcessRenderPass, VkDevice vkDevice)
+void destroyPostProcessRenderPass(PostProcessRenderPass *pPostProcessRenderPass, VkDevice vkDevice)
 {
-    DestroyPostProcessSubpass(&pPostProcessRenderPass->postProcessSubpass, vkDevice);
+    destroyPostProcessSubpass(&pPostProcessRenderPass->postProcessSubpass, vkDevice);
     for (size_t i = 0; i < pPostProcessRenderPass->vkFramebufferCount; i++)
     {
         vkDestroyFramebuffer(vkDevice, pPostProcessRenderPass->vkFramebuffers[i], NULL);
     }
-    TickernelFree(pPostProcessRenderPass->vkFramebuffers);
-    DestroyVkRenderPass(pPostProcessRenderPass, vkDevice);
+    tickernelFree(pPostProcessRenderPass->vkFramebuffers);
+    destroyVkRenderPass(pPostProcessRenderPass, vkDevice);
 }
-void UpdatePostProcessRenderPass(PostProcessRenderPass *pPostProcessRenderPass, VkDevice vkDevice, GraphicImage colorGraphicImage, uint32_t width, uint32_t height, VkImageView *swapchainImageViews)
+void updatePostProcessRenderPass(PostProcessRenderPass *pPostProcessRenderPass, VkDevice vkDevice, GraphicImage colorGraphicImage, uint32_t width, uint32_t height, VkImageView *swapchainImageViews)
 {
     for (size_t i = 0; i < pPostProcessRenderPass->vkFramebufferCount; i++)
     {
@@ -130,11 +130,11 @@ void UpdatePostProcessRenderPass(PostProcessRenderPass *pPostProcessRenderPass, 
             .layers = 1,
         };
         VkResult result = vkCreateFramebuffer(vkDevice, &vkFramebufferCreateInfo, NULL, &pPostProcessRenderPass->vkFramebuffers[i]);
-        TryThrowVulkanError(result);
+        tryThrowVulkanError(result);
     }
-    RecreatePostProcessSubpassModel(&pPostProcessRenderPass->postProcessSubpass, vkDevice, colorGraphicImage.vkImageView);
+    recreatePostProcessSubpassModel(&pPostProcessRenderPass->postProcessSubpass, vkDevice, colorGraphicImage.vkImageView);
 }
-void RecordPostProcessRenderPass(PostProcessRenderPass *pPostProcessRenderPass, VkCommandBuffer vkCommandBuffer, VkViewport viewport, VkRect2D scissor, VkDevice vkDevice, uint32_t swapchainIndex)
+void recordPostProcessRenderPass(PostProcessRenderPass *pPostProcessRenderPass, VkCommandBuffer vkCommandBuffer, VkViewport viewport, VkRect2D scissor, VkDevice vkDevice, uint32_t swapchainIndex)
 {
     vkCmdSetScissor(vkCommandBuffer, 0, 1, &scissor);
     VkOffset2D offset =
