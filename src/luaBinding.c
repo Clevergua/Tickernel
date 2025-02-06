@@ -584,7 +584,7 @@ void updateLua(LuaContext *pLuaContext)
 
     int startFunctionType = lua_getfield(pLuaState, -1, "Update");
     assertLuaType(startFunctionType, LUA_TFUNCTION);
-    int luaResult = lua_pcall(pLuaState, 0, 0, 0);
+    int luaResult = lua_pcall(pLuaState, 1, 0, 0);
     tryThrowLuaError(pLuaState, luaResult);
 }
 
