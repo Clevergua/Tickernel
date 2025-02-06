@@ -25,7 +25,7 @@ void tickernelUpdate(TickernelEngine *pTickernelEngine, uint32_t swapchainWidth,
     // printf("Tickernel Update!\n");
     // struct timespec startTime, endTime;
     // timespec_get(&startTime, TIME_UTC);
-    UpdateLua(pTickernelEngine->pLuaContext);
+    updateLua(pTickernelEngine->pLuaContext);
     // timespec_get(&endTime, TIME_UTC);
     // uint32_t luaDeltaTime = (uint32_t)(endTime.tv_sec - startTime.tv_sec) * MILLISECONDS_PER_SECOND + (uint32_t)(endTime.tv_nsec - startTime.tv_nsec) / NANOSECONDS_PER_MILLISECOND;
     // printf("Lua Cost Time: %u ms\n", luaDeltaTime);

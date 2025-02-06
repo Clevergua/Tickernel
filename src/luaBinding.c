@@ -578,7 +578,7 @@ LuaContext *startLua(const char *assetPath, GraphicContext *pGraphicContext)
     return pLuaContext;
 }
 
-void UpdateLua(LuaContext *pLuaContext)
+void updateLua(LuaContext *pLuaContext)
 {
     lua_State *pLuaState = pLuaContext->pLuaState;
 

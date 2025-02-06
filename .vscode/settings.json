@@ -31,6 +31,7 @@
         "ios": "c",
         "tickernelengine.h": "c",
         "luabinding.h": "c",
-        "stdexcept": "cpp"
+        "stdexcept": "cpp",
+        "stdint.h": "c"
     }
 }

@@ -12,5 +12,5 @@ typedef struct
 } LuaContext;
 
 LuaContext *startLua(const char *assetPath, GraphicContext *pGraphicContext);
-void UpdateLua(LuaContext *pLuaContext);
+void updateLua(LuaContext *pLuaContext);
 void endLua(LuaContext *pLuaContext);
