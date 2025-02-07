@@ -578,13 +578,24 @@ LuaContext *startLua(const char *assetPath, GraphicContext *pGraphicContext)
     return pLuaContext;
 }
 
-void updateLua(LuaContext *pLuaContext)
+void updateLua(LuaContext *pLuaContext, bool *keyCodes)
 {
+    // Update keyCodes
     lua_State *pLuaState = pLuaContext->pLuaState;
+    lua_getfield(pLuaState, -1, "input");
+    for (uint32_t i = 0; i < KEY_CODE_MAX_ENUM; i++)
+    {
+        lua_pushnumber(pLuaState, i);
+        lua_pushboolean(pLuaState, keyCodes[i]);
+        lua_settable(pLuaState, -3);
+    }
+    lua_pop(pLuaState, 1);
 
+    // Call Update
     int startFunctionType = lua_getfield(pLuaState, -1, "Update");
     assertLuaType(startFunctionType, LUA_TFUNCTION);
-    int luaResult = lua_pcall(pLuaState, 1, 0, 0);
+    
+    int luaResult = lua_pcall(pLuaState, 0, 0, 0);
     tryThrowLuaError(pLuaState, luaResult);
 }
 

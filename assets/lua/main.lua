@@ -1,10 +1,11 @@
-local min, max = 9999, -9999
 local engine = require("engine")
+_G.engine = engine
 local gameMath = require("gameMath")
 local game = require("game")
+
+
 local length = 64
 local width = 16
--- local profiler = require("profiler")
 local voxelCount = 16
 local scale = 1 / voxelCount;
 local voxel = {
@@ -260,21 +261,24 @@ local targetPosition = { 0, 8, 0 }
 local t = 0
 
 function engine.Update()
-    -- print("Lua Update")
     if engine.frameCount == 0 then
         collectgarbage("collect")
         local memoryUsage = collectgarbage("count")
         print("Current memory usage: ", memoryUsage, "KB")
     end
-    t = t + 0.001
-    local distance = gameMath.PingPong(5, length - 5, t * 0.2)
-    cameraPosition[1] = distance
-    targetPosition[1] = distance
+    if engine.input[engine.keyCodes.Left] then
+        cameraPosition[1] = cameraPosition[1] - 0.1
+    elseif engine.input[engine.keyCodes.Right] then
+        cameraPosition[1] = cameraPosition[1] + 0.1
+    elseif engine.input[engine.keyCodes.Up] then
+        cameraPosition[2] = cameraPosition[2] - 0.1
+    elseif engine.input[engine.keyCodes.Down] then
+        cameraPosition[2] = cameraPosition[2] + 0.1
+    end
 
     engine.UpdateGlobalUniformBuffer(cameraPosition, targetPosition, t * 100)
     engine.frameCount = engine.frameCount + 1
 end
 
-_G.engine = engine
 print("Lua initialized!")
 return engine

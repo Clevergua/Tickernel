@@ -16,18 +16,16 @@ TickernelEngine *tickernelStart(const char *assetsPath, uint32_t targetSwapchain
 
     pTickernelEngine->pGraphicContext = startGraphic(assetsPath, targetSwapchainImageCount, targetPresentMode, vkInstance, vkSurface, swapchainWidth, swapchainHeight);
     pTickernelEngine->pLuaContext = startLua(assetsPath, pTickernelEngine->pGraphicContext);
-    pTickernelEngine->keyCodes = tickernelMalloc(sizeof(bool) * KEY_CODE_MAX_ENUM);
     return pTickernelEngine;
 }
 
 void tickernelUpdate(TickernelEngine *pTickernelEngine, uint32_t swapchainWidth, uint32_t swapchainHeight, bool *keyCodes)
 {
     pTickernelEngine->frameCount++;
-    memcpy(pTickernelEngine->keyCodes, keyCodes, sizeof(bool) * KEY_CODE_MAX_ENUM);
     // printf("Tickernel Update!\n");
     // struct timespec startTime, endTime;
     // timespec_get(&startTime, TIME_UTC);
-    updateLua(pTickernelEngine->pLuaContext);
+    updateLua(pTickernelEngine->pLuaContext, keyCodes);
     // timespec_get(&endTime, TIME_UTC);
     // uint32_t luaDeltaTime = (uint32_t)(endTime.tv_sec - startTime.tv_sec) * MILLISECONDS_PER_SECOND + (uint32_t)(endTime.tv_nsec - startTime.tv_nsec) / NANOSECONDS_PER_MILLISECOND;
     // printf("Lua Cost Time: %u ms\n", luaDeltaTime);
@@ -41,7 +39,6 @@ void tickernelUpdate(TickernelEngine *pTickernelEngine, uint32_t swapchainWidth,
 
 void tickernelEnd(TickernelEngine *pTickernelEngine)
 {
-    tickernelFree(pTickernelEngine->keyCodes);
     LuaContext *pLuaContext = pTickernelEngine->pLuaContext;
     endLua(pLuaContext);
     GraphicContext *pGraphicContext = pTickernelEngine->pGraphicContext;

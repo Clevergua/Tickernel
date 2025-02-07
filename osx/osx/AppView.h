@@ -10,6 +10,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, assign) VkSurfaceKHR vkSurface;
 @property (nonatomic, assign) void* pTickernelEngine;
 @property (nonatomic, assign) VkInstance vkInstance;
+@property (nonatomic, assign) _Bool *keyCodes;
 @end
 
 NS_ASSUME_NONNULL_END
