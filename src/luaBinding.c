@@ -296,36 +296,63 @@ static int luaUpdateInstancesInWaterGeometrySubpass(lua_State *pLuaState)
 
 static int updateGlobalUniformBuffer(lua_State *pLuaState)
 {
-    int engineTpye = lua_getglobal(pLuaState, "engine");
-    assertLuaType(engineTpye, LUA_TTABLE);
-    int pGraphicContextTpye = lua_getfield(pLuaState, -1, "pGraphicContext");
-    assertLuaType(pGraphicContextTpye, LUA_TLIGHTUSERDATA);
+    int engineType = lua_getglobal(pLuaState, "engine");
+    assertLuaType(engineType, LUA_TTABLE);
+    
+    int pGraphicContextType = lua_getfield(pLuaState, -1, "pGraphicContext");
+    assertLuaType(pGraphicContextType, LUA_TLIGHTUSERDATA);
     GraphicContext *pGraphicContext = lua_touserdata(pLuaState, -1);
     lua_pop(pLuaState, 2);
 
+    lua_getfield(pLuaState, -1, "time");
     lua_Number time = luaL_checknumber(pLuaState, -1);
     lua_pop(pLuaState, 1);
 
-    vec3 targetPosition;
+    lua_getfield(pLuaState, -1, "cameraPosition");
     vec3 cameraPosition;
     for (uint32_t i = 0; i < 3; i++)
     {
-        int targetPositionValueType = lua_geti(pLuaState, -1, i + 1);
-        assertLuaType(targetPositionValueType, LUA_TNUMBER);
-        targetPosition[i] = luaL_checknumber(pLuaState, -1);
-        lua_pop(pLuaState, 1);
-
-        int cameraPositionValueType = lua_geti(pLuaState, -2, i + 1);
-        assertLuaType(cameraPositionValueType, LUA_TNUMBER);
+        lua_geti(pLuaState, -1, i + 1);
         cameraPosition[i] = luaL_checknumber(pLuaState, -1);
         lua_pop(pLuaState, 1);
     }
+    lua_pop(pLuaState, 1);
+
+    lua_getfield(pLuaState, -1, "cameraRotation");
+    vec3 cameraRotation;
+    for (uint32_t i = 0; i < 3; i++)
+    {
+        lua_geti(pLuaState, -1, i + 1);
+        cameraRotation[i] = luaL_checknumber(pLuaState, -1);
+        printf("%f\n", cameraRotation[i]);
+        lua_pop(pLuaState, 1);
+    }
+    lua_pop(pLuaState, 1);
+
+    lua_getfield(pLuaState, -1, "fov");
+    float fov = luaL_checknumber(pLuaState, -1);
+    lua_pop(pLuaState, 1);
+
+    lua_getfield(pLuaState, -1, "near");
+    float near = luaL_checknumber(pLuaState, -1);
+    lua_pop(pLuaState, 1);
+
+    lua_getfield(pLuaState, -1, "far");
+    float far = luaL_checknumber(pLuaState, -1);
+    lua_pop(pLuaState, 1);
 
     GlobalUniformBuffer ubo;
-    glm_lookat(cameraPosition, targetPosition, (vec3){0.0f, 0.0f, 1.0f}, ubo.view);
-    float deg = 30.0f;
-    ubo.pointSizeFactor = 0.618 * pGraphicContext->swapchainHeight / tanf(glm_rad(deg / 2)) / 16.0;
-    glm_perspective(glm_rad(deg), pGraphicContext->swapchainWidth / (float)pGraphicContext->swapchainHeight, 8.0f, 32.0f, ubo.proj);
+
+    // Calculate the view matrix using camera position and rotation
+    mat4 viewMatrix;
+    glm_translate_make(viewMatrix, cameraPosition);
+    glm_rotate(viewMatrix, glm_rad(cameraRotation[0]), (vec3){1.0f, 0.0f, 0.0f});
+    glm_rotate(viewMatrix, glm_rad(cameraRotation[1]), (vec3){0.0f, 1.0f, 0.0f});
+    glm_rotate(viewMatrix, glm_rad(cameraRotation[2]), (vec3){0.0f, 0.0f, 1.0f});
+    glm_mat4_inv(viewMatrix, ubo.view);
+
+    ubo.pointSizeFactor = 0.618 * pGraphicContext->swapchainHeight / tanf(glm_rad(fov / 2)) / 16.0;
+    glm_perspective(glm_rad(fov), pGraphicContext->swapchainWidth / (float)pGraphicContext->swapchainHeight, near, far, ubo.proj);
     ubo.proj[1][1] *= -1;
     mat4 view_proj;
     glm_mat4_mul(ubo.proj, ubo.view, view_proj);

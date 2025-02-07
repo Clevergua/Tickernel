@@ -129,10 +129,8 @@ function engine.UpdateInstancesInOpaqueGeometrySubpass(modelIndex, instances)
 end
 
 ---UpdateGlobalUniformBuffer
----@param cameraPosition table
----@param targetPosition table
----@param time number
-function engine.UpdateGlobalUniformBuffer(cameraPosition, targetPosition, time)
+---@param globalUniformBuffer table
+function engine.UpdateGlobalUniformBuffer(globalUniformBuffer)
 end
 
 ---UpdateGlobalUniformBuffer

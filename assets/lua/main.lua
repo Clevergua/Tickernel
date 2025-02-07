@@ -256,9 +256,14 @@ function engine.End()
     print("Lua Start")
 end
 
-local cameraPosition = { 0, 0, 15 }
-local targetPosition = { 0, 8, 0 }
-local t = 0
+local globalUniformBuffer = {
+    cameraPosition = { 0, 0, 15 },
+    cameraRotation = { 30, 0, 0 },
+    fov = 30,
+    near = 2,
+    far = 32,
+    time = 0,
+}
 
 function engine.Update()
     if engine.frameCount == 0 then
@@ -266,17 +271,31 @@ function engine.Update()
         local memoryUsage = collectgarbage("count")
         print("Current memory usage: ", memoryUsage, "KB")
     end
+    local cameraPosition = globalUniformBuffer.cameraPosition
     if engine.input[engine.keyCodes.Left] then
         cameraPosition[1] = cameraPosition[1] - 0.1
     elseif engine.input[engine.keyCodes.Right] then
         cameraPosition[1] = cameraPosition[1] + 0.1
-    elseif engine.input[engine.keyCodes.Up] then
+    end
+    if engine.input[engine.keyCodes.S] then
+        cameraPosition[3] = cameraPosition[3] + 0.1
+    elseif engine.input[engine.keyCodes.W] then
+        cameraPosition[3] = cameraPosition[3] - 0.1
+    end
+
+    if engine.input[engine.keyCodes.Up] then
         cameraPosition[2] = cameraPosition[2] - 0.1
     elseif engine.input[engine.keyCodes.Down] then
         cameraPosition[2] = cameraPosition[2] + 0.1
     end
+    local cameraRotation = globalUniformBuffer.cameraRotation
+    if engine.input[engine.keyCodes.D] then
+        cameraRotation[1] = cameraRotation[1] - 1
+    elseif engine.input[engine.keyCodes.A] then
+        cameraRotation[1] = cameraRotation[1] + 1
+    end
 
-    engine.UpdateGlobalUniformBuffer(cameraPosition, targetPosition, t * 100)
+    engine.UpdateGlobalUniformBuffer(globalUniformBuffer)
     engine.frameCount = engine.frameCount + 1
 end
 
