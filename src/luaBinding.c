@@ -298,7 +298,7 @@ static int updateGlobalUniformBuffer(lua_State *pLuaState)
 {
     int engineType = lua_getglobal(pLuaState, "engine");
     assertLuaType(engineType, LUA_TTABLE);
-    
+
     int pGraphicContextType = lua_getfield(pLuaState, -1, "pGraphicContext");
     assertLuaType(pGraphicContextType, LUA_TLIGHTUSERDATA);
     GraphicContext *pGraphicContext = lua_touserdata(pLuaState, -1);
@@ -306,6 +306,10 @@ static int updateGlobalUniformBuffer(lua_State *pLuaState)
 
     lua_getfield(pLuaState, -1, "time");
     lua_Number time = luaL_checknumber(pLuaState, -1);
+    lua_pop(pLuaState, 1);
+
+    lua_getfield(pLuaState, -1, "frameCount");
+    uint32_t frameCount = luaL_checknumber(pLuaState, -1);
     lua_pop(pLuaState, 1);
 
     lua_getfield(pLuaState, -1, "cameraPosition");
@@ -324,7 +328,6 @@ static int updateGlobalUniformBuffer(lua_State *pLuaState)
     {
         lua_geti(pLuaState, -1, i + 1);
         cameraRotation[i] = luaL_checknumber(pLuaState, -1);
-        printf("%f\n", cameraRotation[i]);
         lua_pop(pLuaState, 1);
     }
     lua_pop(pLuaState, 1);
@@ -341,25 +344,36 @@ static int updateGlobalUniformBuffer(lua_State *pLuaState)
     float far = luaL_checknumber(pLuaState, -1);
     lua_pop(pLuaState, 1);
 
-    GlobalUniformBuffer ubo;
+    lua_getfield(pLuaState, -1, "pointSizeScale");
+    float pointSizeScale = luaL_checknumber(pLuaState, -1);
+    lua_pop(pLuaState, 1);
 
-    // Calculate the view matrix using camera position and rotation
+    pGraphicContext->inputGlobalUniformBuffer.time = time;
+    pGraphicContext->inputGlobalUniformBuffer.frameCount = frameCount;
+    pGraphicContext->inputGlobalUniformBuffer.near = near;
+    pGraphicContext->inputGlobalUniformBuffer.far = far;
+    pGraphicContext->inputGlobalUniformBuffer.fov = fov;
+    pGraphicContext->inputGlobalUniformBuffer.width = pGraphicContext->swapchainWidth;
+    pGraphicContext->inputGlobalUniformBuffer.height = pGraphicContext->swapchainHeight;
+
+    mat4 rotationMatrix;
+    glm_euler_xyz(cameraRotation, rotationMatrix);
+
+    mat4 translationMatrix;
+    glm_translate_make(translationMatrix, cameraPosition);
+
     mat4 viewMatrix;
-    glm_translate_make(viewMatrix, cameraPosition);
-    glm_rotate(viewMatrix, glm_rad(cameraRotation[0]), (vec3){1.0f, 0.0f, 0.0f});
-    glm_rotate(viewMatrix, glm_rad(cameraRotation[1]), (vec3){0.0f, 1.0f, 0.0f});
-    glm_rotate(viewMatrix, glm_rad(cameraRotation[2]), (vec3){0.0f, 0.0f, 1.0f});
-    glm_mat4_inv(viewMatrix, ubo.view);
+    glm_mat4_mul(translationMatrix, rotationMatrix, viewMatrix);
+    glm_mat4_inv(viewMatrix, pGraphicContext->inputGlobalUniformBuffer.view);
 
-    ubo.pointSizeFactor = 0.618 * pGraphicContext->swapchainHeight / tanf(glm_rad(fov / 2)) / 16.0;
-    glm_perspective(glm_rad(fov), pGraphicContext->swapchainWidth / (float)pGraphicContext->swapchainHeight, near, far, ubo.proj);
-    ubo.proj[1][1] *= -1;
+    pGraphicContext->inputGlobalUniformBuffer.pointSizeFactor = pointSizeScale * pGraphicContext->swapchainHeight / tanf(glm_rad(fov / 2)) / 16.0;
+    glm_perspective(glm_rad(fov), pGraphicContext->swapchainWidth / (float)pGraphicContext->swapchainHeight, near, far, pGraphicContext->inputGlobalUniformBuffer.proj);
+    pGraphicContext->inputGlobalUniformBuffer.proj[1][1] *= -1;
     mat4 view_proj;
-    glm_mat4_mul(ubo.proj, ubo.view, view_proj);
-    glm_mat4_inv(view_proj, ubo.inv_view_proj);
-    ubo.time = time;
+    glm_mat4_mul(pGraphicContext->inputGlobalUniformBuffer.proj, pGraphicContext->inputGlobalUniformBuffer.view, view_proj);
+    glm_mat4_inv(view_proj, pGraphicContext->inputGlobalUniformBuffer.inv_view_proj);
+
     lua_pop(pLuaState, 2);
-    pGraphicContext->inputGlobalUniformBuffer = ubo;
     pGraphicContext->canUpdateGlobalUniformBuffer = true;
     return 0;
 }
@@ -621,7 +635,7 @@ void updateLua(LuaContext *pLuaContext, bool *keyCodes)
     // Call Update
     int startFunctionType = lua_getfield(pLuaState, -1, "Update");
     assertLuaType(startFunctionType, LUA_TFUNCTION);
-    
+
     int luaResult = lua_pcall(pLuaState, 0, 0, 0);
     tryThrowLuaError(pLuaState, luaResult);
 }

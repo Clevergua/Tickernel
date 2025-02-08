@@ -16,6 +16,12 @@ layout(binding = 0) uniform GlobalUniform
     mat4 inv_view_proj;
     float pointSizeFactor;
     float time;
+    int frameCount;
+    float near;
+    float far;
+    float fov;
+    int width;
+    int height;
 }
 globalUniform;
 

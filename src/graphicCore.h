@@ -17,6 +17,12 @@ typedef struct
     mat4 inv_view_proj;
     float pointSizeFactor;
     float time;
+    int frameCount;
+    float near;
+    float far;
+    float fov;
+    int width;
+    int height;
 } GlobalUniformBuffer;
 
 typedef struct

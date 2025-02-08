@@ -10,6 +10,12 @@ layout(binding = 3) uniform GlobalUniform {
     mat4 inv_view_proj;
     float pointSizeFactor;
     float time;
+    int frameCount;
+    float near;
+    float far;
+    float fov;
+    int width;
+    int height;
 } globalUniform;
 
 struct DirectionalLight {
@@ -56,8 +62,7 @@ void main() {
 
         o_rgb += albedo.rgb * light.color.rgb * light.color.a * pointHalfLambert * attenuation;
     }
-
-    float fogFactor = clamp(1 - depth + 0.25, 0.0, 1.0);
-    o_rgb = mix(vec3(0.6, 0.6, 0.6), o_rgb, fogFactor);
+    float linearDepth = (2.0 * globalUniform.near * globalUniform.far) / (globalUniform.far + globalUniform.near - depth * (globalUniform.far - globalUniform.near)) / globalUniform.far;
+    o_rgb = mix(o_rgb,vec3(0.6, 0.6, 0.6), linearDepth * linearDepth * linearDepth);
     o_color = vec4(o_rgb, 1.0);
 }

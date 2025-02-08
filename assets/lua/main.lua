@@ -258,11 +258,13 @@ end
 
 local globalUniformBuffer = {
     cameraPosition = { 0, 0, 15 },
-    cameraRotation = { 30, 0, 0 },
-    fov = 30,
-    near = 2,
-    far = 32,
-    time = 0,
+    cameraRotation = { 0, 0, 0 },
+    fov = 30.0,
+    near = 0.5,
+    far = 32.0,
+    time = 0.0,
+    frameCount = 0,
+    pointSizeScale = 0.618,
 }
 
 function engine.Update()
@@ -284,15 +286,15 @@ function engine.Update()
     end
 
     if engine.input[engine.keyCodes.Up] then
-        cameraPosition[2] = cameraPosition[2] - 0.1
-    elseif engine.input[engine.keyCodes.Down] then
         cameraPosition[2] = cameraPosition[2] + 0.1
+    elseif engine.input[engine.keyCodes.Down] then
+        cameraPosition[2] = cameraPosition[2] - 0.1
     end
     local cameraRotation = globalUniformBuffer.cameraRotation
     if engine.input[engine.keyCodes.D] then
-        cameraRotation[1] = cameraRotation[1] - 1
+        cameraRotation[1] = cameraRotation[1] - 0.01
     elseif engine.input[engine.keyCodes.A] then
-        cameraRotation[1] = cameraRotation[1] + 1
+        cameraRotation[1] = cameraRotation[1] + 0.01
     end
 
     engine.UpdateGlobalUniformBuffer(globalUniformBuffer)

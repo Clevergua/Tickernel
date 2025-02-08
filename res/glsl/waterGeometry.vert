@@ -9,26 +9,37 @@ layout(location = 3) in mat4 i_model;
 layout(location = 0) out vec4 o_albedo;
 layout(location = 1) out vec3 o_normal;
 
-layout(binding = 0) uniform GlobalUniform {
+layout(binding = 0) uniform GlobalUniform
+{
     mat4 view;
     mat4 proj;
     mat4 inv_view_proj;
     float pointSizeFactor;
     float time;
-} globalUniform;
+    int frameCount;
+    float near;
+    float far;
+    float fov;
+    int width;
+    int height;
+}
+globalUniform;
 
-float random(vec2 p) {
+float random(vec2 p)
+{
     return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
 }
 
-float waveFunction(vec3 position, float time) {
+float waveFunction(vec3 position, float time)
+{
     float wave = sin(position.x * 10.0 + globalUniform.time) * 0.1 +
         cos(position.y * 10.0 + globalUniform.time) * 0.1;
     wave += (random(position.xy * 10.0) - 0.5) * 0.02;
     return wave;
 }
 
-void main(void) {
+void main(void)
+{
     float wave = waveFunction(i_position, globalUniform.time * 0.01);
     vec3 modifiedPosition = vec3(i_position.x, i_position.y, i_position.z + wave);
 
