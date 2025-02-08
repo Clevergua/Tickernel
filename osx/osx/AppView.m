@@ -133,13 +133,13 @@ VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
 
 - (void)keyDown:(NSEvent *)event {
     NSString *characters = event.charactersIgnoringModifiers;
-    NSLog(@"Key Down: %@", characters);
+//    NSLog(@"Key Down: %@", characters);
     [self updateKeyCode:event keyDown:YES];
 }
 
 - (void)keyUp:(NSEvent *)event {
     NSString *characters = event.charactersIgnoringModifiers;
-    NSLog(@"Key Up: %@", characters);
+//    NSLog(@"Key Up: %@", characters);
     [self updateKeyCode:event keyDown:NO];
 }
 

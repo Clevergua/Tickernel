@@ -113,30 +113,30 @@ local integer = 0
 ---@param vertices table
 ---@param colors table
 ---@return integer
-function engine.AddModelToOpaqueGeometrySubpass(vertices, colors, normals)
+function engine.addModelToOpaqueGeometrySubpass(vertices, colors, normals)
     return integer
 end
 
 ---Add model to opaqueGeometry subpass
 ---@param index integer
-function engine.RemoveModelFromOpaqueGeometrySubpass(index)
+function engine.removeModelFromOpaqueGeometrySubpass(index)
 end
 
 ---Update model unifrom buffer
 ---@param modelIndex integer
 ---@param instances table
-function engine.UpdateInstancesInOpaqueGeometrySubpass(modelIndex, instances)
+function engine.updateInstancesInOpaqueGeometrySubpass(modelIndex, instances)
 end
 
 ---UpdateGlobalUniformBuffer
 ---@param globalUniformBuffer table
-function engine.UpdateGlobalUniformBuffer(globalUniformBuffer)
+function engine.updateGlobalUniformBuffer(globalUniformBuffer)
 end
 
 ---UpdateGlobalUniformBuffer
 ---@param directionalLight table
 ---@param pointLights table
-function engine.UpdateLightsUniformBuffer(directionalLight, pointLights)
+function engine.updateLightsUniformBuffer(directionalLight, pointLights)
 end
 
 local model = {
@@ -148,11 +148,11 @@ local model = {
 }
 ---Deserialize .ply model
 ---@param path string
-function engine.LoadModel(path)
+function engine.loadModel(path)
     return model
 end
 
-function engine.SetNormals(vertices, normals, voxelMap)
+function engine.setNormals(vertices, normals, voxelMap)
     local vertexCount = #vertices
     for i = 1, vertexCount do
         local x = vertices[i][1]
@@ -422,7 +422,7 @@ end
 --     end
 -- end
 
-function engine.DrawModel(instances, model)
+function engine.drawModel(instances, model)
     local vertices = {}
     local colors = {}
     local normals = {}
@@ -456,8 +456,8 @@ function engine.DrawModel(instances, model)
             end
         end
     end
-    local modelIndex = engine.AddModelToOpaqueGeometrySubpass(vertices, colors, normals)
-    engine.UpdateInstancesInOpaqueGeometrySubpass(modelIndex, instances)
+    local modelIndex = engine.addModelToOpaqueGeometrySubpass(vertices, colors, normals)
+    engine.updateInstancesInOpaqueGeometrySubpass(modelIndex, instances)
     return modelIndex
 end
 

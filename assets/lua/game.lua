@@ -15,7 +15,7 @@ local game = {
 local temperatureNoiseScale = 0.07
 local humidityNoiseScale = 0.07
 
-function game.GetFloor(temperature, humidity)
+function game.getFloor(temperature, humidity)
     local floor
     if temperature < -game.temperatureStep then
         if humidity < -game.humidityStep then
@@ -47,31 +47,31 @@ function game.GetFloor(temperature, humidity)
     return floor
 end
 
-function game.GetHumidity(seed, x, y)
+function game.getHumidity(seed, x, y)
     local level = 2
     local humidity = 0
     for i = 1, level do
         local m = 2 ^ (level - 1)
-        humidity = humidity + gameMath.PerlinNoise2D(seed, x * humidityNoiseScale * m, y * humidityNoiseScale * m) / m
+        humidity = humidity + gameMath.perlinNoise2D(seed, x * humidityNoiseScale * m, y * humidityNoiseScale * m) / m
         seed = gameMath.LCGRandom(seed)
     end
     return humidity
 end
 
-function game.GetTemperature(seed, x, y)
+function game.getTemperature(seed, x, y)
     local level = 2
     local temperature = 0
     for i = 1, level do
         local m = 2 ^ (level - 1)
         temperature = temperature +
-            gameMath.PerlinNoise2D(seed, x * temperatureNoiseScale * m, y * temperatureNoiseScale * m) / m
+            gameMath.perlinNoise2D(seed, x * temperatureNoiseScale * m, y * temperatureNoiseScale * m) / m
         seed = gameMath.LCGRandom(seed)
     end
     -- temperature = temperature + (x - (game.length - 1) / 2) / game.length
     return temperature
 end
 
-function game.GenerateWorld(seed, length, width)
+function game.generateWorld(seed, length, width)
     game.seed = seed
     game.temperatureSeed = seed + 1
     game.humiditySeed = seed + 2
@@ -82,11 +82,15 @@ function game.GenerateWorld(seed, length, width)
     for x = 1, game.length do
         floorMap[x] = {}
         for y = 1, game.width do
-            local temperature = game.GetTemperature(game.temperatureSeed, x, y)
-            local humidity = game.GetHumidity(game.humiditySeed, x, y)
-            floorMap[x][y] = game.GetFloor(temperature, humidity)
+            local temperature = game.getTemperature(game.temperatureSeed, x, y)
+            local humidity = game.getHumidity(game.humiditySeed, x, y)
+            floorMap[x][y] = game.getFloor(temperature, humidity)
         end
     end
+end
+
+function game.update()
+
 end
 
 return game

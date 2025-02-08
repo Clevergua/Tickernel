@@ -36,7 +36,7 @@ function gameMath.PingPong(a, b, t)
     end
 end
 
-function gameMath.SmoothLerp(a, b, t)
+function gameMath.smoothLerp(a, b, t)
     t = t * t * t * (6 * t * t - 15 * t + 10)
     return a + (b - a) * t
 end
@@ -69,7 +69,7 @@ local modelMatrix = {
     { 0, 0, 0, 0 }
 }
 
-function RotateAroundZ(angle)
+local function rotateAroundZ(angle)
     local rad = math.rad(angle)
     rotationMatrix[1][1] = math.cos(rad)
     rotationMatrix[1][2] = -math.sin(rad)
@@ -94,7 +94,7 @@ function RotateAroundZ(angle)
     return rotationMatrix
 end
 
-function ScaleModel(scale)
+local function scaleModel(scale)
     scaleMatrix[1][1] = scale
     scaleMatrix[1][2] = 0
     scaleMatrix[1][3] = 0
@@ -118,14 +118,14 @@ function ScaleModel(scale)
     return scaleMatrix
 end
 
-function TranslateModel(x, y, z)
+local function translateModel(x, y, z)
     translateMatrix[1][4] = x
     translateMatrix[2][4] = y
     translateMatrix[3][4] = z
     return translateMatrix
 end
 
-function MatrixMultiply(A, B, result)
+local function matrixMultiply(A, B, result)
     for i = 1, 4 do
         for j = 1, 4 do
             result[i][j] = 0
@@ -137,14 +137,14 @@ function MatrixMultiply(A, B, result)
     return result
 end
 
-function ApplyTransformations(scale, x, y, z, angle)
-    local rotationMatrix = RotateAroundZ(angle)
-    local scaleMatrix = ScaleModel(scale)
-    local translateMatrix = TranslateModel(x, y, z)
-    return MatrixMultiply(translateMatrix, MatrixMultiply(rotationMatrix, scaleMatrix, modelMatrix), modelMatrix)
+local function applyTransformations(scale, x, y, z, angle)
+    local rotationMatrix = rotateAroundZ(angle)
+    local scaleMatrix = scaleModel(scale)
+    local translateMatrix = translateModel(x, y, z)
+    return matrixMultiply(translateMatrix, matrixMultiply(rotationMatrix, scaleMatrix, modelMatrix), modelMatrix)
 end
 
-local Grad2D = function(hash, x, y)
+local grad2D = function(hash, x, y)
     local h = hash & 7 -- 仅保留哈希的低三位
     local u = h < 4 and x or y
     local v = h < 4 and y or x
@@ -153,12 +153,12 @@ local Grad2D = function(hash, x, y)
     return u * u_sign + v * v_sign
 end
 
-local DotGridGradient2D = function(ix, iy, x, y, seed)
+local dotGridGradient2D = function(ix, iy, x, y, seed)
     local dx = x - ix
     local dy = y - iy
     local hash = gameMath.LCGRandom(gameMath.CantorPair(gameMath.CantorPair(ix, iy), seed))
     hash = hash & 0xFF
-    return Grad2D(hash, dx, dy)
+    return grad2D(hash, dx, dy)
 end
 
 ---comment
@@ -166,7 +166,7 @@ end
 ---@param x number
 ---@param y number
 ---@return number
-function gameMath.PerlinNoise2D(seed, x, y)
+function gameMath.perlinNoise2D(seed, x, y)
     -- Determine grid cell coordinates
     local x0 = math.floor(x)
     local x1 = x0 + 1
@@ -178,13 +178,13 @@ function gameMath.PerlinNoise2D(seed, x, y)
     local sy = y - y0
     -- Interpolate between grid point gradients
     local n0, n1, ix0, ix1, value
-    n0 = DotGridGradient2D(x0, y0, x, y, seed)
-    n1 = DotGridGradient2D(x1, y0, x, y, seed)
-    ix0 = gameMath.SmoothLerp(n0, n1, sx)
-    n0 = DotGridGradient2D(x0, y1, x, y, seed)
-    n1 = DotGridGradient2D(x1, y1, x, y, seed)
-    ix1 = gameMath.SmoothLerp(n0, n1, sx)
-    value = gameMath.SmoothLerp(ix0, ix1, sy)
+    n0 = dotGridGradient2D(x0, y0, x, y, seed)
+    n1 = dotGridGradient2D(x1, y0, x, y, seed)
+    ix0 = gameMath.smoothLerp(n0, n1, sx)
+    n0 = dotGridGradient2D(x0, y1, x, y, seed)
+    n1 = dotGridGradient2D(x1, y1, x, y, seed)
+    ix1 = gameMath.smoothLerp(n0, n1, sx)
+    value = gameMath.smoothLerp(ix0, ix1, sy)
     return value
 end
 
@@ -307,7 +307,7 @@ local translateMatrix = {
     { 0, 0, 0, 1 }
 }
 
-function RotateAroundZ(angle)
+local function rotateAroundZ(angle)
     local rad = math.rad(angle)
     rotationMatrix[1][1] = math.cos(rad)
     rotationMatrix[1][2] = -math.sin(rad)
@@ -332,7 +332,7 @@ function RotateAroundZ(angle)
     return rotationMatrix
 end
 
-function ScaleModel(scale)
+local function scaleModel(scale)
     scaleMatrix[1][1] = scale
     scaleMatrix[1][2] = 0
     scaleMatrix[1][3] = 0
@@ -356,7 +356,7 @@ function ScaleModel(scale)
     return scaleMatrix
 end
 
-function TranslateModel(x, y, z)
+local function translateModel(x, y, z)
     translateMatrix[1][1] = 1
     translateMatrix[1][2] = 0
     translateMatrix[1][3] = 0
@@ -379,7 +379,7 @@ function TranslateModel(x, y, z)
     return translateMatrix
 end
 
-function MatrixMultiply(A, B, result)
+local function matrixMultiply(A, B, result)
     for i = 1, 4 do
         for j = 1, 4 do
             result[i][j] = 0
@@ -396,15 +396,15 @@ local modelMatrix = {
     { 0, 0, 0, 0 },
     { 0, 0, 0, 0 }
 }
-function gameMath.ApplyTransformations(scale, x, y, z, angle, matrix)
-    local rotationMatrix = RotateAroundZ(angle)
-    local scaleMatrix = ScaleModel(scale)
-    local translateMatrix = TranslateModel(x, y, z)
-    MatrixMultiply(rotationMatrix, scaleMatrix, modelMatrix)
-    MatrixMultiply(translateMatrix, modelMatrix, matrix)
+function gameMath.applyTransformations(scale, x, y, z, angle, matrix)
+    local rotationMatrix = rotateAroundZ(angle)
+    local scaleMatrix = scaleModel(scale)
+    local translateMatrix = translateModel(x, y, z)
+    matrixMultiply(rotationMatrix, scaleMatrix, modelMatrix)
+    matrixMultiply(translateMatrix, modelMatrix, matrix)
 end
 
-function gameMath.CreateMatrix()
+function gameMath.createMatrix()
     return {
         { 0, 0, 0, 0 },
         { 0, 0, 0, 0 },

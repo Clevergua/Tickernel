@@ -585,34 +585,34 @@ LuaContext *startLua(const char *assetPath, GraphicContext *pGraphicContext)
     lua_setfield(pLuaState, -2, "pathSeparator");
 
     lua_pushcfunction(pLuaState, luaAddModelToOpaqueGeometrySubpass);
-    lua_setfield(pLuaState, -2, "AddModelToOpaqueGeometrySubpass");
+    lua_setfield(pLuaState, -2, "addModelToOpaqueGeometrySubpass");
 
     lua_pushcfunction(pLuaState, luaRemoveModelFromOpaqueGeometrySubpass);
-    lua_setfield(pLuaState, -2, "RemoveModelFromOpaqueGeometrySubpass");
+    lua_setfield(pLuaState, -2, "removeModelFromOpaqueGeometrySubpass");
 
     lua_pushcfunction(pLuaState, luaUpdateInstancesInOpaqueGeometrySubpass);
-    lua_setfield(pLuaState, -2, "UpdateInstancesInOpaqueGeometrySubpass");
+    lua_setfield(pLuaState, -2, "updateInstancesInOpaqueGeometrySubpass");
 
     lua_pushcfunction(pLuaState, luaAddModelToWaterGeometrySubpass);
-    lua_setfield(pLuaState, -2, "AddModelToWaterGeometrySubpass");
+    lua_setfield(pLuaState, -2, "addModelToWaterGeometrySubpass");
 
     lua_pushcfunction(pLuaState, luaRemoveModelFromWaterGeometrySubpass);
-    lua_setfield(pLuaState, -2, "RemoveModelFromWaterGeometrySubpass");
+    lua_setfield(pLuaState, -2, "removeModelFromWaterGeometrySubpass");
 
     lua_pushcfunction(pLuaState, luaUpdateInstancesInWaterGeometrySubpass);
-    lua_setfield(pLuaState, -2, "UpdateInstancesInWaterGeometrySubpass");
+    lua_setfield(pLuaState, -2, "updateInstancesInWaterGeometrySubpass");
 
     lua_pushcfunction(pLuaState, updateGlobalUniformBuffer);
-    lua_setfield(pLuaState, -2, "UpdateGlobalUniformBuffer");
+    lua_setfield(pLuaState, -2, "updateGlobalUniformBuffer");
 
     lua_pushcfunction(pLuaState, updateLightsUniformBuffer);
-    lua_setfield(pLuaState, -2, "UpdateLightsUniformBuffer");
+    lua_setfield(pLuaState, -2, "updateLightsUniformBuffer");
 
     lua_pushcfunction(pLuaState, loadModel);
-    lua_setfield(pLuaState, -2, "LoadModel");
+    lua_setfield(pLuaState, -2, "loadModel");
 
     // Call start
-    int startFunctionType = lua_getfield(pLuaState, -1, "Start");
+    int startFunctionType = lua_getfield(pLuaState, -1, "start");
     assertLuaType(startFunctionType, LUA_TFUNCTION);
     luaResult = lua_pcall(pLuaState, 0, 0, 0);
     tryThrowLuaError(pLuaState, luaResult);
@@ -633,7 +633,7 @@ void updateLua(LuaContext *pLuaContext, bool *keyCodes)
     lua_pop(pLuaState, 1);
 
     // Call Update
-    int startFunctionType = lua_getfield(pLuaState, -1, "Update");
+    int startFunctionType = lua_getfield(pLuaState, -1, "update");
     assertLuaType(startFunctionType, LUA_TFUNCTION);
 
     int luaResult = lua_pcall(pLuaState, 0, 0, 0);
@@ -644,7 +644,7 @@ void endLua(LuaContext *pLuaContext)
 {
     // Call End
     lua_State *pLuaState = pLuaContext->pLuaState;
-    int startFunctionType = lua_getfield(pLuaState, -1, "End");
+    int startFunctionType = lua_getfield(pLuaState, -1, "stop");
     assertLuaType(startFunctionType, LUA_TFUNCTION);
     int luaResult = lua_pcall(pLuaState, 0, 0, 0);
     tryThrowLuaError(pLuaState, luaResult);

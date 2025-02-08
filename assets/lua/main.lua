@@ -49,76 +49,76 @@ local foundationSeed = 12432
 -- local lavaNoiseSeed = 321412
 
 
-function GetInterpolationValue(value, step, delta)
-    if value < -step - delta then
-        return 1, 1, 0
-    elseif value < -step then
-        return 1, 2, (value + step + delta) / delta
-    elseif value < step then
-        return 2, 2, 0.5
-    elseif value < step + delta then
-        return 2, 3, (value - step) / delta
-    else
-        return 3, 3, 1
-    end
-end
+-- function getInterpolationValue(value, step, delta)
+--     if value < -step - delta then
+--         return 1, 1, 0
+--     elseif value < -step then
+--         return 1, 2, (value + step + delta) / delta
+--     elseif value < step then
+--         return 2, 2, 0.5
+--     elseif value < step + delta then
+--         return 2, 3, (value - step) / delta
+--     else
+--         return 3, 3, 1
+--     end
+-- end
 
-function GetVoxelInterpolation(temperature, humidity, map)
-    local delta = 0.05
-    local x0, x1, dx = GetInterpolationValue(temperature, game.temperatureStep, delta)
-    local y0, y1, dy = GetInterpolationValue(humidity, game.humidityStep, delta)
-    local r00 = map[x0][y0]
-    local r01 = map[x0][y1]
-    local r10 = map[x1][y0]
-    local r11 = map[x1][y1]
-    local tx = gameMath.SmoothLerp(r00, r01, dx)
-    local ty = gameMath.SmoothLerp(r10, r11, dx)
-    return gameMath.SmoothLerp(tx, ty, dy)
-end
+-- function getVoxelInterpolation(temperature, humidity, map)
+--     local delta = 0.05
+--     local x0, x1, dx = getInterpolationValue(temperature, game.temperatureStep, delta)
+--     local y0, y1, dy = getInterpolationValue(humidity, game.humidityStep, delta)
+--     local r00 = map[x0][y0]
+--     local r01 = map[x0][y1]
+--     local r10 = map[x1][y0]
+--     local r11 = map[x1][y1]
+--     local tx = gameMath.SmoothLerp(r00, r01, dx)
+--     local ty = gameMath.SmoothLerp(r10, r11, dx)
+--     return gameMath.SmoothLerp(tx, ty, dy)
+-- end
 
-function GetVoxel(temperature, humidity, map)
-    if temperature < -game.temperatureStep then
-        if humidity < -game.humidityStep then
-            return map[1][1]
-        elseif humidity < game.humidityStep then
-            return map[1][2]
-        else
-            return map[1][3]
-        end
-    elseif temperature < game.temperatureStep then
-        if humidity < -game.humidityStep then
-            return map[2][1]
-        elseif humidity < game.humidityStep then
-            return map[2][2]
-        else
-            return map[2][3]
-        end
-    else
-        if humidity < -game.humidityStep then
-            return map[3][1]
-        elseif humidity < game.humidityStep then
-            return map[3][2]
-        else
-            return map[3][3]
-        end
-    end
-end
+-- function getVoxel(temperature, humidity, map)
+--     if temperature < -game.temperatureStep then
+--         if humidity < -game.humidityStep then
+--             return map[1][1]
+--         elseif humidity < game.humidityStep then
+--             return map[1][2]
+--         else
+--             return map[1][3]
+--         end
+--     elseif temperature < game.temperatureStep then
+--         if humidity < -game.humidityStep then
+--             return map[2][1]
+--         elseif humidity < game.humidityStep then
+--             return map[2][2]
+--         else
+--             return map[2][3]
+--         end
+--     else
+--         if humidity < -game.humidityStep then
+--             return map[3][1]
+--         elseif humidity < game.humidityStep then
+--             return map[3][2]
+--         else
+--             return map[3][3]
+--         end
+--     end
+-- end
 
-function engine.Start()
+function engine.start()
     print("Lua Start")
 
     local modelsPath = engine.assetsPath .. engine.pathSeparator
     print("Loading models..")
     local models = {
-        engine.LoadModel(modelsPath .. "LargeBuilding01_0.tknvox"),
-        engine.LoadModel(modelsPath .. "SmallBuilding01_0.tknvox"),
-        engine.LoadModel(modelsPath .. "SmallBuilding02_0.tknvox"),
-        engine.LoadModel(modelsPath .. "SmallBuilding03_0.tknvox"),
-        engine.LoadModel(modelsPath .. "SmallBuilding04_0.tknvox"),
-        engine.LoadModel(modelsPath .. "TallBuilding01_0.tknvox"),
-        engine.LoadModel(modelsPath .. "TallBuilding02_0.tknvox"),
-        engine.LoadModel(modelsPath .. "TallBuilding03_0.tknvox"),
-        engine.LoadModel(modelsPath .. "Stone_0.tknvox"),
+        engine.loadModel(modelsPath .. "LargeBuilding01_0.tknvox"),
+        engine.loadModel(modelsPath .. "SmallBuilding01_0.tknvox"),
+        engine.loadModel(modelsPath .. "SmallBuilding02_0.tknvox"),
+        engine.loadModel(modelsPath .. "SmallBuilding03_0.tknvox"),
+        engine.loadModel(modelsPath .. "SmallBuilding04_0.tknvox"),
+        engine.loadModel(modelsPath .. "TallBuilding01_0.tknvox"),
+        engine.loadModel(modelsPath .. "TallBuilding02_0.tknvox"),
+        engine.loadModel(modelsPath .. "TallBuilding03_0.tknvox"),
+        engine.loadModel(modelsPath .. "Stone_0.tknvox"),
     }
     for index, model in ipairs(models) do
         local count = 15
@@ -131,8 +131,8 @@ function engine.Start()
             local y = math.abs(gameMath.LCGRandom((x - 2317831) * 431513511 + index * 24141312 - i * 2131204)) % width
             local z = 0 * scale
             local angle = 90 * i
-            instances[i] = gameMath.CreateMatrix()
-            gameMath.ApplyTransformations(scale, x, y, z, angle, instances[i])
+            instances[i] = gameMath.createMatrix()
+            gameMath.applyTransformations(scale, x, y, z, angle, instances[i])
         end
         engine.DrawModel(instances, model)
     end
@@ -162,7 +162,7 @@ function engine.Start()
                     local dx = (px - (voxelCount + 1) / 2) / voxelCount
                     local dy = (py - (voxelCount + 1) / 2) / voxelCount
                     local foundationHeightNoiseScale = 2.1
-                    local foundationHeight = gameMath.PerlinNoise2D(foundationSeed,
+                    local foundationHeight = gameMath.perlinNoise2D(foundationSeed,
                         foundationHeightNoiseScale * (x + dx),
                         foundationHeightNoiseScale * (y + dy))
                     foundationHeight = 3 + gameMath.Round(gameMath.Clamp(foundationHeight * 2, -1, 1))
@@ -217,9 +217,9 @@ function engine.Start()
     end
 
     print("Drawing models..")
-    engine.SetNormals(vertices, normals, voxelMap)
-    engine.SetNormals(waterVertices, waterNormals, voxelMap)
-    local index = engine.AddModelToOpaqueGeometrySubpass(vertices, colors, normals)
+    engine.setNormals(vertices, normals, voxelMap)
+    engine.setNormals(waterVertices, waterNormals, voxelMap)
+    local index = engine.addModelToOpaqueGeometrySubpass(vertices, colors, normals)
     -- local waterIndex = engine.AddModelToWaterGeometrySubpass(waterVertices, waterColors, waterNormals)
     local modelMatrix = {
         {
@@ -229,7 +229,7 @@ function engine.Start()
             { 0,     0,     0,     1 },
         },
     }
-    engine.UpdateInstancesInOpaqueGeometrySubpass(index, modelMatrix)
+    engine.updateInstancesInOpaqueGeometrySubpass(index, modelMatrix)
     -- engine.UpdateInstancesInWaterGeometrySubpass(waterIndex, modelMatrix)
     print("Generating lightings..")
     local pointLights = {}
@@ -249,11 +249,11 @@ function engine.Start()
         color = { 0.3, 0.3, 0.8, 0.2 },
         direction = { -0.618, -0.618, -1 },
     }
-    engine.UpdateLightsUniformBuffer(directionalLight, pointLights)
+    engine.updateLightsUniformBuffer(directionalLight, pointLights)
 end
 
-function engine.End()
-    print("Lua Start")
+function engine.stop()
+    print("Lua stop")
 end
 
 local globalUniformBuffer = {
@@ -267,7 +267,7 @@ local globalUniformBuffer = {
     pointSizeScale = 0.618,
 }
 
-function engine.Update()
+function engine.update()
     if engine.frameCount == 0 then
         collectgarbage("collect")
         local memoryUsage = collectgarbage("count")
@@ -297,7 +297,7 @@ function engine.Update()
         cameraRotation[1] = cameraRotation[1] + 0.01
     end
 
-    engine.UpdateGlobalUniformBuffer(globalUniformBuffer)
+    engine.updateGlobalUniformBuffer(globalUniformBuffer)
     engine.frameCount = engine.frameCount + 1
 end
 
