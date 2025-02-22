@@ -63,6 +63,8 @@
         "tuple": "c",
         "variant": "c",
         "vector": "c",
-        "unistd.h": "c"
+        "unistd.h": "c",
+        "time.h": "c",
+        "stdarg.h": "c"
     }
 }

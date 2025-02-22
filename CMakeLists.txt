@@ -5,48 +5,45 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_STANDARD 99)
 # Debug or Release
 # message(${CMAKE_BUILD_TYPE})
-
 find_package(Vulkan REQUIRED)
 # find_library(GLFW3_LIBRARY NAMES "libglfw3.a" "libglfw.3.dylib" "glfw3.dll" "glfw3dll.lib" PATHS ${CMAKE_CURRENT_SOURCE_DIR}/lib/glfw3)
-find_library(LUA_LIBRARY NAMES "liblua.dylib" "lualib53.dylib" "liblua.dll" "liblua.lib" PATHS ${CMAKE_CURRENT_SOURCE_DIR}/lib/lua)
+# find_library(LUA_LIBRARY NAMES "liblua.dylib" "lualib53.dylib" "liblua.dll" "liblua.lib" PATHS ${CMAKE_CURRENT_SOURCE_DIR}/lib/lua)
 
 file(GLOB_RECURSE SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/*.c)
 
 set(HEADER_DIRS
     ${Vulkan_INCLUDE_DIRS}
     ${CMAKE_CURRENT_SOURCE_DIR}/include/cglm
-    ${CMAKE_SOURCE_DIR}/include/lua
+    # ${CMAKE_SOURCE_DIR}/include/lua
     ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
 set(LIBRARYS
     ${Vulkan_LIBRARIES}
-    ${LUA_LIBRARY}
+    # ${LUA_LIBRARY}
     ${CGLM_LIBRARY}
 )
-if(WIN32)
-    # Windows paltform
-    # Collect library
-    add_definitions(-D_CRT_NO_MICROSOFT_JEDI_MIND_CONTROL=1 -D_CRT_SECURE_NO_WARNINGS=1)
-elseif(APPLE)
-    # Apple paltform
-    # Collect library
-    enable_language(OBJC)
-    find_library(COCOA_LIBRARY Cocoa)
-    find_library(QUARTZCORE_LIBRARY QuartzCore)
-    # find_library(MOLTENVK_LIBRARY MoltenVK)
+# if(WIN32)
+#     # Windows paltform
+#     # Collect library
+#     add_definitions(-D_CRT_NO_MICROSOFT_JEDI_MIND_CONTROL=1 -D_CRT_SECURE_NO_WARNINGS=1)
+# elseif(APPLE)
+#     # Apple paltform
+#     # Collect library
+#     enable_language(OBJC)
+#     find_library(COCOA_LIBRARY Cocoa)
+#     find_library(QUARTZCORE_LIBRARY QuartzCore)
+#     # find_library(MOLTENVK_LIBRARY MoltenVK)
 
-    list(APPEND LIBRARYS ${COCOA_LIBRARY})
-    list(APPEND LIBRARYS ${QUARTZCORE_LIBRARY})
-    # list(APPEND LIBRARYS ${MOLTENVK_LIBRARY})
+#     list(APPEND LIBRARYS ${COCOA_LIBRARY})
+#     list(APPEND LIBRARYS ${QUARTZCORE_LIBRARY})
+#     # list(APPEND LIBRARYS ${MOLTENVK_LIBRARY})
 
-    file(GLOB_RECURSE OCSOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/*.m)
-    list(APPEND SOURCES ${OCSOURCES})
-
-    
-else()
-    # Ohter platform
-    message("Unknown platform!")
-endif()
+#     file(GLOB_RECURSE OCSOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/*.m)
+#     list(APPEND SOURCES ${OCSOURCES})
+# else()
+#     # Ohter platform
+#     message("Unknown platform!")
+# endif()
 
 message("   SOURCES:${SOURCES}")
 add_library(${PROJECT_NAME} SHARED ${SOURCES})

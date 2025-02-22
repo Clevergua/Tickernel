@@ -15,32 +15,17 @@ TickernelEngine *tickernelStart(const char *assetsPath, uint32_t targetSwapchain
     pTickernelEngine->vkSurface = vkSurface;
 
     pTickernelEngine->pGraphicContext = startGraphic(assetsPath, targetSwapchainImageCount, targetPresentMode, vkInstance, vkSurface, swapchainWidth, swapchainHeight);
-    pTickernelEngine->pLuaContext = startLua(assetsPath, pTickernelEngine->pGraphicContext);
     return pTickernelEngine;
 }
 
-void tickernelUpdate(TickernelEngine *pTickernelEngine, uint32_t swapchainWidth, uint32_t swapchainHeight, bool *keyCodes)
+void tickernelUpdate(TickernelEngine *pTickernelEngine, uint32_t swapchainWidth, uint32_t swapchainHeight)
 {
     pTickernelEngine->frameCount++;
-    // printf("Tickernel Update!\n");
-    // struct timespec startTime, endTime;
-    // timespec_get(&startTime, TIME_UTC);
-    updateLua(pTickernelEngine->pLuaContext, keyCodes);
-    // timespec_get(&endTime, TIME_UTC);
-    // uint32_t luaDeltaTime = (uint32_t)(endTime.tv_sec - startTime.tv_sec) * MILLISECONDS_PER_SECOND + (uint32_t)(endTime.tv_nsec - startTime.tv_nsec) / NANOSECONDS_PER_MILLISECOND;
-    // printf("Lua Cost Time: %u ms\n", luaDeltaTime);
-
-    // timespec_get(&startTime, TIME_UTC);
     updateGraphic(pTickernelEngine->pGraphicContext, swapchainWidth, swapchainHeight);
-    // timespec_get(&endTime, TIME_UTC);
-    // uint32_t graphicDeltaTime = (uint32_t)(endTime.tv_sec - startTime.tv_sec) * MILLISECONDS_PER_SECOND + (uint32_t)(endTime.tv_nsec - startTime.tv_nsec) / NANOSECONDS_PER_MILLISECOND;
-    // printf("Graphic Cost Time: %u ms\n", graphicDeltaTime);
 }
 
 void tickernelEnd(TickernelEngine *pTickernelEngine)
 {
-    LuaContext *pLuaContext = pTickernelEngine->pLuaContext;
-    endLua(pLuaContext);
     GraphicContext *pGraphicContext = pTickernelEngine->pGraphicContext;
     endGraphic(pGraphicContext);
     tickernelFree(pTickernelEngine);
