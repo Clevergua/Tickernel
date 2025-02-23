@@ -66,5 +66,6 @@
         "unistd.h": "c",
         "time.h": "c",
         "stdarg.h": "c"
-    }
+    },
+    "cmake.sourceDirectory": "/Users/forgemastergua/Documents/GitHub/Tickernel"
 }

@@ -56,5 +56,6 @@ dkms.conf
 #Project build dir
 build/
 out/
+dylib/build/
 
 *.DS_Store
