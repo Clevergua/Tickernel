@@ -22,13 +22,6 @@ target_include_directories(${PROJECT_NAME} PUBLIC ${HEADER_DIRS})
 message("   LIBRARYS:${LIBRARYS}")
 target_link_libraries(${PROJECT_NAME} ${LIBRARYS})
 
-# # Copy libs
-# set(DLL_LIBS)
-# file(GLOB_RECURSE DLL_LIBS ${CMAKE_SOURCE_DIR}/lib/*.dylib ${CMAKE_SOURCE_DIR}/lib/*.dll)
-# message(DLL_LIBS: ${DLL_LIBS})
-# add_custom_target(CopyDLL COMMAND ${CMAKE_COMMAND} -E copy_if_different ${DLL_LIBS} ${CMAKE_BINARY_DIR}/${DLL_FILENAME})
-# add_dependencies(${PROJECT_NAME} CopyDLL)
-
 # Compile shaders
 find_program(GLSLC_EXECUTABLE glslc)
 set(SHADER_SOURCES_DIR ${CMAKE_SOURCE_DIR}/res/glsl)
@@ -49,11 +42,11 @@ foreach(SHADER ${SHADER_SOURCES})
 endforeach()
 add_custom_target(CompileShaders DEPENDS ${SPIRV_BINARIES})
 add_dependencies(${PROJECT_NAME} CompileShaders)
-# Copy assets
-add_custom_target(CopyAssets
-    COMMAND ${CMAKE_COMMAND} -E copy_directory
-    ${CMAKE_SOURCE_DIR}/assets
-    ${CMAKE_BINARY_DIR}/assets
-)
-add_dependencies(${PROJECT_NAME} CopyAssets)
+# # Copy assets
+# add_custom_target(CopyAssets
+#     COMMAND ${CMAKE_COMMAND} -E copy_directory
+#     ${CMAKE_SOURCE_DIR}/assets
+#     ${CMAKE_BINARY_DIR}/assets
+# )
+# add_dependencies(${PROJECT_NAME} CopyAssets)
 
