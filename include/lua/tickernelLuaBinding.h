@@ -2,23 +2,7 @@
 #include "lauxlib.h"
 #include "lualib.h"
 #include "tickernelVoxel.h"
-#define LUA_PEEK_TOP(L)      \
-    {                        \
-        top = lua_gettop(L); \
-    }
-static void tryThrowLuaError(lua_State *pLuaState, int luaResult)
-{
-    if (LUA_OK == luaResult)
-    {
-        // continue.
-    }
-    else
-    {
-        const char *msg = lua_tostring(pLuaState, -1);
-        lua_pop(pLuaState, 1);
-        tickernelError("Lua error code: %d!\n   Error msg: %s\n", luaResult, msg);
-    }
-}
+
 
 static void assertLuaType(int type, int targetType)
 {
@@ -296,273 +280,269 @@ int luaUpdateInstancesInWaterGeometrySubpass(lua_State *pLuaState)
     return 0;
 }
 
-// int updateGlobalUniformBuffer(lua_State *pLuaState)
+int updateGlobalUniformBuffer(lua_State *pLuaState)
+{
+    int engineType = lua_getglobal(pLuaState, "engine");
+    assertLuaType(engineType, LUA_TTABLE);
+
+    int pGraphicContextType = lua_getfield(pLuaState, -1, "pGraphicContext");
+    assertLuaType(pGraphicContextType, LUA_TLIGHTUSERDATA);
+    GraphicContext *pGraphicContext = lua_touserdata(pLuaState, -1);
+    lua_pop(pLuaState, 2);
+
+    lua_getfield(pLuaState, -1, "time");
+    lua_Number time = luaL_checknumber(pLuaState, -1);
+    lua_pop(pLuaState, 1);
+
+    lua_getfield(pLuaState, -1, "frameCount");
+    uint32_t frameCount = luaL_checknumber(pLuaState, -1);
+    lua_pop(pLuaState, 1);
+
+    lua_getfield(pLuaState, -1, "cameraPosition");
+    vec3 cameraPosition;
+    for (uint32_t i = 0; i < 3; i++)
+    {
+        lua_geti(pLuaState, -1, i + 1);
+        cameraPosition[i] = luaL_checknumber(pLuaState, -1);
+        lua_pop(pLuaState, 1);
+    }
+    lua_pop(pLuaState, 1);
+
+    lua_getfield(pLuaState, -1, "cameraRotation");
+    vec3 cameraRotation;
+    for (uint32_t i = 0; i < 3; i++)
+    {
+        lua_geti(pLuaState, -1, i + 1);
+        cameraRotation[i] = luaL_checknumber(pLuaState, -1);
+        lua_pop(pLuaState, 1);
+    }
+    lua_pop(pLuaState, 1);
+
+    lua_getfield(pLuaState, -1, "fov");
+    float fov = luaL_checknumber(pLuaState, -1);
+    lua_pop(pLuaState, 1);
+
+    lua_getfield(pLuaState, -1, "near");
+    float near = luaL_checknumber(pLuaState, -1);
+    lua_pop(pLuaState, 1);
+
+    lua_getfield(pLuaState, -1, "far");
+    float far = luaL_checknumber(pLuaState, -1);
+    lua_pop(pLuaState, 1);
+
+    lua_getfield(pLuaState, -1, "pointSizeScale");
+    float pointSizeScale = luaL_checknumber(pLuaState, -1);
+    lua_pop(pLuaState, 1);
+
+    pGraphicContext->inputGlobalUniformBuffer.time = time;
+    pGraphicContext->inputGlobalUniformBuffer.frameCount = frameCount;
+    pGraphicContext->inputGlobalUniformBuffer.near = near;
+    pGraphicContext->inputGlobalUniformBuffer.far = far;
+    pGraphicContext->inputGlobalUniformBuffer.fov = fov;
+    pGraphicContext->inputGlobalUniformBuffer.width = pGraphicContext->swapchainWidth;
+    pGraphicContext->inputGlobalUniformBuffer.height = pGraphicContext->swapchainHeight;
+
+    mat4 rotationMatrix;
+    glm_euler_xyz(cameraRotation, rotationMatrix);
+
+    mat4 translationMatrix;
+    glm_translate_make(translationMatrix, cameraPosition);
+
+    mat4 viewMatrix;
+    glm_mat4_mul(translationMatrix, rotationMatrix, viewMatrix);
+    glm_mat4_inv(viewMatrix, pGraphicContext->inputGlobalUniformBuffer.view);
+
+    pGraphicContext->inputGlobalUniformBuffer.pointSizeFactor = pointSizeScale * pGraphicContext->swapchainHeight / tanf(glm_rad(fov / 2)) / 16.0;
+    glm_perspective(glm_rad(fov), pGraphicContext->swapchainWidth / (float)pGraphicContext->swapchainHeight, near, far, pGraphicContext->inputGlobalUniformBuffer.proj);
+    pGraphicContext->inputGlobalUniformBuffer.proj[1][1] *= -1;
+    mat4 view_proj;
+    glm_mat4_mul(pGraphicContext->inputGlobalUniformBuffer.proj, pGraphicContext->inputGlobalUniformBuffer.view, view_proj);
+    glm_mat4_inv(view_proj, pGraphicContext->inputGlobalUniformBuffer.inv_view_proj);
+
+    lua_pop(pLuaState, 2);
+    pGraphicContext->canUpdateGlobalUniformBuffer = true;
+    return 0;
+}
+
+int updateLightsUniformBuffer(lua_State *pLuaState)
+{
+    int engineTpye = lua_getglobal(pLuaState, "engine");
+    assertLuaType(engineTpye, LUA_TTABLE);
+    int pGraphicContextTpye = lua_getfield(pLuaState, -1, "pGraphicContext");
+    assertLuaType(pGraphicContextTpye, LUA_TLIGHTUSERDATA);
+    GraphicContext *pGraphicContext = lua_touserdata(pLuaState, -1);
+    lua_pop(pLuaState, 2);
+
+    LightsUniformBuffer lightsUniformBuffer;
+
+    lua_len(pLuaState, -1);
+    lua_Integer pointLightCount = luaL_checkinteger(pLuaState, -1);
+    lightsUniformBuffer.pointLightCount = (int)pointLightCount;
+    if (pointLightCount > MAX_POINT_LIGHT_COUNT)
+    {
+        tickernelError("Point light count: %d out of range!\n", (int)pointLightCount);
+    }
+
+    lua_pop(pLuaState, 1);
+    for (uint32_t i = 0; i < pointLightCount; i++)
+    {
+        int pointLightsType = lua_geti(pLuaState, -1, i + 1);
+        assertLuaType(pointLightsType, LUA_TTABLE);
+        {
+            int colorType = lua_getfield(pLuaState, -1, "color");
+            assertLuaType(colorType, LUA_TTABLE);
+            for (uint32_t j = 0; j < 4; j++)
+            {
+                int colorValueType = lua_geti(pLuaState, -1, j + 1);
+                assertLuaType(colorValueType, LUA_TNUMBER);
+                lightsUniformBuffer.pointLights[i].color[j] = luaL_checknumber(pLuaState, -1);
+                lua_pop(pLuaState, 1);
+            }
+            lua_pop(pLuaState, 1);
+
+            int positionType = lua_getfield(pLuaState, -1, "position");
+            assertLuaType(positionType, LUA_TTABLE);
+            for (uint32_t j = 0; j < 3; j++)
+            {
+                int positionValueType = lua_geti(pLuaState, -1, j + 1);
+                assertLuaType(positionValueType, LUA_TNUMBER);
+                lightsUniformBuffer.pointLights[i].position[j] = luaL_checknumber(pLuaState, -1);
+                lua_pop(pLuaState, 1);
+            }
+            lua_pop(pLuaState, 1);
+
+            int rangeType = lua_getfield(pLuaState, -1, "range");
+            assertLuaType(rangeType, LUA_TNUMBER);
+            lightsUniformBuffer.pointLights[i].range = luaL_checknumber(pLuaState, -1);
+            lua_pop(pLuaState, 1);
+        }
+        lua_pop(pLuaState, 1);
+    }
+    lua_pop(pLuaState, 1);
+
+    {
+        int colorType = lua_getfield(pLuaState, -1, "color");
+        assertLuaType(colorType, LUA_TTABLE);
+        for (uint32_t i = 0; i < 4; i++)
+        {
+            int colorValueType = lua_geti(pLuaState, -1, i + 1);
+            assertLuaType(colorValueType, LUA_TNUMBER);
+            lightsUniformBuffer.directionalLight.color[i] = luaL_checknumber(pLuaState, -1);
+            lua_pop(pLuaState, 1);
+        }
+        lua_pop(pLuaState, 1);
+
+        int directionType = lua_getfield(pLuaState, -1, "direction");
+        assertLuaType(directionType, LUA_TTABLE);
+        for (uint32_t i = 0; i < 3; i++)
+        {
+            int directionValueType = lua_geti(pLuaState, -1, i + 1);
+            assertLuaType(directionValueType, LUA_TNUMBER);
+            lightsUniformBuffer.directionalLight.direction[i] = luaL_checknumber(pLuaState, -1);
+            lua_pop(pLuaState, 1);
+        }
+        lua_pop(pLuaState, 1);
+    }
+    lua_pop(pLuaState, 1);
+    pGraphicContext->inputLightsUniformBuffer = lightsUniformBuffer;
+    pGraphicContext->canUpdateLightsUniformBuffer = true;
+    // assert(lua_gettop(pLuaState) == 0);
+    return 0;
+}
+
+int loadModel(lua_State *pLuaState)
+{
+    const char *path = luaL_checkstring(pLuaState, -1);
+    lua_pop(pLuaState, 1);
+    TickernelVoxel *pTickernelVoxel = tickernelMalloc(sizeof(TickernelVoxel));
+    deserializeTickernelVoxel(path, pTickernelVoxel, tickernelMalloc);
+
+    lua_newtable(pLuaState);
+    lua_pushstring(pLuaState, "vertexCount");
+    lua_pushinteger(pLuaState, pTickernelVoxel->vertexCount);
+    lua_settable(pLuaState, -3);
+
+    lua_pushstring(pLuaState, "propertyCount");
+    lua_pushinteger(pLuaState, pTickernelVoxel->propertyCount);
+    lua_settable(pLuaState, -3);
+
+    lua_pushstring(pLuaState, "names");
+    lua_newtable(pLuaState);
+    for (uint32_t i = 0; i < pTickernelVoxel->propertyCount; i++)
+    {
+        lua_pushinteger(pLuaState, i + 1);
+        lua_pushstring(pLuaState, pTickernelVoxel->names[i]);
+        lua_settable(pLuaState, -3);
+    }
+    lua_settable(pLuaState, -3);
+
+    lua_pushstring(pLuaState, "types");
+    lua_newtable(pLuaState);
+    for (uint32_t i = 0; i < pTickernelVoxel->propertyCount; i++)
+    {
+        lua_pushinteger(pLuaState, i + 1);
+        lua_pushinteger(pLuaState, pTickernelVoxel->types[i]);
+        lua_settable(pLuaState, -3);
+    }
+    lua_settable(pLuaState, -3);
+
+    lua_pushstring(pLuaState, "indexToProperties");
+    lua_newtable(pLuaState);
+    for (uint32_t i = 0; i < pTickernelVoxel->propertyCount; i++)
+    {
+        lua_pushinteger(pLuaState, i + 1);
+        lua_newtable(pLuaState);
+        for (uint32_t j = 0; j < pTickernelVoxel->vertexCount; j++)
+        {
+            lua_pushinteger(pLuaState, j + 1);
+
+            switch (pTickernelVoxel->types[i])
+            {
+            case TICKERNEL_VOXEL_INT8:
+                lua_pushinteger(pLuaState, ((int8_t *)pTickernelVoxel->indexToProperties[i])[j]);
+                break;
+            case TICKERNEL_VOXEL_UINT8:
+                lua_pushinteger(pLuaState, ((uint8_t *)pTickernelVoxel->indexToProperties[i])[j]);
+                break;
+            case TICKERNEL_VOXEL_INT16:
+                lua_pushinteger(pLuaState, ((int16_t *)pTickernelVoxel->indexToProperties[i])[j]);
+                break;
+            case TICKERNEL_VOXEL_UINT16:
+                lua_pushinteger(pLuaState, ((uint16_t *)pTickernelVoxel->indexToProperties[i])[j]);
+                break;
+            case TICKERNEL_VOXEL_INT32:
+                lua_pushinteger(pLuaState, ((int32_t *)pTickernelVoxel->indexToProperties[i])[j]);
+                break;
+            case TICKERNEL_VOXEL_UINT32:
+                lua_pushinteger(pLuaState, ((uint32_t *)pTickernelVoxel->indexToProperties[i])[j]);
+                break;
+            case TICKERNEL_VOXEL_FLOAT32:
+                lua_pushnumber(pLuaState, ((float *)pTickernelVoxel->indexToProperties[i])[j]);
+                break;
+            default:
+                tickernelError("Unknown property type %d", pTickernelVoxel->types[i]);
+                break;
+            }
+
+            lua_settable(pLuaState, -3);
+        }
+        lua_settable(pLuaState, -3);
+    }
+    lua_settable(pLuaState, -3);
+    releaseTickernelVoxel(pTickernelVoxel, tickernelFree);
+    tickernelFree(pTickernelVoxel);
+    return 1;
+}
+
+// void startLua(const char *assetPath, GraphicContext *pGraphicContext)
 // {
-//     int engineType = lua_getglobal(pLuaState, "engine");
-//     assertLuaType(engineType, LUA_TTABLE);
-
-//     int pGraphicContextType = lua_getfield(pLuaState, -1, "pGraphicContext");
-//     assertLuaType(pGraphicContextType, LUA_TLIGHTUSERDATA);
-//     GraphicContext *pGraphicContext = lua_touserdata(pLuaState, -1);
-//     lua_pop(pLuaState, 2);
-
-//     lua_getfield(pLuaState, -1, "time");
-//     lua_Number time = luaL_checknumber(pLuaState, -1);
-//     lua_pop(pLuaState, 1);
-
-//     lua_getfield(pLuaState, -1, "frameCount");
-//     uint32_t frameCount = luaL_checknumber(pLuaState, -1);
-//     lua_pop(pLuaState, 1);
-
-//     lua_getfield(pLuaState, -1, "cameraPosition");
-//     vec3 cameraPosition;
-//     for (uint32_t i = 0; i < 3; i++)
-//     {
-//         lua_geti(pLuaState, -1, i + 1);
-//         cameraPosition[i] = luaL_checknumber(pLuaState, -1);
-//         lua_pop(pLuaState, 1);
-//     }
-//     lua_pop(pLuaState, 1);
-
-//     lua_getfield(pLuaState, -1, "cameraRotation");
-//     vec3 cameraRotation;
-//     for (uint32_t i = 0; i < 3; i++)
-//     {
-//         lua_geti(pLuaState, -1, i + 1);
-//         cameraRotation[i] = luaL_checknumber(pLuaState, -1);
-//         lua_pop(pLuaState, 1);
-//     }
-//     lua_pop(pLuaState, 1);
-
-//     lua_getfield(pLuaState, -1, "fov");
-//     float fov = luaL_checknumber(pLuaState, -1);
-//     lua_pop(pLuaState, 1);
-
-//     lua_getfield(pLuaState, -1, "near");
-//     float near = luaL_checknumber(pLuaState, -1);
-//     lua_pop(pLuaState, 1);
-
-//     lua_getfield(pLuaState, -1, "far");
-//     float far = luaL_checknumber(pLuaState, -1);
-//     lua_pop(pLuaState, 1);
-
-//     lua_getfield(pLuaState, -1, "pointSizeScale");
-//     float pointSizeScale = luaL_checknumber(pLuaState, -1);
-//     lua_pop(pLuaState, 1);
-
-//     pGraphicContext->inputGlobalUniformBuffer.time = time;
-//     pGraphicContext->inputGlobalUniformBuffer.frameCount = frameCount;
-//     pGraphicContext->inputGlobalUniformBuffer.near = near;
-//     pGraphicContext->inputGlobalUniformBuffer.far = far;
-//     pGraphicContext->inputGlobalUniformBuffer.fov = fov;
-//     pGraphicContext->inputGlobalUniformBuffer.width = pGraphicContext->swapchainWidth;
-//     pGraphicContext->inputGlobalUniformBuffer.height = pGraphicContext->swapchainHeight;
-
-//     mat4 rotationMatrix;
-//     glm_euler_xyz(cameraRotation, rotationMatrix);
-
-//     mat4 translationMatrix;
-//     glm_translate_make(translationMatrix, cameraPosition);
-
-//     mat4 viewMatrix;
-//     glm_mat4_mul(translationMatrix, rotationMatrix, viewMatrix);
-//     glm_mat4_inv(viewMatrix, pGraphicContext->inputGlobalUniformBuffer.view);
-
-//     pGraphicContext->inputGlobalUniformBuffer.pointSizeFactor = pointSizeScale * pGraphicContext->swapchainHeight / tanf(glm_rad(fov / 2)) / 16.0;
-//     glm_perspective(glm_rad(fov), pGraphicContext->swapchainWidth / (float)pGraphicContext->swapchainHeight, near, far, pGraphicContext->inputGlobalUniformBuffer.proj);
-//     pGraphicContext->inputGlobalUniformBuffer.proj[1][1] *= -1;
-//     mat4 view_proj;
-//     glm_mat4_mul(pGraphicContext->inputGlobalUniformBuffer.proj, pGraphicContext->inputGlobalUniformBuffer.view, view_proj);
-//     glm_mat4_inv(view_proj, pGraphicContext->inputGlobalUniformBuffer.inv_view_proj);
-
-//     lua_pop(pLuaState, 2);
-//     pGraphicContext->canUpdateGlobalUniformBuffer = true;
-//     return 0;
-// }
-
-// int updateLightsUniformBuffer(lua_State *pLuaState)
-// {
-//     int engineTpye = lua_getglobal(pLuaState, "engine");
-//     assertLuaType(engineTpye, LUA_TTABLE);
-//     int pGraphicContextTpye = lua_getfield(pLuaState, -1, "pGraphicContext");
-//     assertLuaType(pGraphicContextTpye, LUA_TLIGHTUSERDATA);
-//     GraphicContext *pGraphicContext = lua_touserdata(pLuaState, -1);
-//     lua_pop(pLuaState, 2);
-
-//     LightsUniformBuffer lightsUniformBuffer;
-
-//     lua_len(pLuaState, -1);
-//     lua_Integer pointLightCount = luaL_checkinteger(pLuaState, -1);
-//     lightsUniformBuffer.pointLightCount = (int)pointLightCount;
-//     if (pointLightCount > MAX_POINT_LIGHT_COUNT)
-//     {
-//         tickernelError("Point light count: %d out of range!\n", (int)pointLightCount);
-//     }
-
-//     lua_pop(pLuaState, 1);
-//     for (uint32_t i = 0; i < pointLightCount; i++)
-//     {
-//         int pointLightsType = lua_geti(pLuaState, -1, i + 1);
-//         assertLuaType(pointLightsType, LUA_TTABLE);
-//         {
-//             int colorType = lua_getfield(pLuaState, -1, "color");
-//             assertLuaType(colorType, LUA_TTABLE);
-//             for (uint32_t j = 0; j < 4; j++)
-//             {
-//                 int colorValueType = lua_geti(pLuaState, -1, j + 1);
-//                 assertLuaType(colorValueType, LUA_TNUMBER);
-//                 lightsUniformBuffer.pointLights[i].color[j] = luaL_checknumber(pLuaState, -1);
-//                 lua_pop(pLuaState, 1);
-//             }
-//             lua_pop(pLuaState, 1);
-
-//             int positionType = lua_getfield(pLuaState, -1, "position");
-//             assertLuaType(positionType, LUA_TTABLE);
-//             for (uint32_t j = 0; j < 3; j++)
-//             {
-//                 int positionValueType = lua_geti(pLuaState, -1, j + 1);
-//                 assertLuaType(positionValueType, LUA_TNUMBER);
-//                 lightsUniformBuffer.pointLights[i].position[j] = luaL_checknumber(pLuaState, -1);
-//                 lua_pop(pLuaState, 1);
-//             }
-//             lua_pop(pLuaState, 1);
-
-//             int rangeType = lua_getfield(pLuaState, -1, "range");
-//             assertLuaType(rangeType, LUA_TNUMBER);
-//             lightsUniformBuffer.pointLights[i].range = luaL_checknumber(pLuaState, -1);
-//             lua_pop(pLuaState, 1);
-//         }
-//         lua_pop(pLuaState, 1);
-//     }
-//     lua_pop(pLuaState, 1);
-
-//     {
-//         int colorType = lua_getfield(pLuaState, -1, "color");
-//         assertLuaType(colorType, LUA_TTABLE);
-//         for (uint32_t i = 0; i < 4; i++)
-//         {
-//             int colorValueType = lua_geti(pLuaState, -1, i + 1);
-//             assertLuaType(colorValueType, LUA_TNUMBER);
-//             lightsUniformBuffer.directionalLight.color[i] = luaL_checknumber(pLuaState, -1);
-//             lua_pop(pLuaState, 1);
-//         }
-//         lua_pop(pLuaState, 1);
-
-//         int directionType = lua_getfield(pLuaState, -1, "direction");
-//         assertLuaType(directionType, LUA_TTABLE);
-//         for (uint32_t i = 0; i < 3; i++)
-//         {
-//             int directionValueType = lua_geti(pLuaState, -1, i + 1);
-//             assertLuaType(directionValueType, LUA_TNUMBER);
-//             lightsUniformBuffer.directionalLight.direction[i] = luaL_checknumber(pLuaState, -1);
-//             lua_pop(pLuaState, 1);
-//         }
-//         lua_pop(pLuaState, 1);
-//     }
-//     lua_pop(pLuaState, 1);
-//     pGraphicContext->inputLightsUniformBuffer = lightsUniformBuffer;
-//     pGraphicContext->canUpdateLightsUniformBuffer = true;
-//     // assert(lua_gettop(pLuaState) == 0);
-//     return 0;
-// }
-
-// int loadModel(lua_State *pLuaState)
-// {
-//     const char *path = luaL_checkstring(pLuaState, -1);
-//     lua_pop(pLuaState, 1);
-//     TickernelVoxel *pTickernelVoxel = tickernelMalloc(sizeof(TickernelVoxel));
-//     deserializeTickernelVoxel(path, pTickernelVoxel, tickernelMalloc);
-
-//     lua_newtable(pLuaState);
-//     lua_pushstring(pLuaState, "vertexCount");
-//     lua_pushinteger(pLuaState, pTickernelVoxel->vertexCount);
-//     lua_settable(pLuaState, -3);
-
-//     lua_pushstring(pLuaState, "propertyCount");
-//     lua_pushinteger(pLuaState, pTickernelVoxel->propertyCount);
-//     lua_settable(pLuaState, -3);
-
-//     lua_pushstring(pLuaState, "names");
-//     lua_newtable(pLuaState);
-//     for (uint32_t i = 0; i < pTickernelVoxel->propertyCount; i++)
-//     {
-//         lua_pushinteger(pLuaState, i + 1);
-//         lua_pushstring(pLuaState, pTickernelVoxel->names[i]);
-//         lua_settable(pLuaState, -3);
-//     }
-//     lua_settable(pLuaState, -3);
-
-//     lua_pushstring(pLuaState, "types");
-//     lua_newtable(pLuaState);
-//     for (uint32_t i = 0; i < pTickernelVoxel->propertyCount; i++)
-//     {
-//         lua_pushinteger(pLuaState, i + 1);
-//         lua_pushinteger(pLuaState, pTickernelVoxel->types[i]);
-//         lua_settable(pLuaState, -3);
-//     }
-//     lua_settable(pLuaState, -3);
-
-//     lua_pushstring(pLuaState, "indexToProperties");
-//     lua_newtable(pLuaState);
-//     for (uint32_t i = 0; i < pTickernelVoxel->propertyCount; i++)
-//     {
-//         lua_pushinteger(pLuaState, i + 1);
-//         lua_newtable(pLuaState);
-//         for (uint32_t j = 0; j < pTickernelVoxel->vertexCount; j++)
-//         {
-//             lua_pushinteger(pLuaState, j + 1);
-
-//             switch (pTickernelVoxel->types[i])
-//             {
-//             case TICKERNEL_VOXEL_INT8:
-//                 lua_pushinteger(pLuaState, ((int8_t *)pTickernelVoxel->indexToProperties[i])[j]);
-//                 break;
-//             case TICKERNEL_VOXEL_UINT8:
-//                 lua_pushinteger(pLuaState, ((uint8_t *)pTickernelVoxel->indexToProperties[i])[j]);
-//                 break;
-//             case TICKERNEL_VOXEL_INT16:
-//                 lua_pushinteger(pLuaState, ((int16_t *)pTickernelVoxel->indexToProperties[i])[j]);
-//                 break;
-//             case TICKERNEL_VOXEL_UINT16:
-//                 lua_pushinteger(pLuaState, ((uint16_t *)pTickernelVoxel->indexToProperties[i])[j]);
-//                 break;
-//             case TICKERNEL_VOXEL_INT32:
-//                 lua_pushinteger(pLuaState, ((int32_t *)pTickernelVoxel->indexToProperties[i])[j]);
-//                 break;
-//             case TICKERNEL_VOXEL_UINT32:
-//                 lua_pushinteger(pLuaState, ((uint32_t *)pTickernelVoxel->indexToProperties[i])[j]);
-//                 break;
-//             case TICKERNEL_VOXEL_FLOAT32:
-//                 lua_pushnumber(pLuaState, ((float *)pTickernelVoxel->indexToProperties[i])[j]);
-//                 break;
-//             default:
-//                 tickernelError("Unknown property type %d", pTickernelVoxel->types[i]);
-//                 break;
-//             }
-
-//             lua_settable(pLuaState, -3);
-//         }
-//         lua_settable(pLuaState, -3);
-//     }
-//     lua_settable(pLuaState, -3);
-//     releaseTickernelVoxel(pTickernelVoxel, tickernelFree);
-//     tickernelFree(pTickernelVoxel);
-//     return 1;
-// }
-
-// LuaContext *startLua(const char *assetPath, GraphicContext *pGraphicContext)
-// {
-//     LuaContext *pLuaContext = tickernelMalloc(sizeof(LuaContext));
-//     pLuaContext->assetPath = assetPath;
-//     pLuaContext->pGraphicContext = pGraphicContext;
 //     // New lua state
-//     pLuaContext->pLuaState = luaL_newstate();
-//     lua_State *pLuaState = pLuaContext->pLuaState;
+//     lua_State *pLuaState = luaL_newstate();
 //     luaL_openlibs(pLuaState);
 
 //     // Set package path
 //     char packagePath[FILENAME_MAX];
-//     strcpy(packagePath, pLuaContext->assetPath);
+//     strcpy(packagePath, assetPath);
 //     tickernelCombinePaths(packagePath, FILENAME_MAX, "?.lua;");
 //     lua_getglobal(pLuaState, "package");
 //     lua_pushstring(pLuaState, packagePath);
@@ -571,16 +551,16 @@ int luaUpdateInstancesInWaterGeometrySubpass(lua_State *pLuaState)
 
 //     // Do file main.lua
 //     char luaMainFilePath[FILENAME_MAX];
-//     strcpy(luaMainFilePath, pLuaContext->assetPath);
+//     strcpy(luaMainFilePath, assetPath);
 //     tickernelCombinePaths(luaMainFilePath, FILENAME_MAX, "main.lua");
 //     // Put engine state on the stack
 //     int luaResult = luaL_dofile(pLuaState, luaMainFilePath);
 //     tryThrowLuaError(pLuaState, luaResult);
 
-//     lua_pushlightuserdata(pLuaState, pLuaContext->pGraphicContext);
+//     lua_pushlightuserdata(pLuaState, pGraphicContext);
 //     lua_setfield(pLuaState, -2, "pGraphicContext");
 
-//     lua_pushstring(pLuaState, pLuaContext->assetPath);
+//     lua_pushstring(pLuaState, assetPath);
 //     lua_setfield(pLuaState, -2, "assetsPath");
 
 //     lua_pushstring(pLuaState, tickernelGetPathSeparator());
@@ -618,15 +598,13 @@ int luaUpdateInstancesInWaterGeometrySubpass(lua_State *pLuaState)
 //     assertLuaType(startFunctionType, LUA_TFUNCTION);
 //     luaResult = lua_pcall(pLuaState, 0, 0, 0);
 //     tryThrowLuaError(pLuaState, luaResult);
-//     return pLuaContext;
 // }
 
-// void updateLua(LuaContext *pLuaContext, bool *keyCodes)
+// void updateLua(lua_State *pLuaState, bool *keyCodes, uint32_t keyCodesLength)
 // {
 //     // Update keyCodes
-//     lua_State *pLuaState = pLuaContext->pLuaState;
 //     lua_getfield(pLuaState, -1, "input");
-//     for (uint32_t i = 0; i < KEY_CODE_MAX_ENUM; i++)
+//     for (uint32_t i = 0; i < keyCodesLength; i++)
 //     {
 //         lua_pushnumber(pLuaState, i);
 //         lua_pushboolean(pLuaState, keyCodes[i]);
@@ -642,10 +620,9 @@ int luaUpdateInstancesInWaterGeometrySubpass(lua_State *pLuaState)
 //     tryThrowLuaError(pLuaState, luaResult);
 // }
 
-// void endLua(LuaContext *pLuaContext)
+// void endLua(lua_State *pLuaState)
 // {
 //     // Call End
-//     lua_State *pLuaState = pLuaContext->pLuaState;
 //     int startFunctionType = lua_getfield(pLuaState, -1, "stop");
 //     assertLuaType(startFunctionType, LUA_TFUNCTION);
 //     int luaResult = lua_pcall(pLuaState, 0, 0, 0);
@@ -653,7 +630,5 @@ int luaUpdateInstancesInWaterGeometrySubpass(lua_State *pLuaState)
 
 //     //  Pop engine state off the stack
 //     lua_pop(pLuaState, 1);
-
-//     lua_close(pLuaContext->pLuaState);
-//     tickernelFree(pLuaContext);
+//     lua_close(pLuaState);
 // }

@@ -1,8 +1,6 @@
 #pragma once
-#include <stdio.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
+#include "tickernelCore.h"
+
 typedef enum
 {
     TICKERNEL_VOXEL_INT8,

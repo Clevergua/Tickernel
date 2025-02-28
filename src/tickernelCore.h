@@ -9,6 +9,7 @@
 #include <string.h>
 #include <assert.h>
 #include <unistd.h>
+#include <execinfo.h>
 
 typedef struct TickernelNodeStruct
 {

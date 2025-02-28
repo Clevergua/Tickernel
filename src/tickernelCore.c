@@ -1,10 +1,5 @@
 #include "tickernelCore.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#include <execinfo.h>
 
-#include <stdio.h>
 
 void tickernelError(char const *const _Format, ...)
 {

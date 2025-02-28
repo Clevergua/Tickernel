@@ -1,7 +1,5 @@
 #import "AppDelegate.h"
 
-static NSString * const AppName = @"Tickernel";
-
 @implementation AppDelegate
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
