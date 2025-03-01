@@ -1,128 +1,36 @@
 #import "AppView.h"
 
 @implementation AppView
-VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
-                                             VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-                                             VkDebugUtilsMessageTypeFlagsEXT messageType,
-                                             const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
-                                             void* pUserData) {
-    NSLog(@"[Vulkan Validation] %s", pCallbackData->pMessage);
-    return VK_FALSE;
-}
-
-- (void)createVkInstance {
-    VkApplicationInfo appInfo = {};
-    appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-    appInfo.pApplicationName = [AppName UTF8String];
-    appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
-    appInfo.pEngineName = "Tickernel Engine";
-    appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-    appInfo.apiVersion = VK_API_VERSION_1_3;
-    
-    VkInstanceCreateInfo createInfo = {};
-    createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-    createInfo.pApplicationInfo = &appInfo;
-    createInfo.flags = VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
-    
-#ifdef DEBUG
-    const char* layers[] = {
-        "VK_LAYER_KHRONOS_validation",
-    };
-    createInfo.enabledLayerCount = sizeof(layers) / sizeof(layers[0]);
-    createInfo.ppEnabledLayerNames = layers;
-    
-    VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo = {};
-    debugCreateInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
-    debugCreateInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT |
-    VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
-    VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
-    debugCreateInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
-    VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
-    VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
-    debugCreateInfo.pfnUserCallback = debugCallback;
-    createInfo.pNext = &debugCreateInfo;
-#else
-    createInfo.enabledLayerCount = 0;
-    createInfo.ppEnabledLayerNames = NULL;
-    createInfo.pNext = NULL;
-#endif
-    
-    const char* extensions[] = {
-        "VK_KHR_surface",
-        "VK_MVK_macos_surface",
-        "VK_KHR_portability_enumeration",
-#ifdef DEBUG
-        "VK_EXT_debug_utils",
-#endif
-    };
-    createInfo.enabledExtensionCount = sizeof(extensions) / sizeof(extensions[0]);
-    createInfo.ppEnabledExtensionNames = extensions;
-    
-    if (vkCreateInstance(&createInfo, NULL, &_vkInstance) != VK_SUCCESS) {
-        NSLog(@"Failed to create Vulkan instance!");
-        exit(EXIT_FAILURE);
-    }
-    NSLog(@"Vulkan instance created successfully!");
-}
-
-- (void)createVkSurface {
-    VkMacOSSurfaceCreateInfoMVK surfaceCreateInfo = {};
-    surfaceCreateInfo.sType = VK_STRUCTURE_TYPE_MACOS_SURFACE_CREATE_INFO_MVK;
-    surfaceCreateInfo.pView = (__bridge void*)self;
-    
-    if (vkCreateMacOSSurfaceMVK(_vkInstance, &surfaceCreateInfo, NULL, &_vkSurface) != VK_SUCCESS) {
-        NSLog(@"Failed to create Vulkan surface!");
-        exit(EXIT_FAILURE);
-    }
-    NSLog(@"Vulkan surface created successfully!");
-}
-
-- (void)destroyVkInstance {
-    if (_vkInstance != VK_NULL_HANDLE) {
-        vkDestroyInstance(_vkInstance, NULL);
-        _vkInstance = VK_NULL_HANDLE;
-    }
-}
-
-- (void)destroyVkSurface {
-    if (_vkSurface != VK_NULL_HANDLE) {
-        vkDestroySurfaceKHR(_vkInstance, _vkSurface, NULL);
-        _vkSurface = VK_NULL_HANDLE;
-    }
-}
 
 - (void)setupView {
     self.delegate = self;
     self.colorPixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
     self.preferredFramesPerSecond = 60;
-    [self createVkInstance];
-    [self createVkSurface];
-    NSString *resourcesPath = [[NSBundle mainBundle] resourcePath];
-    _pTickernelEngine = tickernelStart([resourcesPath UTF8String], 2, VK_PRESENT_MODE_FIFO_KHR,
-                                       _vkInstance, _vkSurface,
-                                       self.drawableSize.width,
-                                       self.drawableSize.height);
     self.keyCodes = calloc(KEY_CODE_MAX_ENUM, sizeof(BOOL));
+    self.pEngineBinding = [[EngineBinding alloc] init];
+    self.pLuaBinding = [[LuaBinding alloc] init];
+    NSString *resourcesPath = [[NSBundle mainBundle] resourcePath];
+    
+    [self.pEngineBinding setupEngine:self.drawableSize.width height:self.drawableSize.height assetPath:resourcesPath pView:(__bridge void *)self];
+    [self.pLuaBinding startLua:resourcesPath graphicContext:self.pEngineBinding.pTickernelEngine->pGraphicContext];
 }
 
 - (void)teardownView {
+    [self.pLuaBinding endLua];
+    [self.pEngineBinding teardownEngine];
     free(self.keyCodes);
-    tickernelEnd(self.pTickernelEngine);
-    [self destroyVkSurface];
-    [self destroyVkInstance];
 }
 
 - (void)mtkView:(MTKView *)view drawableSizeWillChange:(CGSize)size {
-    if (self.pTickernelEngine) {
-        tickernelUpdate(self.pTickernelEngine, (uint32_t)size.width, (uint32_t)size.height);
-    }
+    [self.pLuaBinding updateLua:self.keyCodes keyCodesLength: KEY_CODE_MAX_ENUM];
+    [self.pEngineBinding updateEngine:size.width height:size.height];
+    
 }
 
 - (void)drawInMTKView:(MTKView *)view {
     NSCAssert([NSThread isMainThread], @"Rendering must be on main thread!");
-    if (self.pTickernelEngine) {
-        tickernelUpdate(self.pTickernelEngine, (uint32_t)view.drawableSize.width, (uint32_t)view.drawableSize.height);
-    }
+    [self.pLuaBinding updateLua:self.keyCodes keyCodesLength: KEY_CODE_MAX_ENUM];
+    [self.pEngineBinding updateEngine:view.drawableSize.width height:view.drawableSize.height];
 }
 
 - (BOOL)acceptsFirstResponder {
@@ -130,12 +38,12 @@ VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
 }
 
 - (void)keyDown:(NSEvent *)event {
-//    NSLog(@"Key Down: %@", characters);
+    //    NSLog(@"Key Down: %@", characters);
     [self updateKeyCode:event keyDown:YES];
 }
 
 - (void)keyUp:(NSEvent *)event {
-//    NSLog(@"Key Up: %@", characters);
+    //    NSLog(@"Key Up: %@", characters);
     [self updateKeyCode:event keyDown:NO];
 }
 
@@ -197,11 +105,11 @@ VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
         case 65: self.keyCodes[KEY_CODE_PERIOD] = keyDown; break;
         case 67: self.keyCodes[KEY_CODE_NUMPAD_MULTIPLY] = keyDown; break;
         case 69: self.keyCodes[KEY_CODE_NUMPAD_ADD] = keyDown; break;
-//        case 71: self.keyCodes[KEY_CODE_NUMPAD_CLEAR] = keyDown; break;
+            //        case 71: self.keyCodes[KEY_CODE_NUMPAD_CLEAR] = keyDown; break;
         case 75: self.keyCodes[KEY_CODE_NUMPAD_DIVIDE] = keyDown; break;
         case 76: self.keyCodes[KEY_CODE_NUMPAD_ENTER] = keyDown; break;
         case 78: self.keyCodes[KEY_CODE_NUMPAD_SUBTRACT] = keyDown; break;
-//        case 81: self.keyCodes[KEY_CODE_NUMPAD_EQUAL] = keyDown; break;
+            //        case 81: self.keyCodes[KEY_CODE_NUMPAD_EQUAL] = keyDown; break;
         case 82: self.keyCodes[KEY_CODE_NUMPAD_0] = keyDown; break;
         case 83: self.keyCodes[KEY_CODE_NUMPAD_1] = keyDown; break;
         case 84: self.keyCodes[KEY_CODE_NUMPAD_2] = keyDown; break;
@@ -219,13 +127,13 @@ VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
         case 100: self.keyCodes[KEY_CODE_F8] = keyDown; break;
         case 101: self.keyCodes[KEY_CODE_F9] = keyDown; break;
         case 103: self.keyCodes[KEY_CODE_F11] = keyDown; break;
-//        case 105: self.keyCodes[KEY_CODE_F13] = keyDown; break;
-//        case 106: self.keyCodes[KEY_CODE_F16] = keyDown; break;
-//        case 107: self.keyCodes[KEY_CODE_F14] = keyDown; break;
+            //        case 105: self.keyCodes[KEY_CODE_F13] = keyDown; break;
+            //        case 106: self.keyCodes[KEY_CODE_F16] = keyDown; break;
+            //        case 107: self.keyCodes[KEY_CODE_F14] = keyDown; break;
         case 109: self.keyCodes[KEY_CODE_F10] = keyDown; break;
         case 111: self.keyCodes[KEY_CODE_F12] = keyDown; break;
-//        case 113: self.keyCodes[KEY_CODE_F15] = keyDown; break;
-//        case 114: self.keyCodes[KEY_CODE_HELP] = keyDown; break;
+            //        case 113: self.keyCodes[KEY_CODE_F15] = keyDown; break;
+            //        case 114: self.keyCodes[KEY_CODE_HELP] = keyDown; break;
         case 115: self.keyCodes[KEY_CODE_HOME] = keyDown; break;
         case 116: self.keyCodes[KEY_CODE_PAGE_UP] = keyDown; break;
         case 117: self.keyCodes[KEY_CODE_DELETE] = keyDown; break;

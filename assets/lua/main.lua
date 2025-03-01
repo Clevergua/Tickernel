@@ -134,7 +134,7 @@ function engine.start()
             instances[i] = gameMath.createMatrix()
             gameMath.applyTransformations(scale, x, y, z, angle, instances[i])
         end
-        engine.DrawModel(instances, model)
+        engine.drawModel(instances, model)
     end
 
 
