@@ -5,7 +5,8 @@
 @implementation LuaBinding
 
 - (void)startLua:(NSString *)assetPath graphicContext:(GraphicContext *)pGraphicContext {
-    lua_State *pLuaState = luaL_newstate();
+    self.pLuaState = luaL_newstate();
+    lua_State *pLuaState = self.pLuaState;
     luaL_openlibs(pLuaState);
     
     const char *cAssetPath = [assetPath UTF8String];
@@ -74,7 +75,8 @@
 
 - (void)updateLua:(BOOL *)keyCodes keyCodesLength:(uint32_t)keyCodesLength {
     lua_State* pLuaState = self.pLuaState;
-    lua_getfield(pLuaState, -1,"input");
+//    uint32_t i = lua_gettop(pLuaState);
+    lua_getfield(pLuaState, -1, "input");
     for (uint32_t i = 0; i < keyCodesLength; i++) {
         lua_pushinteger(pLuaState, i);
         lua_pushboolean(pLuaState, keyCodes[i]);
