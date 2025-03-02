@@ -1,5 +1,9 @@
 #import <Foundation/Foundation.h>
 #import "tickernelLuaBinding.h"
+#import "lua.h"
+#import "lualib.h"
+#import "lauxlib.h"
+
 typedef enum {
    KEY_CODE_A,
    KEY_CODE_B,

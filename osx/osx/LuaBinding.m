@@ -53,13 +53,13 @@
     lua_pushcfunction(pLuaState, luaUpdateInstancesInWaterGeometrySubpass);
     lua_setfield(pLuaState, -2, "updateInstancesInWaterGeometrySubpass");
     
-    lua_pushcfunction(pLuaState, updateGlobalUniformBuffer);
+    lua_pushcfunction(pLuaState, luaUpdateGlobalUniformBuffer);
     lua_setfield(pLuaState, -2, "updateGlobalUniformBuffer");
     
-    lua_pushcfunction(pLuaState, updateLightsUniformBuffer);
+    lua_pushcfunction(pLuaState, luaUpdateLightsUniformBuffer);
     lua_setfield(pLuaState, -2, "updateLightsUniformBuffer");
     
-    lua_pushcfunction(pLuaState, loadModel);
+    lua_pushcfunction(pLuaState, luaLoadModel);
     lua_setfield(pLuaState, -2, "loadModel");
     
     lua_getfield(pLuaState, -1, "start");
