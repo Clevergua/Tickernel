@@ -12,11 +12,11 @@
     NSString *resourcesPath = [[NSBundle mainBundle] resourcePath];
     
     [self.pEngineBinding setupEngine:self.drawableSize.width height:self.drawableSize.height assetPath:resourcesPath pView:(__bridge void *)self];
-    [self.pLuaBinding startLua:resourcesPath graphicContext:self.pEngineBinding.pTickernelEngine->pGraphicContext];
+    [self.pLuaBinding setupLua:resourcesPath graphicContext:self.pEngineBinding.pTickernelEngine->pGraphicContext];
 }
 
 - (void)teardownView {
-    [self.pLuaBinding endLua];
+    [self.pLuaBinding teardownLua];
     [self.pEngineBinding teardownEngine];
     free(self.keyCodes);
 }

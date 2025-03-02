@@ -3,7 +3,6 @@
 #include "lualib.h"
 #include "tickernelVoxel.h"
 
-
 static void assertLuaType(int type, int targetType)
 {
     if (type == targetType)

@@ -1,9 +1,5 @@
 #import <Foundation/Foundation.h>
-#import "lua.h"
-#import "lualib.h"
-#import "lauxlib.h"
-#import "tickernelEngine.h"
-
+#import "tickernelLuaBinding.h"
 typedef enum {
    KEY_CODE_A,
    KEY_CODE_B,
@@ -107,8 +103,7 @@ typedef enum {
 @interface LuaBinding : NSObject
 
 @property (nonatomic, assign) lua_State *pLuaState;
-
-- (void)startLua:(NSString *)assetPath graphicContext:(GraphicContext *)pGraphicContext;
+- (void)setupLua:(NSString *)assetPath graphicContext:(GraphicContext *)pGraphicContext;
 - (void)updateLua:(BOOL *)keyCodes keyCodesLength:(uint32_t)keyCodesLength;
-- (void)endLua;
+- (void)teardownLua;
 @end

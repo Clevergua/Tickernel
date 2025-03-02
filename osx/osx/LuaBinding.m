@@ -1,10 +1,8 @@
 #import "LuaBinding.h"
-#import "graphic.h"
-#import "tickernelLuaBinding.h"
 
 @implementation LuaBinding
 
-- (void)startLua:(NSString *)assetPath graphicContext:(GraphicContext *)pGraphicContext {
+- (void)setupLua:(NSString *)assetPath graphicContext:(GraphicContext *)pGraphicContext {
     self.pLuaState = luaL_newstate();
     lua_State *pLuaState = self.pLuaState;
     luaL_openlibs(pLuaState);
@@ -93,7 +91,7 @@
     }
 }
 
-- (void)endLua {
+- (void)teardownLua {
     lua_State * pLuaState = self.pLuaState;
     lua_getfield(pLuaState, -1,"stop");
     int luaResult = lua_pcall(pLuaState, 0, 0, 0);
