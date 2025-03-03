@@ -1,6 +1,45 @@
 #import "LuaBinding.h"
 
 @implementation LuaBinding
+- (int)luaLoadAudio:(lua_State *)pLuaState {
+    const char *identifier = luaL_checkstring(pLuaState, 1);
+    const char *fileType = luaL_checkstring(pLuaState, 2);
+    [self.pAudioBinding loadAudio:[NSString stringWithUTF8String:identifier] fileType:[NSString stringWithUTF8String:fileType]];
+    return 0;
+}
+
+- (int)luaPlayAudio:(lua_State *)pLuaState {
+    const char *identifier = luaL_checkstring(pLuaState, 1);
+    [self.pAudioBinding playAudio:[NSString stringWithUTF8String:identifier]];
+    return 0;
+}
+
+- (int)luaPauseAudio:(lua_State *)pLuaState {
+    const char *identifier = luaL_checkstring(pLuaState, 1);
+    [self.pAudioBinding pauseAudio:[NSString stringWithUTF8String:identifier]];
+    return 0;
+}
+
+- (int)luaStopAudio:(lua_State *)pLuaState {
+    const char *identifier = luaL_checkstring(pLuaState, 1);
+    [self.pAudioBinding stopAudio:[NSString stringWithUTF8String:identifier]];
+    return 0;
+}
+
+- (int)luaUnloadAudio:(lua_State *)pLuaState {
+    const char *identifier = luaL_checkstring(pLuaState, 1);
+    [self.pAudioBinding unloadAudio:[NSString stringWithUTF8String:identifier]];
+    return 0;
+}
+
+- (int)luaSet3DPositionForAudio:(lua_State *)pLuaState {
+    const char *identifier = luaL_checkstring(pLuaState, 1);
+    float x = luaL_checknumber(pLuaState, 2);
+    float y = luaL_checknumber(pLuaState, 3);
+    float z = luaL_checknumber(pLuaState, 4);
+    [self.pAudioBinding set3DPositionForAudio:[NSString stringWithUTF8String:identifier] X:x Y:y Z:z];
+    return 0;
+}
 
 - (void)setupLua:(NSString *)assetPath graphicContext:(GraphicContext *)pGraphicContext {
     self.pLuaState = luaL_newstate();
@@ -61,6 +100,19 @@
     
     lua_pushcfunction(pLuaState, luaLoadModel);
     lua_setfield(pLuaState, -2, "loadModel");
+    
+//    self.pAudioBinding = [[AudioBinding alloc] init];
+//    lua_pushcfunction(pLuaState, self.pAudioBinding loadA);
+//    lua_setfield(pLuaState, -2, "loadModel");
+
+//    lua_pushcfunction(pLuaState, luaLoadModel);
+//    lua_setfield(pLuaState, -2, "loadModel");
+
+//    lua_pushcfunction(pLuaState, luaLoadModel);
+//    lua_setfield(pLuaState, -2, "loadModel");
+
+//    lua_pushcfunction(pLuaState, luaLoadModel);
+//    lua_setfield(pLuaState, -2, "loadModel");
     
     lua_getfield(pLuaState, -1, "start");
     luaResult = lua_pcall(pLuaState, 0, 0, 0);

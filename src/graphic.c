@@ -775,9 +775,13 @@ void updateGraphic(GraphicContext *pGraphicContext, uint32_t swapchainWidth, uin
     
     if (swapchainWidth != pGraphicContext->swapchainWidth || swapchainHeight != pGraphicContext->swapchainHeight)
     {
+        printf("Recreate swapchain because of a size change: (%d, %d) to (%d, %d) \n",
+               pGraphicContext->swapchainWidth,
+               pGraphicContext->swapchainHeight,
+               swapchainWidth,
+               swapchainHeight);
         pGraphicContext->swapchainWidth = swapchainWidth;
         pGraphicContext->swapchainHeight = swapchainHeight;
-        printf("Recreate swapchain because of size.%d\n", result);
         recreateSwapchain(pGraphicContext);
     }
     else

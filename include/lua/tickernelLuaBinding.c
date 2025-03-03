@@ -147,11 +147,9 @@ int luaAddModelToWaterGeometrySubpass(lua_State *pLuaState)
 {
     lua_len(pLuaState, -2);
     //  vertices colors length
-
     lua_Integer vertexCount = luaL_checkinteger(pLuaState, -1);
     lua_pop(pLuaState, 1);
     //  vertices colors
-
     if (vertexCount > 0)
     {
         WaterGeometrySubpassVertex *waterGeometrySubpassVertices = tickernelMalloc(sizeof(WaterGeometrySubpassVertex) * vertexCount);

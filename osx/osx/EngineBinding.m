@@ -110,5 +110,4 @@ VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
 }
 
 
-
 @end

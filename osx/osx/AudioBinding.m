@@ -22,7 +22,7 @@
     [self.audioEngine stop];
 
     for (NSString *identifier in self.audioPlayers.allKeys) {
-        [self unloadAudioWithIdentifier:identifier];
+        [self unloadAudio:identifier];
     }
 
     [self.audioPlayers removeAllObjects];
@@ -32,24 +32,24 @@
     self.audioEngine = nil;
 }
 
-- (void)loadAudioWithIdentifier:(NSString *)identifier fileName:(NSString *)fileName fileType:(NSString *)fileType {
-    NSString *path = [[NSBundle mainBundle] pathForResource:fileName ofType:fileType];
+- (void)loadAudio:(NSString *)identifier fileType:(NSString *)fileType {
+    NSString *path = [[NSBundle mainBundle] pathForResource:identifier ofType:fileType];
     if (path) {
         NSURL *url = [NSURL fileURLWithPath:path];
         AVAudioFile *audioFile = [[AVAudioFile alloc] initForReading:url error:nil];
         if (audioFile) {
-            self.audioFiles[identifier] = audioFile; // 存储音频文件
+            self.audioFiles[identifier] = audioFile;
             AVAudioPlayerNode *audioPlayer = [[AVAudioPlayerNode alloc] init];
             [self.audioEngine attachNode:audioPlayer];
             [self.audioEngine connect:audioPlayer to:self.audioEngine.mainMixerNode format:audioFile.processingFormat];
-            self.audioPlayers[identifier] = audioPlayer; // 存储音频播放器
+            self.audioPlayers[identifier] = audioPlayer;
         }
     } else {
-        NSLog(@"音频文件未找到: %@", fileName);
+        NSLog(@"音频文件未找到: %@", path);
     }
 }
 
-- (void)playAudioWithIdentifier:(NSString *)identifier {
+- (void)playAudio:(NSString *)identifier {
     AVAudioPlayerNode *audioPlayer = self.audioPlayers[identifier];
     AVAudioFile *audioFile = self.audioFiles[identifier];
     if (audioPlayer && audioFile) {
@@ -60,7 +60,7 @@
     }
 }
 
-- (void)pauseAudioWithIdentifier:(NSString *)identifier {
+- (void)pauseAudio:(NSString *)identifier {
     AVAudioPlayerNode *audioPlayer = self.audioPlayers[identifier];
     if (audioPlayer) {
         [audioPlayer pause];
@@ -69,7 +69,7 @@
     }
 }
 
-- (void)stopAudioWithIdentifier:(NSString *)identifier {
+- (void)stopAudio:(NSString *)identifier {
     AVAudioPlayerNode *audioPlayer = self.audioPlayers[identifier];
     if (audioPlayer) {
         [audioPlayer stop];
@@ -78,7 +78,7 @@
     }
 }
 
-- (void)unloadAudioWithIdentifier:(NSString *)identifier {
+- (void)unloadAudio:(NSString *)identifier {
     AVAudioPlayerNode *audioPlayer = self.audioPlayers[identifier];
     AVAudioFile *audioFile = self.audioFiles[identifier];
     if (audioPlayer) {
@@ -91,7 +91,7 @@
     }
 }
 
-- (void)set3DPositionForAudioWithIdentifier:(NSString *)identifier X:(float)x Y:(float)y Z:(float)z {
+- (void)set3DPositionForAudio:(NSString *)identifier X:(float)x Y:(float)y Z:(float)z {
     AVAudioPlayerNode *audioPlayer = self.audioPlayers[identifier];
     if (audioPlayer) {
         AVAudio3DPoint position = AVAudioMake3DPoint(x, y, z);
