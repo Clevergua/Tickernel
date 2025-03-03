@@ -108,7 +108,7 @@ typedef enum {
 @interface LuaBinding : NSObject
 @property (nonatomic, strong) AudioBinding *pAudioBinding;
 @property (nonatomic, assign) lua_State *pLuaState;
-
+- (instancetype)init;
 - (void)setupLua:(NSString *)assetPath graphicContext:(GraphicContext *)pGraphicContext;
 - (void)updateLua:(BOOL *)keyCodes keyCodesLength:(uint32_t)keyCodesLength;
 - (void)teardownLua;

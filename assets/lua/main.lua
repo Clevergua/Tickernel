@@ -296,7 +296,11 @@ function engine.update()
     elseif engine.input[engine.keyCodes.A] then
         cameraRotation[1] = cameraRotation[1] + 0.01
     end
-
+    if engine.input[engine.keyCodes.E] then
+        -- print("Playing audio..")
+        engine.loadAudio("laugh", "mp3")
+        engine.playAudio("laugh")
+    end
     engine.updateGlobalUniformBuffer(globalUniformBuffer)
     engine.frameCount = engine.frameCount + 1
 end
