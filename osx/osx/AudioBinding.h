@@ -8,6 +8,7 @@
 @property (nonatomic, strong) NSMutableDictionary<NSString *, AVAudioFile *> *audioFiles;
 
 - (instancetype)init;
+
 - (void)loadAudio:(NSString *)identifier fileType:(NSString *)fileType;
 - (void)playAudio:(NSString *)identifier;
 - (void)pauseAudio:(NSString *)identifier;
