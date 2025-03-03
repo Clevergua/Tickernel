@@ -109,10 +109,6 @@ typedef enum {
 @property (nonatomic, strong) AudioBinding *pAudioBinding;
 @property (nonatomic, assign) lua_State *pLuaState;
 
-- (int)luaLoadAudio:(lua_State *)pLuaState;
-- (int)luaPlayAudio:(lua_State *)pLuaState;
-- (int)luaPauseAudio:(lua_State *)pLuaState;
-
 - (void)setupLua:(NSString *)assetPath graphicContext:(GraphicContext *)pGraphicContext;
 - (void)updateLua:(BOOL *)keyCodes keyCodesLength:(uint32_t)keyCodesLength;
 - (void)teardownLua;
