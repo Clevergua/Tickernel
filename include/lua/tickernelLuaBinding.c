@@ -61,13 +61,11 @@ int luaAddModelToOpaqueGeometrySubpass(lua_State *pLuaState)
         lua_pop(pLuaState, 2);
 
         uint32_t outputIndex;
-
-        int engineTpye = lua_getglobal(pLuaState, "engine");
-        assertLuaType(engineTpye, LUA_TTABLE);
-        int pGraphicContextTpye = lua_getfield(pLuaState, -1, "pGraphicContext");
-        assertLuaType(pGraphicContextTpye, LUA_TLIGHTUSERDATA);
+        
+        int pGraphicContextType = lua_getfield(pLuaState, LUA_REGISTRYINDEX, "pGraphicContext");
+        assertLuaType(pGraphicContextType, LUA_TLIGHTUSERDATA);
         GraphicContext *pGraphicContext = lua_touserdata(pLuaState, -1);
-        lua_pop(pLuaState, 2);
+        lua_pop(pLuaState, 1);
 
         addModelToOpaqueGeometrySubpass(&pGraphicContext->deferredRenderPass.opaqueGeometrySubpass, pGraphicContext->vkDevice, pGraphicContext->vkPhysicalDevice, pGraphicContext->graphicVkCommandPool, pGraphicContext->vkGraphicQueue, pGraphicContext->globalUniformBuffer, (uint32_t)vertexCount, opaqueGeometrySubpassVertices, &outputIndex);
 
@@ -90,12 +88,10 @@ int luaRemoveModelFromOpaqueGeometrySubpass(lua_State *pLuaState)
     lua_Integer index = luaL_checkinteger(pLuaState, -1);
     lua_pop(pLuaState, 1);
 
-    int engineTpye = lua_getglobal(pLuaState, "engine");
-    assertLuaType(engineTpye, LUA_TTABLE);
-    int pGraphicContextTpye = lua_getfield(pLuaState, -1, "pGraphicContext");
-    assertLuaType(pGraphicContextTpye, LUA_TLIGHTUSERDATA);
+    int pGraphicContextType = lua_getfield(pLuaState, LUA_REGISTRYINDEX, "pGraphicContext");
+    assertLuaType(pGraphicContextType, LUA_TLIGHTUSERDATA);
     GraphicContext *pGraphicContext = lua_touserdata(pLuaState, -1);
-    lua_pop(pLuaState, 2);
+    lua_pop(pLuaState, 1);
 
     removeModelFromOpaqueGeometrySubpass(&pGraphicContext->deferredRenderPass.opaqueGeometrySubpass, pGraphicContext->vkDevice, (uint32_t)index);
     return 0;
@@ -133,12 +129,11 @@ int luaUpdateInstancesInOpaqueGeometrySubpass(lua_State *pLuaState)
     lua_Integer modelIndex = luaL_checkinteger(pLuaState, -1);
     lua_pop(pLuaState, 1);
 
-    int engineTpye = lua_getglobal(pLuaState, "engine");
-    assertLuaType(engineTpye, LUA_TTABLE);
-    int pGraphicContextTpye = lua_getfield(pLuaState, -1, "pGraphicContext");
-    assertLuaType(pGraphicContextTpye, LUA_TLIGHTUSERDATA);
+    int pGraphicContextType = lua_getfield(pLuaState, LUA_REGISTRYINDEX, "pGraphicContext");
+    assertLuaType(pGraphicContextType, LUA_TLIGHTUSERDATA);
     GraphicContext *pGraphicContext = lua_touserdata(pLuaState, -1);
-    lua_pop(pLuaState, 2);
+    lua_pop(pLuaState, 1);
+
     updateInstancesInOpaqueGeometrySubpass(&pGraphicContext->deferredRenderPass.opaqueGeometrySubpass, (uint32_t)modelIndex, pGraphicContext->vkDevice, pGraphicContext->vkPhysicalDevice, pGraphicContext->graphicVkCommandPool, pGraphicContext->vkGraphicQueue, pGraphicContext->globalUniformBuffer, instances, (uint32_t)instanceCount);
     return 0;
 }
@@ -195,12 +190,11 @@ int luaAddModelToWaterGeometrySubpass(lua_State *pLuaState)
 
         uint32_t outputIndex;
 
-        int engineTpye = lua_getglobal(pLuaState, "engine");
-        assertLuaType(engineTpye, LUA_TTABLE);
-        int pGraphicContextTpye = lua_getfield(pLuaState, -1, "pGraphicContext");
-        assertLuaType(pGraphicContextTpye, LUA_TLIGHTUSERDATA);
+        int pGraphicContextType = lua_getfield(pLuaState, LUA_REGISTRYINDEX, "pGraphicContext");
+        assertLuaType(pGraphicContextType, LUA_TLIGHTUSERDATA);
         GraphicContext *pGraphicContext = lua_touserdata(pLuaState, -1);
-        lua_pop(pLuaState, 2);
+        lua_pop(pLuaState, 1);
+
 
         addModelToWaterGeometrySubpass(&pGraphicContext->deferredRenderPass.waterGeometrySubpass, pGraphicContext->vkDevice, pGraphicContext->vkPhysicalDevice, pGraphicContext->graphicVkCommandPool, pGraphicContext->vkGraphicQueue, pGraphicContext->globalUniformBuffer, (uint32_t)vertexCount, waterGeometrySubpassVertices, &outputIndex);
 
@@ -223,12 +217,11 @@ int luaRemoveModelFromWaterGeometrySubpass(lua_State *pLuaState)
     lua_Integer index = luaL_checkinteger(pLuaState, -1);
     lua_pop(pLuaState, 1);
 
-    int engineTpye = lua_getglobal(pLuaState, "engine");
-    assertLuaType(engineTpye, LUA_TTABLE);
-    int pGraphicContextTpye = lua_getfield(pLuaState, -1, "pGraphicContext");
-    assertLuaType(pGraphicContextTpye, LUA_TLIGHTUSERDATA);
+    int pGraphicContextType = lua_getfield(pLuaState, LUA_REGISTRYINDEX, "pGraphicContext");
+    assertLuaType(pGraphicContextType, LUA_TLIGHTUSERDATA);
     GraphicContext *pGraphicContext = lua_touserdata(pLuaState, -1);
-    lua_pop(pLuaState, 2);
+    lua_pop(pLuaState, 1);
+
 
     removeModelFromWaterGeometrySubpass(&pGraphicContext->deferredRenderPass.waterGeometrySubpass, pGraphicContext->vkDevice, (uint32_t)index);
     return 0;
@@ -264,25 +257,22 @@ int luaUpdateInstancesInWaterGeometrySubpass(lua_State *pLuaState)
     lua_Integer modelIndex = luaL_checkinteger(pLuaState, -1);
     lua_pop(pLuaState, 1);
 
-    int engineTpye = lua_getglobal(pLuaState, "engine");
-    assertLuaType(engineTpye, LUA_TTABLE);
-    int pGraphicContextTpye = lua_getfield(pLuaState, -1, "pGraphicContext");
-    assertLuaType(pGraphicContextTpye, LUA_TLIGHTUSERDATA);
+    int pGraphicContextType = lua_getfield(pLuaState, LUA_REGISTRYINDEX, "pGraphicContext");
+    assertLuaType(pGraphicContextType, LUA_TLIGHTUSERDATA);
     GraphicContext *pGraphicContext = lua_touserdata(pLuaState, -1);
-    lua_pop(pLuaState, 2);
+    lua_pop(pLuaState, 1);
+
     updateInstancesInWaterGeometrySubpass(&pGraphicContext->deferredRenderPass.waterGeometrySubpass, (uint32_t)modelIndex, pGraphicContext->vkDevice, pGraphicContext->vkPhysicalDevice, pGraphicContext->graphicVkCommandPool, pGraphicContext->vkGraphicQueue, pGraphicContext->globalUniformBuffer, instances, (uint32_t)instanceCount);
     return 0;
 }
 
 int luaUpdateGlobalUniformBuffer(lua_State *pLuaState)
 {
-    int engineType = lua_getglobal(pLuaState, "engine");
-    assertLuaType(engineType, LUA_TTABLE);
-
-    int pGraphicContextType = lua_getfield(pLuaState, -1, "pGraphicContext");
+    int pGraphicContextType = lua_getfield(pLuaState, LUA_REGISTRYINDEX, "pGraphicContext");
     assertLuaType(pGraphicContextType, LUA_TLIGHTUSERDATA);
     GraphicContext *pGraphicContext = lua_touserdata(pLuaState, -1);
-    lua_pop(pLuaState, 2);
+    lua_pop(pLuaState, 1);
+
 
     lua_getfield(pLuaState, -1, "time");
     lua_Number time = luaL_checknumber(pLuaState, -1);
@@ -360,12 +350,10 @@ int luaUpdateGlobalUniformBuffer(lua_State *pLuaState)
 
 int luaUpdateLightsUniformBuffer(lua_State *pLuaState)
 {
-    int engineTpye = lua_getglobal(pLuaState, "engine");
-    assertLuaType(engineTpye, LUA_TTABLE);
-    int pGraphicContextTpye = lua_getfield(pLuaState, -1, "pGraphicContext");
-    assertLuaType(pGraphicContextTpye, LUA_TLIGHTUSERDATA);
+    int pGraphicContextType = lua_getfield(pLuaState, LUA_REGISTRYINDEX, "pGraphicContext");
+    assertLuaType(pGraphicContextType, LUA_TLIGHTUSERDATA);
     GraphicContext *pGraphicContext = lua_touserdata(pLuaState, -1);
-    lua_pop(pLuaState, 2);
+    lua_pop(pLuaState, 1);
 
     LightsUniformBuffer lightsUniformBuffer;
 
@@ -527,102 +515,3 @@ int luaLoadModel(lua_State *pLuaState)
     tickernelFree(pTickernelVoxel);
     return 1;
 }
-
-// void startLua(const char *assetPath, GraphicContext *pGraphicContext)
-// {
-//     // New lua state
-//     lua_State *pLuaState = luaL_newstate();
-//     luaL_openlibs(pLuaState);
-
-//     // Set package path
-//     char packagePath[FILENAME_MAX];
-//     strcpy(packagePath, assetPath);
-//     tickernelCombinePaths(packagePath, FILENAME_MAX, "?.lua;");
-//     lua_getglobal(pLuaState, "package");
-//     lua_pushstring(pLuaState, packagePath);
-//     lua_setfield(pLuaState, -2, "path");
-//     lua_pop(pLuaState, 1);
-
-//     // Do file main.lua
-//     char luaMainFilePath[FILENAME_MAX];
-//     strcpy(luaMainFilePath, assetPath);
-//     tickernelCombinePaths(luaMainFilePath, FILENAME_MAX, "main.lua");
-//     // Put engine state on the stack
-//     int luaResult = luaL_dofile(pLuaState, luaMainFilePath);
-//     tryThrowLuaError(pLuaState, luaResult);
-
-//     lua_pushlightuserdata(pLuaState, pGraphicContext);
-//     lua_setfield(pLuaState, -2, "pGraphicContext");
-
-//     lua_pushstring(pLuaState, assetPath);
-//     lua_setfield(pLuaState, -2, "assetsPath");
-
-//     lua_pushstring(pLuaState, tickernelGetPathSeparator());
-//     lua_setfield(pLuaState, -2, "pathSeparator");
-
-//     lua_pushcfunction(pLuaState, luaAddModelToOpaqueGeometrySubpass);
-//     lua_setfield(pLuaState, -2, "addModelToOpaqueGeometrySubpass");
-
-//     lua_pushcfunction(pLuaState, luaRemoveModelFromOpaqueGeometrySubpass);
-//     lua_setfield(pLuaState, -2, "removeModelFromOpaqueGeometrySubpass");
-
-//     lua_pushcfunction(pLuaState, luaUpdateInstancesInOpaqueGeometrySubpass);
-//     lua_setfield(pLuaState, -2, "updateInstancesInOpaqueGeometrySubpass");
-
-//     lua_pushcfunction(pLuaState, luaAddModelToWaterGeometrySubpass);
-//     lua_setfield(pLuaState, -2, "addModelToWaterGeometrySubpass");
-
-//     lua_pushcfunction(pLuaState, luaRemoveModelFromWaterGeometrySubpass);
-//     lua_setfield(pLuaState, -2, "removeModelFromWaterGeometrySubpass");
-
-//     lua_pushcfunction(pLuaState, luaUpdateInstancesInWaterGeometrySubpass);
-//     lua_setfield(pLuaState, -2, "updateInstancesInWaterGeometrySubpass");
-
-//     lua_pushcfunction(pLuaState, updateGlobalUniformBuffer);
-//     lua_setfield(pLuaState, -2, "updateGlobalUniformBuffer");
-
-//     lua_pushcfunction(pLuaState, updateLightsUniformBuffer);
-//     lua_setfield(pLuaState, -2, "updateLightsUniformBuffer");
-
-//     lua_pushcfunction(pLuaState, loadModel);
-//     lua_setfield(pLuaState, -2, "loadModel");
-
-//     // Call start
-//     int startFunctionType = lua_getfield(pLuaState, -1, "start");
-//     assertLuaType(startFunctionType, LUA_TFUNCTION);
-//     luaResult = lua_pcall(pLuaState, 0, 0, 0);
-//     tryThrowLuaError(pLuaState, luaResult);
-// }
-
-// void updateLua(lua_State *pLuaState, bool *keyCodes, uint32_t keyCodesLength)
-// {
-//     // Update keyCodes
-//     lua_getfield(pLuaState, -1, "input");
-//     for (uint32_t i = 0; i < keyCodesLength; i++)
-//     {
-//         lua_pushnumber(pLuaState, i);
-//         lua_pushboolean(pLuaState, keyCodes[i]);
-//         lua_settable(pLuaState, -3);
-//     }
-//     lua_pop(pLuaState, 1);
-
-//     // Call Update
-//     int startFunctionType = lua_getfield(pLuaState, -1, "update");
-//     assertLuaType(startFunctionType, LUA_TFUNCTION);
-
-//     int luaResult = lua_pcall(pLuaState, 0, 0, 0);
-//     tryThrowLuaError(pLuaState, luaResult);
-// }
-
-// void endLua(lua_State *pLuaState)
-// {
-//     // Call End
-//     int startFunctionType = lua_getfield(pLuaState, -1, "stop");
-//     assertLuaType(startFunctionType, LUA_TFUNCTION);
-//     int luaResult = lua_pcall(pLuaState, 0, 0, 0);
-//     tryThrowLuaError(pLuaState, luaResult);
-
-//     //  Pop engine state off the stack
-//     lua_pop(pLuaState, 1);
-//     lua_close(pLuaState);
-// }

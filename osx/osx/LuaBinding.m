@@ -96,7 +96,7 @@ static int luaSet3DPositionForAudio(lua_State *L) {
     }
     
     lua_pushlightuserdata(pLuaState, pGraphicContext);
-    lua_setfield(pLuaState, -2, "pGraphicContext");
+    lua_setfield(pLuaState, LUA_REGISTRYINDEX, "pGraphicContext");
     
     lua_pushlightuserdata(pLuaState, (__bridge void *)self.pAudioBinding);
     lua_setfield(pLuaState, LUA_REGISTRYINDEX, "pAudioBinding");

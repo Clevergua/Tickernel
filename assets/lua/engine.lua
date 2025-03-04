@@ -1,7 +1,6 @@
 table.empty = {}
 
 local engine = {
-    pGraphicEngine = nil,
     assetsPath = "",
     pathSeparator = "",
     frameCount = 0,
@@ -106,7 +105,6 @@ engine.keyCodes = {
     NumpadDecimal = 94,
     MaxEnum = 95,
 }
-
 
 local integer = 0
 ---Add model to opaqueGeometry subpass
