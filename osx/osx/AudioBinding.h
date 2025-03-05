@@ -6,11 +6,10 @@
 @interface AudioBinding : NSObject
 
 @property (nonatomic, strong) AVAudioEngine *audioEngine;
-@property (nonatomic, strong) NSMutableDictionary<NSString *, AVAudioPlayerNode *> *audioPlayers;
-@property (nonatomic, strong) NSMutableDictionary<NSString *, AVAudioFile *> *audioFiles;
+@property (nonatomic, strong) NSMutableArray<AVAudioPlayerNode *> *unusedAudioPlayers;
+@property (nonatomic, strong) NSMutableDictionary<NSString *, AVAudioFile *> *id2AudioFile;
 
 - (instancetype)init;
-
 - (void)loadAudio:(NSString *)identifier fileType:(NSString *)fileType;
 - (void)playAudio:(NSString *)identifier;
 - (void)pauseAudio:(NSString *)identifier;
