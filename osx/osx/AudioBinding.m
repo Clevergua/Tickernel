@@ -8,9 +8,7 @@
     {
         self.audioEngine = [[AVAudioEngine alloc] init];
         self.fileNameToAudioFile = [NSMutableDictionary dictionary];
-        self.unusedAudioPlayers = [[NSMutableArray alloc] init];
-        self.usedAudioPlayers = [[NSMutableArray alloc] init];
-        self.usedAudioFileNames = [[NSMutableArray alloc] init];
+        self.audioPlayerPool = [[NSMutableArray alloc] init];
         NSError *error = nil;
         if (![self.audioEngine startAndReturnError:&error])
         {
@@ -33,7 +31,7 @@
     
     [self.usedAudioPlayers removeAllObjects];
     [self.usedAudioFileNames removeAllObjects];
-    [self.unusedAudioPlayers removeAllObjects];
+    [self.audioPlayerPool removeAllObjects];
     [self.fileNameToAudioFile removeAllObjects];
     self.audioEngine = nil;
 }
