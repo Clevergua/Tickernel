@@ -2,13 +2,15 @@
 #import <AVFoundation/AVFoundation.h>
 
 @implementation AudioBinding
-
 - (instancetype)init {
     self = [super init];
-    if (self) {
+    if (self)
+    {
         self.audioEngine = [[AVAudioEngine alloc] init];
-        self.id2AudioFile = [NSMutableDictionary dictionary];
+        self.fileNameToAudioFile = [NSMutableDictionary dictionary];
         self.unusedAudioPlayers = [[NSMutableArray alloc] init];
+        self.usedAudioPlayers = [[NSMutableArray alloc] init];
+        self.usedAudioFileNames = [[NSMutableArray alloc] init];
         NSError *error = nil;
         if (![self.audioEngine startAndReturnError:&error])
         {
@@ -24,67 +26,81 @@
 
 - (void)dealloc {
     [self.audioEngine stop];
-    for (NSString *identifier in self.id2AudioFile.allKeys)
+    for (NSString *identifier in self.fileNameToAudioFile.allKeys)
     {
         [self unloadAudio:identifier];
     }
-//    for (AVAudioPlayerNode *audioPlayer in self.unusedAudioPlayers) {
-//        [audioPlayer stop];
-//        [self.audioEngine detachNode:audioPlayer];
-//    }
+    
+    [self.usedAudioPlayers removeAllObjects];
+    [self.usedAudioFileNames removeAllObjects];
     [self.unusedAudioPlayers removeAllObjects];
-    [self.id2AudioFile removeAllObjects];
+    [self.fileNameToAudioFile removeAllObjects];
     self.audioEngine = nil;
 }
 
 
-- (void)loadAudio:(NSString *)identifier fileType:(NSString *)fileType {
-    NSLog(@"Load audio: %@.%@ .", identifier, fileType);
-    NSString *path = [[NSBundle mainBundle] pathForResource:identifier ofType:fileType];
-    if (!path) {
-        NSLog(@"Audio: %@.%@ not found!", identifier, fileType);
-        return;
+- (void)loadAudio:(NSString *)fileName {
+    if ([self.fileNameToAudioFile objectForKey: fileName])
+    {
+        NSLog(@"Audio : %@ has been loaded!", fileName);
     }
-    NSURL *url = [NSURL fileURLWithPath:path];
-    NSError *error = nil;
-    AVAudioFile *audioFile = [[AVAudioFile alloc] initForReading:url error:&error];
-    if (error) {
-        NSLog(@"Failed to load audio: %@!", error.localizedDescription);
-        return;
+    else
+    {
+        NSString *path = [[NSBundle mainBundle] pathForResource:[fileName stringByDeletingPathExtension] ofType:[fileName pathExtension]];
+        NSURL *url = [NSURL fileURLWithPath:path];
+        NSError *error = nil;
+        AVAudioFile *audioFile = [[AVAudioFile alloc] initForReading:url error:&error];
+        if (error)
+        {
+            NSLog(@"Failed to load audio: %@!", error.localizedDescription);
+        }
+        else
+        {
+            self.fileNameToAudioFile[fileName] = audioFile;
+            NSLog(@"Load audio: %@ successfully.", fileName);
+        }
     }
-    
-    //    AVAudioPlayerNode *audioPlayer = [[AVAudioPlayerNode alloc] init];
-    //    [self.audioEngine attachNode:audioPlayer];
-    //    [self.audioEngine connect:audioPlayer to:self.audioEngine.mainMixerNode format:audioFile.processingFormat];
-    //    self.audioPlayers[identifier] = audioPlayer;
-    
-    self.id2AudioFile[identifier] = audioFile;
-    NSLog(@"Load audio: %@ successfully.", identifier);
 }
 
-- (void)unloadAudio:(NSString *)identifier {
+- (void)unloadAudio:(NSString *) fileName {
     //    AVAudioPlayerNode *audioPlayer = self.audioPlayers[identifier];
-    AVAudioFile *audioFile = self.id2AudioFile[identifier];
+    AVAudioFile *audioFile = self.fileNameToAudioFile[fileName];
     if (!audioFile)
     {
-        NSLog(@"Unloaded audio!: %@", identifier);
+        NSLog(@"Unloaded audio!: %@", fileName);
         return;
     }
     else
     {
-//      [audioPlayer stop];
-//      [self.audioEngine detachNode:audioPlayer];
-//      [self.audioPlayers removeObjectForKey:identifier];
-        [self.id2AudioFile removeObjectForKey:identifier];
-        NSLog(@"Unloaded audio: %@", identifier);
+        for (NSUInteger i = self.usedAudioPlayers.count - 1; i > -1 ; i--) {
+            AVAudioPlayerNode *currentAudioPlayerNode = self.usedAudioPlayers[i];
+            NSString *currentFileName = self.usedAudioFileNames[i];
+            if ([currentFileName isEqualToString:fileName]) {
+                if (currentAudioPlayerNode.isPlaying) {
+                    [currentAudioPlayerNode stop];
+                }
+                
+                [self.usedAudioPlayers removeObjectAtIndex:i];
+                [self.usedAudioFileNames removeObjectAtIndex:i];
+                NSLog(@"已移除文件名: %@ 对应的 AVAudioPlayerNode", fileName);
+            }
+        }        //      [audioPlayer stop];
+        //      [self.audioEngine detachNode:audioPlayer];
+        //      [self.audioPlayers removeObjectForKey:identifier];
+        [self.fileNameToAudioFile removeObjectForKey:fileName];
+        NSLog(@"Unloaded audio: %@", fileName);
     }
 }
 
 
 - (void)playAudio:(NSString *)identifier {
     
+    //    AVAudioPlayerNode *audioPlayer = [[AVAudioPlayerNode alloc] init];
+    //    [self.audioEngine attachNode:audioPlayer];
+    //    [self.audioEngine connect:audioPlayer to:self.audioEngine.mainMixerNode format:audioFile.processingFormat];
+    //    self.audioPlayers[identifier] = audioPlayer;
     AVAudioPlayerNode *audioPlayer = self.unusedAudioPlayers[identifier];
-    AVAudioFile *audioFile = self.id2AudioFile[identifier];
+    AVAudioFile *audioFile = self.fileNameToAudioFile[identifier];
     if (!audioPlayer || !audioFile) {
         NSLog(@"音频未加载: %@", identifier);
         return;
@@ -121,7 +137,10 @@
     
     // 停止音频
     [audioPlayer stop];
-    
+    //    for (AVAudioPlayerNode *audioPlayer in self.unusedAudioPlayers) {
+    //        [audioPlayer stop];
+    //        [self.audioEngine detachNode:audioPlayer];
+    //    }
     NSLog(@"音频停止: %@", identifier);
 }
 
