@@ -1,27 +1,26 @@
 #import "AudioBinding.h"
 @import AVFoundation;
 
-
 @implementation AudioBinding
 
 - (instancetype)init {
     self = [super init];
     if (self) {
         // Initialize the audio engine.
-        _audioEngine = [[AVAudioEngine alloc] init];
+        self.audioEngine = [[AVAudioEngine alloc] init];
 
         // Create and attach a persistent environment node for 3D audio.
-        _environmentNode = [[AVAudioEnvironmentNode alloc] init];
-        [_audioEngine attachNode:_environmentNode];
+        self.environmentNode = [[AVAudioEnvironmentNode alloc] init];
+        [self.audioEngine attachNode:self.environmentNode];
         // Connect the environment node to the main mixer.
-        [_audioEngine connect:_environmentNode to:_audioEngine.mainMixerNode format:nil];
+        [self.audioEngine connect:self.environmentNode to:self.audioEngine.mainMixerNode format:nil];
         
-        _audioPlayerPool = [NSMutableArray array];
-        _audioFileNameToFile = [NSMutableDictionary dictionary];
-        _audioPlayerNodeToFile = [NSMutableDictionary dictionary];
+        self.audioPlayerPool = [NSMutableArray array];
+        self.audioFileNameToFile = [NSMutableDictionary dictionary];
+        self.audioPlayerNodeToFile = [NSMutableDictionary dictionary];
         
         NSError *error = nil;
-        if (![_audioEngine startAndReturnError:&error]) {
+        if (![self.audioEngine startAndReturnError:&error]) {
             NSLog(@"Failed to start audio engine: %@", error.localizedDescription);
         }
     }
@@ -123,9 +122,7 @@
     }
     
     // Schedule the file to play and release the player once done.
-    [audioPlayer scheduleFile:audioFile atTime:nil completionHandler:^{
-        [self releaseAudioPlayer:audioPlayer];
-    }];
+    [audioPlayer scheduleFile:audioFile atTime:nil completionHandler:nil];
     [audioPlayer play];
 }
 

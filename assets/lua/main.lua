@@ -298,8 +298,11 @@ function engine.update()
     end
     if engine.input[engine.keyCodes.E] then
         -- print("Playing audio..")
-        engine.loadAudio("laugh", "mp3")
-        engine.playAudio("laugh")
+        engine.loadAudio("laugh.mp3")
+        for i = 1, 200 do
+            local player = engine.getAudioPlayer("laugh.mp3")
+            engine.playAudio(player)
+        end
     end
     engine.updateGlobalUniformBuffer(globalUniformBuffer)
     engine.frameCount = engine.frameCount + 1

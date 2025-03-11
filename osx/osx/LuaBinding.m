@@ -4,59 +4,79 @@ static int luaLoadAudio(lua_State *L) {
     lua_getfield(L, LUA_REGISTRYINDEX, "pAudioBinding");
     AudioBinding *pAudioBinding = (__bridge AudioBinding *)(lua_touserdata(L, -1));
     lua_pop(L, 1);
-    const char *identifier = luaL_checkstring(L, -2);
-    const char *fileType = luaL_checkstring(L, -1);
-    [pAudioBinding loadAudio:[NSString stringWithUTF8String:identifier] fileType:[NSString stringWithUTF8String:fileType]];
+    const char *fileName = luaL_checkstring(L, -1);
+    [pAudioBinding loadAudio:[NSString stringWithUTF8String:fileName]];
     return 0;
 }
-
-static int luaPlayAudio(lua_State *L) {
-    lua_getfield(L, LUA_REGISTRYINDEX, "pAudioBinding");
-    AudioBinding *pAudioBinding = (__bridge AudioBinding *)(lua_touserdata(L, -1));
-    lua_pop(L, 1);
-    const char *identifier = luaL_checkstring(L, -1);
-    [pAudioBinding playAudio:[NSString stringWithUTF8String:identifier]];
-    return 0;
-}
-
-static int luaPauseAudio(lua_State *L) {
-    lua_getfield(L, LUA_REGISTRYINDEX, "pAudioBinding");
-    AudioBinding *pAudioBinding = (__bridge AudioBinding *)(lua_touserdata(L, -1));
-    lua_pop(L, 1);
-    const char *identifier = luaL_checkstring(L, -1);
-    [pAudioBinding pauseAudio:[NSString stringWithUTF8String:identifier]];
-    return 0;
-}
-
-static int luaStopAudio(lua_State *L) {
-    lua_getfield(L, LUA_REGISTRYINDEX, "pAudioBinding");
-    AudioBinding *pAudioBinding = (__bridge AudioBinding *)(lua_touserdata(L, -1));
-    lua_pop(L, 1);
-    const char *identifier = luaL_checkstring(L, -1);
-    [pAudioBinding stopAudio:[NSString stringWithUTF8String:identifier]];
-    return 0;
-}
-
 static int luaUnloadAudio(lua_State *L) {
     lua_getfield(L, LUA_REGISTRYINDEX, "pAudioBinding");
     AudioBinding *pAudioBinding = (__bridge AudioBinding *)(lua_touserdata(L, -1));
     lua_pop(L, 1);
-    const char *identifier = luaL_checkstring(L, -1);
-    [pAudioBinding unloadAudio:[NSString stringWithUTF8String:identifier]];
+    const char *fileName = luaL_checkstring(L, -1);
+    [pAudioBinding unloadAudio:[NSString stringWithUTF8String:fileName]];
     return 0;
 }
-
+static int luaGetAudioPlayer(lua_State *L) {
+    lua_getfield(L, LUA_REGISTRYINDEX, "pAudioBinding");
+    AudioBinding *pAudioBinding = (__bridge AudioBinding *)(lua_touserdata(L, -1));
+    lua_pop(L, 1);
+    const char *fileName = luaL_checkstring(L, -1);
+    AVAudioPlayerNode *audioPlayer = [pAudioBinding getAudioPlayer:[NSString stringWithUTF8String:fileName]];
+    lua_pushlightuserdata(L, (__bridge void *)audioPlayer);
+    return 1;
+}
+static int luaReleaseAudioPlayer(lua_State *L) {
+    lua_getfield(L, LUA_REGISTRYINDEX, "pAudioBinding");
+    AudioBinding *pAudioBinding = (__bridge AudioBinding *)(lua_touserdata(L, -1));
+    lua_pop(L, 1);
+    AVAudioPlayerNode *audioPlayer = (__bridge AVAudioPlayerNode *)(lua_touserdata(L, -1));
+    [pAudioBinding releaseAudioPlayer:audioPlayer];
+    return 0;
+}
+static int luaPlayAudio(lua_State *L) {
+    lua_getfield(L, LUA_REGISTRYINDEX, "pAudioBinding");
+    AudioBinding *pAudioBinding = (__bridge AudioBinding *)(lua_touserdata(L, -1));
+    lua_pop(L, 1);
+    AVAudioPlayerNode *audioPlayer = (__bridge AVAudioPlayerNode *)(lua_touserdata(L, -1));
+    if (audioPlayer) {
+        [pAudioBinding playAudio:audioPlayer];
+    }
+    return 0;
+}
+static int luaPauseAudio(lua_State *L) {
+    lua_getfield(L, LUA_REGISTRYINDEX, "pAudioBinding");
+    AudioBinding *pAudioBinding = (__bridge AudioBinding *)(lua_touserdata(L, -1));
+    lua_pop(L, 1);
+    AVAudioPlayerNode *audioPlayer = (__bridge AVAudioPlayerNode *)(lua_touserdata(L, -1));
+    if (audioPlayer) {
+        [pAudioBinding pauseAudio:audioPlayer];
+    }
+    return 0;
+}
+static int luaStopAudio(lua_State *L) {
+    lua_getfield(L, LUA_REGISTRYINDEX, "pAudioBinding");
+    AudioBinding *pAudioBinding = (__bridge AudioBinding *)(lua_touserdata(L, -1));
+    lua_pop(L, 1);
+    AVAudioPlayerNode *audioPlayer = (__bridge AVAudioPlayerNode *)(lua_touserdata(L, -1));
+    if (audioPlayer) {
+        [pAudioBinding stopAudio:audioPlayer];
+    }
+    return 0;
+}
 static int luaSet3DPositionForAudio(lua_State *L) {
     lua_getfield(L, LUA_REGISTRYINDEX, "pAudioBinding");
     AudioBinding *pAudioBinding = (__bridge AudioBinding *)(lua_touserdata(L, -1));
     lua_pop(L, 1);
-    const char *identifier = luaL_checkstring(L, -4);
+    AVAudioPlayerNode *audioPlayer = (__bridge AVAudioPlayerNode *)(lua_touserdata(L, -4));
     float x = luaL_checknumber(L, -3);
     float y = luaL_checknumber(L, -2);
     float z = luaL_checknumber(L, -1);
-    [pAudioBinding set3DPositionForAudio:[NSString stringWithUTF8String:identifier] X:x Y:y Z:z];
+    if (audioPlayer) {
+        [pAudioBinding setAudioPosition:audioPlayer X:x Y:y Z:z];
+    }
     return 0;
 }
+
 
 @implementation LuaBinding
 - (instancetype)init {
@@ -137,6 +157,9 @@ static int luaSet3DPositionForAudio(lua_State *L) {
     lua_pushcfunction(pLuaState, luaLoadAudio);
     lua_setfield(pLuaState, -2, "loadAudio");
     
+    lua_pushcfunction(pLuaState, luaUnloadAudio);
+    lua_setfield(pLuaState, -2, "unloadAudio");
+    
     lua_pushcfunction(pLuaState, luaPlayAudio);
     lua_setfield(pLuaState, -2, "playAudio");
     
@@ -146,11 +169,14 @@ static int luaSet3DPositionForAudio(lua_State *L) {
     lua_pushcfunction(pLuaState, luaStopAudio);
     lua_setfield(pLuaState, -2, "stopAudio");
     
-    lua_pushcfunction(pLuaState, luaUnloadAudio);
-    lua_setfield(pLuaState, -2, "unloadAudio");
-    
     lua_pushcfunction(pLuaState, luaSet3DPositionForAudio);
     lua_setfield(pLuaState, -2, "set3DPositionForAudio");
+    
+    lua_pushcfunction(pLuaState, luaGetAudioPlayer);
+    lua_setfield(pLuaState, -2, "getAudioPlayer");
+
+    lua_pushcfunction(pLuaState, luaReleaseAudioPlayer);
+    lua_setfield(pLuaState, -2, "releaseAudioPlayer");
     
     lua_getfield(pLuaState, -1, "start");
     luaResult = lua_pcall(pLuaState, 0, 0, 0);
