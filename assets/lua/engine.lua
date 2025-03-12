@@ -5,6 +5,7 @@ local engine = {
     pathSeparator = "",
     frameCount = 0,
     keyCodes = nil,
+    lastFrameInput = {},
     input = {},
 }
 engine.keyCodes = {

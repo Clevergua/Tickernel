@@ -268,6 +268,7 @@ local globalUniformBuffer = {
 }
 
 function engine.update()
+
     if engine.frameCount == 0 then
         collectgarbage("collect")
         local memoryUsage = collectgarbage("count")
@@ -296,16 +297,18 @@ function engine.update()
     elseif engine.input[engine.keyCodes.A] then
         cameraRotation[1] = cameraRotation[1] + 0.01
     end
-    if engine.input[engine.keyCodes.E] then
-        -- print("Playing audio..")
+    if engine.input[engine.keyCodes.E] and (not engine.lastFrameInput[engine.keyCodes.E]) then
         engine.loadAudio("laugh.mp3")
-        for i = 1, 200 do
-            local player = engine.getAudioPlayer("laugh.mp3")
-            engine.playAudio(player)
-        end
+        local player = engine.getAudioPlayer("laugh.mp3")
+        engine.setAudioPosition(player, 10000,0,0)
+        engine.playAudio(player)
     end
     engine.updateGlobalUniformBuffer(globalUniformBuffer)
     engine.frameCount = engine.frameCount + 1
+
+    for index, value in ipairs(engine.input) do
+        engine.lastFrameInput[index] = value
+    end
 end
 
 

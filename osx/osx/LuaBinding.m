@@ -63,7 +63,7 @@ static int luaStopAudio(lua_State *L) {
     }
     return 0;
 }
-static int luaSet3DPositionForAudio(lua_State *L) {
+static int luaSetAudioPosition(lua_State *L) {
     lua_getfield(L, LUA_REGISTRYINDEX, "pAudioBinding");
     AudioBinding *pAudioBinding = (__bridge AudioBinding *)(lua_touserdata(L, -1));
     lua_pop(L, 1);
@@ -169,8 +169,8 @@ static int luaSet3DPositionForAudio(lua_State *L) {
     lua_pushcfunction(pLuaState, luaStopAudio);
     lua_setfield(pLuaState, -2, "stopAudio");
     
-    lua_pushcfunction(pLuaState, luaSet3DPositionForAudio);
-    lua_setfield(pLuaState, -2, "set3DPositionForAudio");
+    lua_pushcfunction(pLuaState, luaSetAudioPosition);
+    lua_setfield(pLuaState, -2, "setAudioPosition");
     
     lua_pushcfunction(pLuaState, luaGetAudioPlayer);
     lua_setfield(pLuaState, -2, "getAudioPlayer");
