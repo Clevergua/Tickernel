@@ -8,6 +8,11 @@ local engine = {
     lastFrameInput = {},
     input = {},
 }
+engine.keyCodeState = {
+    IDLE = 0,
+    DOWN = 1,
+    UP = 2,
+}
 engine.keyCodes = {
     A = 0,
     B = 1,
@@ -459,7 +464,5 @@ function engine.drawModel(instances, model)
     engine.updateInstancesInOpaqueGeometrySubpass(modelIndex, instances)
     return modelIndex
 end
-
-
 
 return engine

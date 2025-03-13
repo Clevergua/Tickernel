@@ -275,29 +275,29 @@ function engine.update()
         print("Current memory usage: ", memoryUsage, "KB")
     end
     local cameraPosition = globalUniformBuffer.cameraPosition
-    if engine.input[engine.keyCodes.Left] then
+    if engine.input[engine.keyCodes.Left] == engine.keyCodeState.UP then
         cameraPosition[1] = cameraPosition[1] - 0.1
-    elseif engine.input[engine.keyCodes.Right] then
+    elseif engine.input[engine.keyCodes.Right]== engine.keyCodeState.UP  then
         cameraPosition[1] = cameraPosition[1] + 0.1
     end
-    if engine.input[engine.keyCodes.S] then
+    if engine.input[engine.keyCodes.S]== engine.keyCodeState.UP  then
         cameraPosition[3] = cameraPosition[3] + 0.1
-    elseif engine.input[engine.keyCodes.W] then
+    elseif engine.input[engine.keyCodes.W]== engine.keyCodeState.UP  then
         cameraPosition[3] = cameraPosition[3] - 0.1
     end
 
-    if engine.input[engine.keyCodes.Up] then
+    if engine.input[engine.keyCodes.Up]== engine.keyCodeState.UP  then
         cameraPosition[2] = cameraPosition[2] + 0.1
-    elseif engine.input[engine.keyCodes.Down] then
+    elseif engine.input[engine.keyCodes.Down]== engine.keyCodeState.UP  then
         cameraPosition[2] = cameraPosition[2] - 0.1
     end
     local cameraRotation = globalUniformBuffer.cameraRotation
-    if engine.input[engine.keyCodes.D] then
+    if engine.input[engine.keyCodes.D]== engine.keyCodeState.UP  then
         cameraRotation[1] = cameraRotation[1] - 0.01
-    elseif engine.input[engine.keyCodes.A] then
+    elseif engine.input[engine.keyCodes.A]== engine.keyCodeState.UP  then
         cameraRotation[1] = cameraRotation[1] + 0.01
     end
-    if engine.input[engine.keyCodes.E] and (not engine.lastFrameInput[engine.keyCodes.E]) then
+    if engine.input[engine.keyCodes.E] == engine.keyCodeState.UP then
         engine.loadAudio("laugh.mp3")
         local player = engine.getAudioPlayer("laugh.mp3")
         engine.setAudioPosition(player, 10000,0,0)

@@ -187,13 +187,12 @@ static int luaSetAudioPosition(lua_State *L) {
     }
 }
 
-- (void)updateLua:(BOOL *)keyCodes keyCodesLength:(uint32_t)keyCodesLength {
+- (void)updateLua:(KeyCodeState *)keyCodeStates keyCodesLength:(uint32_t)keyCodesLength {
     lua_State* pLuaState = self.pLuaState;
-//    uint32_t i = lua_gettop(pLuaState);
     lua_getfield(pLuaState, -1, "input");
     for (uint32_t i = 0; i < keyCodesLength; i++) {
         lua_pushinteger(pLuaState, i);
-        lua_pushboolean(pLuaState, keyCodes[i]);
+        lua_pushinteger(pLuaState, keyCodeStates[i]);
         lua_settable(pLuaState, -3);
     }
     lua_pop(pLuaState, 1);

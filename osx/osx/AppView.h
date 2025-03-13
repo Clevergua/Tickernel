@@ -3,12 +3,12 @@
 
 @interface AppView : MTKView <MTKViewDelegate>
 
-@property (nonatomic, assign) _Bool *keyCodes;
+@property (nonatomic, assign) KeyCodeState *keyCodeStates;
 @property (nonatomic, strong) LuaBinding* pLuaBinding;
 @property (nonatomic, strong) EngineBinding* pEngineBinding;
 
 - (void)setupView;
 - (void)teardownView;
-- (void)updateKeyCode:(NSEvent *)event keyDown:(BOOL)keyDown;
+- (void)updateKeyCode:(NSEvent *)event keyCodeState:(KeyCodeState)keyCodeState;
 
 @end

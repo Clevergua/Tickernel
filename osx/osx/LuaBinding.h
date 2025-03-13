@@ -4,6 +4,11 @@
 #import "lua.h"
 #import "lualib.h"
 #import "lauxlib.h"
+typedef enum {
+    KEY_CODE_STATE_IDLE,
+    KEY_CODE_STATE_DOWN,
+    KEY_CODE_STATE_UP,
+}KeyCodeState;
 
 typedef enum {
    KEY_CODE_A,
@@ -110,6 +115,6 @@ typedef enum {
 @property (nonatomic, assign) lua_State *pLuaState;
 - (instancetype)init;
 - (void)setupLua:(NSString *)assetPath graphicContext:(GraphicContext *)pGraphicContext;
-- (void)updateLua:(BOOL *)keyCodes keyCodesLength:(uint32_t)keyCodesLength;
+- (void)updateLua:(KeyCodeState *)keyCodeStates keyCodesLength:(uint32_t)keyCodesLength;
 - (void)teardownLua;
 @end
