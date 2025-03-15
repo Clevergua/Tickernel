@@ -542,6 +542,7 @@ static void recreateSwapchain(GraphicContext *pGraphicContext)
     
     updateDeferredRenderPass(&pGraphicContext->deferredRenderPass, pGraphicContext->vkDevice, pGraphicContext->colorGraphicImage, pGraphicContext->depthGraphicImage, pGraphicContext->albedoGraphicImage, pGraphicContext->normalGraphicImage, swapchainWidth, swapchainHeight, pGraphicContext->globalUniformBuffer, pGraphicContext->lightsUniformBuffer);
     updatePostProcessRenderPass(&pGraphicContext->postProcessRenderPass, pGraphicContext->vkDevice, pGraphicContext->colorGraphicImage, swapchainWidth, swapchainHeight, pGraphicContext->swapchainImageViews);
+    updateUIRenderPass(&pGraphicContext->uiRenderPass, pGraphicContext->vkDevice, pGraphicContext->colorGraphicImage, swapchainWidth, swapchainHeight, pGraphicContext->swapchainImageViews);
 }
 
 static void createCommandPools(GraphicContext *pGraphicContext)
@@ -714,6 +715,7 @@ static void recordCommandBuffer(GraphicContext *pGraphicContext)
     
     recordDeferredRenderPass(&pGraphicContext->deferredRenderPass, vkCommandBuffer, viewport, scissor, pGraphicContext->vkDevice);
     recordPostProcessRenderPass(&pGraphicContext->postProcessRenderPass, vkCommandBuffer, viewport, scissor, pGraphicContext->vkDevice, pGraphicContext->swapchainIndex);
+    recordUIRenderPass(&pGraphicContext->uiRenderPass, vkCommandBuffer, viewport, scissor, pGraphicContext->vkDevice, pGraphicContext->swapchainIndex);
     
     result = vkEndCommandBuffer(vkCommandBuffer);
     tryThrowVulkanError(result);
@@ -761,6 +763,7 @@ GraphicContext *startGraphic(const char *assetsPath, int targetSwapchainImageCou
     };
     createDeferredRenderPass(&pGraphicContext->deferredRenderPass, pGraphicContext->assetsPath, pGraphicContext->vkDevice, pGraphicContext->colorGraphicImage, pGraphicContext->depthGraphicImage, pGraphicContext->albedoGraphicImage, pGraphicContext->normalGraphicImage, viewport, scissor, pGraphicContext->globalUniformBuffer, pGraphicContext->lightsUniformBuffer);
     createPostProcessRenderPass(&pGraphicContext->postProcessRenderPass, pGraphicContext->assetsPath, pGraphicContext->vkDevice, pGraphicContext->colorGraphicImage, viewport, scissor, pGraphicContext->swapchainImageCount, pGraphicContext->swapchainImageViews, pGraphicContext->surfaceFormat.format);
+    createUIRenderPass(&pGraphicContext->uiRenderPass, pGraphicContext->assetsPath, pGraphicContext->vkDevice, pGraphicContext->colorGraphicImage, viewport, scissor, pGraphicContext->swapchainImageCount, pGraphicContext->swapchainImageViews, pGraphicContext->surfaceFormat.format);
     return pGraphicContext;
 }
 
@@ -832,6 +835,7 @@ void endGraphic(GraphicContext *pGraphicContext)
 {
     VkResult result = vkDeviceWaitIdle(pGraphicContext->vkDevice);
     tryThrowVulkanError(result);
+    destroyUIRenderPass(&pGraphicContext->uiRenderPass, pGraphicContext->vkDevice);
     destroyPostProcessRenderPass(&pGraphicContext->postProcessRenderPass, pGraphicContext->vkDevice);
     destroyDeferredRenderPass(&pGraphicContext->deferredRenderPass, pGraphicContext->vkDevice);
     destroyGraphicImages(pGraphicContext);
@@ -841,7 +845,6 @@ void endGraphic(GraphicContext *pGraphicContext)
     destroySignals(pGraphicContext);
     destroySwapchain(pGraphicContext);
     destroyLogicalDevice(pGraphicContext);
-    // Destroy vkPhysicsDevice
     
     tickernelFree(pGraphicContext);
 }
