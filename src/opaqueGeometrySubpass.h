@@ -13,13 +13,6 @@ typedef struct
     mat4 model;
 } OpaqueGeometrySubpassInstance;
 
-typedef struct
-{
-    uint32_t count;
-    OpaqueGeometrySubpassVertex *opaqueGeometrySubpassVertices;
-
-} OpaqueGeometrySubpassModel;
-
 // For graphic engine
 void createOpaqueGeometrySubpass(Subpass *pOpaqueGeometrySubpass, const char *shadersPath, VkRenderPass vkRenderPass, uint32_t opaqueGeometrySubpassIndex, VkDevice vkDevice, VkViewport viewport, VkRect2D scissor);
 void destroyOpaqueGeometrySubpass(Subpass *pOpaqueGeometrySubpass, VkDevice vkDevice);

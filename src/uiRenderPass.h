@@ -1,15 +1,13 @@
 #pragma once
 #include "uiSubpass.h"
 
-typedef struct UIRenderPassStruct
-{
+typedef struct {
     VkRenderPass vkRenderPass;
-    uint32_t vkFramebufferCount;
-    VkFramebuffer *vkFramebuffers;
+    VkFramebuffer vkFramebuffer;
     Subpass uiSubpass;
 } UIRenderPass;
 
-void createUIRenderPass(UIRenderPass *pUIRenderPass, const char *shadersPath, VkDevice vkDevice, GraphicImage colorGraphicImage, VkViewport viewport, VkRect2D scissor, uint32_t swapchainCount, VkImageView *swapchainImageViews, VkFormat swapchainVkFormat);
+void createUIRenderPass(UIRenderPass *pUIRenderPass, const char *shadersPath, VkDevice vkDevice, GraphicImage colorGraphicImage, GraphicImage depthGraphicImage, VkViewport viewport, VkRect2D scissor, VkBuffer globalUniformBuffer);
 void destroyUIRenderPass(UIRenderPass *pUIRenderPass, VkDevice vkDevice);
-void updateUIRenderPass(UIRenderPass *pUIRenderPass, VkDevice vkDevice, GraphicImage colorGraphicImage, uint32_t width, uint32_t height, VkImageView *swapchainImageViews);
-void recordUIRenderPass(UIRenderPass *pUIRenderPass, VkCommandBuffer vkCommandBuffer, VkViewport viewport, VkRect2D scissor, VkDevice vkDevice, uint32_t swapchainIndex);
+void updateUIRenderPass(UIRenderPass *pUIRenderPass, VkDevice vkDevice, GraphicImage colorGraphicImage, GraphicImage depthGraphicImage, uint32_t width, uint32_t height, VkBuffer globalUniformBuffer);
+void recordUIRenderPass(UIRenderPass *pUIRenderPass, VkCommandBuffer vkCommandBuffer, VkViewport viewport, VkRect2D scissor, VkDevice vkDevice);

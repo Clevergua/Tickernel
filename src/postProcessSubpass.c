@@ -31,6 +31,8 @@ static void createVkPipeline(Subpass *pPostProcessSubpass, const char *shadersPa
         .pName = "main",
         .pSpecializationInfo = NULL,
     };
+
+
     uint32_t stageCount = 2;
     VkPipelineShaderStageCreateInfo *pipelineShaderStageCreateInfos = (VkPipelineShaderStageCreateInfo[]){vertShaderStageCreateInfo, fragShaderStageCreateInfo};
 

@@ -13,13 +13,6 @@ typedef struct
     mat4 model;
 } WaterGeometrySubpassInstance;
 
-typedef struct
-{
-    uint32_t count;
-    WaterGeometrySubpassVertex *waterGeometrySubpassVertices;
-
-} WaterGeometrySubpassModel;
-
 // For graphic engine
 void createWaterGeometrySubpass(Subpass *pWaterGeometrySubpass, const char *shadersPath, VkRenderPass vkRenderPass, uint32_t waterGeometrySubpassIndex, VkDevice vkDevice, VkViewport viewport, VkRect2D scissor);
 void destroyWaterGeometrySubpass(Subpass *pWaterGeometrySubpass, VkDevice vkDevice);
