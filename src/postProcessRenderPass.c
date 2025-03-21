@@ -169,7 +169,7 @@ void recordPostProcessRenderPass(PostProcessRenderPass *pPostProcessRenderPass, 
 
     vkCmdBeginRenderPass(vkCommandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
     Subpass *pPostProcessSubpass = &pPostProcessRenderPass->postProcessSubpass;
-    SubpassModel *pSubpassModel = pPostProcessSubpass->modelCollection.array[0];
+    SubpassModel *pSubpassModel = pPostProcessSubpass->modelDynamicArray.array[0];
     vkCmdBindPipeline(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pPostProcessSubpass->vkPipeline);
     vkCmdSetViewport(vkCommandBuffer, 0, 1, &viewport);
     vkCmdSetScissor(vkCommandBuffer, 0, 1, &scissor);

@@ -361,16 +361,15 @@ static void createPostProcessSubpassModel(Subpass *pOpaqueLightingSubpass, VkDev
         },
     };
     vkUpdateDescriptorSets(vkDevice, 5, descriptorWrites, 0, NULL);
-    uint32_t index;
-    tickernelAddToCollection(&pOpaqueLightingSubpass->modelCollection, &subpassModel, &index);
+    tickernelAddToDynamicArray(&pOpaqueLightingSubpass->modelDynamicArray, &subpassModel);
 }
 static void destroyOpaqueLightingSubpassModel(Subpass *pOpaqueLightingSubpass, VkDevice vkDevice, uint32_t index)
 {
-    SubpassModel *pSubpassModel = pOpaqueLightingSubpass->modelCollection.array[index];
+    SubpassModel *pSubpassModel = pOpaqueLightingSubpass->modelDynamicArray.array[index];
     VkResult result = vkFreeDescriptorSets(vkDevice, pSubpassModel->vkDescriptorPool, 1, &pSubpassModel->vkDescriptorSet);
     tryThrowVulkanError(result);
     vkDestroyDescriptorPool(vkDevice, pSubpassModel->vkDescriptorPool, NULL);
-    tickernelRemoveFromCollection(&pOpaqueLightingSubpass->modelCollection, index);
+    tickernelRemoveAtIndexFromDynamicArray(&pOpaqueLightingSubpass->modelDynamicArray, index);
 }
 
 void createOpaqueLightingSubpass(Subpass *pOpaqueLightingSubpass, const char *shadersPath, VkRenderPass vkRenderPass, uint32_t opaqueLightingSubpassIndex, VkDevice vkDevice, VkViewport viewport, VkRect2D scissor, VkBuffer globalUniformBuffer, VkBuffer lightsUniformBuffer, VkImageView depthVkImageView, VkImageView albedoVkImageView, VkImageView normalVkImageView)
@@ -388,14 +387,14 @@ void createOpaqueLightingSubpass(Subpass *pOpaqueLightingSubpass, const char *sh
         .descriptorCount = 3,
     };
 
-    tickernelCreateCollection(&pOpaqueLightingSubpass->modelCollection, sizeof(SubpassModel), 1);
+    tickernelCreateDynamicArray(&pOpaqueLightingSubpass->modelDynamicArray, 1, sizeof(SubpassModel));
     createPostProcessSubpassModel(pOpaqueLightingSubpass, vkDevice, globalUniformBuffer, lightsUniformBuffer, depthVkImageView, albedoVkImageView, normalVkImageView);
 }
 
 void destroyOpaqueLightingSubpass(Subpass *pOpaqueLightingSubpass, VkDevice vkDevice)
 {
     destroyOpaqueLightingSubpassModel(pOpaqueLightingSubpass, vkDevice, 0);
-    tickernelDestroyCollection(&pOpaqueLightingSubpass->modelCollection);
+    tickernelDestroyDynamicArray(&pOpaqueLightingSubpass->modelDynamicArray);
     tickernelFree(pOpaqueLightingSubpass->vkDescriptorPoolSizes);
 
     destroyVkPipeline(pOpaqueLightingSubpass, vkDevice);

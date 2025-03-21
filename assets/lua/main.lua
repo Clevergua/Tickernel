@@ -219,7 +219,7 @@ function engine.start()
     print("Drawing models..")
     engine.setNormals(vertices, normals, voxelMap)
     engine.setNormals(waterVertices, waterNormals, voxelMap)
-    local index = engine.addModelToOpaqueGeometrySubpass(vertices, colors, normals)
+    local model = engine.addModelToOpaqueGeometrySubpass(vertices, colors, normals)
     -- local waterIndex = engine.AddModelToWaterGeometrySubpass(waterVertices, waterColors, waterNormals)
     local modelMatrix = {
         {
@@ -229,7 +229,7 @@ function engine.start()
             { 0,     0,     0,     1 },
         },
     }
-    engine.updateInstancesInOpaqueGeometrySubpass(index, modelMatrix)
+    engine.updateInstancesInOpaqueGeometrySubpass(model, modelMatrix)
     -- engine.UpdateInstancesInWaterGeometrySubpass(waterIndex, modelMatrix)
     print("Generating lightings..")
     local pointLights = {}

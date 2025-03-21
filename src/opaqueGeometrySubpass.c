@@ -282,21 +282,22 @@ void createOpaqueGeometrySubpass(Subpass *pOpaqueGeometrySubpass, const char *sh
         .descriptorCount = 1,
     };
 
-    tickernelCreateCollection(&pOpaqueGeometrySubpass->modelCollection, sizeof(SubpassModel), 1);
+    tickernelCreateDynamicArray(&pOpaqueGeometrySubpass->modelDynamicArray, 1, sizeof(SubpassModel));
 }
 void destroyOpaqueGeometrySubpass(Subpass *pOpaqueGeometrySubpass, VkDevice vkDevice)
 {
-    for (uint32_t i = pOpaqueGeometrySubpass->modelCollection.length - 1; i != UINT32_MAX; i--)
+    for (uint32_t i = pOpaqueGeometrySubpass->modelDynamicArray.length - 1; i > -1; i--)
     {
-        removeModelFromOpaqueGeometrySubpass(pOpaqueGeometrySubpass, vkDevice, i);
+        SubpassModel *pSubpassModel = pOpaqueGeometrySubpass->modelDynamicArray.array[i];
+        removeModelFromOpaqueGeometrySubpass(pOpaqueGeometrySubpass, vkDevice, pSubpassModel);
     }
-    tickernelDestroyCollection(&pOpaqueGeometrySubpass->modelCollection);
+    tickernelDestroyDynamicArray(&pOpaqueGeometrySubpass->modelDynamicArray);
 
     tickernelFree(pOpaqueGeometrySubpass->vkDescriptorPoolSizes);
     destroyVkPipeline(pOpaqueGeometrySubpass, vkDevice);
 }
 
-void addModelToOpaqueGeometrySubpass(Subpass *pOpaqueGeometrySubpass, VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkCommandPool graphicVkCommandPool, VkQueue vkGraphicQueue, VkBuffer globalUniformBuffer, uint32_t vertexCount, OpaqueGeometrySubpassVertex *opaqueGeometrySubpassVertices, uint32_t *pIndex)
+SubpassModel *addModelToOpaqueGeometrySubpass(Subpass *pOpaqueGeometrySubpass, VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkCommandPool graphicVkCommandPool, VkQueue vkGraphicQueue, VkBuffer globalUniformBuffer, uint32_t vertexCount, OpaqueGeometrySubpassVertex *opaqueGeometrySubpassVertices)
 {
     SubpassModel subpassModel = {
         .vertexCount = vertexCount,
@@ -361,11 +362,10 @@ void addModelToOpaqueGeometrySubpass(Subpass *pOpaqueGeometrySubpass, VkDevice v
         },
     };
     vkUpdateDescriptorSets(vkDevice, 1, descriptorWrites, 0, NULL);
-    tickernelAddToCollection(&pOpaqueGeometrySubpass->modelCollection, &subpassModel, pIndex);
+    return tickernelAddToDynamicArray(&pOpaqueGeometrySubpass->modelDynamicArray, &subpassModel);
 }
-void removeModelFromOpaqueGeometrySubpass(Subpass *pOpaqueGeometrySubpass, VkDevice vkDevice, uint32_t index)
+void removeModelFromOpaqueGeometrySubpass(Subpass *pOpaqueGeometrySubpass, VkDevice vkDevice, SubpassModel *pSubpassModel)
 {
-    SubpassModel *pSubpassModel = pOpaqueGeometrySubpass->modelCollection.array[index];
     if (pSubpassModel->maxInstanceCount > 0)
     {
         destroyBuffer(vkDevice, pSubpassModel->instanceBuffer, pSubpassModel->instanceBufferMemory);
@@ -376,11 +376,11 @@ void removeModelFromOpaqueGeometrySubpass(Subpass *pOpaqueGeometrySubpass, VkDev
     VkResult result = vkFreeDescriptorSets(vkDevice, pSubpassModel->vkDescriptorPool, 1, &pSubpassModel->vkDescriptorSet);
     tryThrowVulkanError(result);
     vkDestroyDescriptorPool(vkDevice, pSubpassModel->vkDescriptorPool, NULL);
-    tickernelRemoveFromCollection(&pOpaqueGeometrySubpass->modelCollection, index);
+    tickernelRemoveFromDynamicArray(&pOpaqueGeometrySubpass->modelDynamicArray, pSubpassModel);
 }
-void updateInstancesInOpaqueGeometrySubpass(Subpass *pOpaqueGeometrySubpass, uint32_t modelIndex, VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkCommandPool graphicVkCommandPool, VkQueue vkGraphicQueue, VkBuffer globalUniformBuffer, OpaqueGeometrySubpassInstance *opaqueGeometrySubpassInstances, uint32_t instanceCount)
+
+void updateInstancesInOpaqueGeometrySubpass(Subpass *pOpaqueGeometrySubpass, SubpassModel *pSubpassModel, VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkCommandPool graphicVkCommandPool, VkQueue vkGraphicQueue, VkBuffer globalUniformBuffer, OpaqueGeometrySubpassInstance *opaqueGeometrySubpassInstances, uint32_t instanceCount)
 {
-    SubpassModel *pSubpassModel = pOpaqueGeometrySubpass->modelCollection.array[modelIndex];
     if (0 == pSubpassModel->maxInstanceCount)
     {
         pSubpassModel->maxInstanceCount = instanceCount;

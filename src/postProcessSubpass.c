@@ -262,16 +262,15 @@ static void createPostProcessSubpassModel(Subpass *pPostProcessSubpass, VkDevice
         },
     };
     vkUpdateDescriptorSets(vkDevice, 1, descriptorWrites, 0, NULL);
-    uint32_t index;
-    tickernelAddToCollection(&pPostProcessSubpass->modelCollection, &subpassModel, &index);
+    tickernelAddToDynamicArray(&pPostProcessSubpass->modelDynamicArray, &subpassModel);
 }
 static void destroyPostProcessSubpassModel(Subpass *pPostProcessSubpass, VkDevice vkDevice, uint32_t index)
 {
-    SubpassModel *pSubpassModel = pPostProcessSubpass->modelCollection.array[index];
+    SubpassModel *pSubpassModel = pPostProcessSubpass->modelDynamicArray.array[index];
     VkResult result = vkFreeDescriptorSets(vkDevice, pSubpassModel->vkDescriptorPool, 1, &pSubpassModel->vkDescriptorSet);
     tryThrowVulkanError(result);
     vkDestroyDescriptorPool(vkDevice, pSubpassModel->vkDescriptorPool, NULL);
-    tickernelRemoveFromCollection(&pPostProcessSubpass->modelCollection, index);
+    tickernelRemoveAtIndexFromDynamicArray(&pPostProcessSubpass->modelDynamicArray, index);
 }
 
 void createPostProcessSubpass(Subpass *pPostProcessSubpass, const char *shadersPath, VkRenderPass vkRenderPass, VkDevice vkDevice, VkViewport viewport, VkRect2D scissor, VkImageView colorVkImageView)
@@ -284,14 +283,14 @@ void createPostProcessSubpass(Subpass *pPostProcessSubpass, const char *shadersP
         .descriptorCount = 1,
     };
 
-    tickernelCreateCollection(&pPostProcessSubpass->modelCollection, sizeof(SubpassModel), 1);
+    tickernelCreateDynamicArray(&pPostProcessSubpass->modelDynamicArray, 1, sizeof(SubpassModel));
     createPostProcessSubpassModel(pPostProcessSubpass, vkDevice, colorVkImageView);
 }
 
 void destroyPostProcessSubpass(Subpass *pPostProcessSubpass, VkDevice vkDevice)
 {
     destroyPostProcessSubpassModel(pPostProcessSubpass, vkDevice, 0);
-    tickernelDestroyCollection(&pPostProcessSubpass->modelCollection);
+    tickernelDestroyDynamicArray(&pPostProcessSubpass->modelDynamicArray);
     tickernelFree(pPostProcessSubpass->vkDescriptorPoolSizes);
 
     destroyVkPipeline(pPostProcessSubpass, vkDevice);

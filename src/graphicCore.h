@@ -71,7 +71,7 @@ typedef struct SubpassStruct
     VkPipelineLayout vkPipelineLayout;
     VkDescriptorSetLayout descriptorSetLayout;
 
-    TickernelCollection modelCollection;
+    TickernelDynamicArray modelDynamicArray;
     uint32_t vkDescriptorPoolSizeCount;
     VkDescriptorPoolSize *vkDescriptorPoolSizes;
 } Subpass;

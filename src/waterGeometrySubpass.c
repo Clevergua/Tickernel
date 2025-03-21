@@ -282,21 +282,22 @@ void createWaterGeometrySubpass(Subpass *pWaterGeometrySubpass, const char *shad
         .descriptorCount = 1,
     };
 
-    tickernelCreateCollection(&pWaterGeometrySubpass->modelCollection, sizeof(SubpassModel), 1);
+    tickernelCreateDynamicArray(&pWaterGeometrySubpass->modelDynamicArray, 1, sizeof(SubpassModel));
 }
 void destroyWaterGeometrySubpass(Subpass *pWaterGeometrySubpass, VkDevice vkDevice)
 {
-    for (uint32_t i = pWaterGeometrySubpass->modelCollection.length - 1; i != UINT32_MAX; i--)
+    for (uint32_t i = pWaterGeometrySubpass->modelDynamicArray.length - 1; i != UINT32_MAX; i--)
     {
-        removeModelFromWaterGeometrySubpass(pWaterGeometrySubpass, vkDevice, i);
+        SubpassModel *pSubpassModel = pWaterGeometrySubpass->modelDynamicArray.array[i];
+        removeModelFromWaterGeometrySubpass(pWaterGeometrySubpass, vkDevice, pSubpassModel);
     }
-    tickernelDestroyCollection(&pWaterGeometrySubpass->modelCollection);
+    tickernelDestroyDynamicArray(&pWaterGeometrySubpass->modelDynamicArray);
 
     tickernelFree(pWaterGeometrySubpass->vkDescriptorPoolSizes);
     destroyVkPipeline(pWaterGeometrySubpass, vkDevice);
 }
 
-void addModelToWaterGeometrySubpass(Subpass *pWaterGeometrySubpass, VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkCommandPool graphicVkCommandPool, VkQueue vkGraphicQueue, VkBuffer globalUniformBuffer, uint32_t vertexCount, WaterGeometrySubpassVertex *waterGeometrySubpassVertices, uint32_t *pIndex)
+SubpassModel* addModelToWaterGeometrySubpass(Subpass *pWaterGeometrySubpass, VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkCommandPool graphicVkCommandPool, VkQueue vkGraphicQueue, VkBuffer globalUniformBuffer, uint32_t vertexCount, WaterGeometrySubpassVertex *waterGeometrySubpassVertices)
 {
     SubpassModel subpassModel = {
         .vertexCount = vertexCount,
@@ -361,11 +362,10 @@ void addModelToWaterGeometrySubpass(Subpass *pWaterGeometrySubpass, VkDevice vkD
         },
     };
     vkUpdateDescriptorSets(vkDevice, 1, descriptorWrites, 0, NULL);
-    tickernelAddToCollection(&pWaterGeometrySubpass->modelCollection, &subpassModel, pIndex);
+    return tickernelAddToDynamicArray(&pWaterGeometrySubpass->modelDynamicArray, &subpassModel);
 }
-void removeModelFromWaterGeometrySubpass(Subpass *pWaterGeometrySubpass, VkDevice vkDevice, uint32_t index)
+void removeModelFromWaterGeometrySubpass(Subpass *pWaterGeometrySubpass, VkDevice vkDevice, SubpassModel *pSubpassModel)
 {
-    SubpassModel *pSubpassModel = pWaterGeometrySubpass->modelCollection.array[index];
     if (pSubpassModel->maxInstanceCount > 0)
     {
         destroyBuffer(vkDevice, pSubpassModel->instanceBuffer, pSubpassModel->instanceBufferMemory);
@@ -376,11 +376,10 @@ void removeModelFromWaterGeometrySubpass(Subpass *pWaterGeometrySubpass, VkDevic
     VkResult result = vkFreeDescriptorSets(vkDevice, pSubpassModel->vkDescriptorPool, 1, &pSubpassModel->vkDescriptorSet);
     tryThrowVulkanError(result);
     vkDestroyDescriptorPool(vkDevice, pSubpassModel->vkDescriptorPool, NULL);
-    tickernelRemoveFromCollection(&pWaterGeometrySubpass->modelCollection, index);
+    tickernelRemoveFromDynamicArray(&pWaterGeometrySubpass->modelDynamicArray, pSubpassModel);
 }
-void updateInstancesInWaterGeometrySubpass(Subpass *pWaterGeometrySubpass, uint32_t modelIndex, VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkCommandPool graphicVkCommandPool, VkQueue vkGraphicQueue, VkBuffer globalUniformBuffer, WaterGeometrySubpassInstance *waterGeometrySubpassInstances, uint32_t instanceCount)
+void updateInstancesInWaterGeometrySubpass(Subpass *pWaterGeometrySubpass, SubpassModel* pSubpassModel, VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkCommandPool graphicVkCommandPool, VkQueue vkGraphicQueue, VkBuffer globalUniformBuffer, WaterGeometrySubpassInstance *waterGeometrySubpassInstances, uint32_t instanceCount)
 {
-    SubpassModel *pSubpassModel = pWaterGeometrySubpass->modelCollection.array[modelIndex];
     if (0 == pSubpassModel->maxInstanceCount)
     {
         pSubpassModel->maxInstanceCount = instanceCount;

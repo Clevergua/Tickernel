@@ -257,9 +257,9 @@ void recordDeferredRenderPass(DeferredRenderPass *pDeferredRenderPass, VkCommand
     vkCmdBeginRenderPass(vkCommandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
     Subpass *pOpaqueGeometrySubpass = &pDeferredRenderPass->opaqueGeometrySubpass;
     vkCmdBindPipeline(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pOpaqueGeometrySubpass->vkPipeline);
-    for (uint32_t modelIndex = 0; modelIndex < pOpaqueGeometrySubpass->modelCollection.length; modelIndex++)
+    for (uint32_t modelIndex = 0; modelIndex < pOpaqueGeometrySubpass->modelDynamicArray.length; modelIndex++)
     {
-        SubpassModel *pSubpassModel = pOpaqueGeometrySubpass->modelCollection.array[modelIndex];
+        SubpassModel *pSubpassModel = pOpaqueGeometrySubpass->modelDynamicArray.array[modelIndex];
         if (NULL != pSubpassModel)
         {
             vkCmdSetViewport(vkCommandBuffer, 0, 1, &viewport);
@@ -274,9 +274,9 @@ void recordDeferredRenderPass(DeferredRenderPass *pDeferredRenderPass, VkCommand
     vkCmdNextSubpass(vkCommandBuffer, VK_SUBPASS_CONTENTS_INLINE);
     Subpass *pWaterGeometrySubpass = &pDeferredRenderPass->waterGeometrySubpass;
     vkCmdBindPipeline(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pWaterGeometrySubpass->vkPipeline);
-    for (uint32_t modelIndex = 0; modelIndex < pWaterGeometrySubpass->modelCollection.length; modelIndex++)
+    for (uint32_t modelIndex = 0; modelIndex < pWaterGeometrySubpass->modelDynamicArray.length; modelIndex++)
     {
-        SubpassModel *pSubpassModel = pWaterGeometrySubpass->modelCollection.array[modelIndex];
+        SubpassModel *pSubpassModel = pWaterGeometrySubpass->modelDynamicArray.array[modelIndex];
         if (NULL != pSubpassModel)
         {
             vkCmdSetViewport(vkCommandBuffer, 0, 1, &viewport);
@@ -291,7 +291,7 @@ void recordDeferredRenderPass(DeferredRenderPass *pDeferredRenderPass, VkCommand
     vkCmdNextSubpass(vkCommandBuffer, VK_SUBPASS_CONTENTS_INLINE);
     // opaqueLighting subpass
     Subpass *pOpaqueLightingSubpass = &pDeferredRenderPass->opaqueLightingSubpass;
-    SubpassModel *pSubpassModel = pOpaqueLightingSubpass->modelCollection.array[0];
+    SubpassModel *pSubpassModel = pOpaqueLightingSubpass->modelDynamicArray.array[0];
     vkCmdBindPipeline(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pOpaqueLightingSubpass->vkPipeline);
     vkCmdSetViewport(vkCommandBuffer, 0, 1, &viewport);
     vkCmdSetScissor(vkCommandBuffer, 0, 1, &scissor);
