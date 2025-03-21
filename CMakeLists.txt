@@ -42,6 +42,7 @@ foreach(SHADER ${SHADER_SOURCES})
 endforeach()
 add_custom_target(CompileShaders DEPENDS ${SPIRV_BINARIES})
 add_dependencies(${PROJECT_NAME} CompileShaders)
+
 # # Copy assets
 # add_custom_target(CopyAssets
 #     COMMAND ${CMAKE_COMMAND} -E copy_directory
@@ -50,3 +51,13 @@ add_dependencies(${PROJECT_NAME} CompileShaders)
 # )
 # add_dependencies(${PROJECT_NAME} CopyAssets)
 
+enable_testing() 
+set(TEST_SOURCES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/tests)
+file(GLOB TEST_SOURCES ${TEST_SOURCES_DIR}/*.c)
+
+foreach(TEST_SOURCE ${TEST_SOURCES})
+    get_filename_component(TEST_NAME ${TEST_SOURCE} NAME_WE)
+    add_executable(${TEST_NAME} ${TEST_SOURCE})
+    target_link_libraries(${TEST_NAME} ${PROJECT_NAME})
+    add_test(NAME ${TEST_NAME} COMMAND ${TEST_NAME})
+endforeach()
