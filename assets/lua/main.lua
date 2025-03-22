@@ -297,12 +297,13 @@ function engine.update()
     elseif engine.input[engine.keyCodes.A]== engine.keyCodeState.UP  then
         cameraRotation[1] = cameraRotation[1] + 0.01
     end
-    if engine.input[engine.keyCodes.E] == engine.keyCodeState.UP then
-        engine.loadAudio("laugh.mp3")
-        local player = engine.getAudioPlayer("laugh.mp3")
-        engine.setAudioPosition(player, 10000,0,0)
-        engine.playAudio(player)
-    end
+    -- if engine.input[engine.keyCodes.E] == engine.keyCodeState.UP then
+    --     engine.loadAudio("laugh.mp3")
+    --     local player = engine.getAudioPlayer("laugh.mp3")
+    --     engine.setAudioPosition(player, 10000,0,0)
+    --     engine.playAudio(player)
+    --     engine.unloadAudio("laugh.mp3")
+    -- end
     engine.updateGlobalUniformBuffer(globalUniformBuffer)
     engine.frameCount = engine.frameCount + 1
 

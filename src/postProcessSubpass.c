@@ -262,7 +262,7 @@ static void createPostProcessSubpassModel(Subpass *pPostProcessSubpass, VkDevice
         },
     };
     vkUpdateDescriptorSets(vkDevice, 1, descriptorWrites, 0, NULL);
-    tickernelAddToDynamicArray(&pPostProcessSubpass->modelDynamicArray, &subpassModel);
+    tickernelAddToDynamicArray(&pPostProcessSubpass->modelDynamicArray, &subpassModel, pPostProcessSubpass->modelDynamicArray.length);
 }
 static void destroyPostProcessSubpassModel(Subpass *pPostProcessSubpass, VkDevice vkDevice, uint32_t index)
 {

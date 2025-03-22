@@ -362,7 +362,7 @@ SubpassModel *addModelToOpaqueGeometrySubpass(Subpass *pOpaqueGeometrySubpass, V
         },
     };
     vkUpdateDescriptorSets(vkDevice, 1, descriptorWrites, 0, NULL);
-    return tickernelAddToDynamicArray(&pOpaqueGeometrySubpass->modelDynamicArray, &subpassModel);
+    return tickernelAddToDynamicArray(&pOpaqueGeometrySubpass->modelDynamicArray, &subpassModel, pOpaqueGeometrySubpass->modelDynamicArray.length);
 }
 void removeModelFromOpaqueGeometrySubpass(Subpass *pOpaqueGeometrySubpass, VkDevice vkDevice, SubpassModel *pSubpassModel)
 {

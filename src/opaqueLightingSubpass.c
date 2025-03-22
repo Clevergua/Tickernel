@@ -361,7 +361,7 @@ static void createPostProcessSubpassModel(Subpass *pOpaqueLightingSubpass, VkDev
         },
     };
     vkUpdateDescriptorSets(vkDevice, 5, descriptorWrites, 0, NULL);
-    tickernelAddToDynamicArray(&pOpaqueLightingSubpass->modelDynamicArray, &subpassModel);
+    tickernelAddToDynamicArray(&pOpaqueLightingSubpass->modelDynamicArray, &subpassModel, pOpaqueLightingSubpass->modelDynamicArray.length);
 }
 static void destroyOpaqueLightingSubpassModel(Subpass *pOpaqueLightingSubpass, VkDevice vkDevice, uint32_t index)
 {

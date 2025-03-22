@@ -362,7 +362,7 @@ SubpassModel* addModelToWaterGeometrySubpass(Subpass *pWaterGeometrySubpass, VkD
         },
     };
     vkUpdateDescriptorSets(vkDevice, 1, descriptorWrites, 0, NULL);
-    return tickernelAddToDynamicArray(&pWaterGeometrySubpass->modelDynamicArray, &subpassModel);
+    return tickernelAddToDynamicArray(&pWaterGeometrySubpass->modelDynamicArray, &subpassModel, pWaterGeometrySubpass->modelDynamicArray.length);
 }
 void removeModelFromWaterGeometrySubpass(Subpass *pWaterGeometrySubpass, VkDevice vkDevice, SubpassModel *pSubpassModel)
 {

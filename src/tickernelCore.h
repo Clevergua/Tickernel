@@ -30,7 +30,7 @@ const char *tickernelGetPathSeparator(void);
 
 void tickernelCreateDynamicArray(TickernelDynamicArray *pDynamicArray, uint32_t maxLength, size_t dataSize);
 void tickernelDestroyDynamicArray(TickernelDynamicArray *pDynamicArray);
-void *tickernelAddToDynamicArray(TickernelDynamicArray *pDynamicArray, void *pData);
+void *tickernelAddToDynamicArray(TickernelDynamicArray *pDynamicArray, void *pData, uint32_t index);
 void tickernelRemoveFromDynamicArray(TickernelDynamicArray *pDynamicArray, void* pData);
 void tickernelRemoveAtIndexFromDynamicArray(TickernelDynamicArray *pDynamicArray, uint32_t index);
 void tickernelClearDynamicArray(TickernelDynamicArray *pDynamicArray);
