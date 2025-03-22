@@ -3,8 +3,7 @@ static void createVkPipeline(Subpass *pOpaqueGeometrySubpass, const char *shader
 {
     VkShaderModule opaqueGeometryVertShaderModule;
     char opaqueGeometryVertShaderPath[FILENAME_MAX];
-    strcpy(opaqueGeometryVertShaderPath, shadersPath);
-    tickernelCombinePaths(opaqueGeometryVertShaderPath, FILENAME_MAX, "opaqueGeometry.vert.spv");
+    sprintf(opaqueGeometryVertShaderPath, "%s/%s", shadersPath, "opaqueGeometry.vert.spv");
     createVkShaderModule(vkDevice, opaqueGeometryVertShaderPath, &opaqueGeometryVertShaderModule);
     VkPipelineShaderStageCreateInfo vertShaderStageCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
@@ -18,8 +17,7 @@ static void createVkPipeline(Subpass *pOpaqueGeometrySubpass, const char *shader
 
     VkShaderModule opaqueGeometryFragShaderModule;
     char opaqueGeometryFragShaderPath[FILENAME_MAX];
-    strcpy(opaqueGeometryFragShaderPath, shadersPath);
-    tickernelCombinePaths(opaqueGeometryFragShaderPath, FILENAME_MAX, "opaqueGeometry.frag.spv");
+    sprintf(opaqueGeometryFragShaderPath, "%s/%s", shadersPath, "opaqueGeometry.frag.spv");
     createVkShaderModule(vkDevice, opaqueGeometryFragShaderPath, &opaqueGeometryFragShaderModule);
     VkPipelineShaderStageCreateInfo fragShaderStageCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,

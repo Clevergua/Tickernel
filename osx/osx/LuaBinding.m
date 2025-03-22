@@ -98,16 +98,14 @@ static int luaSetAudioPosition(lua_State *L) {
     
     const char *cAssetPath = [assetPath UTF8String];
     char packagePath[FILENAME_MAX];
-    strcpy(packagePath, cAssetPath);
-    tickernelCombinePaths(packagePath, FILENAME_MAX, "?.lua;");
+    snprintf(packagePath, FILENAME_MAX, "%s?.lua;", cAssetPath);
     lua_getglobal(pLuaState, "package");
     lua_pushstring(pLuaState, packagePath);
     lua_setfield(pLuaState, -2, "path");
     lua_pop(pLuaState, 1);
     
     char luaMainFilePath[FILENAME_MAX];
-    strcpy(luaMainFilePath, cAssetPath);
-    tickernelCombinePaths(luaMainFilePath, FILENAME_MAX, "main.lua");
+    snprintf(luaMainFilePath, FILENAME_MAX, "%s/main.lua", cAssetPath);
     int luaResult = luaL_dofile(pLuaState, luaMainFilePath);
     if (luaResult != LUA_OK) {
         const char *msg = lua_tostring(pLuaState, -1);

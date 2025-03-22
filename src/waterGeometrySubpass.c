@@ -3,8 +3,7 @@ static void createVkPipeline(Subpass *pWaterGeometrySubpass, const char *shaders
 {
     VkShaderModule waterGeometryVertShaderModule;
     char waterGeometryVertShaderPath[FILENAME_MAX];
-    strcpy(waterGeometryVertShaderPath, shadersPath);
-    tickernelCombinePaths(waterGeometryVertShaderPath, FILENAME_MAX, "waterGeometry.vert.spv");
+    sprintf(waterGeometryVertShaderPath, "%s/%s", shadersPath, "waterGeometry.vert.spv");
     createVkShaderModule(vkDevice, waterGeometryVertShaderPath, &waterGeometryVertShaderModule);
     VkPipelineShaderStageCreateInfo vertShaderStageCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
@@ -18,8 +17,7 @@ static void createVkPipeline(Subpass *pWaterGeometrySubpass, const char *shaders
 
     VkShaderModule waterGeometryFragShaderModule;
     char waterGeometryFragShaderPath[FILENAME_MAX];
-    strcpy(waterGeometryFragShaderPath, shadersPath);
-    tickernelCombinePaths(waterGeometryFragShaderPath, FILENAME_MAX, "waterGeometry.frag.spv");
+    sprintf(waterGeometryFragShaderPath, "%s/%s", shadersPath, "waterGeometry.frag.spv");
     createVkShaderModule(vkDevice, waterGeometryFragShaderPath, &waterGeometryFragShaderModule);
     VkPipelineShaderStageCreateInfo fragShaderStageCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,

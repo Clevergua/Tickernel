@@ -4,8 +4,7 @@ static void createVkPipeline(Subpass *pPostProcessSubpass, const char *shadersPa
 {
     VkShaderModule postProcessVertShaderModule;
     char postProcessVertShaderPath[FILENAME_MAX];
-    strcpy(postProcessVertShaderPath, shadersPath);
-    tickernelCombinePaths(postProcessVertShaderPath, FILENAME_MAX, "postProcess.vert.spv");
+    sprintf(postProcessVertShaderPath, "%s/%s", shadersPath, "postProcess.vert.spv");
     createVkShaderModule(vkDevice, postProcessVertShaderPath, &postProcessVertShaderModule);
     VkPipelineShaderStageCreateInfo vertShaderStageCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
@@ -19,8 +18,7 @@ static void createVkPipeline(Subpass *pPostProcessSubpass, const char *shadersPa
 
     VkShaderModule postProcessFragShaderModule;
     char postProcessFragShaderPath[FILENAME_MAX];
-    strcpy(postProcessFragShaderPath, shadersPath);
-    tickernelCombinePaths(postProcessFragShaderPath, FILENAME_MAX, "postProcess.frag.spv");
+    sprintf(postProcessFragShaderPath, "%s/%s", shadersPath, "postProcess.frag.spv");
     createVkShaderModule(vkDevice, postProcessFragShaderPath, &postProcessFragShaderModule);
     VkPipelineShaderStageCreateInfo fragShaderStageCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,

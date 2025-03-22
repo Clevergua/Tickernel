@@ -23,10 +23,6 @@ void tickernelError(char const *const _Format, ...);
 void tickernelSleep(uint32_t milliseconds);
 void *tickernelMalloc(size_t size);
 void tickernelFree(void *block);
-void tickernelCombinePaths(char *dstPath, size_t size, const char *srcPath);
-bool tickernelStartsWith(const char *str, const char *prefix);
-bool tickernelEndsWith(const char *str, const char *suffix);
-const char *tickernelGetPathSeparator(void);
 
 void tickernelCreateDynamicArray(TickernelDynamicArray *pDynamicArray, uint32_t maxLength, size_t dataSize);
 void tickernelDestroyDynamicArray(TickernelDynamicArray *pDynamicArray);

@@ -4,8 +4,7 @@ static void createVkPipeline(Subpass *pOpaqueLightingSubpass, const char *shader
 {
     VkShaderModule opaqueLightingVertShaderModule;
     char opaqueLightingVertShaderPath[FILENAME_MAX];
-    strcpy(opaqueLightingVertShaderPath, shadersPath);
-    tickernelCombinePaths(opaqueLightingVertShaderPath, FILENAME_MAX, "opaqueLighting.vert.spv");
+    sprintf(opaqueLightingVertShaderPath, "%s/%s", shadersPath, "opaqueLighting.vert.spv");
     createVkShaderModule(vkDevice, opaqueLightingVertShaderPath, &opaqueLightingVertShaderModule);
     VkPipelineShaderStageCreateInfo vertShaderStageCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
@@ -19,8 +18,7 @@ static void createVkPipeline(Subpass *pOpaqueLightingSubpass, const char *shader
 
     VkShaderModule opaqueLightingFragShaderModule;
     char opaqueLightingFragShaderPath[FILENAME_MAX];
-    strcpy(opaqueLightingFragShaderPath, shadersPath);
-    tickernelCombinePaths(opaqueLightingFragShaderPath, FILENAME_MAX, "opaqueLighting.frag.spv");
+    sprintf(opaqueLightingFragShaderPath, "%s/%s", shadersPath, "opaqueLighting.frag.spv");
     createVkShaderModule(vkDevice, opaqueLightingFragShaderPath, &opaqueLightingFragShaderModule);
     VkPipelineShaderStageCreateInfo fragShaderStageCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
