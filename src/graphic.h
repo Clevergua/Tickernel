@@ -1,6 +1,5 @@
 #pragma once
 #include "deferredRenderPass.h"
-#include "postProcessRenderPass.h"
 
 typedef struct
 {
@@ -45,7 +44,6 @@ typedef struct
     GraphicImage albedoGraphicImage;
     GraphicImage normalGraphicImage;
     DeferredRenderPass deferredRenderPass;
-    PostProcessRenderPass postProcessRenderPass;
     // UIRenderPass uiRenderPass;
     uint32_t fullScreenTriangleModelIndex;
 } GraphicContext;

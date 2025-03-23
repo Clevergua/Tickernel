@@ -1,6 +1,6 @@
 #include "postProcessSubpass.h"
 
-static void createVkPipeline(Subpass *pPostProcessSubpass, const char *shadersPath, VkRenderPass vkRenderPass, VkDevice vkDevice, VkViewport viewport, VkRect2D scissor)
+static void createVkPipeline(Subpass *pPostProcessSubpass, const char *shadersPath, VkRenderPass vkRenderPass, uint32_t postProcessSubpassIndex, VkDevice vkDevice, VkViewport viewport, VkRect2D scissor)
 {
     VkShaderModule postProcessVertShaderModule;
     char postProcessVertShaderPath[FILENAME_MAX];
@@ -29,7 +29,6 @@ static void createVkPipeline(Subpass *pPostProcessSubpass, const char *shadersPa
         .pName = "main",
         .pSpecializationInfo = NULL,
     };
-
 
     uint32_t stageCount = 2;
     VkPipelineShaderStageCreateInfo *pipelineShaderStageCreateInfos = (VkPipelineShaderStageCreateInfo[]){vertShaderStageCreateInfo, fragShaderStageCreateInfo};
@@ -182,7 +181,7 @@ static void createVkPipeline(Subpass *pPostProcessSubpass, const char *shadersPa
         .pDynamicState = &dynamicState,
         .layout = pPostProcessSubpass->vkPipelineLayout,
         .renderPass = vkRenderPass,
-        .subpass = 0,
+        .subpass = postProcessSubpassIndex,
         .basePipelineHandle = VK_NULL_HANDLE,
         .basePipelineIndex = -1,
     };
@@ -271,9 +270,9 @@ static void destroyPostProcessSubpassModel(Subpass *pPostProcessSubpass, VkDevic
     tickernelRemoveAtIndexFromDynamicArray(&pPostProcessSubpass->modelDynamicArray, index);
 }
 
-void createPostProcessSubpass(Subpass *pPostProcessSubpass, const char *shadersPath, VkRenderPass vkRenderPass, VkDevice vkDevice, VkViewport viewport, VkRect2D scissor, VkImageView colorVkImageView)
+void createPostProcessSubpass(Subpass *pPostProcessSubpass, const char *shadersPath, VkRenderPass vkRenderPass, uint32_t postProcessSubpassIndex, VkDevice vkDevice, VkViewport viewport, VkRect2D scissor, VkImageView colorVkImageView)
 {
-    createVkPipeline(pPostProcessSubpass, shadersPath, vkRenderPass, vkDevice, viewport, scissor);
+    createVkPipeline(pPostProcessSubpass, shadersPath, vkRenderPass, postProcessSubpassIndex, vkDevice, viewport, scissor);
     pPostProcessSubpass->vkDescriptorPoolSizeCount = 1;
     pPostProcessSubpass->vkDescriptorPoolSizes = tickernelMalloc(sizeof(VkDescriptorPoolSize) * pPostProcessSubpass->vkDescriptorPoolSizeCount);
     pPostProcessSubpass->vkDescriptorPoolSizes[0] = (VkDescriptorPoolSize){
