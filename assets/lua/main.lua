@@ -107,7 +107,7 @@ local foundationSeed = 12432
 function engine.start()
     print("Lua Start")
 
-    local modelsPath = engine.assetsPath .. engine.pathSeparator
+    local modelsPath = engine.assetsPath .. "/"
     print("Loading models..")
     local models = {
         engine.loadModel(modelsPath .. "LargeBuilding01_0.tknvox"),

@@ -98,7 +98,7 @@ static int luaSetAudioPosition(lua_State *L) {
     
     const char *cAssetPath = [assetPath UTF8String];
     char packagePath[FILENAME_MAX];
-    snprintf(packagePath, FILENAME_MAX, "%s?.lua;", cAssetPath);
+    snprintf(packagePath, FILENAME_MAX, "%s/?.lua;", cAssetPath);
     lua_getglobal(pLuaState, "package");
     lua_pushstring(pLuaState, packagePath);
     lua_setfield(pLuaState, -2, "path");
@@ -121,9 +121,6 @@ static int luaSetAudioPosition(lua_State *L) {
     
     lua_pushstring(pLuaState, cAssetPath);
     lua_setfield(pLuaState, -2, "assetsPath");
-    
-    lua_pushstring(pLuaState, tickernelGetPathSeparator());
-    lua_setfield(pLuaState, -2, "pathSeparator");
     
     lua_pushcfunction(pLuaState, luaAddModelToOpaqueGeometrySubpass);
     lua_setfield(pLuaState, -2, "addModelToOpaqueGeometrySubpass");

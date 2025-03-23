@@ -2,7 +2,6 @@ table.empty = {}
 
 local engine = {
     assetsPath = "",
-    pathSeparator = "",
     frameCount = 0,
     keyCodes = nil,
     lastFrameInput = {},
