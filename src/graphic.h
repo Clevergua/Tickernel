@@ -1,6 +1,6 @@
 #pragma once
 #include "deferredRenderPass.h"
-
+#include "uiRenderPass.h"
 typedef struct
 {
     const char *assetsPath;
@@ -44,8 +44,7 @@ typedef struct
     GraphicImage albedoGraphicImage;
     GraphicImage normalGraphicImage;
     DeferredRenderPass deferredRenderPass;
-    // UIRenderPass uiRenderPass;
-    uint32_t fullScreenTriangleModelIndex;
+    UIRenderPass uiRenderPass;
 } GraphicContext;
 
 GraphicContext *startGraphic(const char *assetsPath, int targetSwapchainImageCount, VkPresentModeKHR targetPresentMode, VkInstance vkInstance, VkSurfaceKHR vkSurface, uint32_t swapchainWidth, uint32_t swapchainHeight);

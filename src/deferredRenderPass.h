@@ -9,7 +9,6 @@ typedef struct DeferredRenderPassStruct
     uint32_t vkFramebufferCount;
     VkFramebuffer *vkFramebuffers;
 
-
     Subpass opaqueGeometrySubpass;
     Subpass waterGeometrySubpass;
     Subpass opaqueLightingSubpass;
