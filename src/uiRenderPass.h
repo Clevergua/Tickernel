@@ -8,3 +8,5 @@ typedef struct UIRenderPass
     VkFramebuffer *vkFramebuffers;
     Subpass uiSubpass;
 } UIRenderPass;
+
+void createUIRenderPass(UIRenderPass *pUIRenderPass, VkDevice vkDevice, VkFormat swapchainVkFormat, uint32_t swapchainCount, VkImageView *swapchainImageViews, VkViewport viewport, VkRect2D scissor);

@@ -540,7 +540,7 @@ static void recreateSwapchain(GraphicContext *pGraphicContext)
     destroyGraphicImages(pGraphicContext);
     createGraphicImages(pGraphicContext);
 
-    updateDeferredRenderPass(&pGraphicContext->deferredRenderPass, pGraphicContext->vkDevice, pGraphicContext->colorGraphicImage, pGraphicContext->depthGraphicImage, pGraphicContext->albedoGraphicImage, pGraphicContext->normalGraphicImage, pGraphicContext->swapchainImageCount, pGraphicContext->swapchainImageViews, swapchainWidth, swapchainHeight, pGraphicContext->globalUniformBuffer, pGraphicContext->lightsUniformBuffer);
+    updateDeferredRenderPass(&pGraphicContext->deferredRenderPass, pGraphicContext->vkDevice, pGraphicContext->colorGraphicImage, pGraphicContext->depthGraphicImage, pGraphicContext->albedoGraphicImage, pGraphicContext->normalGraphicImage, pGraphicContext->swapchainImageViews, swapchainWidth, swapchainHeight, pGraphicContext->globalUniformBuffer, pGraphicContext->lightsUniformBuffer);
     // updatePostProcessRenderPass(&pGraphicContext->postProcessRenderPass, pGraphicContext->vkDevice, pGraphicContext->colorGraphicImage, swapchainWidth, swapchainHeight, pGraphicContext->swapchainImageViews);
     // updateUIRenderPass(&pGraphicContext->uiRenderPass, pGraphicContext->vkDevice, pGraphicContext->colorGraphicImage, swapchainWidth, swapchainHeight, pGraphicContext->swapchainImageViews);
 }
@@ -761,7 +761,8 @@ GraphicContext *startGraphic(const char *assetsPath, int targetSwapchainImageCou
     };
     createDeferredRenderPass(&pGraphicContext->deferredRenderPass, pGraphicContext->assetsPath, pGraphicContext->vkDevice, pGraphicContext->colorGraphicImage, pGraphicContext->depthGraphicImage, pGraphicContext->albedoGraphicImage, pGraphicContext->normalGraphicImage, pGraphicContext->swapchainImageCount, pGraphicContext->swapchainImageViews, pGraphicContext->surfaceFormat.format, viewport, scissor, pGraphicContext->globalUniformBuffer, pGraphicContext->lightsUniformBuffer);
     // createPostProcessRenderPass(&pGraphicContext->postProcessRenderPass, pGraphicContext->assetsPath, pGraphicContext->vkDevice, pGraphicContext->colorGraphicImage, viewport, scissor, pGraphicContext->swapchainImageCount, pGraphicContext->swapchainImageViews, pGraphicContext->surfaceFormat.format);
-    createUIRenderPass(&pGraphicContext->uiRenderPass, pGraphicContext->assetsPath, pGraphicContext->vkDevice, pGraphicContext->colorGraphicImage, viewport, scissor, pGraphicContext->swapchainImageCount, pGraphicContext->swapchainImageViews, pGraphicContext->surfaceFormat.format);
+    createUIRenderPass(&pGraphicContext->uiRenderPass, pGraphicContext->vkDevice, pGraphicContext->surfaceFormat.format, pGraphicContext->swapchainImageCount, pGraphicContext->swapchainImageViews, viewport, scissor);
+    
     return pGraphicContext;
 }
 

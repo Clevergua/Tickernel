@@ -124,8 +124,9 @@ void tickernelRemoveAtIndexFromDynamicArray(TickernelDynamicArray *pDynamicArray
     }
     else
     {
-        pDynamicArray->length--;
+        // do nothing
     }
+    pDynamicArray->length--;
     pDynamicArray->array[pDynamicArray->length] = NULL;
 }
 

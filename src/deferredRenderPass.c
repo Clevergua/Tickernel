@@ -241,24 +241,13 @@ void destroyDeferredRenderPass(DeferredRenderPass *pDeferredRenderPass, VkDevice
     destroyVkRenderPass(pDeferredRenderPass, vkDevice);
 }
 
-void updateDeferredRenderPass(DeferredRenderPass *pDeferredRenderPass, VkDevice vkDevice, GraphicImage colorGraphicImage, GraphicImage depthGraphicImage, GraphicImage albedoGraphicImage, GraphicImage normalGraphicImage, uint32_t swapchainCount, VkImageView *swapchainImageViews, uint32_t width, uint32_t height, VkBuffer globalUniformBuffer, VkBuffer lightsUniformBuffer)
+void updateDeferredRenderPass(DeferredRenderPass *pDeferredRenderPass, VkDevice vkDevice, GraphicImage colorGraphicImage, GraphicImage depthGraphicImage, GraphicImage albedoGraphicImage, GraphicImage normalGraphicImage, VkImageView *swapchainImageViews, uint32_t width, uint32_t height, VkBuffer globalUniformBuffer, VkBuffer lightsUniformBuffer)
 {
     for (size_t i = 0; i < pDeferredRenderPass->vkFramebufferCount; i++)
     {
         vkDestroyFramebuffer(vkDevice, pDeferredRenderPass->vkFramebuffers[i], NULL);
     }
-    if (swapchainCount != pDeferredRenderPass->vkFramebufferCount)
-    {
-        tickernelFree(pDeferredRenderPass->vkFramebuffers);
-        pDeferredRenderPass->vkFramebufferCount = swapchainCount;
-        pDeferredRenderPass->vkFramebuffers = tickernelMalloc(sizeof(VkFramebuffer) * swapchainCount);
-    }
-    else
-    {
-        // do nothing
-    }
-
-    for (size_t i = 0; i < swapchainCount; i++)
+    for (size_t i = 0; i < pDeferredRenderPass->vkFramebufferCount; i++)
     {
         VkImageView attachments[] = {colorGraphicImage.vkImageView, depthGraphicImage.vkImageView, albedoGraphicImage.vkImageView, normalGraphicImage.vkImageView, swapchainImageViews[i]};
         VkFramebufferCreateInfo vkFramebufferCreateInfo = {
