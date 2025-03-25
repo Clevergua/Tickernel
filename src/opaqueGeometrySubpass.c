@@ -234,6 +234,7 @@ static void createVkPipeline(Subpass *pOpaqueGeometrySubpass, const char *shader
 
     result = vkCreatePipelineLayout(vkDevice, &pipelineLayoutCreateInfo, NULL, &pOpaqueGeometrySubpass->vkPipelineLayout);
     tryThrowVulkanError(result);
+    
     VkGraphicsPipelineCreateInfo opaqueGeometryPipelineCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
         .pNext = NULL,
@@ -282,6 +283,7 @@ void createOpaqueGeometrySubpass(Subpass *pOpaqueGeometrySubpass, const char *sh
 
     tickernelCreateDynamicArray(&pOpaqueGeometrySubpass->modelDynamicArray, 1, sizeof(SubpassModel));
 }
+
 void destroyOpaqueGeometrySubpass(Subpass *pOpaqueGeometrySubpass, VkDevice vkDevice)
 {
     for (uint32_t i = pOpaqueGeometrySubpass->modelDynamicArray.length - 1; i > -1; i--)
