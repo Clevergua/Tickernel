@@ -97,7 +97,6 @@ static void hasGraphicsAndPresentQueueFamilies(GraphicContext *pGraphicContext, 
 
 static void pickPhysicalDevice(GraphicContext *pGraphicContext)
 {
-
     VkResult result = VK_SUCCESS;
     uint32_t deviceCount = -1;
     result = vkEnumeratePhysicalDevices(pGraphicContext->vkInstance, &deviceCount, NULL);
@@ -141,6 +140,13 @@ static void pickPhysicalDevice(GraphicContext *pGraphicContext)
             result = vkGetPhysicalDeviceSurfacePresentModesKHR(vkPhysicalDevice, vkSurface, &presentModeCount, NULL);
             tryThrowVulkanError(result);
             bool hasPresentMode = presentModeCount > 0;
+
+            VkFormatProperties formatProps;
+            vkGetPhysicalDeviceFormatProperties(vkPhysicalDevice, VK_FORMAT_ASTC_4x4_UNORM_BLOCK, &formatProps);
+            if (!(formatProps.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT))
+            {
+                // 设备不支持ASTC格式
+            }
             if (hasExtensions && hasQueueFamilies && hasSurfaceFormat && hasPresentMode)
             {
                 uint32_t formatCount = 0;
@@ -762,7 +768,7 @@ GraphicContext *startGraphic(const char *assetsPath, int targetSwapchainImageCou
     createDeferredRenderPass(&pGraphicContext->deferredRenderPass, pGraphicContext->assetsPath, pGraphicContext->vkDevice, pGraphicContext->colorGraphicImage, pGraphicContext->depthGraphicImage, pGraphicContext->albedoGraphicImage, pGraphicContext->normalGraphicImage, pGraphicContext->swapchainImageCount, pGraphicContext->swapchainImageViews, pGraphicContext->surfaceFormat.format, viewport, scissor, pGraphicContext->globalUniformBuffer, pGraphicContext->lightsUniformBuffer);
     // createPostProcessRenderPass(&pGraphicContext->postProcessRenderPass, pGraphicContext->assetsPath, pGraphicContext->vkDevice, pGraphicContext->colorGraphicImage, viewport, scissor, pGraphicContext->swapchainImageCount, pGraphicContext->swapchainImageViews, pGraphicContext->surfaceFormat.format);
     createUIRenderPass(&pGraphicContext->uiRenderPass, pGraphicContext->vkDevice, pGraphicContext->surfaceFormat.format, pGraphicContext->swapchainImageCount, pGraphicContext->swapchainImageViews, viewport, scissor);
-    
+
     return pGraphicContext;
 }
 

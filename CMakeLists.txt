@@ -43,6 +43,47 @@ endforeach()
 add_custom_target(CompileShaders DEPENDS ${SPIRV_BINARIES})
 add_dependencies(${PROJECT_NAME} CompileShaders)
 
+# ASTC Texture Compression
+find_program(ASTCENC_EXECUTABLE astcenc)
+if(NOT ASTCENC_EXECUTABLE)
+    message(WARNING "astcenc not found - ASTC texture compression will be disabled")
+else()
+    set(TEXTURE_SOURCES_DIR ${CMAKE_SOURCE_DIR}/res/textures)
+    set(TEXTURE_SOURCES)
+    file(GLOB_RECURSE TEXTURE_SOURCES 
+        ${TEXTURE_SOURCES_DIR}/*.png
+        ${TEXTURE_SOURCES_DIR}/*.jpg
+        ${TEXTURE_SOURCES_DIR}/*.jpeg
+        ${TEXTURE_SOURCES_DIR}/*.tga
+        ${TEXTURE_SOURCES_DIR}/*.bmp
+    )
+
+    set(TEXTURE_OUTPUT_DIR ${CMAKE_SOURCE_DIR}/assets/textures)
+    file(MAKE_DIRECTORY ${TEXTURE_OUTPUT_DIR})
+
+    foreach(TEXTURE ${TEXTURE_SOURCES})
+        get_filename_component(TEXTURE_NAME_WE ${TEXTURE} NAME_WE)
+        get_filename_component(TEXTURE_DIR ${TEXTURE} DIRECTORY)
+        string(REPLACE "${TEXTURE_SOURCES_DIR}" "" RELATIVE_DIR ${TEXTURE_DIR})
+        set(OUTPUT_DIR "${TEXTURE_OUTPUT_DIR}${RELATIVE_DIR}")
+        file(MAKE_DIRECTORY ${OUTPUT_DIR})
+        
+        set(ASTC_OUTPUT "${OUTPUT_DIR}/${TEXTURE_NAME_WE}.astc")
+        add_custom_command(
+            OUTPUT ${ASTC_OUTPUT}
+            COMMAND ${ASTCENC_EXECUTABLE} -cl ${TEXTURE} ${ASTC_OUTPUT} 6x6 -medium
+            DEPENDS ${TEXTURE}
+            COMMENT "Compressing ${TEXTURE} to ASTC format"
+        )
+        list(APPEND ASTC_TEXTURES ${ASTC_OUTPUT})
+    endforeach()
+
+    add_custom_target(CompressTextures DEPENDS ${ASTC_TEXTURES})
+    add_dependencies(${PROJECT_NAME} CompressTextures)
+endif()
+
+
+
 # # Copy assets
 # add_custom_target(CopyAssets
 #     COMMAND ${CMAKE_COMMAND} -E copy_directory
