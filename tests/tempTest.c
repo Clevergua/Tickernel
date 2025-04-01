@@ -3,7 +3,36 @@
 #include <stdio.h>
 #include <string.h>
 
-int main() {
+struct aabb_storage
+{
+    float center[3];
+    float extents[3];
+};
+
+struct PreparedRendererInfo
+{
+    bool isOptimizedMesh;
+    bool removeScaleFromWorldMatrix;
+    bool hasNonUniformScaleTransform;
+    bool calculateAnimatedPosesReturnValue;
+    bool calculateBoneBasedBounds;
+    void *invalidationRoot;
+    void *hierarchy;
+    uint32_t rendererTransformIndex;
+    uint32_t rootBoneTransformIndex;
+    uint32_t tempTransformCount;
+    uint32_t boneTransformCount;
+    uint32_t boundsCount;
+    uint32_t *tempTransformParentIndices;
+    uint32_t *tempTransformHierarchyIndices;
+    uint32_t *boneTransformIndices;
+    uint32_t *boundsTransformIndices;
+    void *boundsAABBs;
+    struct aabb_storage localAABB;
+    void *calcSkinMatricesTask;
+};
+int main()
+{
     TickernelDynamicArray dynamicArray;
 
     // Test tickernelCreateDynamicArray
@@ -41,7 +70,5 @@ int main() {
     // Test tickernelDestroyDynamicArray
     tickernelDestroyDynamicArray(&dynamicArray);
     assert(dynamicArray.array == NULL);
-
-    printf("All tests passed!\n");
     return 0;
 }

@@ -245,12 +245,12 @@ void destroyUISubpass(Subpass *pPostProcessSubpass, VkDevice vkDevice)
     destroyVkPipeline(pPostProcessSubpass, vkDevice);
 }
 
-void createImageAndSampler(){
+void AddImage(){
 
 }
 
-void destroyImageAndSampler(){
-
+void RemoveImage(){
+    
 }
 
 // SubpassModel *addModelToUISubpass(Subpass *pUISubpass, VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkCommandPool graphicVkCommandPool, VkQueue vkGraphicQueue, uint32_t vertexCount, UISubpassVertex *uiSubpassVertices)
