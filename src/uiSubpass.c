@@ -245,12 +245,17 @@ void destroyUISubpass(Subpass *pPostProcessSubpass, VkDevice vkDevice)
     destroyVkPipeline(pPostProcessSubpass, vkDevice);
 }
 
-void AddImage(){
-
+GraphicImage *AddImage(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, const char *fileName, VkCommandPool graphicVkCommandPool, VkQueue vkGraphicQueue)
+{
+    GraphicImage *pGraphicImage = tickernelMalloc(sizeof(GraphicImage));
+    createASTCGraphicImage(vkDevice, vkPhysicalDevice, fileName, graphicVkCommandPool, vkGraphicQueue, pGraphicImage);
+    return pGraphicImage;
 }
 
-void RemoveImage(){
-    
+void RemoveImage(GraphicImage *pGraphicImage, VkDevice vkDevice)
+{
+    destroyASTCGraphicImage(vkDevice, pGraphicImage);
+    tickernelFree(pGraphicImage);
 }
 
 // SubpassModel *addModelToUISubpass(Subpass *pUISubpass, VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkCommandPool graphicVkCommandPool, VkQueue vkGraphicQueue, uint32_t vertexCount, UISubpassVertex *uiSubpassVertices)

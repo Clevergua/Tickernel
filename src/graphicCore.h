@@ -65,7 +65,7 @@ typedef struct SubpassModelStruct
     VkDescriptorSet vkDescriptorSet;
 } SubpassModel;
 
-typedef struct SubpassStruct
+typedef struct
 {
     VkPipeline vkPipeline;
     VkPipelineLayout vkPipelineLayout;
@@ -76,13 +76,23 @@ typedef struct SubpassStruct
     VkDescriptorPoolSize *vkDescriptorPoolSizes;
 } Subpass;
 
-typedef struct GraphicImageStruct
+typedef struct
 {
     VkImage vkImage;
     VkFormat vkFormat;
     VkImageView vkImageView;
     VkDeviceMemory vkDeviceMemory;
 } GraphicImage;
+
+typedef struct {
+    uint8_t magic[4];
+    uint8_t blockDimX;
+    uint8_t blockDimY;
+    uint8_t blockDimZ;
+    uint8_t width[3];
+    uint8_t height[3];
+    uint8_t depth[3];
+} ASTCHeader;
 
 void tryThrowVulkanError(VkResult vkResult);
 void findMemoryType(VkPhysicalDevice vkPhysicalDevice, uint32_t typeFilter, VkMemoryPropertyFlags memoryPropertyFlags, uint32_t *memoryTypeIndex);
@@ -99,3 +109,8 @@ void createBuffer(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkDevice
 void destroyBuffer(VkDevice vkDevice, VkBuffer vkBuffer, VkDeviceMemory deviceMemory);
 void updateBufferWithStagingBuffer(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkDeviceSize offset, VkDeviceSize bufferSize, void *bufferData, VkCommandPool graphicVkCommandPool, VkQueue vkGraphicQueue, VkBuffer vkBuffer);
 void updateBuffer(VkDevice vkDevice, VkDeviceMemory bufferMemory, VkDeviceSize offset, VkDeviceSize bufferSize, void *bufferData);
+
+void transitionImageLayout(VkDevice device,VkCommandPool commandPool,VkQueue queue,VkImage image,VkFormat format,VkImageLayout oldLayout,VkImageLayout newLayout);
+
+void createASTCGraphicImage(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, const char *fileName, VkCommandPool commandPool, VkQueue graphicQueue, GraphicImage *pGraphicImage);
+void destroyASTCGraphicImage(VkDevice vkDevice, GraphicImage *pGraphicImage);
