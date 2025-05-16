@@ -45,7 +45,6 @@ typedef struct
     PointLight pointLights[MAX_POINT_LIGHT_COUNT];
 } LightsUniformBuffer;
 
-
 typedef struct
 {
     uint32_t vertexCount;
@@ -84,7 +83,8 @@ typedef struct
     VkDeviceMemory vkDeviceMemory;
 } GraphicImage;
 
-typedef struct {
+typedef struct
+{
     uint8_t magic[4];
     uint8_t blockDimX;
     uint8_t blockDimY;
@@ -110,7 +110,5 @@ void destroyBuffer(VkDevice vkDevice, VkBuffer vkBuffer, VkDeviceMemory deviceMe
 void updateBufferWithStagingBuffer(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkDeviceSize offset, VkDeviceSize bufferSize, void *bufferData, VkCommandPool graphicVkCommandPool, VkQueue vkGraphicQueue, VkBuffer vkBuffer);
 void updateBuffer(VkDevice vkDevice, VkDeviceMemory bufferMemory, VkDeviceSize offset, VkDeviceSize bufferSize, void *bufferData);
 
-void transitionImageLayout(VkDevice device,VkCommandPool commandPool,VkQueue queue,VkImage image,VkFormat format,VkImageLayout oldLayout,VkImageLayout newLayout);
-
-void createASTCGraphicImage(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, const char *fileName, VkCommandPool commandPool, VkQueue graphicQueue, GraphicImage *pGraphicImage);
+GraphicImage *createASTCGraphicImage(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, const char *fileName, VkCommandPool commandPool, VkQueue graphicQueue);
 void destroyASTCGraphicImage(VkDevice vkDevice, GraphicImage *pGraphicImage);
