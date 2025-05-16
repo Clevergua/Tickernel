@@ -245,78 +245,86 @@ void destroyUISubpass(Subpass *pPostProcessSubpass, VkDevice vkDevice)
     destroyVkPipeline(pPostProcessSubpass, vkDevice);
 }
 
-GraphicImage *AddImage(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, const char *fileName, VkCommandPool graphicVkCommandPool, VkQueue vkGraphicQueue)
+SubpassModel *addModelToUISubpass(Subpass *pUISubpass, VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkCommandPool graphicVkCommandPool, VkQueue vkGraphicQueue, uint32_t vertexCount, UISubpassVertex *uiSubpassVertices, GraphicImage *pGraphicImage, VkSampler vkSampler)
 {
-    GraphicImage *pGraphicImage = tickernelMalloc(sizeof(GraphicImage));
-    createASTCGraphicImage(vkDevice, vkPhysicalDevice, fileName, graphicVkCommandPool, vkGraphicQueue, pGraphicImage);
-    return pGraphicImage;
+    SubpassModel subpassModel = {
+        .vertexCount = vertexCount,
+        .vertexBuffer = NULL,
+        .vertexBufferMemory = NULL,
+
+        .maxInstanceCount = 0,
+        .instanceCount = 0,
+        .instanceBuffer = NULL,
+        .instanceBufferMemory = NULL,
+
+        .modelUniformBuffer = NULL,
+        .modelUniformBufferMemory = NULL,
+        .modelUniformBufferMapped = NULL,
+
+        .vkDescriptorPool = NULL,
+        .vkDescriptorSet = NULL,
+    };
+    VkDeviceSize vertexBufferSize = sizeof(UISubpassVertex) * vertexCount;
+    createBuffer(vkDevice, vkPhysicalDevice, vertexBufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &subpassModel.vertexBuffer, &subpassModel.vertexBufferMemory);
+    updateBufferWithStagingBuffer(vkDevice, vkPhysicalDevice, 0, vertexBufferSize, uiSubpassVertices, graphicVkCommandPool, vkGraphicQueue, subpassModel.vertexBuffer);
+    // Create vkDescriptorPool
+    VkDescriptorPoolCreateInfo descriptorPoolCreateInfo = {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+        .pNext = NULL,
+        .flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
+        .maxSets = 1,
+        .poolSizeCount = pUISubpass->vkDescriptorPoolSizeCount,
+        .pPoolSizes = pUISubpass->vkDescriptorPoolSizes,
+    };
+    VkResult result = vkCreateDescriptorPool(vkDevice, &descriptorPoolCreateInfo, NULL, &subpassModel.vkDescriptorPool);
+    tryThrowVulkanError(result);
+
+    // Create vkDescriptorSet
+    VkDescriptorSetAllocateInfo descriptorSetAllocateInfo = {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+        .pNext = NULL,
+        .descriptorPool = subpassModel.vkDescriptorPool,
+        .descriptorSetCount = 1,
+        .pSetLayouts = &pUISubpass->descriptorSetLayout,
+    };
+    result = vkAllocateDescriptorSets(vkDevice, &descriptorSetAllocateInfo, &subpassModel.vkDescriptorSet);
+    tryThrowVulkanError(result);
+
+    VkDescriptorImageInfo imageInfo = {
+        .sampler = vkSampler,
+        .imageView = pGraphicImage->vkImageView,
+        .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+    };
+
+    VkWriteDescriptorSet descriptorWrites[1] = {
+        {
+            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            .pNext = NULL,
+            .dstSet = subpassModel.vkDescriptorSet,
+            .dstBinding = 0,
+            .dstArrayElement = 0,
+            .descriptorCount = 1,
+            .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+            .pImageInfo = &imageInfo,
+            .pBufferInfo = NULL,
+            .pTexelBufferView = NULL,
+        },
+    };
+    vkUpdateDescriptorSets(vkDevice, 1, descriptorWrites, 0, NULL);
+    return tickernelAddToDynamicArray(&pUISubpass->modelDynamicArray, &subpassModel, pUISubpass->modelDynamicArray.length);
 }
 
-void RemoveImage(GraphicImage *pGraphicImage, VkDevice vkDevice)
+void removeModelFromUISubpass(Subpass *pOpaqueGeometrySubpass, VkDevice vkDevice, SubpassModel *pSubpassModel)
 {
-    destroyASTCGraphicImage(vkDevice, pGraphicImage);
-    tickernelFree(pGraphicImage);
+    if (pSubpassModel->maxInstanceCount > 0)
+    {
+        destroyBuffer(vkDevice, pSubpassModel->instanceBuffer, pSubpassModel->instanceBufferMemory);
+    }
+    destroyBuffer(vkDevice, pSubpassModel->modelUniformBuffer, pSubpassModel->modelUniformBufferMemory);
+    destroyBuffer(vkDevice, pSubpassModel->vertexBuffer, pSubpassModel->vertexBufferMemory);
+
+    VkResult result = vkFreeDescriptorSets(vkDevice, pSubpassModel->vkDescriptorPool, 1, &pSubpassModel->vkDescriptorSet);
+    tryThrowVulkanError(result);
+    vkDestroyDescriptorPool(vkDevice, pSubpassModel->vkDescriptorPool, NULL);
+    tickernelRemoveFromDynamicArray(&pOpaqueGeometrySubpass->modelDynamicArray, pSubpassModel);
 }
-
-// SubpassModel *addModelToUISubpass(Subpass *pUISubpass, VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkCommandPool graphicVkCommandPool, VkQueue vkGraphicQueue, uint32_t vertexCount, UISubpassVertex *uiSubpassVertices)
-// {
-//     SubpassModel subpassModel = {
-//         .vertexCount = vertexCount,
-//         .vertexBuffer = NULL,
-//         .vertexBufferMemory = NULL,
-
-//         .maxInstanceCount = 0,
-//         .instanceCount = 0,
-//         .instanceBuffer = NULL,
-//         .instanceBufferMemory = NULL,
-
-//         .modelUniformBuffer = NULL,
-//         .modelUniformBufferMemory = NULL,
-//         .modelUniformBufferMapped = NULL,
-
-//         .vkDescriptorPool = NULL,
-//         .vkDescriptorSet = NULL,
-//     };
-//     VkDeviceSize vertexBufferSize = sizeof(UISubpassVertex) * vertexCount;
-//     createBuffer(vkDevice, vkPhysicalDevice, vertexBufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &subpassModel.vertexBuffer, &subpassModel.vertexBufferMemory);
-//     updateBufferWithStagingBuffer(vkDevice, vkPhysicalDevice, 0, vertexBufferSize, uiSubpassVertices, graphicVkCommandPool, vkGraphicQueue, subpassModel.vertexBuffer);
-//     // Create vkDescriptorPool
-//     VkDescriptorPoolCreateInfo descriptorPoolCreateInfo = {
-//         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
-//         .pNext = NULL,
-//         .flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
-//         .maxSets = 1,
-//         .poolSizeCount = pUISubpass->vkDescriptorPoolSizeCount,
-//         .pPoolSizes = pUISubpass->vkDescriptorPoolSizes,
-//     };
-//     VkResult result = vkCreateDescriptorPool(vkDevice, &descriptorPoolCreateInfo, NULL, &subpassModel.vkDescriptorPool);
-//     tryThrowVulkanError(result);
-
-//     // Create vkDescriptorSet
-//     VkDescriptorSetAllocateInfo descriptorSetAllocateInfo = {
-//         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-//         .pNext = NULL,
-//         .descriptorPool = subpassModel.vkDescriptorPool,
-//         .descriptorSetCount = 1,
-//         .pSetLayouts = &pUISubpass->descriptorSetLayout,
-//     };
-//     result = vkAllocateDescriptorSets(vkDevice, &descriptorSetAllocateInfo, &subpassModel.vkDescriptorSet);
-//     tryThrowVulkanError(result);
-
-//     VkWriteDescriptorSet descriptorWrites[1] = {
-//         {
-//             .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-//             .pNext = NULL,
-//             .dstSet = subpassModel.vkDescriptorSet,
-//             .dstBinding = 0,
-//             .dstArrayElement = 0,
-//             .descriptorCount = 1,
-//             .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-//             .pImageInfo = ,
-//             .pBufferInfo = NULL,
-//             .pTexelBufferView = NULL,
-//         },
-//     };
-//     vkUpdateDescriptorSets(vkDevice, 1, descriptorWrites, 0, NULL);
-//     return tickernelAddToDynamicArray(&pUISubpass->modelDynamicArray, &subpassModel, pUISubpass->modelDynamicArray.length);
-// }

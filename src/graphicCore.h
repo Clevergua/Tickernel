@@ -46,7 +46,7 @@ typedef struct
 } LightsUniformBuffer;
 
 
-typedef struct SubpassModelStruct
+typedef struct
 {
     uint32_t vertexCount;
     VkBuffer vertexBuffer;

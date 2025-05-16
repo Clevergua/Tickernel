@@ -61,8 +61,12 @@ static void findSupportedFormat(VkPhysicalDevice vkPhysicalDevice, VkFormat *can
                 // continue;
             }
         }
+        else
+        {
+            // continue;
+        }
     }
-    printf("Target format not found!");
+    tickernelError("Target format not found!");
 }
 
 void copyVkBuffer(VkCommandPool graphicVkCommandPool, VkDevice vkDevice, VkQueue vkGraphicQueue, VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize offset, VkDeviceSize size)
@@ -399,8 +403,10 @@ static void copyBufferToImage(VkDevice device, VkCommandPool commandPool, VkQueu
     vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
 }
 
-void createASTCGraphicImage(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, const char *fileName, VkCommandPool commandPool, VkQueue graphicQueue, GraphicImage *pGraphicImage)
+GraphicImage *createASTCGraphicImage(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, const char *fileName, VkCommandPool commandPool, VkQueue graphicQueue)
 {
+    GraphicImage *pGraphicImage = tickernelMalloc(sizeof(GraphicImage));
+
     FILE *file = fopen(fileName, "rb");
     if (!file)
     {
@@ -537,11 +543,13 @@ void createASTCGraphicImage(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice
         VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
     destroyBuffer(vkDevice, stagingBuffer, stagingMemory);
+    return pGraphicImage;
 }
 
 void destroyASTCGraphicImage(VkDevice vkDevice, GraphicImage *pGraphicImage)
 {
     destroyGraphicImage(vkDevice, *pGraphicImage);
+    tickernelFree(pGraphicImage);
 }
 
 void createSampler(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkSampler *pVkSampler)
