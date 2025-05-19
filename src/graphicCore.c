@@ -490,6 +490,7 @@ GraphicImage *createASTCGraphicImage(VkDevice vkDevice, VkPhysicalDevice vkPhysi
         astcFormat = VK_FORMAT_ASTC_12x12_UNORM_BLOCK;
         break;
     default:
+        astcFormat = VK_FORMAT_UNDEFINED;
         tickernelFree(astcData);
         tickernelError("Unsupported ASTC block size: %dx%d\n", blockWidth, blockHeight);
     }
