@@ -50,6 +50,11 @@ typedef struct
     uint32_t vertexCount;
     VkBuffer vertexBuffer;
     VkDeviceMemory vertexBufferMemory;
+} Mesh;
+
+typedef struct
+{
+    Mesh* pMesh;
 
     uint32_t maxInstanceCount;
     uint32_t instanceCount;
@@ -69,10 +74,16 @@ typedef struct
     VkPipeline vkPipeline;
     VkPipelineLayout vkPipelineLayout;
     VkDescriptorSetLayout descriptorSetLayout;
-
     TickernelDynamicArray modelDynamicArray;
+
     uint32_t vkDescriptorPoolSizeCount;
     VkDescriptorPoolSize *vkDescriptorPoolSizes;
+} Pipeline;
+
+typedef struct
+{
+    uint32_t pipelineCount;
+    Pipeline* pipelines;
 } Subpass;
 
 typedef struct

@@ -13,6 +13,8 @@
 #include <unistd.h>
 #include <execinfo.h>
 
+#define ARRAY_SIZE(array) (NULL == array) ? 0 : (sizeof(array) / sizeof(array[0]))
+
 typedef struct
 {
     size_t dataSize;

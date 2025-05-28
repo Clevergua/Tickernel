@@ -68,7 +68,9 @@
         "stdarg.h": "c",
         "execinfo.h": "c",
         "uirenderpass.h": "c",
-        "uisubpass.h": "c"
+        "uisubpass.h": "c",
+        "algorithm": "c",
+        "chrono": "c"
     },
     "cmake.sourceDirectory": "/Users/hema/Documents/GitHub/Tickernel"
 }

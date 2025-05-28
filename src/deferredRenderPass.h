@@ -10,8 +10,7 @@ typedef struct DeferredRenderPassStruct
     VkFramebuffer *vkFramebuffers;
 
     Subpass opaqueGeometrySubpass;
-    Subpass waterGeometrySubpass;
-    Subpass opaqueLightingSubpass;
+    Subpass lightingSubpass;
     Subpass postProcessSubpass;
 } DeferredRenderPass;
 

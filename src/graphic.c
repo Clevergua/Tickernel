@@ -1,6 +1,6 @@
 #include "graphic.h"
 
-#define GET_ARRAY_COUNT(array) (NULL == array) ? 0 : (sizeof(array) / sizeof(array[0]))
+
 void tryThrowVulkanError(VkResult vkResult)
 {
     if (vkResult != VK_SUCCESS)
@@ -15,7 +15,7 @@ static void hasAllRequiredExtensions(GraphicContext *pGraphicContext, VkPhysical
     char *requiredExtensionNames[] = {
         VK_KHR_SWAPCHAIN_EXTENSION_NAME,
     };
-    uint32_t requiredExtensionCount = GET_ARRAY_COUNT(requiredExtensionNames);
+    uint32_t requiredExtensionCount = ARRAY_SIZE(requiredExtensionNames);
 
     uint32_t extensionCount = 0;
     result = vkEnumerateDeviceExtensionProperties(vkPhysicalDevice, NULL, &extensionCount, NULL);
@@ -267,7 +267,7 @@ static void createLogicalDevice(GraphicContext *pGraphicContext)
         "VK_KHR_portability_subset",
         //        "VK_EXT_debug_utils"
     };
-    uint32_t extensionCount = GET_ARRAY_COUNT(extensionNames);
+    uint32_t extensionCount = ARRAY_SIZE(extensionNames);
     VkDeviceCreateInfo vkDeviceCreateInfo =
         {
             .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
@@ -416,7 +416,7 @@ static void createSwapchain(GraphicContext *pGraphicContext, uint32_t swapchainW
 
         uint32_t queueFamilyIndices[] = {graphicQueueFamilyIndex, presentQueueFamilyIndex};
         pQueueFamilyIndices = queueFamilyIndices;
-        queueFamilyIndexCount = GET_ARRAY_COUNT(queueFamilyIndices);
+        queueFamilyIndexCount = ARRAY_SIZE(queueFamilyIndices);
     }
     else
     {
