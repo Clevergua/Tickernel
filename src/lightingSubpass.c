@@ -2,6 +2,9 @@
 
 static void createVkPipelines(Subpass *pLightingSubpass, const char *shadersPath, VkRenderPass vkRenderPass, uint32_t lightingSubpassIndex, VkDevice vkDevice, VkViewport viewport, VkRect2D scissor)
 {
+    pLightingSubpass->pipelineCount = 1;
+    pLightingSubpass->pipelines = tickernelMalloc(sizeof(Pipeline) * pLightingSubpass->pipelineCount);
+
     VkShaderModule lightingVertShaderModule;
     char lightingVertShaderPath[FILENAME_MAX];
     sprintf(lightingVertShaderPath, "%s/%s", shadersPath, "lighting.vert.spv");
@@ -177,19 +180,20 @@ static void createVkPipelines(Subpass *pLightingSubpass, const char *shadersPath
         .pBindings = bindings,
     };
 
-    VkResult result = vkCreateDescriptorSetLayout(vkDevice, &descriptorSetLayoutCreateInfo, NULL, &pLightingSubpass->descriptorSetLayout);
+    Pipeline *pPipeline = &pLightingSubpass->pipelines[0];
+    VkResult result = vkCreateDescriptorSetLayout(vkDevice, &descriptorSetLayoutCreateInfo, NULL, &pPipeline->descriptorSetLayout);
     tryThrowVulkanError(result);
     VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
         .pNext = NULL,
         .flags = 0,
         .setLayoutCount = 1,
-        .pSetLayouts = &pLightingSubpass->descriptorSetLayout,
+        .pSetLayouts = &pPipeline->descriptorSetLayout,
         .pushConstantRangeCount = 0,
         .pPushConstantRanges = NULL,
     };
 
-    result = vkCreatePipelineLayout(vkDevice, &pipelineLayoutCreateInfo, NULL, &pLightingSubpass->vkPipelineLayout);
+    result = vkCreatePipelineLayout(vkDevice, &pipelineLayoutCreateInfo, NULL, &pPipeline->vkPipelineLayout);
     tryThrowVulkanError(result);
     VkGraphicsPipelineCreateInfo lightingPipelineCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
@@ -206,7 +210,7 @@ static void createVkPipelines(Subpass *pLightingSubpass, const char *shadersPath
         .pDepthStencilState = &pipelineDepthStencilStateCreateInfo,
         .pColorBlendState = &colorBlendStateCreateInfo,
         .pDynamicState = &dynamicState,
-        .layout = pLightingSubpass->vkPipelineLayout,
+        .layout = pPipeline->vkPipelineLayout,
         .renderPass = vkRenderPass,
         .subpass = lightingSubpassIndex,
         .basePipelineHandle = VK_NULL_HANDLE,
@@ -214,29 +218,25 @@ static void createVkPipelines(Subpass *pLightingSubpass, const char *shadersPath
     };
 
     VkPipelineCache pipelineCache = NULL;
-    result = vkCreateGraphicsPipelines(vkDevice, pipelineCache, 1, &lightingPipelineCreateInfo, NULL, &pLightingSubpass->vkPipeline);
+    result = vkCreateGraphicsPipelines(vkDevice, pipelineCache, 1, &lightingPipelineCreateInfo, NULL, &pPipeline->vkPipeline);
     tryThrowVulkanError(result);
     destroyVkShaderModule(vkDevice, lightingVertShaderModule);
     destroyVkShaderModule(vkDevice, lightingFragShaderModule);
 }
 static void destroyVkPipeline(Subpass *pLightingSubpass, VkDevice vkDevice)
 {
-    vkDestroyDescriptorSetLayout(vkDevice, pLightingSubpass->descriptorSetLayout, NULL);
-    vkDestroyPipelineLayout(vkDevice, pLightingSubpass->vkPipelineLayout, NULL);
-    vkDestroyPipeline(vkDevice, pLightingSubpass->vkPipeline, NULL);
+    Pipeline *pPipeline = &pLightingSubpass->pipelines[0];
+    vkDestroyDescriptorSetLayout(vkDevice, pPipeline->descriptorSetLayout, NULL);
+    vkDestroyPipelineLayout(vkDevice, pPipeline->vkPipelineLayout, NULL);
+    vkDestroyPipeline(vkDevice, pPipeline->vkPipeline, NULL);
+
+    tickernelFree(pLightingSubpass->pipelines);
 }
 
 static void createPostProcessSubpassModel(Subpass *pLightingSubpass, VkDevice vkDevice, VkBuffer globalUniformBuffer, VkBuffer lightsUniformBuffer, VkImageView depthVkImageView, VkImageView albedoVkImageView, VkImageView normalVkImageView)
 {
-    assert(pLightingSubpass != NULL);
-    assert(pLightingSubpass->vkDescriptorPoolSizes != NULL);
-    assert(pLightingSubpass->vkDescriptorPoolSizeCount > 0);
-    assert(pLightingSubpass->descriptorSetLayout != VK_NULL_HANDLE);
-    assert(vkDevice != VK_NULL_HANDLE);
     SubpassModel subpassModel = {
-        .vertexCount = 0,
-        .vertexBuffer = NULL,
-        .vertexBufferMemory = NULL,
+        .pMesh = NULL,
 
         .maxInstanceCount = 0,
         .instanceCount = 0,
@@ -250,14 +250,16 @@ static void createPostProcessSubpassModel(Subpass *pLightingSubpass, VkDevice vk
         .vkDescriptorPool = NULL,
         .vkDescriptorSet = NULL,
     };
+
+    Pipeline* pPipeline = &pLightingSubpass->pipelines[0];
     // Create vkDescriptorSet
     VkDescriptorPoolCreateInfo descriptorPoolCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
         .pNext = NULL,
         .flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
         .maxSets = 1,
-        .poolSizeCount = pLightingSubpass->vkDescriptorPoolSizeCount,
-        .pPoolSizes = pLightingSubpass->vkDescriptorPoolSizes,
+        .poolSizeCount = pPipeline->vkDescriptorPoolSizeCount,
+        .pPoolSizes = pPipeline->vkDescriptorPoolSizes,
     };
     VkResult result = vkCreateDescriptorPool(vkDevice, &descriptorPoolCreateInfo, NULL, &subpassModel.vkDescriptorPool);
     tryThrowVulkanError(result);
@@ -266,7 +268,7 @@ static void createPostProcessSubpassModel(Subpass *pLightingSubpass, VkDevice vk
         .pNext = NULL,
         .descriptorPool = subpassModel.vkDescriptorPool,
         .descriptorSetCount = 1,
-        .pSetLayouts = &pLightingSubpass->descriptorSetLayout,
+        .pSetLayouts = &pPipeline->descriptorSetLayout,
     };
 
     result = vkAllocateDescriptorSets(vkDevice, &descriptorSetAllocateInfo, &subpassModel.vkDescriptorSet);
@@ -359,41 +361,43 @@ static void createPostProcessSubpassModel(Subpass *pLightingSubpass, VkDevice vk
         },
     };
     vkUpdateDescriptorSets(vkDevice, 5, descriptorWrites, 0, NULL);
-    tickernelAddToDynamicArray(&pLightingSubpass->modelDynamicArray, &subpassModel, pLightingSubpass->modelDynamicArray.length);
+    tickernelAddToDynamicArray(&pPipeline->modelDynamicArray, &subpassModel, pPipeline->modelDynamicArray.length);
 }
 static void destroyLightingSubpassModel(Subpass *pLightingSubpass, VkDevice vkDevice, uint32_t index)
 {
-    SubpassModel *pSubpassModel = pLightingSubpass->modelDynamicArray.array[index];
+    Pipeline *pPipeline = &pLightingSubpass->pipelines[0];
+    SubpassModel *pSubpassModel = pPipeline->modelDynamicArray.array[index];
     VkResult result = vkFreeDescriptorSets(vkDevice, pSubpassModel->vkDescriptorPool, 1, &pSubpassModel->vkDescriptorSet);
     tryThrowVulkanError(result);
     vkDestroyDescriptorPool(vkDevice, pSubpassModel->vkDescriptorPool, NULL);
-    tickernelRemoveAtIndexFromDynamicArray(&pLightingSubpass->modelDynamicArray, index);
+    tickernelRemoveAtIndexFromDynamicArray(&pPipeline->modelDynamicArray, index);
 }
 
 void createLightingSubpass(Subpass *pLightingSubpass, const char *shadersPath, VkRenderPass vkRenderPass, uint32_t lightingSubpassIndex, VkDevice vkDevice, VkViewport viewport, VkRect2D scissor, VkBuffer globalUniformBuffer, VkBuffer lightsUniformBuffer, VkImageView depthVkImageView, VkImageView albedoVkImageView, VkImageView normalVkImageView)
 {
     createVkPipelines(pLightingSubpass, shadersPath, vkRenderPass, lightingSubpassIndex, vkDevice, viewport, scissor);
-
-    pLightingSubpass->vkDescriptorPoolSizeCount = 2;
-    pLightingSubpass->vkDescriptorPoolSizes = tickernelMalloc(sizeof(VkDescriptorPoolSize) * pLightingSubpass->vkDescriptorPoolSizeCount);
-    pLightingSubpass->vkDescriptorPoolSizes[0] = (VkDescriptorPoolSize){
+    Pipeline *pPipeline = &pLightingSubpass->pipelines[0];
+    pPipeline->vkDescriptorPoolSizeCount = 2;
+    pPipeline->vkDescriptorPoolSizes = tickernelMalloc(sizeof(VkDescriptorPoolSize) * pPipeline->vkDescriptorPoolSizeCount);
+    pPipeline->vkDescriptorPoolSizes[0] = (VkDescriptorPoolSize){
         .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
         .descriptorCount = 2,
     };
-    pLightingSubpass->vkDescriptorPoolSizes[1] = (VkDescriptorPoolSize){
+    pPipeline->vkDescriptorPoolSizes[1] = (VkDescriptorPoolSize){
         .type = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT,
         .descriptorCount = 3,
     };
 
-    tickernelCreateDynamicArray(&pLightingSubpass->modelDynamicArray, 1, sizeof(SubpassModel));
+    tickernelCreateDynamicArray(&pPipeline->modelDynamicArray, 1, sizeof(SubpassModel));
     createPostProcessSubpassModel(pLightingSubpass, vkDevice, globalUniformBuffer, lightsUniformBuffer, depthVkImageView, albedoVkImageView, normalVkImageView);
 }
 
 void destroyLightingSubpass(Subpass *pLightingSubpass, VkDevice vkDevice)
 {
+    Pipeline *pPipeline = &pLightingSubpass->pipelines[0];
     destroyLightingSubpassModel(pLightingSubpass, vkDevice, 0);
-    tickernelDestroyDynamicArray(&pLightingSubpass->modelDynamicArray);
-    tickernelFree(pLightingSubpass->vkDescriptorPoolSizes);
+    tickernelDestroyDynamicArray(&pPipeline->modelDynamicArray);
+    tickernelFree(pPipeline->vkDescriptorPoolSizes);
 
     destroyVkPipeline(pLightingSubpass, vkDevice);
 }

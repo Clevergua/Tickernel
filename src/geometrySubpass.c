@@ -1,38 +1,21 @@
 #include "geometrySubpass.h"
-static void createVkPipelines(Subpass *pGeometrySubpass, const char *shadersPath, VkRenderPass vkRenderPass, uint32_t geometrySubpassIndex, VkDevice vkDevice, VkViewport viewport, VkRect2D scissor)
+
+void createGeometrySubpass(Subpass *pGeometrySubpass, const char *shadersPath, VkRenderPass vkRenderPass, uint32_t geometrySubpassIndex, VkDevice vkDevice, VkViewport viewport, VkRect2D scissor)
 {
-    VkShaderModule geometryVertShaderModule;
-    char geometryVertShaderPath[FILENAME_MAX];
-    sprintf(geometryVertShaderPath, "%s/%s", shadersPath, "geometry.vert.spv");
-    createVkShaderModule(vkDevice, geometryVertShaderPath, &geometryVertShaderModule);
-    VkPipelineShaderStageCreateInfo vertShaderStageCreateInfo = {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
-        .pNext = NULL,
-        .flags = 0,
-        .stage = VK_SHADER_STAGE_VERTEX_BIT,
-        .module = geometryVertShaderModule,
-        .pName = "main",
-        .pSpecializationInfo = NULL,
+    pGeometrySubpass->pipelineCount = 2;
+    pGeometrySubpass->pipelines = tickernelMalloc(sizeof(Pipeline) * pGeometrySubpass->pipelineCount);
+
+    char *vertShaderPaths[] = {
+        "geometry.vert.spv",
+        "geometry.frag.spv",
     };
 
-    VkShaderModule geometryFragShaderModule;
-    char geometryFragShaderPath[FILENAME_MAX];
-    sprintf(geometryFragShaderPath, "%s/%s", shadersPath, "geometry.frag.spv");
-    createVkShaderModule(vkDevice, geometryFragShaderPath, &geometryFragShaderModule);
-    VkPipelineShaderStageCreateInfo fragShaderStageCreateInfo = {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
-        .pNext = NULL,
-        .flags = 0,
-        .stage = VK_SHADER_STAGE_FRAGMENT_BIT,
-        .module = geometryFragShaderModule,
-        .pName = "main",
-        .pSpecializationInfo = NULL,
+    char *fragShaderPaths[] = {
+        "geometry.frag.spv",
+        "geometry.vert.spv",
     };
-    uint32_t stageCount = 2;
-    VkPipelineShaderStageCreateInfo *pipelineShaderStageCreateInfos = (VkPipelineShaderStageCreateInfo[]){vertShaderStageCreateInfo, fragShaderStageCreateInfo};
 
-    uint32_t vertexBindingDescriptionCount = 2;
-    VkVertexInputBindingDescription *vertexBindingDescriptions = (VkVertexInputBindingDescription[]){
+    VkVertexInputBindingDescription vertexBindingDescriptions[] = {
         {
             .binding = 0,
             .stride = sizeof(GeometrySubpassVertex),
@@ -44,7 +27,7 @@ static void createVkPipelines(Subpass *pGeometrySubpass, const char *shadersPath
             .inputRate = VK_VERTEX_INPUT_RATE_INSTANCE,
         },
     };
-    uint32_t vertexAttributeDescriptionCount = 7;
+
     VkVertexInputAttributeDescription vertexAttributeDescriptions[] = {
         {
             .location = 0,
@@ -90,11 +73,13 @@ static void createVkPipelines(Subpass *pGeometrySubpass, const char *shadersPath
             .offset = offsetof(GeometrySubpassInstance, model) + sizeof(vec4) * 3,
         },
     };
+    uint32_t vertexAttributeDescriptionCount = ARRAY_SIZE(vertexAttributeDescriptions);
+
     VkPipelineVertexInputStateCreateInfo vkPipelineVertexInputStateCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
         .pNext = NULL,
         .flags = 0,
-        .vertexBindingDescriptionCount = vertexBindingDescriptionCount,
+        .vertexBindingDescriptionCount = ARRAY_SIZE(vertexBindingDescriptions),
         .pVertexBindingDescriptions = vertexBindingDescriptions,
         .vertexAttributeDescriptionCount = vertexAttributeDescriptionCount,
         .pVertexAttributeDescriptions = vertexAttributeDescriptions,
@@ -184,14 +169,14 @@ static void createVkPipelines(Subpass *pGeometrySubpass, const char *shadersPath
         .flags = 0,
         .logicOpEnable = VK_FALSE,
         .logicOp = VK_LOGIC_OP_COPY,
-        .attachmentCount = 2,
+        .attachmentCount = ARRAY_SIZE(pipelineColorBlendAttachmentStates),
         .pAttachments = pipelineColorBlendAttachmentStates,
         .blendConstants[0] = 0.0f,
         .blendConstants[1] = 0.0f,
         .blendConstants[2] = 0.0f,
         .blendConstants[3] = 0.0f,
     };
-    uint32_t dynamicStateCount = 2;
+
     VkDynamicState dynamicStates[] = {
         VK_DYNAMIC_STATE_VIEWPORT,
         VK_DYNAMIC_STATE_SCISSOR,
@@ -200,7 +185,7 @@ static void createVkPipelines(Subpass *pGeometrySubpass, const char *shadersPath
         .sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO,
         .pNext = NULL,
         .flags = 0,
-        .dynamicStateCount = dynamicStateCount,
+        .dynamicStateCount = ARRAY_SIZE(dynamicStates),
         .pDynamicStates = dynamicStates,
     };
 
@@ -212,89 +197,125 @@ static void createVkPipelines(Subpass *pGeometrySubpass, const char *shadersPath
         .pImmutableSamplers = NULL,
     };
 
-    VkDescriptorSetLayoutBinding *bindings = (VkDescriptorSetLayoutBinding[]){globalUniformLayoutBinding};
+    VkDescriptorSetLayoutBinding bindings[] = {globalUniformLayoutBinding};
     VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
         .pNext = NULL,
         .flags = 0,
-        .bindingCount = 1,
+        .bindingCount = ARRAY_SIZE(bindings),
         .pBindings = bindings,
     };
-    VkResult result = vkCreateDescriptorSetLayout(vkDevice, &descriptorSetLayoutCreateInfo, NULL, &pGeometrySubpass->descriptorSetLayout);
-    tryThrowVulkanError(result);
-    VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
-        .pNext = NULL,
-        .flags = 0,
-        .setLayoutCount = 1,
-        .pSetLayouts = &pGeometrySubpass->descriptorSetLayout,
-        .pushConstantRangeCount = 0,
-        .pPushConstantRanges = NULL,
-    };
 
-    result = vkCreatePipelineLayout(vkDevice, &pipelineLayoutCreateInfo, NULL, &pGeometrySubpass->vkPipelineLayout);
-    tryThrowVulkanError(result);
-    
-    VkGraphicsPipelineCreateInfo geometryPipelineCreateInfo = {
-        .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
-        .pNext = NULL,
-        .flags = 0,
-        .stageCount = stageCount,
-        .pStages = pipelineShaderStageCreateInfos,
-        .pVertexInputState = &vkPipelineVertexInputStateCreateInfo,
-        .pInputAssemblyState = &pipelineInputAssemblyStateCreateInfo,
-        .pTessellationState = NULL,
-        .pViewportState = &pipelineViewportStateInfo,
-        .pRasterizationState = &pipelineRasterizationStateCreateInfo,
-        .pMultisampleState = &pipelineMultisampleStateCreateInfo,
-        .pDepthStencilState = &pipelineDepthStencilStateCreateInfo,
-        .pColorBlendState = &colorBlendStateCreateInfo,
-        .pDynamicState = &dynamicState,
-        .layout = pGeometrySubpass->vkPipelineLayout,
-        .renderPass = vkRenderPass,
-        .subpass = geometrySubpassIndex,
-        .basePipelineHandle = VK_NULL_HANDLE,
-        .basePipelineIndex = 0,
-    };
+    for (uint32_t i = 0; i < pGeometrySubpass->pipelineCount; i++)
+    {
+        Pipeline *pPipeline = &pGeometrySubpass->pipelines[i];
 
-    VkPipelineCache pipelineCache = NULL;
-    result = vkCreateGraphicsPipelines(vkDevice, pipelineCache, 1, &geometryPipelineCreateInfo, NULL, &pGeometrySubpass->vkPipeline);
-    tryThrowVulkanError(result);
-    destroyVkShaderModule(vkDevice, geometryVertShaderModule);
-    destroyVkShaderModule(vkDevice, geometryFragShaderModule);
-}
-static void destroyVkPipeline(Subpass *pGeometrySubpass, VkDevice vkDevice)
-{
-    vkDestroyDescriptorSetLayout(vkDevice, pGeometrySubpass->descriptorSetLayout, NULL);
-    vkDestroyPipelineLayout(vkDevice, pGeometrySubpass->vkPipelineLayout, NULL);
-    vkDestroyPipeline(vkDevice, pGeometrySubpass->vkPipeline, NULL);
-}
+        VkShaderModule geometryVertShaderModule;
+        char geometryVertShaderPath[FILENAME_MAX];
+        sprintf(geometryVertShaderPath, "%s/%s", shadersPath, vertShaderPaths[i]);
+        createVkShaderModule(vkDevice, geometryVertShaderPath, &geometryVertShaderModule);
+        VkPipelineShaderStageCreateInfo vertShaderStageCreateInfo = {
+            .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+            .pNext = NULL,
+            .flags = 0,
+            .stage = VK_SHADER_STAGE_VERTEX_BIT,
+            .module = geometryVertShaderModule,
+            .pName = "main",
+            .pSpecializationInfo = NULL,
+        };
 
-void createGeometrySubpass(Subpass *pGeometrySubpass, const char *shadersPath, VkRenderPass vkRenderPass, uint32_t geometrySubpassIndex, VkDevice vkDevice, VkViewport viewport, VkRect2D scissor)
-{
-    createVkPipelines(pGeometrySubpass, shadersPath, vkRenderPass, geometrySubpassIndex, vkDevice, viewport, scissor);
+        VkShaderModule geometryFragShaderModule;
+        char geometryFragShaderPath[FILENAME_MAX];
+        sprintf(geometryFragShaderPath, "%s/%s", shadersPath, fragShaderPaths[i]);
+        createVkShaderModule(vkDevice, geometryFragShaderPath, &geometryFragShaderModule);
+        VkPipelineShaderStageCreateInfo fragShaderStageCreateInfo = {
+            .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+            .pNext = NULL,
+            .flags = 0,
+            .stage = VK_SHADER_STAGE_FRAGMENT_BIT,
+            .module = geometryFragShaderModule,
+            .pName = "main",
+            .pSpecializationInfo = NULL,
+        };
 
-    pGeometrySubpass->vkDescriptorPoolSizeCount = 1;
-    pGeometrySubpass->vkDescriptorPoolSizes = tickernelMalloc(sizeof(VkDescriptorPoolSize) * pGeometrySubpass->vkDescriptorPoolSizeCount);
-    pGeometrySubpass->vkDescriptorPoolSizes[0] = (VkDescriptorPoolSize){
-        .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-        .descriptorCount = 1,
-    };
+        VkPipelineShaderStageCreateInfo pipelineShaderStageCreateInfos[] = {vertShaderStageCreateInfo, fragShaderStageCreateInfo};
+        uint32_t stageCount = ARRAY_SIZE(pipelineShaderStageCreateInfos);
 
-    tickernelCreateDynamicArray(&pGeometrySubpass->modelDynamicArray, 1, sizeof(SubpassModel));
+        VkResult result = vkCreateDescriptorSetLayout(vkDevice, &descriptorSetLayoutCreateInfo, NULL, &pPipeline->descriptorSetLayout);
+        tryThrowVulkanError(result);
+
+        VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {
+            .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+            .pNext = NULL,
+            .flags = 0,
+            .setLayoutCount = 1,
+            .pSetLayouts = &pPipeline->descriptorSetLayout,
+            .pushConstantRangeCount = 0,
+            .pPushConstantRanges = NULL,
+        };
+
+        result = vkCreatePipelineLayout(vkDevice, &pipelineLayoutCreateInfo, NULL, &pPipeline->vkPipelineLayout);
+        tryThrowVulkanError(result);
+
+        VkGraphicsPipelineCreateInfo geometryPipelineCreateInfo = {
+            .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
+            .pNext = NULL,
+            .flags = 0,
+            .stageCount = stageCount,
+            .pStages = pipelineShaderStageCreateInfos,
+            .pVertexInputState = &vkPipelineVertexInputStateCreateInfo,
+            .pInputAssemblyState = &pipelineInputAssemblyStateCreateInfo,
+            .pTessellationState = NULL,
+            .pViewportState = &pipelineViewportStateInfo,
+            .pRasterizationState = &pipelineRasterizationStateCreateInfo,
+            .pMultisampleState = &pipelineMultisampleStateCreateInfo,
+            .pDepthStencilState = &pipelineDepthStencilStateCreateInfo,
+            .pColorBlendState = &colorBlendStateCreateInfo,
+            .pDynamicState = &dynamicState,
+            .layout = pPipeline->vkPipelineLayout,
+            .renderPass = vkRenderPass,
+            .subpass = geometrySubpassIndex,
+            .basePipelineHandle = VK_NULL_HANDLE,
+            .basePipelineIndex = 0,
+        };
+
+        VkPipelineCache pipelineCache = NULL;
+        result = vkCreateGraphicsPipelines(vkDevice, pipelineCache, 1, &geometryPipelineCreateInfo, NULL, &pPipeline->vkPipeline);
+        tryThrowVulkanError(result);
+        destroyVkShaderModule(vkDevice, geometryVertShaderModule);
+        destroyVkShaderModule(vkDevice, geometryFragShaderModule);
+
+        pPipeline->vkDescriptorPoolSizeCount = 1;
+        pPipeline->vkDescriptorPoolSizes = tickernelMalloc(sizeof(VkDescriptorPoolSize) * pPipeline->vkDescriptorPoolSizeCount);
+        pPipeline->vkDescriptorPoolSizes[0] = (VkDescriptorPoolSize){
+            .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+            .descriptorCount = 1,
+        };
+
+        tickernelCreateDynamicArray(&pPipeline->modelDynamicArray, 1, sizeof(SubpassModel));
+    }
 }
 
 void destroyGeometrySubpass(Subpass *pGeometrySubpass, VkDevice vkDevice)
 {
-    for (uint32_t i = pGeometrySubpass->modelDynamicArray.length - 1; i > -1; i--)
+    for (uint32_t i = 0; i < pGeometrySubpass->pipelineCount; i++)
     {
-        SubpassModel *pSubpassModel = pGeometrySubpass->modelDynamicArray.array[i];
-        removeModelFromGeometrySubpass(pGeometrySubpass, vkDevice, pSubpassModel);
-    }
-    tickernelDestroyDynamicArray(&pGeometrySubpass->modelDynamicArray);
+        Pipeline *pPipeline = &pGeometrySubpass->pipelines[i];
 
-    tickernelFree(pGeometrySubpass->vkDescriptorPoolSizes);
-    destroyVkPipeline(pGeometrySubpass, vkDevice);
+        for (uint32_t i = pPipeline->modelDynamicArray.length - 1; i > -1; i--)
+        {
+            SubpassModel *pSubpassModel = pPipeline->modelDynamicArray.array[i];
+            removeModelFromGeometrySubpass(pPipeline, vkDevice, pSubpassModel);
+        }
+        tickernelDestroyDynamicArray(&pPipeline->modelDynamicArray);
+
+        tickernelFree(pPipeline->vkDescriptorPoolSizes);
+
+        vkDestroyDescriptorSetLayout(vkDevice, pPipeline->descriptorSetLayout, NULL);
+        vkDestroyPipelineLayout(vkDevice, pPipeline->vkPipelineLayout, NULL);
+        vkDestroyPipeline(vkDevice, pPipeline->vkPipeline, NULL);
+    }
+    tickernelFree(pGeometrySubpass->pipelines);
 }
 
 SubpassModel *addModelToGeometrySubpass(Subpass *pGeometrySubpass, VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkCommandPool graphicVkCommandPool, VkQueue vkGraphicQueue, VkBuffer globalUniformBuffer, uint32_t vertexCount, GeometrySubpassVertex *geometrySubpassVertices)
