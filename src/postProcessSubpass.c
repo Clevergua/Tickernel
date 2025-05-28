@@ -150,19 +150,20 @@ static void createVkPipelines(Subpass *pPostProcessSubpass, const char *shadersP
         .pBindings = bindings,
     };
 
-    VkResult result = vkCreateDescriptorSetLayout(vkDevice, &descriptorSetLayoutCreateInfo, NULL, &pPostProcessSubpass->descriptorSetLayout);
+    Pipeline pipeline = pPostProcessSubpass->pipelines[0];
+    VkResult result = vkCreateDescriptorSetLayout(vkDevice, &descriptorSetLayoutCreateInfo, NULL, &pipeline.descriptorSetLayout);
     tryThrowVulkanError(result);
     VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
         .pNext = NULL,
         .flags = 0,
         .setLayoutCount = 1,
-        .pSetLayouts = &pPostProcessSubpass->descriptorSetLayout,
+        .pSetLayouts = &pipeline.descriptorSetLayout,
         .pushConstantRangeCount = 0,
         .pPushConstantRanges = NULL,
     };
 
-    result = vkCreatePipelineLayout(vkDevice, &pipelineLayoutCreateInfo, NULL, &pPostProcessSubpass->vkPipelineLayout);
+    result = vkCreatePipelineLayout(vkDevice, &pipelineLayoutCreateInfo, NULL, &pipeline.vkPipelineLayout);
     tryThrowVulkanError(result);
     VkGraphicsPipelineCreateInfo postProcessPipelineCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
@@ -179,7 +180,7 @@ static void createVkPipelines(Subpass *pPostProcessSubpass, const char *shadersP
         .pDepthStencilState = &pipelineDepthStencilStateCreateInfo,
         .pColorBlendState = &colorBlendStateCreateInfo,
         .pDynamicState = &dynamicState,
-        .layout = pPostProcessSubpass->vkPipelineLayout,
+        .layout = pipeline.vkPipelineLayout,
         .renderPass = vkRenderPass,
         .subpass = postProcessSubpassIndex,
         .basePipelineHandle = VK_NULL_HANDLE,
@@ -187,24 +188,24 @@ static void createVkPipelines(Subpass *pPostProcessSubpass, const char *shadersP
     };
 
     VkPipelineCache pipelineCache = NULL;
-    result = vkCreateGraphicsPipelines(vkDevice, pipelineCache, 1, &postProcessPipelineCreateInfo, NULL, &pPostProcessSubpass->vkPipeline);
+    result = vkCreateGraphicsPipelines(vkDevice, pipelineCache, 1, &postProcessPipelineCreateInfo, NULL, &pipeline.vkPipeline);
     tryThrowVulkanError(result);
     destroyVkShaderModule(vkDevice, postProcessVertShaderModule);
     destroyVkShaderModule(vkDevice, postProcessFragShaderModule);
 }
 static void destroyVkPipeline(Subpass *pPostProcessSubpass, VkDevice vkDevice)
 {
-    vkDestroyDescriptorSetLayout(vkDevice, pPostProcessSubpass->descriptorSetLayout, NULL);
-    vkDestroyPipelineLayout(vkDevice, pPostProcessSubpass->vkPipelineLayout, NULL);
-    vkDestroyPipeline(vkDevice, pPostProcessSubpass->vkPipeline, NULL);
+    Pipeline pipeline = pPostProcessSubpass->pipelines[0];
+    vkDestroyDescriptorSetLayout(vkDevice, pipeline.descriptorSetLayout, NULL);
+    vkDestroyPipelineLayout(vkDevice, pipeline.vkPipelineLayout, NULL);
+    vkDestroyPipeline(vkDevice, pipeline.vkPipeline, NULL);
 }
 
 static void createPostProcessSubpassModel(Subpass *pPostProcessSubpass, VkDevice vkDevice, VkImageView colorVkImageView)
 {
+    Pipeline pipeline = pPostProcessSubpass->pipelines[0];
     SubpassModel subpassModel = {
-        .vertexCount = 0,
-        .vertexBuffer = NULL,
-        .vertexBufferMemory = NULL,
+        .pMesh = NULL,
 
         .maxInstanceCount = 0,
         .instanceCount = 0,
@@ -224,8 +225,8 @@ static void createPostProcessSubpassModel(Subpass *pPostProcessSubpass, VkDevice
         .pNext = NULL,
         .flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
         .maxSets = 1,
-        .poolSizeCount = pPostProcessSubpass->vkDescriptorPoolSizeCount,
-        .pPoolSizes = pPostProcessSubpass->vkDescriptorPoolSizes,
+        .poolSizeCount = pipeline.vkDescriptorPoolSizeCount,
+        .pPoolSizes = pipeline.vkDescriptorPoolSizes,
     };
     VkResult result = vkCreateDescriptorPool(vkDevice, &descriptorPoolCreateInfo, NULL, &subpassModel.vkDescriptorPool);
     tryThrowVulkanError(result);
@@ -234,7 +235,7 @@ static void createPostProcessSubpassModel(Subpass *pPostProcessSubpass, VkDevice
         .pNext = NULL,
         .descriptorPool = subpassModel.vkDescriptorPool,
         .descriptorSetCount = 1,
-        .pSetLayouts = &pPostProcessSubpass->descriptorSetLayout,
+        .pSetLayouts = &pipeline.descriptorSetLayout,
     };
 
     result = vkAllocateDescriptorSets(vkDevice, &descriptorSetAllocateInfo, &subpassModel.vkDescriptorSet);
@@ -259,36 +260,39 @@ static void createPostProcessSubpassModel(Subpass *pPostProcessSubpass, VkDevice
         },
     };
     vkUpdateDescriptorSets(vkDevice, 1, descriptorWrites, 0, NULL);
-    tickernelAddToDynamicArray(&pPostProcessSubpass->modelDynamicArray, &subpassModel, pPostProcessSubpass->modelDynamicArray.length);
+    tickernelAddToDynamicArray(&pipeline.modelDynamicArray, &subpassModel, pipeline.modelDynamicArray.length);
 }
 static void destroyPostProcessSubpassModel(Subpass *pPostProcessSubpass, VkDevice vkDevice, uint32_t index)
 {
-    SubpassModel *pSubpassModel = pPostProcessSubpass->modelDynamicArray.array[index];
+    Pipeline pipeline = pPostProcessSubpass->pipelines[0];
+    SubpassModel *pSubpassModel = pipeline.modelDynamicArray.array[index];
     VkResult result = vkFreeDescriptorSets(vkDevice, pSubpassModel->vkDescriptorPool, 1, &pSubpassModel->vkDescriptorSet);
     tryThrowVulkanError(result);
     vkDestroyDescriptorPool(vkDevice, pSubpassModel->vkDescriptorPool, NULL);
-    tickernelRemoveAtIndexFromDynamicArray(&pPostProcessSubpass->modelDynamicArray, index);
+    tickernelRemoveAtIndexFromDynamicArray(&pipeline.modelDynamicArray, index);
 }
 
 void createPostProcessSubpass(Subpass *pPostProcessSubpass, const char *shadersPath, VkRenderPass vkRenderPass, uint32_t postProcessSubpassIndex, VkDevice vkDevice, VkViewport viewport, VkRect2D scissor, VkImageView colorVkImageView)
 {
+    Pipeline pipeline = pPostProcessSubpass->pipelines[0];
     createVkPipelines(pPostProcessSubpass, shadersPath, vkRenderPass, postProcessSubpassIndex, vkDevice, viewport, scissor);
-    pPostProcessSubpass->vkDescriptorPoolSizeCount = 1;
-    pPostProcessSubpass->vkDescriptorPoolSizes = tickernelMalloc(sizeof(VkDescriptorPoolSize) * pPostProcessSubpass->vkDescriptorPoolSizeCount);
-    pPostProcessSubpass->vkDescriptorPoolSizes[0] = (VkDescriptorPoolSize){
+    pipeline.vkDescriptorPoolSizeCount = 1;
+    pipeline.vkDescriptorPoolSizes = tickernelMalloc(sizeof(VkDescriptorPoolSize) * pipeline.vkDescriptorPoolSizeCount);
+    pipeline.vkDescriptorPoolSizes[0] = (VkDescriptorPoolSize){
         .type = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT,
         .descriptorCount = 1,
     };
 
-    tickernelCreateDynamicArray(&pPostProcessSubpass->modelDynamicArray, 1, sizeof(SubpassModel));
+    tickernelCreateDynamicArray(&pipeline.modelDynamicArray, 1, sizeof(SubpassModel));
     createPostProcessSubpassModel(pPostProcessSubpass, vkDevice, colorVkImageView);
 }
 
 void destroyPostProcessSubpass(Subpass *pPostProcessSubpass, VkDevice vkDevice)
 {
+    Pipeline pipeline = pPostProcessSubpass->pipelines[0];
     destroyPostProcessSubpassModel(pPostProcessSubpass, vkDevice, 0);
-    tickernelDestroyDynamicArray(&pPostProcessSubpass->modelDynamicArray);
-    tickernelFree(pPostProcessSubpass->vkDescriptorPoolSizes);
+    tickernelDestroyDynamicArray(&pipeline.modelDynamicArray);
+    tickernelFree(pipeline.vkDescriptorPoolSizes);
 
     destroyVkPipeline(pPostProcessSubpass, vkDevice);
 }

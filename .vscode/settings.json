@@ -70,7 +70,8 @@
         "uirenderpass.h": "c",
         "uisubpass.h": "c",
         "algorithm": "c",
-        "chrono": "c"
+        "chrono": "c",
+        "lightingsubpass.h": "c"
     },
     "cmake.sourceDirectory": "/Users/hema/Documents/GitHub/Tickernel"
 }

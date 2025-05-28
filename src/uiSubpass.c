@@ -248,9 +248,7 @@ void destroyUISubpass(Subpass *pPostProcessSubpass, VkDevice vkDevice)
 SubpassModel *addModelToUISubpass(Subpass *pUISubpass, VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkCommandPool graphicVkCommandPool, VkQueue vkGraphicQueue, uint32_t vertexCount, UISubpassVertex *uiSubpassVertices, GraphicImage *pGraphicImage, VkSampler vkSampler)
 {
     SubpassModel subpassModel = {
-        .vertexCount = vertexCount,
-        .vertexBuffer = NULL,
-        .vertexBufferMemory = NULL,
+        .pMesh = NULL,
 
         .maxInstanceCount = 0,
         .instanceCount = 0,
