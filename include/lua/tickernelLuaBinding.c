@@ -12,14 +12,14 @@ static void assertLuaType(int type, int targetType)
     }
 }
 
-int luaAddModelToOpaqueGeometrySubpass(lua_State *pLuaState)
+int luaAddModelToGeometrySubpass(lua_State *pLuaState)
 {
     lua_len(pLuaState, -3);
     lua_Integer vertexCount = luaL_checkinteger(pLuaState, -1);
     lua_pop(pLuaState, 1);
     if (vertexCount > 0)
     {
-        OpaqueGeometrySubpassVertex *opaqueGeometrySubpassVertices = tickernelMalloc(sizeof(OpaqueGeometrySubpassVertex) * vertexCount);
+        GeometrySubpassVertex *geometrySubpassVertices = tickernelMalloc(sizeof(GeometrySubpassVertex) * vertexCount);
         for (uint32_t i = 0; i < vertexCount; i++)
         {
             int vertexType = lua_geti(pLuaState, -3, i + 1);
@@ -29,7 +29,7 @@ int luaAddModelToOpaqueGeometrySubpass(lua_State *pLuaState)
             {
                 int vertexValueType = lua_geti(pLuaState, -1, j + 1);
                 assertLuaType(vertexValueType, LUA_TNUMBER);
-                opaqueGeometrySubpassVertices[i].position[j] = luaL_checknumber(pLuaState, -1);
+                geometrySubpassVertices[i].position[j] = luaL_checknumber(pLuaState, -1);
                 lua_pop(pLuaState, 1);
             }
             lua_pop(pLuaState, 1);
@@ -41,7 +41,7 @@ int luaAddModelToOpaqueGeometrySubpass(lua_State *pLuaState)
             {
                 int colorValueType = lua_geti(pLuaState, -1, j + 1);
                 assertLuaType(colorValueType, LUA_TNUMBER);
-                opaqueGeometrySubpassVertices[i].color[j] = luaL_checknumber(pLuaState, -1) / 255.0f;
+                geometrySubpassVertices[i].color[j] = luaL_checknumber(pLuaState, -1) / 255.0f;
                 lua_pop(pLuaState, 1);
             }
             lua_pop(pLuaState, 1);
@@ -53,7 +53,7 @@ int luaAddModelToOpaqueGeometrySubpass(lua_State *pLuaState)
             {
                 int normalValueType = lua_geti(pLuaState, -1, j + 1);
                 assertLuaType(normalValueType, LUA_TNUMBER);
-                opaqueGeometrySubpassVertices[i].normal[j] = luaL_checknumber(pLuaState, -1);
+                geometrySubpassVertices[i].normal[j] = luaL_checknumber(pLuaState, -1);
                 lua_pop(pLuaState, 1);
             }
             lua_pop(pLuaState, 1);
@@ -65,9 +65,9 @@ int luaAddModelToOpaqueGeometrySubpass(lua_State *pLuaState)
         GraphicContext *pGraphicContext = lua_touserdata(pLuaState, -1);
         lua_pop(pLuaState, 1);
         
-        SubpassModel *pSubpassModel = addModelToOpaqueGeometrySubpass(&pGraphicContext->deferredRenderPass.opaqueGeometrySubpass, pGraphicContext->vkDevice, pGraphicContext->vkPhysicalDevice, pGraphicContext->graphicVkCommandPool, pGraphicContext->vkGraphicQueue, pGraphicContext->globalUniformBuffer, (uint32_t)vertexCount, opaqueGeometrySubpassVertices);
+        SubpassModel *pSubpassModel = addModelToGeometrySubpass(&pGraphicContext->deferredRenderPass.geometrySubpass, pGraphicContext->vkDevice, pGraphicContext->vkPhysicalDevice, pGraphicContext->graphicVkCommandPool, pGraphicContext->vkGraphicQueue, pGraphicContext->globalUniformBuffer, (uint32_t)vertexCount, geometrySubpassVertices);
         
-        tickernelFree(opaqueGeometrySubpassVertices);
+        tickernelFree(geometrySubpassVertices);
         
         lua_pushlightuserdata(pLuaState, pSubpassModel);
         return 1;
@@ -80,7 +80,7 @@ int luaAddModelToOpaqueGeometrySubpass(lua_State *pLuaState)
         return 0;
     }
 }
-int luaRemoveModelFromOpaqueGeometrySubpass(lua_State *pLuaState)
+int luaRemoveModelFromGeometrySubpass(lua_State *pLuaState)
 {
     SubpassModel* pSubpassModel = lua_touserdata(pLuaState, -1);
     lua_pop(pLuaState, 1);
@@ -90,17 +90,17 @@ int luaRemoveModelFromOpaqueGeometrySubpass(lua_State *pLuaState)
     GraphicContext *pGraphicContext = lua_touserdata(pLuaState, -1);
     lua_pop(pLuaState, 1);
     
-    removeModelFromOpaqueGeometrySubpass(&pGraphicContext->deferredRenderPass.opaqueGeometrySubpass, pGraphicContext->vkDevice, pSubpassModel);
+    removeModelFromGeometrySubpass(&pGraphicContext->deferredRenderPass.geometrySubpass, pGraphicContext->vkDevice, pSubpassModel);
     return 0;
 }
-int luaUpdateInstancesInOpaqueGeometrySubpass(lua_State *pLuaState)
+int luaUpdateInstancesInGeometrySubpass(lua_State *pLuaState)
 {
     //  index modelMatrix
     
     lua_len(pLuaState, -1);
     lua_Integer instanceCount = luaL_checkinteger(pLuaState, -1);
     lua_pop(pLuaState, 1);
-    OpaqueGeometrySubpassInstance instances[instanceCount];
+    GeometrySubpassInstance instances[instanceCount];
     for (uint32_t i = 0; i < instanceCount; i++)
     {
         int instanceType = lua_geti(pLuaState, -1, i + 1);
@@ -131,7 +131,7 @@ int luaUpdateInstancesInOpaqueGeometrySubpass(lua_State *pLuaState)
     GraphicContext *pGraphicContext = lua_touserdata(pLuaState, -1);
     lua_pop(pLuaState, 1);
     
-    updateInstancesInOpaqueGeometrySubpass(&pGraphicContext->deferredRenderPass.opaqueGeometrySubpass, pSubpassModel, pGraphicContext->vkDevice, pGraphicContext->vkPhysicalDevice, pGraphicContext->graphicVkCommandPool, pGraphicContext->vkGraphicQueue, pGraphicContext->globalUniformBuffer, instances, (uint32_t)instanceCount);
+    updateInstancesInGeometrySubpass(&pGraphicContext->deferredRenderPass.geometrySubpass, pSubpassModel, pGraphicContext->vkDevice, pGraphicContext->vkPhysicalDevice, pGraphicContext->graphicVkCommandPool, pGraphicContext->vkGraphicQueue, pGraphicContext->globalUniformBuffer, instances, (uint32_t)instanceCount);
     return 0;
 }
 

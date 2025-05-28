@@ -1,6 +1,6 @@
 #include "postProcessSubpass.h"
 
-static void createVkPipeline(Subpass *pPostProcessSubpass, const char *shadersPath, VkRenderPass vkRenderPass, uint32_t postProcessSubpassIndex, VkDevice vkDevice, VkViewport viewport, VkRect2D scissor)
+static void createVkPipelines(Subpass *pPostProcessSubpass, const char *shadersPath, VkRenderPass vkRenderPass, uint32_t postProcessSubpassIndex, VkDevice vkDevice, VkViewport viewport, VkRect2D scissor)
 {
     VkShaderModule postProcessVertShaderModule;
     char postProcessVertShaderPath[FILENAME_MAX];
@@ -272,7 +272,7 @@ static void destroyPostProcessSubpassModel(Subpass *pPostProcessSubpass, VkDevic
 
 void createPostProcessSubpass(Subpass *pPostProcessSubpass, const char *shadersPath, VkRenderPass vkRenderPass, uint32_t postProcessSubpassIndex, VkDevice vkDevice, VkViewport viewport, VkRect2D scissor, VkImageView colorVkImageView)
 {
-    createVkPipeline(pPostProcessSubpass, shadersPath, vkRenderPass, postProcessSubpassIndex, vkDevice, viewport, scissor);
+    createVkPipelines(pPostProcessSubpass, shadersPath, vkRenderPass, postProcessSubpassIndex, vkDevice, viewport, scissor);
     pPostProcessSubpass->vkDescriptorPoolSizeCount = 1;
     pPostProcessSubpass->vkDescriptorPoolSizes = tickernelMalloc(sizeof(VkDescriptorPoolSize) * pPostProcessSubpass->vkDescriptorPoolSizeCount);
     pPostProcessSubpass->vkDescriptorPoolSizes[0] = (VkDescriptorPoolSize){

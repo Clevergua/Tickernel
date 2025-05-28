@@ -115,23 +115,23 @@ engine.keyCodes = {
 
 local integer = 0
 local userdata 
----Add model to opaqueGeometry subpass
+---Add model to geometry subpass
 ---@param vertices table
 ---@param colors table
 ---@return userdata model
-function engine.addModelToOpaqueGeometrySubpass(vertices, colors, normals)
+function engine.addModelToGeometrySubpass(vertices, colors, normals)
     return userdata
 end
 
----Add model to opaqueGeometry subpass
+---Add model to geometry subpass
 ---@param model userdata
-function engine.removeModelFromOpaqueGeometrySubpass(model)
+function engine.removeModelFromGeometrySubpass(model)
 end
 
 ---Update model unifrom buffer
 ---@param model userdata
 ---@param instances table
-function engine.updateInstancesInOpaqueGeometrySubpass(model, instances)
+function engine.updateInstancesInGeometrySubpass(model, instances)
 end
 
 ---UpdateGlobalUniformBuffer
@@ -462,8 +462,8 @@ function engine.drawModel(instances, model)
             end
         end
     end
-    local model = engine.addModelToOpaqueGeometrySubpass(vertices, colors, normals)
-    engine.updateInstancesInOpaqueGeometrySubpass(model, instances)
+    local model = engine.addModelToGeometrySubpass(vertices, colors, normals)
+    engine.updateInstancesInGeometrySubpass(model, instances)
     return model
 end
 

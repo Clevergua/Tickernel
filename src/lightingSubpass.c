@@ -1,31 +1,31 @@
-#include "opaqueLightingSubpass.h"
+#include "lightingSubpass.h"
 
-static void createVkPipeline(Subpass *pOpaqueLightingSubpass, const char *shadersPath, VkRenderPass vkRenderPass, uint32_t opaqueLightingSubpassIndex, VkDevice vkDevice, VkViewport viewport, VkRect2D scissor)
+static void createVkPipelines(Subpass *pLightingSubpass, const char *shadersPath, VkRenderPass vkRenderPass, uint32_t lightingSubpassIndex, VkDevice vkDevice, VkViewport viewport, VkRect2D scissor)
 {
-    VkShaderModule opaqueLightingVertShaderModule;
-    char opaqueLightingVertShaderPath[FILENAME_MAX];
-    sprintf(opaqueLightingVertShaderPath, "%s/%s", shadersPath, "opaqueLighting.vert.spv");
-    createVkShaderModule(vkDevice, opaqueLightingVertShaderPath, &opaqueLightingVertShaderModule);
+    VkShaderModule lightingVertShaderModule;
+    char lightingVertShaderPath[FILENAME_MAX];
+    sprintf(lightingVertShaderPath, "%s/%s", shadersPath, "lighting.vert.spv");
+    createVkShaderModule(vkDevice, lightingVertShaderPath, &lightingVertShaderModule);
     VkPipelineShaderStageCreateInfo vertShaderStageCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
         .pNext = NULL,
         .flags = 0,
         .stage = VK_SHADER_STAGE_VERTEX_BIT,
-        .module = opaqueLightingVertShaderModule,
+        .module = lightingVertShaderModule,
         .pName = "main",
         .pSpecializationInfo = NULL,
     };
 
-    VkShaderModule opaqueLightingFragShaderModule;
-    char opaqueLightingFragShaderPath[FILENAME_MAX];
-    sprintf(opaqueLightingFragShaderPath, "%s/%s", shadersPath, "opaqueLighting.frag.spv");
-    createVkShaderModule(vkDevice, opaqueLightingFragShaderPath, &opaqueLightingFragShaderModule);
+    VkShaderModule lightingFragShaderModule;
+    char lightingFragShaderPath[FILENAME_MAX];
+    sprintf(lightingFragShaderPath, "%s/%s", shadersPath, "lighting.frag.spv");
+    createVkShaderModule(vkDevice, lightingFragShaderPath, &lightingFragShaderModule);
     VkPipelineShaderStageCreateInfo fragShaderStageCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
         .pNext = NULL,
         .flags = 0,
         .stage = VK_SHADER_STAGE_FRAGMENT_BIT,
-        .module = opaqueLightingFragShaderModule,
+        .module = lightingFragShaderModule,
         .pName = "main",
         .pSpecializationInfo = NULL,
     };
@@ -177,21 +177,21 @@ static void createVkPipeline(Subpass *pOpaqueLightingSubpass, const char *shader
         .pBindings = bindings,
     };
 
-    VkResult result = vkCreateDescriptorSetLayout(vkDevice, &descriptorSetLayoutCreateInfo, NULL, &pOpaqueLightingSubpass->descriptorSetLayout);
+    VkResult result = vkCreateDescriptorSetLayout(vkDevice, &descriptorSetLayoutCreateInfo, NULL, &pLightingSubpass->descriptorSetLayout);
     tryThrowVulkanError(result);
     VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
         .pNext = NULL,
         .flags = 0,
         .setLayoutCount = 1,
-        .pSetLayouts = &pOpaqueLightingSubpass->descriptorSetLayout,
+        .pSetLayouts = &pLightingSubpass->descriptorSetLayout,
         .pushConstantRangeCount = 0,
         .pPushConstantRanges = NULL,
     };
 
-    result = vkCreatePipelineLayout(vkDevice, &pipelineLayoutCreateInfo, NULL, &pOpaqueLightingSubpass->vkPipelineLayout);
+    result = vkCreatePipelineLayout(vkDevice, &pipelineLayoutCreateInfo, NULL, &pLightingSubpass->vkPipelineLayout);
     tryThrowVulkanError(result);
-    VkGraphicsPipelineCreateInfo opaqueLightingPipelineCreateInfo = {
+    VkGraphicsPipelineCreateInfo lightingPipelineCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
         .pNext = NULL,
         .flags = 0,
@@ -206,32 +206,32 @@ static void createVkPipeline(Subpass *pOpaqueLightingSubpass, const char *shader
         .pDepthStencilState = &pipelineDepthStencilStateCreateInfo,
         .pColorBlendState = &colorBlendStateCreateInfo,
         .pDynamicState = &dynamicState,
-        .layout = pOpaqueLightingSubpass->vkPipelineLayout,
+        .layout = pLightingSubpass->vkPipelineLayout,
         .renderPass = vkRenderPass,
-        .subpass = opaqueLightingSubpassIndex,
+        .subpass = lightingSubpassIndex,
         .basePipelineHandle = VK_NULL_HANDLE,
         .basePipelineIndex = -1,
     };
 
     VkPipelineCache pipelineCache = NULL;
-    result = vkCreateGraphicsPipelines(vkDevice, pipelineCache, 1, &opaqueLightingPipelineCreateInfo, NULL, &pOpaqueLightingSubpass->vkPipeline);
+    result = vkCreateGraphicsPipelines(vkDevice, pipelineCache, 1, &lightingPipelineCreateInfo, NULL, &pLightingSubpass->vkPipeline);
     tryThrowVulkanError(result);
-    destroyVkShaderModule(vkDevice, opaqueLightingVertShaderModule);
-    destroyVkShaderModule(vkDevice, opaqueLightingFragShaderModule);
+    destroyVkShaderModule(vkDevice, lightingVertShaderModule);
+    destroyVkShaderModule(vkDevice, lightingFragShaderModule);
 }
-static void destroyVkPipeline(Subpass *pOpaqueLightingSubpass, VkDevice vkDevice)
+static void destroyVkPipeline(Subpass *pLightingSubpass, VkDevice vkDevice)
 {
-    vkDestroyDescriptorSetLayout(vkDevice, pOpaqueLightingSubpass->descriptorSetLayout, NULL);
-    vkDestroyPipelineLayout(vkDevice, pOpaqueLightingSubpass->vkPipelineLayout, NULL);
-    vkDestroyPipeline(vkDevice, pOpaqueLightingSubpass->vkPipeline, NULL);
+    vkDestroyDescriptorSetLayout(vkDevice, pLightingSubpass->descriptorSetLayout, NULL);
+    vkDestroyPipelineLayout(vkDevice, pLightingSubpass->vkPipelineLayout, NULL);
+    vkDestroyPipeline(vkDevice, pLightingSubpass->vkPipeline, NULL);
 }
 
-static void createPostProcessSubpassModel(Subpass *pOpaqueLightingSubpass, VkDevice vkDevice, VkBuffer globalUniformBuffer, VkBuffer lightsUniformBuffer, VkImageView depthVkImageView, VkImageView albedoVkImageView, VkImageView normalVkImageView)
+static void createPostProcessSubpassModel(Subpass *pLightingSubpass, VkDevice vkDevice, VkBuffer globalUniformBuffer, VkBuffer lightsUniformBuffer, VkImageView depthVkImageView, VkImageView albedoVkImageView, VkImageView normalVkImageView)
 {
-    assert(pOpaqueLightingSubpass != NULL);
-    assert(pOpaqueLightingSubpass->vkDescriptorPoolSizes != NULL);
-    assert(pOpaqueLightingSubpass->vkDescriptorPoolSizeCount > 0);
-    assert(pOpaqueLightingSubpass->descriptorSetLayout != VK_NULL_HANDLE);
+    assert(pLightingSubpass != NULL);
+    assert(pLightingSubpass->vkDescriptorPoolSizes != NULL);
+    assert(pLightingSubpass->vkDescriptorPoolSizeCount > 0);
+    assert(pLightingSubpass->descriptorSetLayout != VK_NULL_HANDLE);
     assert(vkDevice != VK_NULL_HANDLE);
     SubpassModel subpassModel = {
         .vertexCount = 0,
@@ -256,8 +256,8 @@ static void createPostProcessSubpassModel(Subpass *pOpaqueLightingSubpass, VkDev
         .pNext = NULL,
         .flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
         .maxSets = 1,
-        .poolSizeCount = pOpaqueLightingSubpass->vkDescriptorPoolSizeCount,
-        .pPoolSizes = pOpaqueLightingSubpass->vkDescriptorPoolSizes,
+        .poolSizeCount = pLightingSubpass->vkDescriptorPoolSizeCount,
+        .pPoolSizes = pLightingSubpass->vkDescriptorPoolSizes,
     };
     VkResult result = vkCreateDescriptorPool(vkDevice, &descriptorPoolCreateInfo, NULL, &subpassModel.vkDescriptorPool);
     tryThrowVulkanError(result);
@@ -266,7 +266,7 @@ static void createPostProcessSubpassModel(Subpass *pOpaqueLightingSubpass, VkDev
         .pNext = NULL,
         .descriptorPool = subpassModel.vkDescriptorPool,
         .descriptorSetCount = 1,
-        .pSetLayouts = &pOpaqueLightingSubpass->descriptorSetLayout,
+        .pSetLayouts = &pLightingSubpass->descriptorSetLayout,
     };
 
     result = vkAllocateDescriptorSets(vkDevice, &descriptorSetAllocateInfo, &subpassModel.vkDescriptorSet);
@@ -359,46 +359,46 @@ static void createPostProcessSubpassModel(Subpass *pOpaqueLightingSubpass, VkDev
         },
     };
     vkUpdateDescriptorSets(vkDevice, 5, descriptorWrites, 0, NULL);
-    tickernelAddToDynamicArray(&pOpaqueLightingSubpass->modelDynamicArray, &subpassModel, pOpaqueLightingSubpass->modelDynamicArray.length);
+    tickernelAddToDynamicArray(&pLightingSubpass->modelDynamicArray, &subpassModel, pLightingSubpass->modelDynamicArray.length);
 }
-static void destroyOpaqueLightingSubpassModel(Subpass *pOpaqueLightingSubpass, VkDevice vkDevice, uint32_t index)
+static void destroyLightingSubpassModel(Subpass *pLightingSubpass, VkDevice vkDevice, uint32_t index)
 {
-    SubpassModel *pSubpassModel = pOpaqueLightingSubpass->modelDynamicArray.array[index];
+    SubpassModel *pSubpassModel = pLightingSubpass->modelDynamicArray.array[index];
     VkResult result = vkFreeDescriptorSets(vkDevice, pSubpassModel->vkDescriptorPool, 1, &pSubpassModel->vkDescriptorSet);
     tryThrowVulkanError(result);
     vkDestroyDescriptorPool(vkDevice, pSubpassModel->vkDescriptorPool, NULL);
-    tickernelRemoveAtIndexFromDynamicArray(&pOpaqueLightingSubpass->modelDynamicArray, index);
+    tickernelRemoveAtIndexFromDynamicArray(&pLightingSubpass->modelDynamicArray, index);
 }
 
-void createOpaqueLightingSubpass(Subpass *pOpaqueLightingSubpass, const char *shadersPath, VkRenderPass vkRenderPass, uint32_t opaqueLightingSubpassIndex, VkDevice vkDevice, VkViewport viewport, VkRect2D scissor, VkBuffer globalUniformBuffer, VkBuffer lightsUniformBuffer, VkImageView depthVkImageView, VkImageView albedoVkImageView, VkImageView normalVkImageView)
+void createLightingSubpass(Subpass *pLightingSubpass, const char *shadersPath, VkRenderPass vkRenderPass, uint32_t lightingSubpassIndex, VkDevice vkDevice, VkViewport viewport, VkRect2D scissor, VkBuffer globalUniformBuffer, VkBuffer lightsUniformBuffer, VkImageView depthVkImageView, VkImageView albedoVkImageView, VkImageView normalVkImageView)
 {
-    createVkPipeline(pOpaqueLightingSubpass, shadersPath, vkRenderPass, opaqueLightingSubpassIndex, vkDevice, viewport, scissor);
+    createVkPipelines(pLightingSubpass, shadersPath, vkRenderPass, lightingSubpassIndex, vkDevice, viewport, scissor);
 
-    pOpaqueLightingSubpass->vkDescriptorPoolSizeCount = 2;
-    pOpaqueLightingSubpass->vkDescriptorPoolSizes = tickernelMalloc(sizeof(VkDescriptorPoolSize) * pOpaqueLightingSubpass->vkDescriptorPoolSizeCount);
-    pOpaqueLightingSubpass->vkDescriptorPoolSizes[0] = (VkDescriptorPoolSize){
+    pLightingSubpass->vkDescriptorPoolSizeCount = 2;
+    pLightingSubpass->vkDescriptorPoolSizes = tickernelMalloc(sizeof(VkDescriptorPoolSize) * pLightingSubpass->vkDescriptorPoolSizeCount);
+    pLightingSubpass->vkDescriptorPoolSizes[0] = (VkDescriptorPoolSize){
         .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
         .descriptorCount = 2,
     };
-    pOpaqueLightingSubpass->vkDescriptorPoolSizes[1] = (VkDescriptorPoolSize){
+    pLightingSubpass->vkDescriptorPoolSizes[1] = (VkDescriptorPoolSize){
         .type = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT,
         .descriptorCount = 3,
     };
 
-    tickernelCreateDynamicArray(&pOpaqueLightingSubpass->modelDynamicArray, 1, sizeof(SubpassModel));
-    createPostProcessSubpassModel(pOpaqueLightingSubpass, vkDevice, globalUniformBuffer, lightsUniformBuffer, depthVkImageView, albedoVkImageView, normalVkImageView);
+    tickernelCreateDynamicArray(&pLightingSubpass->modelDynamicArray, 1, sizeof(SubpassModel));
+    createPostProcessSubpassModel(pLightingSubpass, vkDevice, globalUniformBuffer, lightsUniformBuffer, depthVkImageView, albedoVkImageView, normalVkImageView);
 }
 
-void destroyOpaqueLightingSubpass(Subpass *pOpaqueLightingSubpass, VkDevice vkDevice)
+void destroyLightingSubpass(Subpass *pLightingSubpass, VkDevice vkDevice)
 {
-    destroyOpaqueLightingSubpassModel(pOpaqueLightingSubpass, vkDevice, 0);
-    tickernelDestroyDynamicArray(&pOpaqueLightingSubpass->modelDynamicArray);
-    tickernelFree(pOpaqueLightingSubpass->vkDescriptorPoolSizes);
+    destroyLightingSubpassModel(pLightingSubpass, vkDevice, 0);
+    tickernelDestroyDynamicArray(&pLightingSubpass->modelDynamicArray);
+    tickernelFree(pLightingSubpass->vkDescriptorPoolSizes);
 
-    destroyVkPipeline(pOpaqueLightingSubpass, vkDevice);
+    destroyVkPipeline(pLightingSubpass, vkDevice);
 }
-void recreateOpaqueLightingSubpassModel(Subpass *pOpaqueLightingSubpass, VkDevice vkDevice, VkBuffer globalUniformBuffer, VkBuffer lightsUniformBuffer, VkImageView depthVkImageView, VkImageView albedoVkImageView, VkImageView normalVkImageView)
+void recreateLightingSubpassModel(Subpass *pLightingSubpass, VkDevice vkDevice, VkBuffer globalUniformBuffer, VkBuffer lightsUniformBuffer, VkImageView depthVkImageView, VkImageView albedoVkImageView, VkImageView normalVkImageView)
 {
-    destroyOpaqueLightingSubpassModel(pOpaqueLightingSubpass, vkDevice, 0);
-    createPostProcessSubpassModel(pOpaqueLightingSubpass, vkDevice, globalUniformBuffer, lightsUniformBuffer, depthVkImageView, albedoVkImageView, normalVkImageView);
+    destroyLightingSubpassModel(pLightingSubpass, vkDevice, 0);
+    createPostProcessSubpassModel(pLightingSubpass, vkDevice, globalUniformBuffer, lightsUniformBuffer, depthVkImageView, albedoVkImageView, normalVkImageView);
 }

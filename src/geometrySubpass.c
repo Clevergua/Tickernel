@@ -1,30 +1,30 @@
-#include "waterGeometrySubpass.h"
-static void createVkPipeline(Subpass *pWaterGeometrySubpass, const char *shadersPath, VkRenderPass vkRenderPass, uint32_t waterGeometrySubpassIndex, VkDevice vkDevice, VkViewport viewport, VkRect2D scissor)
+#include "geometrySubpass.h"
+static void createVkPipelines(Subpass *pGeometrySubpass, const char *shadersPath, VkRenderPass vkRenderPass, uint32_t geometrySubpassIndex, VkDevice vkDevice, VkViewport viewport, VkRect2D scissor)
 {
-    VkShaderModule waterGeometryVertShaderModule;
-    char waterGeometryVertShaderPath[FILENAME_MAX];
-    sprintf(waterGeometryVertShaderPath, "%s/%s", shadersPath, "waterGeometry.vert.spv");
-    createVkShaderModule(vkDevice, waterGeometryVertShaderPath, &waterGeometryVertShaderModule);
+    VkShaderModule geometryVertShaderModule;
+    char geometryVertShaderPath[FILENAME_MAX];
+    sprintf(geometryVertShaderPath, "%s/%s", shadersPath, "geometry.vert.spv");
+    createVkShaderModule(vkDevice, geometryVertShaderPath, &geometryVertShaderModule);
     VkPipelineShaderStageCreateInfo vertShaderStageCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
         .pNext = NULL,
         .flags = 0,
         .stage = VK_SHADER_STAGE_VERTEX_BIT,
-        .module = waterGeometryVertShaderModule,
+        .module = geometryVertShaderModule,
         .pName = "main",
         .pSpecializationInfo = NULL,
     };
 
-    VkShaderModule waterGeometryFragShaderModule;
-    char waterGeometryFragShaderPath[FILENAME_MAX];
-    sprintf(waterGeometryFragShaderPath, "%s/%s", shadersPath, "waterGeometry.frag.spv");
-    createVkShaderModule(vkDevice, waterGeometryFragShaderPath, &waterGeometryFragShaderModule);
+    VkShaderModule geometryFragShaderModule;
+    char geometryFragShaderPath[FILENAME_MAX];
+    sprintf(geometryFragShaderPath, "%s/%s", shadersPath, "geometry.frag.spv");
+    createVkShaderModule(vkDevice, geometryFragShaderPath, &geometryFragShaderModule);
     VkPipelineShaderStageCreateInfo fragShaderStageCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
         .pNext = NULL,
         .flags = 0,
         .stage = VK_SHADER_STAGE_FRAGMENT_BIT,
-        .module = waterGeometryFragShaderModule,
+        .module = geometryFragShaderModule,
         .pName = "main",
         .pSpecializationInfo = NULL,
     };
@@ -35,12 +35,12 @@ static void createVkPipeline(Subpass *pWaterGeometrySubpass, const char *shaders
     VkVertexInputBindingDescription *vertexBindingDescriptions = (VkVertexInputBindingDescription[]){
         {
             .binding = 0,
-            .stride = sizeof(WaterGeometrySubpassVertex),
+            .stride = sizeof(GeometrySubpassVertex),
             .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
         },
         {
             .binding = 1,
-            .stride = sizeof(WaterGeometrySubpassInstance),
+            .stride = sizeof(GeometrySubpassInstance),
             .inputRate = VK_VERTEX_INPUT_RATE_INSTANCE,
         },
     };
@@ -50,44 +50,44 @@ static void createVkPipeline(Subpass *pWaterGeometrySubpass, const char *shaders
             .location = 0,
             .binding = 0,
             .format = VK_FORMAT_R32G32B32_SFLOAT,
-            .offset = offsetof(WaterGeometrySubpassVertex, position),
+            .offset = offsetof(GeometrySubpassVertex, position),
         },
         {
             .location = 1,
             .binding = 0,
             .format = VK_FORMAT_R32G32B32_SFLOAT,
-            .offset = offsetof(WaterGeometrySubpassVertex, color),
+            .offset = offsetof(GeometrySubpassVertex, color),
         },
         {
             .location = 2,
             .binding = 0,
             .format = VK_FORMAT_R32G32B32_SFLOAT,
-            .offset = offsetof(WaterGeometrySubpassVertex, normal),
+            .offset = offsetof(GeometrySubpassVertex, normal),
         },
         // Instance:
         {
             .location = 3,
             .binding = 1,
             .format = VK_FORMAT_R32G32B32A32_SFLOAT,
-            .offset = offsetof(WaterGeometrySubpassInstance, model) + sizeof(vec4) * 0,
+            .offset = offsetof(GeometrySubpassInstance, model) + sizeof(vec4) * 0,
         },
         {
             .location = 4,
             .binding = 1,
             .format = VK_FORMAT_R32G32B32A32_SFLOAT,
-            .offset = offsetof(WaterGeometrySubpassInstance, model) + sizeof(vec4) * 1,
+            .offset = offsetof(GeometrySubpassInstance, model) + sizeof(vec4) * 1,
         },
         {
             .location = 5,
             .binding = 1,
             .format = VK_FORMAT_R32G32B32A32_SFLOAT,
-            .offset = offsetof(WaterGeometrySubpassInstance, model) + sizeof(vec4) * 2,
+            .offset = offsetof(GeometrySubpassInstance, model) + sizeof(vec4) * 2,
         },
         {
             .location = 6,
             .binding = 1,
             .format = VK_FORMAT_R32G32B32A32_SFLOAT,
-            .offset = offsetof(WaterGeometrySubpassInstance, model) + sizeof(vec4) * 3,
+            .offset = offsetof(GeometrySubpassInstance, model) + sizeof(vec4) * 3,
         },
     };
     VkPipelineVertexInputStateCreateInfo vkPipelineVertexInputStateCreateInfo = {
@@ -220,21 +220,22 @@ static void createVkPipeline(Subpass *pWaterGeometrySubpass, const char *shaders
         .bindingCount = 1,
         .pBindings = bindings,
     };
-    VkResult result = vkCreateDescriptorSetLayout(vkDevice, &descriptorSetLayoutCreateInfo, NULL, &pWaterGeometrySubpass->descriptorSetLayout);
+    VkResult result = vkCreateDescriptorSetLayout(vkDevice, &descriptorSetLayoutCreateInfo, NULL, &pGeometrySubpass->descriptorSetLayout);
     tryThrowVulkanError(result);
     VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
         .pNext = NULL,
         .flags = 0,
         .setLayoutCount = 1,
-        .pSetLayouts = &pWaterGeometrySubpass->descriptorSetLayout,
+        .pSetLayouts = &pGeometrySubpass->descriptorSetLayout,
         .pushConstantRangeCount = 0,
         .pPushConstantRanges = NULL,
     };
 
-    result = vkCreatePipelineLayout(vkDevice, &pipelineLayoutCreateInfo, NULL, &pWaterGeometrySubpass->vkPipelineLayout);
+    result = vkCreatePipelineLayout(vkDevice, &pipelineLayoutCreateInfo, NULL, &pGeometrySubpass->vkPipelineLayout);
     tryThrowVulkanError(result);
-    VkGraphicsPipelineCreateInfo waterGeometryPipelineCreateInfo = {
+    
+    VkGraphicsPipelineCreateInfo geometryPipelineCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
         .pNext = NULL,
         .flags = 0,
@@ -249,58 +250,57 @@ static void createVkPipeline(Subpass *pWaterGeometrySubpass, const char *shaders
         .pDepthStencilState = &pipelineDepthStencilStateCreateInfo,
         .pColorBlendState = &colorBlendStateCreateInfo,
         .pDynamicState = &dynamicState,
-        .layout = pWaterGeometrySubpass->vkPipelineLayout,
+        .layout = pGeometrySubpass->vkPipelineLayout,
         .renderPass = vkRenderPass,
-        .subpass = waterGeometrySubpassIndex,
+        .subpass = geometrySubpassIndex,
         .basePipelineHandle = VK_NULL_HANDLE,
         .basePipelineIndex = 0,
     };
 
     VkPipelineCache pipelineCache = NULL;
-    result = vkCreateGraphicsPipelines(vkDevice, pipelineCache, 1, &waterGeometryPipelineCreateInfo, NULL, &pWaterGeometrySubpass->vkPipeline);
+    result = vkCreateGraphicsPipelines(vkDevice, pipelineCache, 1, &geometryPipelineCreateInfo, NULL, &pGeometrySubpass->vkPipeline);
     tryThrowVulkanError(result);
-    destroyVkShaderModule(vkDevice, waterGeometryVertShaderModule);
-    destroyVkShaderModule(vkDevice, waterGeometryFragShaderModule);
+    destroyVkShaderModule(vkDevice, geometryVertShaderModule);
+    destroyVkShaderModule(vkDevice, geometryFragShaderModule);
 }
-static void destroyVkPipeline(Subpass *pWaterGeometrySubpass, VkDevice vkDevice)
+static void destroyVkPipeline(Subpass *pGeometrySubpass, VkDevice vkDevice)
 {
-    vkDestroyDescriptorSetLayout(vkDevice, pWaterGeometrySubpass->descriptorSetLayout, NULL);
-    vkDestroyPipelineLayout(vkDevice, pWaterGeometrySubpass->vkPipelineLayout, NULL);
-    vkDestroyPipeline(vkDevice, pWaterGeometrySubpass->vkPipeline, NULL);
+    vkDestroyDescriptorSetLayout(vkDevice, pGeometrySubpass->descriptorSetLayout, NULL);
+    vkDestroyPipelineLayout(vkDevice, pGeometrySubpass->vkPipelineLayout, NULL);
+    vkDestroyPipeline(vkDevice, pGeometrySubpass->vkPipeline, NULL);
 }
 
-void createWaterGeometrySubpass(Subpass *pWaterGeometrySubpass, const char *shadersPath, VkRenderPass vkRenderPass, uint32_t waterGeometrySubpassIndex, VkDevice vkDevice, VkViewport viewport, VkRect2D scissor)
+void createGeometrySubpass(Subpass *pGeometrySubpass, const char *shadersPath, VkRenderPass vkRenderPass, uint32_t geometrySubpassIndex, VkDevice vkDevice, VkViewport viewport, VkRect2D scissor)
 {
-    createVkPipeline(pWaterGeometrySubpass, shadersPath, vkRenderPass, waterGeometrySubpassIndex, vkDevice, viewport, scissor);
+    createVkPipelines(pGeometrySubpass, shadersPath, vkRenderPass, geometrySubpassIndex, vkDevice, viewport, scissor);
 
-    pWaterGeometrySubpass->vkDescriptorPoolSizeCount = 1;
-    pWaterGeometrySubpass->vkDescriptorPoolSizes = tickernelMalloc(sizeof(VkDescriptorPoolSize) * pWaterGeometrySubpass->vkDescriptorPoolSizeCount);
-    pWaterGeometrySubpass->vkDescriptorPoolSizes[0] = (VkDescriptorPoolSize){
+    pGeometrySubpass->vkDescriptorPoolSizeCount = 1;
+    pGeometrySubpass->vkDescriptorPoolSizes = tickernelMalloc(sizeof(VkDescriptorPoolSize) * pGeometrySubpass->vkDescriptorPoolSizeCount);
+    pGeometrySubpass->vkDescriptorPoolSizes[0] = (VkDescriptorPoolSize){
         .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
         .descriptorCount = 1,
     };
 
-    tickernelCreateDynamicArray(&pWaterGeometrySubpass->modelDynamicArray, 1, sizeof(SubpassModel));
+    tickernelCreateDynamicArray(&pGeometrySubpass->modelDynamicArray, 1, sizeof(SubpassModel));
 }
-void destroyWaterGeometrySubpass(Subpass *pWaterGeometrySubpass, VkDevice vkDevice)
+
+void destroyGeometrySubpass(Subpass *pGeometrySubpass, VkDevice vkDevice)
 {
-    for (uint32_t i = pWaterGeometrySubpass->modelDynamicArray.length - 1; i != UINT32_MAX; i--)
+    for (uint32_t i = pGeometrySubpass->modelDynamicArray.length - 1; i > -1; i--)
     {
-        SubpassModel *pSubpassModel = pWaterGeometrySubpass->modelDynamicArray.array[i];
-        removeModelFromWaterGeometrySubpass(pWaterGeometrySubpass, vkDevice, pSubpassModel);
+        SubpassModel *pSubpassModel = pGeometrySubpass->modelDynamicArray.array[i];
+        removeModelFromGeometrySubpass(pGeometrySubpass, vkDevice, pSubpassModel);
     }
-    tickernelDestroyDynamicArray(&pWaterGeometrySubpass->modelDynamicArray);
+    tickernelDestroyDynamicArray(&pGeometrySubpass->modelDynamicArray);
 
-    tickernelFree(pWaterGeometrySubpass->vkDescriptorPoolSizes);
-    destroyVkPipeline(pWaterGeometrySubpass, vkDevice);
+    tickernelFree(pGeometrySubpass->vkDescriptorPoolSizes);
+    destroyVkPipeline(pGeometrySubpass, vkDevice);
 }
 
-SubpassModel* addModelToWaterGeometrySubpass(Subpass *pWaterGeometrySubpass, VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkCommandPool graphicVkCommandPool, VkQueue vkGraphicQueue, VkBuffer globalUniformBuffer, uint32_t vertexCount, WaterGeometrySubpassVertex *waterGeometrySubpassVertices)
+SubpassModel *addModelToGeometrySubpass(Subpass *pGeometrySubpass, VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkCommandPool graphicVkCommandPool, VkQueue vkGraphicQueue, VkBuffer globalUniformBuffer, uint32_t vertexCount, GeometrySubpassVertex *geometrySubpassVertices)
 {
     SubpassModel subpassModel = {
-        .vertexCount = vertexCount,
-        .vertexBuffer = NULL,
-        .vertexBufferMemory = NULL,
+        .pMesh = NULL,
 
         .maxInstanceCount = 0,
         .instanceCount = 0,
@@ -314,17 +314,17 @@ SubpassModel* addModelToWaterGeometrySubpass(Subpass *pWaterGeometrySubpass, VkD
         .vkDescriptorPool = NULL,
         .vkDescriptorSet = NULL,
     };
-    VkDeviceSize vertexBufferSize = sizeof(WaterGeometrySubpassVertex) * vertexCount;
+    VkDeviceSize vertexBufferSize = sizeof(GeometrySubpassVertex) * vertexCount;
     createBuffer(vkDevice, vkPhysicalDevice, vertexBufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &subpassModel.vertexBuffer, &subpassModel.vertexBufferMemory);
-    updateBufferWithStagingBuffer(vkDevice, vkPhysicalDevice, 0, vertexBufferSize, waterGeometrySubpassVertices, graphicVkCommandPool, vkGraphicQueue, subpassModel.vertexBuffer);
+    updateBufferWithStagingBuffer(vkDevice, vkPhysicalDevice, 0, vertexBufferSize, geometrySubpassVertices, graphicVkCommandPool, vkGraphicQueue, subpassModel.vertexBuffer);
     // Create vkDescriptorPool
     VkDescriptorPoolCreateInfo descriptorPoolCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
         .pNext = NULL,
         .flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
         .maxSets = 1,
-        .poolSizeCount = pWaterGeometrySubpass->vkDescriptorPoolSizeCount,
-        .pPoolSizes = pWaterGeometrySubpass->vkDescriptorPoolSizes,
+        .poolSizeCount = pGeometrySubpass->vkDescriptorPoolSizeCount,
+        .pPoolSizes = pGeometrySubpass->vkDescriptorPoolSizes,
     };
     VkResult result = vkCreateDescriptorPool(vkDevice, &descriptorPoolCreateInfo, NULL, &subpassModel.vkDescriptorPool);
     tryThrowVulkanError(result);
@@ -335,7 +335,7 @@ SubpassModel* addModelToWaterGeometrySubpass(Subpass *pWaterGeometrySubpass, VkD
         .pNext = NULL,
         .descriptorPool = subpassModel.vkDescriptorPool,
         .descriptorSetCount = 1,
-        .pSetLayouts = &pWaterGeometrySubpass->descriptorSetLayout,
+        .pSetLayouts = &pGeometrySubpass->descriptorSetLayout,
     };
     result = vkAllocateDescriptorSets(vkDevice, &descriptorSetAllocateInfo, &subpassModel.vkDescriptorSet);
     tryThrowVulkanError(result);
@@ -360,9 +360,9 @@ SubpassModel* addModelToWaterGeometrySubpass(Subpass *pWaterGeometrySubpass, VkD
         },
     };
     vkUpdateDescriptorSets(vkDevice, 1, descriptorWrites, 0, NULL);
-    return tickernelAddToDynamicArray(&pWaterGeometrySubpass->modelDynamicArray, &subpassModel, pWaterGeometrySubpass->modelDynamicArray.length);
+    return tickernelAddToDynamicArray(&pGeometrySubpass->modelDynamicArray, &subpassModel, pGeometrySubpass->modelDynamicArray.length);
 }
-void removeModelFromWaterGeometrySubpass(Subpass *pWaterGeometrySubpass, VkDevice vkDevice, SubpassModel *pSubpassModel)
+void removeModelFromGeometrySubpass(Subpass *pGeometrySubpass, VkDevice vkDevice, SubpassModel *pSubpassModel)
 {
     if (pSubpassModel->maxInstanceCount > 0)
     {
@@ -374,31 +374,32 @@ void removeModelFromWaterGeometrySubpass(Subpass *pWaterGeometrySubpass, VkDevic
     VkResult result = vkFreeDescriptorSets(vkDevice, pSubpassModel->vkDescriptorPool, 1, &pSubpassModel->vkDescriptorSet);
     tryThrowVulkanError(result);
     vkDestroyDescriptorPool(vkDevice, pSubpassModel->vkDescriptorPool, NULL);
-    tickernelRemoveFromDynamicArray(&pWaterGeometrySubpass->modelDynamicArray, pSubpassModel);
+    tickernelRemoveFromDynamicArray(&pGeometrySubpass->modelDynamicArray, pSubpassModel);
 }
-void updateInstancesInWaterGeometrySubpass(Subpass *pWaterGeometrySubpass, SubpassModel* pSubpassModel, VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkCommandPool graphicVkCommandPool, VkQueue vkGraphicQueue, VkBuffer globalUniformBuffer, WaterGeometrySubpassInstance *waterGeometrySubpassInstances, uint32_t instanceCount)
+
+void updateInstancesInGeometrySubpass(Subpass *pGeometrySubpass, SubpassModel *pSubpassModel, VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkCommandPool graphicVkCommandPool, VkQueue vkGraphicQueue, VkBuffer globalUniformBuffer, GeometrySubpassInstance *geometrySubpassInstances, uint32_t instanceCount)
 {
     if (0 == pSubpassModel->maxInstanceCount)
     {
         pSubpassModel->maxInstanceCount = instanceCount;
         pSubpassModel->instanceCount = instanceCount;
-        VkDeviceSize instanceBufferSize = sizeof(WaterGeometrySubpassInstance) * pSubpassModel->instanceCount;
+        VkDeviceSize instanceBufferSize = sizeof(GeometrySubpassInstance) * pSubpassModel->instanceCount;
         createBuffer(vkDevice, vkPhysicalDevice, instanceBufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &pSubpassModel->instanceBuffer, &pSubpassModel->instanceBufferMemory);
-        updateBuffer(vkDevice, pSubpassModel->instanceBufferMemory, 0, sizeof(WaterGeometrySubpassInstance) * instanceCount, waterGeometrySubpassInstances);
+        updateBuffer(vkDevice, pSubpassModel->instanceBufferMemory, 0, sizeof(GeometrySubpassInstance) * instanceCount, geometrySubpassInstances);
     }
     else if (instanceCount <= pSubpassModel->maxInstanceCount)
     {
         pSubpassModel->instanceCount = instanceCount;
-        VkDeviceSize bufferSize = sizeof(WaterGeometrySubpassInstance) * pSubpassModel->instanceCount;
-        updateBuffer(vkDevice, pSubpassModel->instanceBufferMemory, 0, bufferSize, waterGeometrySubpassInstances);
+        VkDeviceSize bufferSize = sizeof(GeometrySubpassInstance) * pSubpassModel->instanceCount;
+        updateBuffer(vkDevice, pSubpassModel->instanceBufferMemory, 0, bufferSize, geometrySubpassInstances);
     }
     else
     {
         destroyBuffer(vkDevice, pSubpassModel->instanceBuffer, pSubpassModel->instanceBufferMemory);
         pSubpassModel->maxInstanceCount = instanceCount;
         pSubpassModel->instanceCount = instanceCount;
-        VkDeviceSize instanceBufferSize = sizeof(WaterGeometrySubpassInstance) * pSubpassModel->instanceCount;
+        VkDeviceSize instanceBufferSize = sizeof(GeometrySubpassInstance) * pSubpassModel->instanceCount;
         createBuffer(vkDevice, vkPhysicalDevice, instanceBufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &pSubpassModel->instanceBuffer, &pSubpassModel->instanceBufferMemory);
-        updateBuffer(vkDevice, pSubpassModel->instanceBufferMemory, 0, sizeof(WaterGeometrySubpassInstance) * instanceCount, waterGeometrySubpassInstances);
+        updateBuffer(vkDevice, pSubpassModel->instanceBufferMemory, 0, sizeof(GeometrySubpassInstance) * instanceCount, geometrySubpassInstances);
     }
 }

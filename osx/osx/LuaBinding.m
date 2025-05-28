@@ -122,14 +122,14 @@ static int luaSetAudioPosition(lua_State *L) {
     lua_pushstring(pLuaState, cAssetPath);
     lua_setfield(pLuaState, -2, "assetsPath");
     
-    lua_pushcfunction(pLuaState, luaAddModelToOpaqueGeometrySubpass);
-    lua_setfield(pLuaState, -2, "addModelToOpaqueGeometrySubpass");
+    lua_pushcfunction(pLuaState, luaAddModelToGeometrySubpass);
+    lua_setfield(pLuaState, -2, "addModelToGeometrySubpass");
     
-    lua_pushcfunction(pLuaState, luaRemoveModelFromOpaqueGeometrySubpass);
-    lua_setfield(pLuaState, -2, "removeModelFromOpaqueGeometrySubpass");
+    lua_pushcfunction(pLuaState, luaRemoveModelFromGeometrySubpass);
+    lua_setfield(pLuaState, -2, "removeModelFromGeometrySubpass");
     
-    lua_pushcfunction(pLuaState, luaUpdateInstancesInOpaqueGeometrySubpass);
-    lua_setfield(pLuaState, -2, "updateInstancesInOpaqueGeometrySubpass");
+    lua_pushcfunction(pLuaState, luaUpdateInstancesInGeometrySubpass);
+    lua_setfield(pLuaState, -2, "updateInstancesInGeometrySubpass");
     
     lua_pushcfunction(pLuaState, luaAddModelToWaterGeometrySubpass);
     lua_setfield(pLuaState, -2, "addModelToWaterGeometrySubpass");

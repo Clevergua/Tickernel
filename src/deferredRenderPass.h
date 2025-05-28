@@ -1,7 +1,6 @@
 #pragma once
-#include "opaqueGeometrySubpass.h"
-#include "opaqueLightingSubpass.h"
-#include "waterGeometrySubpass.h"
+#include "geometrySubpass.h"
+#include "lightingSubpass.h"
 #include "postProcessSubpass.h"
 typedef struct DeferredRenderPassStruct
 {
@@ -9,7 +8,7 @@ typedef struct DeferredRenderPassStruct
     uint32_t vkFramebufferCount;
     VkFramebuffer *vkFramebuffers;
 
-    Subpass opaqueGeometrySubpass;
+    Subpass geometrySubpass;
     Subpass lightingSubpass;
     Subpass postProcessSubpass;
 } DeferredRenderPass;

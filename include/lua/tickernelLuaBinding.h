@@ -3,9 +3,9 @@
 #include "lualib.h"
 #include "tickernelVoxel.h"
 
-int luaAddModelToOpaqueGeometrySubpass(lua_State *pLuaState);
-int luaRemoveModelFromOpaqueGeometrySubpass(lua_State *pLuaState);
-int luaUpdateInstancesInOpaqueGeometrySubpass(lua_State *pLuaState);
+int luaAddModelToGeometrySubpass(lua_State *pLuaState);
+int luaRemoveModelFromGeometrySubpass(lua_State *pLuaState);
+int luaUpdateInstancesInGeometrySubpass(lua_State *pLuaState);
 
 int luaAddModelToWaterGeometrySubpass(lua_State *pLuaState);
 int luaRemoveModelFromWaterGeometrySubpass(lua_State *pLuaState);

@@ -1,6 +1,6 @@
 #include "uiSubpass.h"
 
-static void createVkPipeline(Subpass *pUISubpass, const char *shadersPath, VkRenderPass vkRenderPass, uint32_t uiSubpassIndex, VkDevice vkDevice, VkViewport viewport, VkRect2D scissor)
+static void createVkPipelines(Subpass *pUISubpass, const char *shadersPath, VkRenderPass vkRenderPass, uint32_t uiSubpassIndex, VkDevice vkDevice, VkViewport viewport, VkRect2D scissor)
 {
     VkShaderModule uiVertShaderModule;
     char uiVertShaderPath[FILENAME_MAX];
@@ -224,7 +224,7 @@ static void destroyVkPipeline(Subpass *pUISubpass, VkDevice vkDevice)
 
 void createUISubpass(Subpass *pUISubpass, const char *shadersPath, VkRenderPass vkRenderPass, uint32_t uiSubpassIndex, VkDevice vkDevice, VkViewport viewport, VkRect2D scissor)
 {
-    createVkPipeline(pUISubpass, shadersPath, vkRenderPass, uiSubpassIndex, vkDevice, viewport, scissor);
+    createVkPipelines(pUISubpass, shadersPath, vkRenderPass, uiSubpassIndex, vkDevice, viewport, scissor);
 
     pUISubpass->vkDescriptorPoolSizeCount = 1;
     pUISubpass->vkDescriptorPoolSizes = tickernelMalloc(sizeof(VkDescriptorPoolSize) * pUISubpass->vkDescriptorPoolSizeCount);
@@ -314,7 +314,7 @@ SubpassModel *addModelToUISubpass(Subpass *pUISubpass, VkDevice vkDevice, VkPhys
     return tickernelAddToDynamicArray(&pUISubpass->modelDynamicArray, &subpassModel, pUISubpass->modelDynamicArray.length);
 }
 
-void removeModelFromUISubpass(Subpass *pOpaqueGeometrySubpass, VkDevice vkDevice, SubpassModel *pSubpassModel)
+void removeModelFromUISubpass(Subpass *pGeometrySubpass, VkDevice vkDevice, SubpassModel *pSubpassModel)
 {
     if (pSubpassModel->maxInstanceCount > 0)
     {
@@ -326,5 +326,5 @@ void removeModelFromUISubpass(Subpass *pOpaqueGeometrySubpass, VkDevice vkDevice
     VkResult result = vkFreeDescriptorSets(vkDevice, pSubpassModel->vkDescriptorPool, 1, &pSubpassModel->vkDescriptorSet);
     tryThrowVulkanError(result);
     vkDestroyDescriptorPool(vkDevice, pSubpassModel->vkDescriptorPool, NULL);
-    tickernelRemoveFromDynamicArray(&pOpaqueGeometrySubpass->modelDynamicArray, pSubpassModel);
+    tickernelRemoveFromDynamicArray(&pGeometrySubpass->modelDynamicArray, pSubpassModel);
 }

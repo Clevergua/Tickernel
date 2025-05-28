@@ -206,17 +206,17 @@ void createDeferredRenderPass(DeferredRenderPass *pDeferredRenderPass, const cha
     }
 
     uint32_t subpassIndex = 0;
-    createOpaqueGeometrySubpass(&pDeferredRenderPass->opaqueGeometrySubpass, shadersPath, pDeferredRenderPass->vkRenderPass, subpassIndex, vkDevice, viewport, scissor);
+    createGeometrySubpass(&pDeferredRenderPass->geometrySubpass, shadersPath, pDeferredRenderPass->vkRenderPass, subpassIndex, vkDevice, viewport, scissor);
     subpassIndex++;
-    createOpaqueLightingSubpass(&pDeferredRenderPass->lightingSubpass, shadersPath, pDeferredRenderPass->vkRenderPass, subpassIndex, vkDevice, viewport, scissor, globalUniformBuffer, lightsUniformBuffer, depthGraphicImage.vkImageView, albedoGraphicImage.vkImageView, normalGraphicImage.vkImageView);
+    createLightingSubpass(&pDeferredRenderPass->lightingSubpass, shadersPath, pDeferredRenderPass->vkRenderPass, subpassIndex, vkDevice, viewport, scissor, globalUniformBuffer, lightsUniformBuffer, depthGraphicImage.vkImageView, albedoGraphicImage.vkImageView, normalGraphicImage.vkImageView);
     subpassIndex++;
     createPostProcessSubpass(&pDeferredRenderPass->postProcessSubpass, shadersPath, pDeferredRenderPass->vkRenderPass, subpassIndex, vkDevice, viewport, scissor, colorGraphicImage.vkImageView);
 }
 void destroyDeferredRenderPass(DeferredRenderPass *pDeferredRenderPass, VkDevice vkDevice)
 {
     destroyPostProcessSubpass(&pDeferredRenderPass->postProcessSubpass, vkDevice);
-    destroyOpaqueGeometrySubpass(&pDeferredRenderPass->opaqueGeometrySubpass, vkDevice);
-    destroyOpaqueLightingSubpass(&pDeferredRenderPass->lightingSubpass, vkDevice);
+    destroyGeometrySubpass(&pDeferredRenderPass->geometrySubpass, vkDevice);
+    destroyLightingSubpass(&pDeferredRenderPass->lightingSubpass, vkDevice);
 
     for (size_t i = 0; i < pDeferredRenderPass->vkFramebufferCount; i++)
     {
@@ -250,8 +250,8 @@ void updateDeferredRenderPass(DeferredRenderPass *pDeferredRenderPass, VkDevice 
         tryThrowVulkanError(result);
     }
 
-    Subpass *pOpaqueLightingSubpass = &pDeferredRenderPass->lightingSubpass;
-    recreateOpaqueLightingSubpassModel(pOpaqueLightingSubpass, vkDevice, globalUniformBuffer, lightsUniformBuffer, depthGraphicImage.vkImageView, albedoGraphicImage.vkImageView, normalGraphicImage.vkImageView);
+    Subpass *pLightingSubpass = &pDeferredRenderPass->lightingSubpass;
+    recreateLightingSubpassModel(pLightingSubpass, vkDevice, globalUniformBuffer, lightsUniformBuffer, depthGraphicImage.vkImageView, albedoGraphicImage.vkImageView, normalGraphicImage.vkImageView);
     Subpass *pPostProcessSubpass = &pDeferredRenderPass->postProcessSubpass;
     recreatePostProcessSubpassModel(pPostProcessSubpass, vkDevice, colorGraphicImage.vkImageView);
 }
@@ -300,10 +300,10 @@ void recordDeferredRenderPass(DeferredRenderPass *pDeferredRenderPass, VkCommand
         };
 
     vkCmdBeginRenderPass(vkCommandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
-    Subpass *pOpaqueGeometrySubpass = &pDeferredRenderPass->opaqueGeometrySubpass;
-    for (uint32_t i = 0; i < pOpaqueGeometrySubpass->pipelineCount; i++)
+    Subpass *pGeometrySubpass = &pDeferredRenderPass->geometrySubpass;
+    for (uint32_t i = 0; i < pGeometrySubpass->pipelineCount; i++)
     {
-        Pipeline *pPipeline = &pOpaqueGeometrySubpass->pipelines[i];
+        Pipeline *pPipeline = &pGeometrySubpass->pipelines[i];
         vkCmdBindPipeline(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pPipeline->vkPipeline);
         for (uint32_t modelIndex = 0; modelIndex < pPipeline->modelDynamicArray.length; modelIndex++)
         {
@@ -322,7 +322,7 @@ void recordDeferredRenderPass(DeferredRenderPass *pDeferredRenderPass, VkCommand
     }
 
     vkCmdNextSubpass(vkCommandBuffer, VK_SUBPASS_CONTENTS_INLINE);
-    // opaqueLighting subpass
+    // lighting subpass
     Subpass *pLightingSubpass = &pDeferredRenderPass->lightingSubpass;
     Pipeline *pLightingPipeline = &pLightingSubpass->pipelines[0];
     SubpassModel *pSubpassModel = pLightingPipeline->modelDynamicArray.array[0];
