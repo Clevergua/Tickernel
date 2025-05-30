@@ -3,6 +3,7 @@
 void createDeferredRenderPass(DeferredRenderPass *pDeferredRenderPass, const char *shadersPath, VkDevice vkDevice, GraphicImage colorGraphicImage, GraphicImage depthGraphicImage, GraphicImage albedoGraphicImage, GraphicImage normalGraphicImage, uint32_t swapchainCount, VkImageView *swapchainImageViews, VkFormat swapchainVkFormat, VkViewport viewport, VkRect2D scissor, VkBuffer globalUniformBuffer, VkBuffer lightsUniformBuffer)
 {
     printf("CreateDeferredRenderPass:\n");
+
     VkFormat colorVkFormat = colorGraphicImage.vkFormat;
     VkFormat depthVkFormat = depthGraphicImage.vkFormat;
     VkFormat albedoVkFormat = albedoGraphicImage.vkFormat;
@@ -211,7 +212,6 @@ void createDeferredRenderPass(DeferredRenderPass *pDeferredRenderPass, const cha
     subpassIndex++;
     createPostProcessSubpass(&pDeferredRenderPass->postProcessSubpass, shadersPath, pDeferredRenderPass->vkRenderPass, subpassIndex, vkDevice, viewport, scissor, colorGraphicImage.vkImageView);
 }
-
 void destroyDeferredRenderPass(DeferredRenderPass *pDeferredRenderPass, VkDevice vkDevice)
 {
     destroyPostProcessSubpass(&pDeferredRenderPass->postProcessSubpass, vkDevice);
@@ -258,8 +258,8 @@ void updateDeferredRenderPass(DeferredRenderPass *pDeferredRenderPass, VkDevice 
 
 void recordDeferredRenderPass(DeferredRenderPass *pDeferredRenderPass, VkCommandBuffer vkCommandBuffer, VkViewport viewport, VkRect2D scissor, VkDevice vkDevice, uint32_t swapchainIndex)
 {
+
     vkCmdSetScissor(vkCommandBuffer, 0, 1, &scissor);
-    vkCmdSetViewport(vkCommandBuffer, 0, 1, &viewport);
     VkOffset2D offset =
         {
             .x = 0,
@@ -298,11 +298,50 @@ void recordDeferredRenderPass(DeferredRenderPass *pDeferredRenderPass, VkCommand
             .clearValueCount = clearValueCount,
             .pClearValues = clearValues,
         };
+
     vkCmdBeginRenderPass(vkCommandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
-    recordGeometrySubpass(&pDeferredRenderPass->geometrySubpass, vkCommandBuffer);
+    Subpass *pGeometrySubpass = &pDeferredRenderPass->geometrySubpass;
+    for (uint32_t i = 0; i < pGeometrySubpass->pipelineCount; i++)
+    {
+        Pipeline *pPipeline = &pGeometrySubpass->pipelines[i];
+        vkCmdBindPipeline(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pPipeline->vkPipeline);
+        for (uint32_t modelIndex = 0; modelIndex < pPipeline->modelDynamicArray.length; modelIndex++)
+        {
+            SubpassModel *pSubpassModel = pPipeline->modelDynamicArray.array[modelIndex];
+            if (NULL != pSubpassModel)
+            {
+                vkCmdSetViewport(vkCommandBuffer, 0, 1, &viewport);
+                vkCmdSetScissor(vkCommandBuffer, 0, 1, &scissor);
+                vkCmdBindDescriptorSets(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pPipeline->vkPipelineLayout, 0, 1, &pSubpassModel->vkDescriptorSet, 0, NULL);
+                VkBuffer vertexBuffers[] = {pSubpassModel->pMesh->vertexBuffer, pSubpassModel->instanceBuffer};
+                VkDeviceSize offsets[] = {0, 0};
+                vkCmdBindVertexBuffers(vkCommandBuffer, 0, 2, vertexBuffers, offsets);
+                vkCmdDraw(vkCommandBuffer, pSubpassModel->pMesh->vertexCount, pSubpassModel->instanceCount, 0, 0);
+            }
+        }
+    }
+
     vkCmdNextSubpass(vkCommandBuffer, VK_SUBPASS_CONTENTS_INLINE);
-    recordLightingSubpass(&pDeferredRenderPass->lightingSubpass, vkCommandBuffer);
+    // lighting subpass
+    Subpass *pLightingSubpass = &pDeferredRenderPass->lightingSubpass;
+    Pipeline *pLightingPipeline = &pLightingSubpass->pipelines[0];
+    SubpassModel *pSubpassModel = pLightingPipeline->modelDynamicArray.array[0];
+    vkCmdBindPipeline(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pLightingPipeline->vkPipeline);
+    vkCmdSetViewport(vkCommandBuffer, 0, 1, &viewport);
+    vkCmdSetScissor(vkCommandBuffer, 0, 1, &scissor);
+    vkCmdBindDescriptorSets(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pLightingPipeline->vkPipelineLayout, 0, 1, &pSubpassModel->vkDescriptorSet, 0, NULL);
+    vkCmdDraw(vkCommandBuffer, 3, 1, 0, 0);
+
+    // postProcess subpass
     vkCmdNextSubpass(vkCommandBuffer, VK_SUBPASS_CONTENTS_INLINE);
-    recordPostProcessSubpass(&pDeferredRenderPass->postProcessSubpass, vkCommandBuffer);
+    Subpass *pPostProcessSubpass = &pDeferredRenderPass->postProcessSubpass;
+    Pipeline *pPostProcessPipeline = &pPostProcessSubpass->pipelines[0];
+    pSubpassModel = pPostProcessPipeline->modelDynamicArray.array[0];
+    vkCmdBindPipeline(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pPostProcessPipeline->vkPipeline);
+    vkCmdSetViewport(vkCommandBuffer, 0, 1, &viewport);
+    vkCmdSetScissor(vkCommandBuffer, 0, 1, &scissor);
+    vkCmdBindDescriptorSets(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pPostProcessPipeline->vkPipelineLayout, 0, 1, &pSubpassModel->vkDescriptorSet, 0, NULL);
+    vkCmdDraw(vkCommandBuffer, 3, 1, 0, 0);
+
     vkCmdEndRenderPass(vkCommandBuffer);
 }

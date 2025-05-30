@@ -1,14 +1,5 @@
 #include "graphic.h"
 
-
-void tryThrowVulkanError(VkResult vkResult)
-{
-    if (vkResult != VK_SUCCESS)
-    {
-        tickernelError("Vulkan error code: %d\n", vkResult);
-    }
-}
-
 static void hasAllRequiredExtensions(GraphicContext *pGraphicContext, VkPhysicalDevice vkPhysicalDevice, bool *pHasAllRequiredExtensions)
 {
     VkResult result = VK_SUCCESS;
@@ -546,8 +537,8 @@ static void recreateSwapchain(GraphicContext *pGraphicContext)
     destroyGraphicImages(pGraphicContext);
     createGraphicImages(pGraphicContext);
 
-    updateDeferredRenderPass(&pGraphicContext->deferredRenderPass, pGraphicContext->vkDevice, pGraphicContext->colorGraphicImage, pGraphicContext->depthGraphicImage, pGraphicContext->albedoGraphicImage, pGraphicContext->normalGraphicImage, pGraphicContext->swapchainImageViews, swapchainWidth, swapchainHeight, pGraphicContext->globalUniformBuffer, pGraphicContext->lightsUniformBuffer);
-    // updatePostProcessRenderPass(&pGraphicContext->postProcessRenderPass, pGraphicContext->vkDevice, pGraphicContext->colorGraphicImage, swapchainWidth, swapchainHeight, pGraphicContext->swapchainImageViews);
+    // updateDeferredRenderPass(&pGraphicContext->deferredRenderPass, pGraphicContext->vkDevice, pGraphicContext->colorGraphicImage, pGraphicContext->depthGraphicImage, pGraphicContext->albedoGraphicImage, pGraphicContext->normalGraphicImage, pGraphicContext->swapchainImageViews, swapchainWidth, swapchainHeight, pGraphicContext->globalUniformBuffer, pGraphicContext->lightsUniformBuffer);
+
     // updateUIRenderPass(&pGraphicContext->uiRenderPass, pGraphicContext->vkDevice, pGraphicContext->colorGraphicImage, swapchainWidth, swapchainHeight, pGraphicContext->swapchainImageViews);
 }
 
@@ -632,30 +623,31 @@ static void createUniformBuffers(GraphicContext *pGraphicContext)
 {
     VkResult result = VK_SUCCESS;
     size_t bufferSize = sizeof(GlobalUniformBuffer);
-    createBuffer(pGraphicContext->vkDevice, pGraphicContext->vkPhysicalDevice, bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &pGraphicContext->globalUniformBuffer, &pGraphicContext->globalUniformBufferMemory);
-    result = vkMapMemory(pGraphicContext->vkDevice, pGraphicContext->globalUniformBufferMemory, 0, bufferSize, 0, &pGraphicContext->globalUniformBufferMapped);
+
+    createBuffer(pGraphicContext->vkDevice, pGraphicContext->vkPhysicalDevice, bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &pGraphicContext->globalUniformBufferMappedBuffer.buffer.buffer, &pGraphicContext->globalUniformBufferMappedBuffer.buffer.bufferMemory);
+    result = vkMapMemory(pGraphicContext->vkDevice, pGraphicContext->globalUniformBufferMappedBuffer.buffer.bufferMemory, 0, bufferSize, 0, &pGraphicContext->globalUniformBufferMappedBuffer.mapped);
     tryThrowVulkanError(result);
 
     bufferSize = sizeof(LightsUniformBuffer);
-    createBuffer(pGraphicContext->vkDevice, pGraphicContext->vkPhysicalDevice, bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &pGraphicContext->lightsUniformBuffer, &pGraphicContext->lightsUniformBufferMemory);
-    result = vkMapMemory(pGraphicContext->vkDevice, pGraphicContext->lightsUniformBufferMemory, 0, bufferSize, 0, &pGraphicContext->lightsUniformBufferMapped);
+    createBuffer(pGraphicContext->vkDevice, pGraphicContext->vkPhysicalDevice, bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &pGraphicContext->lightsUniformBufferMappedBuffer.buffer.buffer, &pGraphicContext->lightsUniformBufferMappedBuffer.buffer.bufferMemory);
+    result = vkMapMemory(pGraphicContext->vkDevice, pGraphicContext->lightsUniformBufferMappedBuffer.buffer.bufferMemory, 0, bufferSize, 0, &pGraphicContext->lightsUniformBufferMappedBuffer.mapped);
     tryThrowVulkanError(result);
 }
 
 static void destroyUniformBuffers(GraphicContext *pGraphicContext)
 {
-    vkUnmapMemory(pGraphicContext->vkDevice, pGraphicContext->lightsUniformBufferMemory);
-    destroyBuffer(pGraphicContext->vkDevice, pGraphicContext->lightsUniformBuffer, pGraphicContext->lightsUniformBufferMemory);
+    vkUnmapMemory(pGraphicContext->vkDevice, pGraphicContext->lightsUniformBufferMappedBuffer.buffer.bufferMemory);
+    destroyBuffer(pGraphicContext->vkDevice, pGraphicContext->lightsUniformBufferMappedBuffer.buffer.buffer, pGraphicContext->lightsUniformBufferMappedBuffer.buffer.bufferMemory);
 
-    vkUnmapMemory(pGraphicContext->vkDevice, pGraphicContext->globalUniformBufferMemory);
-    destroyBuffer(pGraphicContext->vkDevice, pGraphicContext->globalUniformBuffer, pGraphicContext->globalUniformBufferMemory);
+    vkUnmapMemory(pGraphicContext->vkDevice, pGraphicContext->globalUniformBufferMappedBuffer.buffer.bufferMemory);
+    destroyBuffer(pGraphicContext->vkDevice, pGraphicContext->globalUniformBufferMappedBuffer.buffer.buffer, pGraphicContext->globalUniformBufferMappedBuffer.buffer.bufferMemory);
 }
 
 static void updateGlobalUniformBuffer(GraphicContext *pGraphicContext)
 {
     if (pGraphicContext->canUpdateGlobalUniformBuffer)
     {
-        memcpy(pGraphicContext->globalUniformBufferMapped, &pGraphicContext->inputGlobalUniformBuffer, sizeof(pGraphicContext->inputGlobalUniformBuffer));
+        memcpy(pGraphicContext->globalUniformBufferMappedBuffer.mapped, &pGraphicContext->inputGlobalUniformBuffer, sizeof(pGraphicContext->inputGlobalUniformBuffer));
         pGraphicContext->canUpdateGlobalUniformBuffer = false;
     }
     else
@@ -668,7 +660,7 @@ static void updateLightsUniformBuffer(GraphicContext *pGraphicContext)
 {
     if (pGraphicContext->canUpdateLightsUniformBuffer)
     {
-        memcpy(pGraphicContext->lightsUniformBufferMapped, &pGraphicContext->inputLightsUniformBuffer, sizeof(pGraphicContext->inputLightsUniformBuffer));
+        memcpy(pGraphicContext->lightsUniformBufferMappedBuffer.mapped, &pGraphicContext->inputLightsUniformBuffer, sizeof(pGraphicContext->inputLightsUniformBuffer));
         pGraphicContext->canUpdateLightsUniformBuffer = false;
     }
     else
@@ -717,10 +709,9 @@ static void recordCommandBuffer(GraphicContext *pGraphicContext)
     VkResult result = vkBeginCommandBuffer(vkCommandBuffer, &vkCommandBufferBeginInfo);
     tryThrowVulkanError(result);
 
-    recordDeferredRenderPass(&pGraphicContext->deferredRenderPass, vkCommandBuffer, viewport, scissor, pGraphicContext->vkDevice, pGraphicContext->swapchainIndex);
+    // recordDeferredRenderPass(&pGraphicContext->deferredRenderPass, vkCommandBuffer, viewport, scissor, pGraphicContext->vkDevice, pGraphicContext->swapchainIndex);
     // recordPostProcessRenderPass(&pGraphicContext->postProcessRenderPass, vkCommandBuffer, viewport, scissor, pGraphicContext->vkDevice, pGraphicContext->swapchainIndex);
     // recordUIRenderPass(&pGraphicContext->uiRenderPass, vkCommandBuffer, viewport, scissor, pGraphicContext->vkDevice, pGraphicContext->swapchainIndex);
-
     result = vkEndCommandBuffer(vkCommandBuffer);
     tryThrowVulkanError(result);
 }
@@ -765,9 +756,9 @@ GraphicContext *startGraphic(const char *assetsPath, int targetSwapchainImageCou
         .offset = offset,
         .extent = extent,
     };
-    createDeferredRenderPass(&pGraphicContext->deferredRenderPass, pGraphicContext->assetsPath, pGraphicContext->vkDevice, pGraphicContext->colorGraphicImage, pGraphicContext->depthGraphicImage, pGraphicContext->albedoGraphicImage, pGraphicContext->normalGraphicImage, pGraphicContext->swapchainImageCount, pGraphicContext->swapchainImageViews, pGraphicContext->surfaceFormat.format, viewport, scissor, pGraphicContext->globalUniformBuffer, pGraphicContext->lightsUniformBuffer);
+    // createDeferredRenderPass(&pGraphicContext->deferredRenderPass, pGraphicContext->assetsPath, pGraphicContext->vkDevice, pGraphicContext->colorGraphicImage, pGraphicContext->depthGraphicImage, pGraphicContext->albedoGraphicImage, pGraphicContext->normalGraphicImage, pGraphicContext->swapchainImageCount, pGraphicContext->swapchainImageViews, pGraphicContext->surfaceFormat.format, viewport, scissor, pGraphicContext->globalUniformBuffer, pGraphicContext->lightsUniformBuffer);
     // createPostProcessRenderPass(&pGraphicContext->postProcessRenderPass, pGraphicContext->assetsPath, pGraphicContext->vkDevice, pGraphicContext->colorGraphicImage, viewport, scissor, pGraphicContext->swapchainImageCount, pGraphicContext->swapchainImageViews, pGraphicContext->surfaceFormat.format);
-    createUIRenderPass(&pGraphicContext->uiRenderPass, pGraphicContext->vkDevice, pGraphicContext->surfaceFormat.format, pGraphicContext->swapchainImageCount, pGraphicContext->swapchainImageViews, viewport, scissor);
+    // createUIRenderPass(&pGraphicContext->uiRenderPass, pGraphicContext->vkDevice, pGraphicContext->surfaceFormat.format, pGraphicContext->swapchainImageCount, pGraphicContext->swapchainImageViews, viewport, scissor);
 
     return pGraphicContext;
 }
@@ -810,6 +801,7 @@ void updateGraphic(GraphicContext *pGraphicContext, uint32_t swapchainWidth, uin
 
                 updateGlobalUniformBuffer(pGraphicContext);
                 updateLightsUniformBuffer(pGraphicContext);
+
                 recordCommandBuffer(pGraphicContext);
                 submitCommandBuffer(pGraphicContext);
                 present(pGraphicContext);
@@ -839,7 +831,7 @@ void endGraphic(GraphicContext *pGraphicContext)
     tryThrowVulkanError(result);
     // destroyUIRenderPass(&pGraphicContext->uiRenderPass, pGraphicContext->vkDevice);
     // destroyPostProcessRenderPass(&pGraphicContext->postProcessRenderPass, pGraphicContext->vkDevice);
-    destroyDeferredRenderPass(&pGraphicContext->deferredRenderPass, pGraphicContext->vkDevice);
+    // destroyDeferredRenderPass(&pGraphicContext->deferredRenderPass, pGraphicContext->vkDevice);
     destroyGraphicImages(pGraphicContext);
     destroyUniformBuffers(pGraphicContext);
     destroyVkCommandBuffers(pGraphicContext);

@@ -71,7 +71,9 @@
         "uisubpass.h": "c",
         "algorithm": "c",
         "chrono": "c",
-        "lightingsubpass.h": "c"
+        "lightingsubpass.h": "c",
+        "geometrysubpass.h": "c",
+        "streambuf": "c"
     },
-    "cmake.sourceDirectory": "/Users/forgemastergua/Documents/GitHub/Tickernel"
+    "cmake.sourceDirectory": "/Users/hema/Documents/GitHub/Tickernel"
 }

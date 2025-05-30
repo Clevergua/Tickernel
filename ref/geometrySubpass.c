@@ -6,13 +6,13 @@ void createGeometrySubpass(Subpass *pGeometrySubpass, const char *shadersPath, V
     pGeometrySubpass->pipelines = tickernelMalloc(sizeof(Pipeline) * pGeometrySubpass->pipelineCount);
 
     char *vertShaderPaths[] = {
-        "opaqueGeometry.vert.spv",
-        "waterGeometry.vert.spv",
+        "geometry.vert.spv",
+        "geometry.frag.spv",
     };
 
     char *fragShaderPaths[] = {
-        "opaqueGeometry.frag.spv",
-        "waterGeometry.frag.spv",
+        "geometry.frag.spv",
+        "geometry.vert.spv",
     };
 
     VkVertexInputBindingDescription vertexBindingDescriptions[] = {
@@ -292,7 +292,7 @@ void createGeometrySubpass(Subpass *pGeometrySubpass, const char *shadersPath, V
             .descriptorCount = 1,
         };
 
-        tickernelCreateDynamicArray(&pPipeline->materialDynamicArray, 1, sizeof(Material));
+        tickernelCreateDynamicArray(&pPipeline->modelDynamicArray, 1, sizeof(SubpassModel));
     }
 }
 
@@ -301,18 +301,16 @@ void destroyGeometrySubpass(Subpass *pGeometrySubpass, VkDevice vkDevice)
     for (uint32_t i = 0; i < pGeometrySubpass->pipelineCount; i++)
     {
         Pipeline *pPipeline = &pGeometrySubpass->pipelines[i];
-        for (uint32_t i = 0; i < pPipeline->materialDynamicArray.length; i++)
+
+        for (uint32_t i = pPipeline->modelDynamicArray.length - 1; i > -1; i--)
         {
-            Material *pMaterial = pPipeline->materialDynamicArray.array[i];
-            for (uint32_t j = pMaterial->meshDynamicArray.length - 1; j > -1; j--)
-            {
-                // TODO: removeMesh
-            }
-            tickernelDestroyDynamicArray(&pMaterial->meshDynamicArray);
+            SubpassModel *pSubpassModel = pPipeline->modelDynamicArray.array[i];
+            removeModelFromGeometrySubpass(pPipeline, vkDevice, pSubpassModel);
         }
-        tickernelDestroyDynamicArray(&pPipeline->materialDynamicArray);
+        tickernelDestroyDynamicArray(&pPipeline->modelDynamicArray);
 
         tickernelFree(pPipeline->vkDescriptorPoolSizes);
+
         vkDestroyDescriptorSetLayout(vkDevice, pPipeline->descriptorSetLayout, NULL);
         vkDestroyPipelineLayout(vkDevice, pPipeline->vkPipelineLayout, NULL);
         vkDestroyPipeline(vkDevice, pPipeline->vkPipeline, NULL);
@@ -320,24 +318,109 @@ void destroyGeometrySubpass(Subpass *pGeometrySubpass, VkDevice vkDevice)
     tickernelFree(pGeometrySubpass->pipelines);
 }
 
-void recordGeometrySubpass(Subpass *pGeometrySubpass, VkCommandBuffer vkCommandBuffer)
+SubpassModel *addModelToGeometrySubpass(Subpass *pGeometrySubpass, VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkCommandPool graphicVkCommandPool, VkQueue vkGraphicQueue, VkBuffer globalUniformBuffer, uint32_t vertexCount, GeometrySubpassVertex *geometrySubpassVertices)
 {
-    for (uint32_t i = 0; i < pGeometrySubpass->pipelineCount; i++)
-    {
-        Pipeline *pPipeline = &pGeometrySubpass->pipelines[i];
-        vkCmdBindPipeline(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pPipeline->vkPipeline);
-        for (uint32_t modelIndex = 0; modelIndex < pPipeline->materialDynamicArray.length; modelIndex++)
+    SubpassModel subpassModel = {
+        .pMesh = NULL,
+
+        .maxInstanceCount = 0,
+        .instanceCount = 0,
+        .instanceBuffer = NULL,
+        .instanceBufferMemory = NULL,
+
+        .modelUniformBuffer = NULL,
+        .modelUniformBufferMemory = NULL,
+        .modelUniformBufferMapped = NULL,
+
+        .vkDescriptorPool = NULL,
+        .vkDescriptorSet = NULL,
+    };
+    VkDeviceSize vertexBufferSize = sizeof(GeometrySubpassVertex) * vertexCount;
+    createBuffer(vkDevice, vkPhysicalDevice, vertexBufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &subpassModel.vertexBuffer, &subpassModel.vertexBufferMemory);
+    updateBufferWithStagingBuffer(vkDevice, vkPhysicalDevice, 0, vertexBufferSize, geometrySubpassVertices, graphicVkCommandPool, vkGraphicQueue, subpassModel.vertexBuffer);
+    // Create vkDescriptorPool
+    VkDescriptorPoolCreateInfo descriptorPoolCreateInfo = {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+        .pNext = NULL,
+        .flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
+        .maxSets = 1,
+        .poolSizeCount = pGeometrySubpass->vkDescriptorPoolSizeCount,
+        .pPoolSizes = pGeometrySubpass->vkDescriptorPoolSizes,
+    };
+    VkResult result = vkCreateDescriptorPool(vkDevice, &descriptorPoolCreateInfo, NULL, &subpassModel.vkDescriptorPool);
+    tryThrowVulkanError(result);
+
+    // Create vkDescriptorSet
+    VkDescriptorSetAllocateInfo descriptorSetAllocateInfo = {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+        .pNext = NULL,
+        .descriptorPool = subpassModel.vkDescriptorPool,
+        .descriptorSetCount = 1,
+        .pSetLayouts = &pGeometrySubpass->descriptorSetLayout,
+    };
+    result = vkAllocateDescriptorSets(vkDevice, &descriptorSetAllocateInfo, &subpassModel.vkDescriptorSet);
+    tryThrowVulkanError(result);
+
+    VkDescriptorBufferInfo globalDescriptorBufferInfo = {
+        .buffer = globalUniformBuffer,
+        .offset = 0,
+        .range = sizeof(GlobalUniformBuffer),
+    };
+    VkWriteDescriptorSet descriptorWrites[1] = {
         {
-            Material *pMaterial = pPipeline->materialDynamicArray.array[modelIndex];
-            vkCmdBindDescriptorSets(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pPipeline->vkPipelineLayout, 0, 1, &pMaterial->vkDescriptorSet, 0, NULL);
-            for (uint32_t meshIndex = 0; meshIndex < pMaterial->meshDynamicArray.length; meshIndex++)
-            {
-                GeometryMesh *pGeometryMesh = pMaterial->meshDynamicArray.array[meshIndex];
-                VkBuffer vertexBuffers[] = {pGeometryMesh->vertexBuffer.buffer, pGeometryMesh->instanceBuffer.buffer.buffer};
-                VkDeviceSize offsets[] = {0, 0};
-                vkCmdBindVertexBuffers(vkCommandBuffer, 0, 2, vertexBuffers, offsets);
-                vkCmdDraw(vkCommandBuffer, pGeometryMesh->vertexCount, pGeometryMesh->instanceCount, 0, 0);
-            }
-        }
+            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            .pNext = NULL,
+            .dstSet = subpassModel.vkDescriptorSet,
+            .dstBinding = 0,
+            .dstArrayElement = 0,
+            .descriptorCount = 1,
+            .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+            .pImageInfo = NULL,
+            .pBufferInfo = &globalDescriptorBufferInfo,
+            .pTexelBufferView = NULL,
+        },
+    };
+    vkUpdateDescriptorSets(vkDevice, 1, descriptorWrites, 0, NULL);
+    return tickernelAddToDynamicArray(&pGeometrySubpass->modelDynamicArray, &subpassModel, pGeometrySubpass->modelDynamicArray.length);
+}
+void removeModelFromGeometrySubpass(Subpass *pGeometrySubpass, VkDevice vkDevice, SubpassModel *pSubpassModel)
+{
+    if (pSubpassModel->maxInstanceCount > 0)
+    {
+        destroyBuffer(vkDevice, pSubpassModel->instanceBuffer, pSubpassModel->instanceBufferMemory);
+    }
+    destroyBuffer(vkDevice, pSubpassModel->modelUniformBuffer, pSubpassModel->modelUniformBufferMemory);
+    destroyBuffer(vkDevice, pSubpassModel->vertexBuffer, pSubpassModel->vertexBufferMemory);
+
+    VkResult result = vkFreeDescriptorSets(vkDevice, pSubpassModel->vkDescriptorPool, 1, &pSubpassModel->vkDescriptorSet);
+    tryThrowVulkanError(result);
+    vkDestroyDescriptorPool(vkDevice, pSubpassModel->vkDescriptorPool, NULL);
+    tickernelRemoveFromDynamicArray(&pGeometrySubpass->modelDynamicArray, pSubpassModel);
+}
+
+void updateInstancesInGeometrySubpass(Subpass *pGeometrySubpass, SubpassModel *pSubpassModel, VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkCommandPool graphicVkCommandPool, VkQueue vkGraphicQueue, VkBuffer globalUniformBuffer, GeometrySubpassInstance *geometrySubpassInstances, uint32_t instanceCount)
+{
+    if (0 == pSubpassModel->maxInstanceCount)
+    {
+        pSubpassModel->maxInstanceCount = instanceCount;
+        pSubpassModel->instanceCount = instanceCount;
+        VkDeviceSize instanceBufferSize = sizeof(GeometrySubpassInstance) * pSubpassModel->instanceCount;
+        createBuffer(vkDevice, vkPhysicalDevice, instanceBufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &pSubpassModel->instanceBuffer, &pSubpassModel->instanceBufferMemory);
+        updateBuffer(vkDevice, pSubpassModel->instanceBufferMemory, 0, sizeof(GeometrySubpassInstance) * instanceCount, geometrySubpassInstances);
+    }
+    else if (instanceCount <= pSubpassModel->maxInstanceCount)
+    {
+        pSubpassModel->instanceCount = instanceCount;
+        VkDeviceSize bufferSize = sizeof(GeometrySubpassInstance) * pSubpassModel->instanceCount;
+        updateBuffer(vkDevice, pSubpassModel->instanceBufferMemory, 0, bufferSize, geometrySubpassInstances);
+    }
+    else
+    {
+        destroyBuffer(vkDevice, pSubpassModel->instanceBuffer, pSubpassModel->instanceBufferMemory);
+        pSubpassModel->maxInstanceCount = instanceCount;
+        pSubpassModel->instanceCount = instanceCount;
+        VkDeviceSize instanceBufferSize = sizeof(GeometrySubpassInstance) * pSubpassModel->instanceCount;
+        createBuffer(vkDevice, vkPhysicalDevice, instanceBufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &pSubpassModel->instanceBuffer, &pSubpassModel->instanceBufferMemory);
+        updateBuffer(vkDevice, pSubpassModel->instanceBufferMemory, 0, sizeof(GeometrySubpassInstance) * instanceCount, geometrySubpassInstances);
     }
 }

@@ -18,33 +18,34 @@ typedef struct
     VkDevice vkDevice;
     VkQueue vkGraphicQueue;
     VkQueue vkPresentQueue;
+    
     VkSwapchainKHR vkSwapchain;
     VkSurfaceFormatKHR surfaceFormat;
     uint32_t swapchainImageCount;
     VkImage *swapchainImages;
     VkImageView *swapchainImageViews;
+    uint32_t swapchainIndex;
+
     VkCommandPool graphicVkCommandPool;
     VkCommandBuffer *graphicVkCommandBuffers;
-    uint32_t swapchainIndex;
     VkSemaphore imageAvailableSemaphore;
     VkSemaphore renderFinishedSemaphore;
     VkFence renderFinishedFence;
-    VkBuffer globalUniformBuffer;
-    VkDeviceMemory globalUniformBufferMemory;
-    void *globalUniformBufferMapped;
-    VkBuffer lightsUniformBuffer;
-    VkDeviceMemory lightsUniformBufferMemory;
-    void *lightsUniformBufferMapped;
+
+    MappedBuffer globalUniformBufferMappedBuffer;
+    MappedBuffer lightsUniformBufferMappedBuffer;
+
     bool canUpdateGlobalUniformBuffer;
     bool canUpdateLightsUniformBuffer;
     GlobalUniformBuffer inputGlobalUniformBuffer;
     LightsUniformBuffer inputLightsUniformBuffer;
+    
     GraphicImage colorGraphicImage;
     GraphicImage depthGraphicImage;
     GraphicImage albedoGraphicImage;
     GraphicImage normalGraphicImage;
-    DeferredRenderPass deferredRenderPass;
-    UIRenderPass uiRenderPass;
+    // DeferredRenderPass deferredRenderPass;
+    // UIRenderPass uiRenderPass;
 } GraphicContext;
 
 GraphicContext *startGraphic(const char *assetsPath, int targetSwapchainImageCount, VkPresentModeKHR targetPresentMode, VkInstance vkInstance, VkSurfaceKHR vkSurface, uint32_t swapchainWidth, uint32_t swapchainHeight);

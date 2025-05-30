@@ -47,34 +47,29 @@ typedef struct
 
 typedef struct
 {
-    uint32_t vertexCount;
-    VkBuffer vertexBuffer;
-    VkDeviceMemory vertexBufferMemory;
-} Mesh;
+    VkBuffer buffer;
+    VkDeviceMemory bufferMemory;
+} Buffer;
 
 typedef struct
 {
-    Mesh* pMesh;
+    Buffer buffer;
+    void *mapped;
+} MappedBuffer;
 
-    uint32_t maxInstanceCount;
-    uint32_t instanceCount;
-    VkBuffer instanceBuffer;
-    VkDeviceMemory instanceBufferMemory;
-
-    VkBuffer modelUniformBuffer;
-    VkDeviceMemory modelUniformBufferMemory;
-    void *modelUniformBufferMapped;
-
+typedef struct
+{
+    TickernelDynamicArray meshDynamicArray;
     VkDescriptorPool vkDescriptorPool;
     VkDescriptorSet vkDescriptorSet;
-} SubpassModel;
+} Material;
 
 typedef struct
 {
     VkPipeline vkPipeline;
     VkPipelineLayout vkPipelineLayout;
     VkDescriptorSetLayout descriptorSetLayout;
-    TickernelDynamicArray modelDynamicArray;
+    TickernelDynamicArray materialDynamicArray;
 
     uint32_t vkDescriptorPoolSizeCount;
     VkDescriptorPoolSize *vkDescriptorPoolSizes;
@@ -83,7 +78,7 @@ typedef struct
 typedef struct
 {
     uint32_t pipelineCount;
-    Pipeline* pipelines;
+    Pipeline *pipelines;
 } Subpass;
 
 typedef struct
