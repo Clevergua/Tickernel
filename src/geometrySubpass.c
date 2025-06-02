@@ -25,19 +25,46 @@ void recordGeometrySubpass(Subpass *pGeometrySubpass, VkCommandBuffer vkCommandB
                 Mesh *pMesh = pMaterial->meshDynamicArray.array[meshIndex];
                 if (pMesh->vertexCount > 0)
                 {
-                    vkCmdBindVertexBuffers(vkCommandBuffer, 0, 1, &pMesh->vertexBuffer.vkBuffer, (VkDeviceSize[]){0});
                     if (pMesh->indexCount > 0)
                     {
-                        vkCmdBindIndexBuffer(vkCommandBuffer, pMesh->indexBuffer.vkBuffer, 0, VK_INDEX_TYPE_UINT32);
-                        vkCmdDrawIndexed(vkCommandBuffer, pMesh->indexCount, pMesh->instanceCount, 0, 0, 0);
+                        if (pMesh->instanceCount > 0)
+                        {
+                            VkBuffer vertexBuffers[] = {pMesh->vertexBuffer.vkBuffer, pMesh->instanceMappedBuffer.buffer.vkBuffer};
+                            VkDeviceSize offsets[] = {0, 0};
+                            vkCmdBindVertexBuffers(vkCommandBuffer, 0, 2, vertexBuffers, offsets);
+                            vkCmdBindIndexBuffer(vkCommandBuffer, pMesh->indexBuffer.vkBuffer, 0, VK_INDEX_TYPE_UINT32);
+                            vkCmdDrawIndexed(vkCommandBuffer, pMesh->indexCount, pMesh->instanceCount, 0, 0, 0);
+                        }
+                        else
+                        {
+                            VkBuffer vertexBuffers[] = {pMesh->vertexBuffer.vkBuffer};
+                            VkDeviceSize offsets[] = {0};
+                            vkCmdBindVertexBuffers(vkCommandBuffer, 0, 1, vertexBuffers, offsets);
+                            vkCmdBindIndexBuffer(vkCommandBuffer, pMesh->indexBuffer.vkBuffer, 0, VK_INDEX_TYPE_UINT32);
+                            vkCmdDrawIndexed(vkCommandBuffer, pMesh->indexCount, 1, 0, 0, 0);
+                        }
                     }
                     else
                     {
+                        if (pMesh->instanceCount > 0)
+                        {
+                            VkBuffer vertexBuffers[] = {pMesh->vertexBuffer.vkBuffer, pMesh->instanceMappedBuffer.buffer.vkBuffer};
+                            VkDeviceSize offsets[] = {0, 0};
+                            vkCmdBindVertexBuffers(vkCommandBuffer, 0, 2, vertexBuffers, offsets);
+                            vkCmdDraw(vkCommandBuffer, pMesh->vertexCount, pMesh->instanceCount, 0, 0);
+                        }
+                        else
+                        {
+                            VkBuffer vertexBuffers[] = {pMesh->vertexBuffer.vkBuffer};
+                            VkDeviceSize offsets[] = {0};
+                            vkCmdBindVertexBuffers(vkCommandBuffer, 0, 1, vertexBuffers, offsets);
+                            vkCmdDraw(vkCommandBuffer, pMesh->vertexCount, 1, 0, 0);
+                        }
                     }
                 }
                 else
                 {
-                    vkCmdDraw(vkCommandBuffer, pMesh->vertexCount, pMesh->instanceCount, 0, 0);
+                    // Skip mesh
                 }
             }
         }
