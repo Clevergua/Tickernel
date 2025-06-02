@@ -73,7 +73,8 @@
         "chrono": "c",
         "lightingsubpass.h": "c",
         "geometrysubpass.h": "c",
-        "streambuf": "c"
+        "streambuf": "c",
+        "__node_handle": "c"
     },
-    "cmake.sourceDirectory": "/Users/hema/Documents/GitHub/Tickernel"
+    "cmake.sourceDirectory": "/Users/forgemastergua/Documents/GitHub/Tickernel"
 }

@@ -69,8 +69,53 @@ static void findSupportedFormat(VkPhysicalDevice vkPhysicalDevice, VkFormat *can
     tickernelError("Target format not found!");
 }
 
-void copyVkBuffer(VkCommandPool graphicVkCommandPool, VkDevice vkDevice, VkQueue vkGraphicQueue, VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize offset, VkDeviceSize size)
+void createBuffer(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkDeviceSize bufferSize, VkBufferUsageFlags bufferUsageFlags, VkMemoryPropertyFlags memoryPropertyFlags, Buffer *pBuffer)
 {
+    VkResult result = VK_SUCCESS;
+    VkBufferCreateInfo bufferCreateInfo = {
+        .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+        .pNext = NULL,
+        .flags = 0,
+        .size = bufferSize,
+        .usage = bufferUsageFlags,
+        .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+        .queueFamilyIndexCount = 0,
+        .pQueueFamilyIndices = 0,
+    };
+    result = vkCreateBuffer(vkDevice, &bufferCreateInfo, NULL, &pBuffer->vkBuffer);
+    tryThrowVulkanError(result);
+    VkMemoryRequirements memoryRequirements;
+    vkGetBufferMemoryRequirements(vkDevice, pBuffer->vkBuffer, &memoryRequirements);
+    uint32_t memoryTypeIndex;
+    findMemoryType(vkPhysicalDevice, memoryRequirements.memoryTypeBits, memoryPropertyFlags, &memoryTypeIndex);
+    VkMemoryAllocateInfo memoryAllocateInfo = {
+        .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
+        .pNext = NULL,
+        .allocationSize = memoryRequirements.size,
+        .memoryTypeIndex = memoryTypeIndex,
+    };
+    result = vkAllocateMemory(vkDevice, &memoryAllocateInfo, NULL, &pBuffer->vkBufferMemory);
+    tryThrowVulkanError(result);
+    result = vkBindBufferMemory(vkDevice, pBuffer->vkBuffer, pBuffer->vkBufferMemory, 0);
+    tryThrowVulkanError(result);
+}
+void destroyBuffer(VkDevice vkDevice, Buffer buffer)
+{
+    vkFreeMemory(vkDevice, buffer.vkBufferMemory, NULL);
+    vkDestroyBuffer(vkDevice, buffer.vkBuffer, NULL);
+}
+
+void updateBufferWithStagingBuffer(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkDeviceSize offset, VkDeviceSize bufferSize, void *bufferData, VkCommandPool graphicVkCommandPool, VkQueue vkGraphicQueue, VkBuffer vkBuffer)
+{
+    Buffer stagingBuffer;
+    createBuffer(vkDevice, vkPhysicalDevice, bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingBuffer);
+
+    void *pData;
+    VkResult result = vkMapMemory(vkDevice, stagingBuffer.vkBufferMemory, offset, bufferSize, 0, &pData);
+    tryThrowVulkanError(result);
+    memcpy(pData, bufferData, bufferSize);
+    vkUnmapMemory(vkDevice, stagingBuffer.vkBufferMemory);
+
     VkCommandBuffer vkCommandBuffer;
     VkCommandBufferAllocateInfo vkCommandBufferAllocateInfo = {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
@@ -79,7 +124,7 @@ void copyVkBuffer(VkCommandPool graphicVkCommandPool, VkDevice vkDevice, VkQueue
         .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
         .commandBufferCount = 1,
     };
-    VkResult result = vkAllocateCommandBuffers(vkDevice, &vkCommandBufferAllocateInfo, &vkCommandBuffer);
+    result = vkAllocateCommandBuffers(vkDevice, &vkCommandBufferAllocateInfo, &vkCommandBuffer);
     tryThrowVulkanError(result);
 
     VkCommandBufferBeginInfo vkCommandBufferBeginInfo =
@@ -95,9 +140,9 @@ void copyVkBuffer(VkCommandPool graphicVkCommandPool, VkDevice vkDevice, VkQueue
     VkBufferCopy copyRegion = {
         .srcOffset = 0,
         .dstOffset = offset,
-        .size = size,
+        .size = bufferSize,
     };
-    vkCmdCopyBuffer(vkCommandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
+    vkCmdCopyBuffer(vkCommandBuffer, stagingBuffer.vkBuffer, vkBuffer, 1, &copyRegion);
 
     vkEndCommandBuffer(vkCommandBuffer);
     VkSubmitInfo submitInfo = {
@@ -113,66 +158,17 @@ void copyVkBuffer(VkCommandPool graphicVkCommandPool, VkDevice vkDevice, VkQueue
     };
     vkQueueSubmit(vkGraphicQueue, 1, &submitInfo, VK_NULL_HANDLE);
     vkQueueWaitIdle(vkGraphicQueue);
+
     vkFreeCommandBuffers(vkDevice, graphicVkCommandPool, 1, &vkCommandBuffer);
+    destroyBuffer(vkDevice, stagingBuffer);
 }
 
-void createBuffer(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkDeviceSize bufferSize, VkBufferUsageFlags bufferUsageFlags, VkMemoryPropertyFlags msemoryPropertyFlags, VkBuffer *pBuffer, VkDeviceMemory *pDeviceMemory)
-{
-    VkResult result = VK_SUCCESS;
-    VkBufferCreateInfo bufferCreateInfo = {
-        .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
-        .pNext = NULL,
-        .flags = 0,
-        .size = bufferSize,
-        .usage = bufferUsageFlags,
-        .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
-        .queueFamilyIndexCount = 0,
-        .pQueueFamilyIndices = 0,
-    };
-    result = vkCreateBuffer(vkDevice, &bufferCreateInfo, NULL, pBuffer);
-    tryThrowVulkanError(result);
-    VkMemoryRequirements memoryRequirements;
-    vkGetBufferMemoryRequirements(vkDevice, *pBuffer, &memoryRequirements);
-    uint32_t memoryTypeIndex;
-    findMemoryType(vkPhysicalDevice, memoryRequirements.memoryTypeBits, msemoryPropertyFlags, &memoryTypeIndex);
-    VkMemoryAllocateInfo memoryAllocateInfo = {
-        .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
-        .pNext = NULL,
-        .allocationSize = memoryRequirements.size,
-        .memoryTypeIndex = memoryTypeIndex,
-    };
-    result = vkAllocateMemory(vkDevice, &memoryAllocateInfo, NULL, pDeviceMemory);
-    tryThrowVulkanError(result);
-    result = vkBindBufferMemory(vkDevice, *pBuffer, *pDeviceMemory, 0);
-    tryThrowVulkanError(result);
-}
-void destroyBuffer(VkDevice vkDevice, VkBuffer vkBuffer, VkDeviceMemory deviceMemory)
-{
-    vkFreeMemory(vkDevice, deviceMemory, NULL);
-    vkDestroyBuffer(vkDevice, vkBuffer, NULL);
-}
-
-void updateBufferWithStagingBuffer(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkDeviceSize offset, VkDeviceSize bufferSize, void *bufferData, VkCommandPool graphicVkCommandPool, VkQueue vkGraphicQueue, VkBuffer vkBuffer)
-{
-    VkBuffer stagingBuffer;
-    VkDeviceMemory stagingBufferMemory;
-    createBuffer(vkDevice, vkPhysicalDevice, bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingBuffer, &stagingBufferMemory);
-
-    void *pData;
-    VkResult result = vkMapMemory(vkDevice, stagingBufferMemory, offset, bufferSize, 0, &pData);
-    tryThrowVulkanError(result);
-    memcpy(pData, bufferData, bufferSize);
-    vkUnmapMemory(vkDevice, stagingBufferMemory);
-
-    copyVkBuffer(graphicVkCommandPool, vkDevice, vkGraphicQueue, stagingBuffer, vkBuffer, 0, bufferSize);
-    destroyBuffer(vkDevice, stagingBuffer, stagingBufferMemory);
-}
-void updateBuffer(VkDevice vkDevice, VkDeviceMemory bufferMemory, VkDeviceSize offset, VkDeviceSize bufferSize, void *bufferData)
+void updateBuffer(VkDevice vkDevice, VkDeviceMemory vkBufferMemory, VkDeviceSize offset, VkDeviceSize bufferSize, void *bufferData)
 {
     void *data;
-    vkMapMemory(vkDevice, bufferMemory, offset, bufferSize, 0, &data);
+    vkMapMemory(vkDevice, vkBufferMemory, offset, bufferSize, 0, &data);
     memcpy(data, bufferData, bufferSize);
-    vkUnmapMemory(vkDevice, bufferMemory);
+    vkUnmapMemory(vkDevice, vkBufferMemory);
 }
 
 void findMemoryType(VkPhysicalDevice vkPhysicalDevice, uint32_t typeFilter, VkMemoryPropertyFlags memoryPropertyFlags, uint32_t *memoryTypeIndex)
@@ -513,16 +509,15 @@ GraphicImage *createASTCGraphicImage(VkDevice vkDevice, VkPhysicalDevice vkPhysi
         VK_IMAGE_ASPECT_COLOR_BIT,
         pGraphicImage);
 
-    VkBuffer stagingBuffer;
-    VkDeviceMemory stagingMemory;
+    Buffer stagingBuffer;
     createBuffer(
         vkDevice, vkPhysicalDevice,
         fileSize,
         VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-        &stagingBuffer, &stagingMemory);
+        &stagingBuffer);
 
-    updateBuffer(vkDevice, stagingMemory, 0, fileSize, astcData);
+    updateBuffer(vkDevice, stagingBuffer.vkBufferMemory, 0, fileSize, astcData);
     tickernelFree(astcData);
 
     transitionImageLayout(
@@ -533,7 +528,7 @@ GraphicImage *createASTCGraphicImage(VkDevice vkDevice, VkPhysicalDevice vkPhysi
         VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
     copyBufferToImage(
         vkDevice, commandPool, graphicQueue,
-        stagingBuffer,
+        stagingBuffer.vkBuffer,
         pGraphicImage->vkImage,
         width, height);
     transitionImageLayout(
@@ -543,7 +538,7 @@ GraphicImage *createASTCGraphicImage(VkDevice vkDevice, VkPhysicalDevice vkPhysi
         VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
         VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
-    destroyBuffer(vkDevice, stagingBuffer, stagingMemory);
+    destroyBuffer(vkDevice, stagingBuffer);
     return pGraphicImage;
 }
 
@@ -583,4 +578,240 @@ void createSampler(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkSampl
 void destroySampler(VkDevice vkDevice, VkSampler vkSampler)
 {
     vkDestroySampler(vkDevice, vkSampler, NULL);
+}
+
+void createPipelines(Subpass *pSubpass, PipelineConfig *pipelineConfigs, uint32_t pipelineConfigCount, VkDevice vkDevice)
+{
+    pSubpass->pipelineCount = pipelineConfigCount;
+    pSubpass->pipelines = tickernelMalloc(sizeof(Pipeline) * pSubpass->pipelineCount);
+
+    for (uint32_t i = 0; i < pipelineConfigCount; i++)
+    {
+        PipelineConfig *pPipelineConfig = &pipelineConfigs[i];
+        Pipeline *pPipeline = &pSubpass->pipelines[i];
+        VkPipelineCache pipelineCache = NULL;
+        VkGraphicsPipelineCreateInfo *pVkGraphicsPipelineCreateInfo = &pPipelineConfig->vkGraphicsPipelineCreateInfo;
+        for (uint32_t j = 0; j < pVkGraphicsPipelineCreateInfo->stageCount; j++)
+        {
+            VkPipelineShaderStageCreateInfo vkPipelineShaderStageCreateInfo = pVkGraphicsPipelineCreateInfo->pStages[j];
+            createVkShaderModule(vkDevice, pPipelineConfig->shaderPaths[j], &vkPipelineShaderStageCreateInfo.module);
+        }
+
+        VkResult result = vkCreateDescriptorSetLayout(vkDevice, &pPipelineConfig->vkDescriptorSetLayoutCreateInfo, NULL, &pPipeline->descriptorSetLayout);
+        tryThrowVulkanError(result);
+
+        VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {
+            .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+            .pNext = NULL,
+            .flags = 0,
+            .setLayoutCount = 1,
+            .pSetLayouts = &pPipeline->descriptorSetLayout,
+            .pushConstantRangeCount = 0,
+            .pPushConstantRanges = NULL,
+        };
+
+        result = vkCreatePipelineLayout(vkDevice, &pipelineLayoutCreateInfo, NULL, &pPipeline->vkPipelineLayout);
+        tryThrowVulkanError(result);
+
+        pVkGraphicsPipelineCreateInfo->layout = pPipeline->vkPipelineLayout;
+        result = vkCreateGraphicsPipelines(vkDevice, pipelineCache, 1, pVkGraphicsPipelineCreateInfo, NULL, &pPipeline->vkPipeline);
+        tryThrowVulkanError(result);
+
+        for (uint32_t j = 0; j < pVkGraphicsPipelineCreateInfo->stageCount; j++)
+        {
+            VkPipelineShaderStageCreateInfo vkPipelineShaderStageCreateInfo = pVkGraphicsPipelineCreateInfo->pStages[j];
+            destroyVkShaderModule(vkDevice, vkPipelineShaderStageCreateInfo.module);
+        }
+
+        pPipeline->vkDescriptorPoolSizeCount = pPipelineConfig->vkDescriptorPoolSizeCount;
+        pPipeline->vkDescriptorPoolSizes = tickernelMalloc(sizeof(VkDescriptorPoolSize) * pPipeline->vkDescriptorPoolSizeCount);
+        memcpy(pPipeline->vkDescriptorPoolSizes, pPipelineConfig->vkDescriptorPoolSizes, sizeof(VkDescriptorPoolSize) * pPipeline->vkDescriptorPoolSizeCount);
+
+        tickernelCreateDynamicArray(&pPipeline->materialDynamicArray, 1, sizeof(Material));
+    }
+}
+
+void destroyPipelines(Subpass *pSubpass, VkDevice vkDevice)
+{
+    for (uint32_t i = 0; i < pSubpass->pipelineCount; i++)
+    {
+        Pipeline *pPipeline = &pSubpass->pipelines[i];
+        for (uint32_t i = 0; i < pPipeline->materialDynamicArray.length; i++)
+        {
+            Material *pMaterial = pPipeline->materialDynamicArray.array[i];
+            destroyMaterial(pMaterial, vkDevice);
+            tickernelDestroyDynamicArray(&pMaterial->meshDynamicArray);
+        }
+        tickernelDestroyDynamicArray(&pPipeline->materialDynamicArray);
+
+        tickernelFree(pPipeline->vkDescriptorPoolSizes);
+
+        vkDestroyPipeline(vkDevice, pPipeline->vkPipeline, NULL);
+        vkDestroyPipelineLayout(vkDevice, pPipeline->vkPipelineLayout, NULL);
+        vkDestroyDescriptorSetLayout(vkDevice, pPipeline->descriptorSetLayout, NULL);
+    }
+
+    tickernelFree(pSubpass->pipelines);
+}
+
+void createMaterial(VkDevice vkDevice, Pipeline pipeline, size_t meshSize, VkWriteDescriptorSet *vkWriteDescriptorSets, uint32_t vkWriteDescriptorSetCount, Material *pMaterial)
+{
+    tickernelCreateDynamicArray(&pMaterial->meshDynamicArray, 1, meshSize);
+    pMaterial->vkDescriptorSet = VK_NULL_HANDLE;
+
+    VkDescriptorPoolCreateInfo descriptorPoolCreateInfo = {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+        .pNext = NULL,
+        .flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
+        .maxSets = 1,
+        .poolSizeCount = pipeline.vkDescriptorPoolSizeCount,
+        .pPoolSizes = pipeline.vkDescriptorPoolSizes,
+    };
+    VkResult result = vkCreateDescriptorPool(vkDevice, &descriptorPoolCreateInfo, NULL, &pMaterial->vkDescriptorPool);
+    tryThrowVulkanError(result);
+
+    // Create vkDescriptorSet
+    VkDescriptorSetAllocateInfo descriptorSetAllocateInfo = {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+        .pNext = NULL,
+        .descriptorPool = pMaterial->vkDescriptorPool,
+        .descriptorSetCount = 1,
+        .pSetLayouts = &pipeline.descriptorSetLayout,
+    };
+    result = vkAllocateDescriptorSets(vkDevice, &descriptorSetAllocateInfo, &pMaterial->vkDescriptorSet);
+    tryThrowVulkanError(result);
+
+    vkUpdateDescriptorSets(vkDevice, vkWriteDescriptorSetCount, vkWriteDescriptorSets, 0, NULL);
+}
+
+void destroyMaterial(Material *pMaterial, VkDevice vkDevice)
+{
+    vkFreeDescriptorSets(vkDevice, pMaterial->vkDescriptorPool, 1, &pMaterial->vkDescriptorSet);
+    vkDestroyDescriptorPool(vkDevice, pMaterial->vkDescriptorPool, NULL);
+
+    for (size_t i = pMaterial->meshDynamicArray.length - 1; i > -1; i--)
+    {
+        Mesh *pMesh = pMaterial->meshDynamicArray.array[i];
+        if (pMesh)
+        {
+            destroyMesh(pMesh, vkDevice);
+        }
+    }
+    tickernelDestroyDynamicArray(&pMaterial->meshDynamicArray);
+}
+
+void createMesh(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkCommandPool graphicVkCommandPool, VkQueue vkGraphicQueue, uint32_t vertexCount, VkDeviceSize vertexBufferSize, void *vertexBufferData, uint32_t indexCount, VkDeviceSize indexBufferSize, void *indexBufferData, uint32_t instanceCount, VkDeviceSize instanceBufferSize, void *instanceBufferData, Mesh *pMesh)
+{
+    pMesh = tickernelMalloc(sizeof(Mesh));
+    pMesh->vertexCount = vertexCount;
+    if (vertexCount > 0)
+    {
+        createBuffer(vkDevice, vkPhysicalDevice, vertexBufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &pMesh->vertexBuffer);
+
+        updateBufferWithStagingBuffer(vkDevice, vkPhysicalDevice, 0, vertexBufferSize, vertexBufferData, graphicVkCommandPool, vkGraphicQueue, pMesh->vertexBuffer.vkBuffer);
+
+        pMesh->indexCount = indexCount;
+        if (indexCount > 0)
+        {
+            createBuffer(vkDevice, vkPhysicalDevice, indexBufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &pMesh->indexBuffer);
+
+            updateBufferWithStagingBuffer(vkDevice, vkPhysicalDevice, 0, indexBufferSize, indexBufferData, graphicVkCommandPool, vkGraphicQueue, pMesh->indexBuffer.vkBuffer);
+            pMesh->indexCount = indexCount;
+        }
+        else
+        {
+            // continue;
+        }
+
+        pMesh->maxInstanceCount = instanceCount;
+        pMesh->instanceCount = instanceCount;
+        if (instanceCount > 0)
+        {
+            createBuffer(vkDevice, vkPhysicalDevice, instanceBufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &pMesh->instanceBuffer.buffer);
+            vkMapMemory(vkDevice, pMesh->instanceBuffer.buffer.vkBufferMemory, 0, instanceBufferSize, 0, pMesh->instanceBuffer.mapped);
+
+            memcpy(pMesh->instanceBuffer.mapped, instanceBufferData, instanceBufferSize);
+        }
+        else
+        {
+            // continue;
+        }
+    }
+    else
+    {
+        // continue;
+    }
+}
+
+void destroyMesh(Mesh *pMesh, VkDevice vkDevice)
+{
+    if (pMesh->vertexCount > 0)
+    {
+        destroyBuffer(vkDevice, pMesh->vertexBuffer);
+    }
+    else
+    {
+        // continue;
+    }
+    if (pMesh->indexCount > 0)
+    {
+        destroyBuffer(vkDevice, pMesh->indexBuffer);
+    }
+    else
+    {
+        // continue;
+    }
+
+    if (pMesh->instanceCount > 0)
+    {
+        vkUnmapMemory(vkDevice, pMesh->instanceBuffer.buffer.vkBufferMemory);
+        destroyBuffer(vkDevice, pMesh->instanceBuffer.buffer);
+    }
+    else
+    {
+        // continue;
+    }
+
+    tickernelFree(pMesh);
+}
+
+void updateMesh(Mesh *pMesh, VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkCommandPool graphicVkCommandPool, VkQueue vkGraphicQueue, VkBuffer globalUniformBuffer, VkDeviceSize instanceBufferSize, void *instanceBufferData, uint32_t instanceCount)
+{
+    if (0 == pMesh->maxInstanceCount)
+    {
+        pMesh->maxInstanceCount = instanceCount;
+        pMesh->instanceCount = instanceCount;
+
+        createMappedBuffer(vkDevice, vkPhysicalDevice, instanceBufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &pMesh->instanceBuffer);
+        updateMappedBuffer(pMesh->instanceBuffer.mapped, instanceBufferData, instanceBufferSize);
+    }
+    else if (instanceCount <= pMesh->maxInstanceCount)
+    {
+        pMesh->instanceCount = instanceCount;
+        updateMappedBuffer(pMesh->instanceBuffer.mapped, instanceBufferData, instanceBufferSize);
+    }
+    else
+    {
+        destroyMappedBuffer(vkDevice, pMesh->instanceBuffer);
+        pMesh->maxInstanceCount = instanceCount;
+        pMesh->instanceCount = instanceCount;
+        createMappedBuffer(vkDevice, vkPhysicalDevice, instanceBufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &pMesh->instanceBuffer);
+        updateMappedBuffer(pMesh->instanceBuffer.mapped, instanceBufferData, instanceBufferSize);
+    }
+}
+
+void createMappedBuffer(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkDeviceSize bufferSize, VkBufferUsageFlags bufferUsageFlags, VkMemoryPropertyFlags memoryPropertyFlags, MappedBuffer *pMappedBuffer)
+{
+    createBuffer(vkDevice, vkPhysicalDevice, bufferSize, bufferUsageFlags, memoryPropertyFlags, &pMappedBuffer->buffer);
+    vkMapMemory(vkDevice, pMappedBuffer->buffer.vkBufferMemory, 0, bufferSize, 0, &pMappedBuffer->mapped);
+}
+void destroyMappedBuffer(VkDevice vkDevice, MappedBuffer mappedBuffer)
+{
+    vkUnmapMemory(vkDevice, mappedBuffer.buffer.vkBufferMemory);
+    destroyBuffer(vkDevice, mappedBuffer.buffer);
+}
+
+void updateMappedBuffer(MappedBuffer *pMappedBuffer, void *data, VkDeviceSize size)
+{
+    memcpy(pMappedBuffer->mapped, data, size);
 }

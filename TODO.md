@@ -1,2 +1,3 @@
 # TODO LIST
-    Because opauque subpass model only use Global ubo, bind them to one DescriptorSet when draw.
+    重构Graphic补充硬件能力细节.
+    修改lua是用32位int float

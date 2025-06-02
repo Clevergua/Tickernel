@@ -1,6 +1,5 @@
 #pragma once
 #include "deferredRenderPass.h"
-#include "uiRenderPass.h"
 typedef struct
 {
     const char *assetsPath;

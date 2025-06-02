@@ -624,23 +624,23 @@ static void createUniformBuffers(GraphicContext *pGraphicContext)
     VkResult result = VK_SUCCESS;
     size_t bufferSize = sizeof(GlobalUniformBuffer);
 
-    createBuffer(pGraphicContext->vkDevice, pGraphicContext->vkPhysicalDevice, bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &pGraphicContext->globalUniformBufferMappedBuffer.buffer.buffer, &pGraphicContext->globalUniformBufferMappedBuffer.buffer.bufferMemory);
-    result = vkMapMemory(pGraphicContext->vkDevice, pGraphicContext->globalUniformBufferMappedBuffer.buffer.bufferMemory, 0, bufferSize, 0, &pGraphicContext->globalUniformBufferMappedBuffer.mapped);
+    createBuffer(pGraphicContext->vkDevice, pGraphicContext->vkPhysicalDevice, bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &pGraphicContext->globalUniformBufferMappedBuffer.buffer);
+    result = vkMapMemory(pGraphicContext->vkDevice, pGraphicContext->globalUniformBufferMappedBuffer.buffer.vkBufferMemory, 0, bufferSize, 0, &pGraphicContext->globalUniformBufferMappedBuffer.mapped);
     tryThrowVulkanError(result);
 
     bufferSize = sizeof(LightsUniformBuffer);
-    createBuffer(pGraphicContext->vkDevice, pGraphicContext->vkPhysicalDevice, bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &pGraphicContext->lightsUniformBufferMappedBuffer.buffer.buffer, &pGraphicContext->lightsUniformBufferMappedBuffer.buffer.bufferMemory);
-    result = vkMapMemory(pGraphicContext->vkDevice, pGraphicContext->lightsUniformBufferMappedBuffer.buffer.bufferMemory, 0, bufferSize, 0, &pGraphicContext->lightsUniformBufferMappedBuffer.mapped);
+    createBuffer(pGraphicContext->vkDevice, pGraphicContext->vkPhysicalDevice, bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &pGraphicContext->lightsUniformBufferMappedBuffer.buffer);
+    result = vkMapMemory(pGraphicContext->vkDevice, pGraphicContext->lightsUniformBufferMappedBuffer.buffer.vkBufferMemory, 0, bufferSize, 0, &pGraphicContext->lightsUniformBufferMappedBuffer.mapped);
     tryThrowVulkanError(result);
 }
 
 static void destroyUniformBuffers(GraphicContext *pGraphicContext)
 {
-    vkUnmapMemory(pGraphicContext->vkDevice, pGraphicContext->lightsUniformBufferMappedBuffer.buffer.bufferMemory);
-    destroyBuffer(pGraphicContext->vkDevice, pGraphicContext->lightsUniformBufferMappedBuffer.buffer.buffer, pGraphicContext->lightsUniformBufferMappedBuffer.buffer.bufferMemory);
+    vkUnmapMemory(pGraphicContext->vkDevice, pGraphicContext->lightsUniformBufferMappedBuffer.buffer.vkBufferMemory);
+    destroyBuffer(pGraphicContext->vkDevice, pGraphicContext->lightsUniformBufferMappedBuffer.buffer);
 
-    vkUnmapMemory(pGraphicContext->vkDevice, pGraphicContext->globalUniformBufferMappedBuffer.buffer.bufferMemory);
-    destroyBuffer(pGraphicContext->vkDevice, pGraphicContext->globalUniformBufferMappedBuffer.buffer.buffer, pGraphicContext->globalUniformBufferMappedBuffer.buffer.bufferMemory);
+    vkUnmapMemory(pGraphicContext->vkDevice, pGraphicContext->globalUniformBufferMappedBuffer.buffer.vkBufferMemory);
+    destroyBuffer(pGraphicContext->vkDevice, pGraphicContext->globalUniformBufferMappedBuffer.buffer);
 }
 
 static void updateGlobalUniformBuffer(GraphicContext *pGraphicContext)

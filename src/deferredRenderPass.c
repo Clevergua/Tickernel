@@ -194,7 +194,7 @@ void createDeferredRenderPass(DeferredRenderPass *pDeferredRenderPass, const cha
             .pNext = NULL,
             .flags = 0,
             .renderPass = pDeferredRenderPass->vkRenderPass,
-            .attachmentCount = 5,
+            .attachmentCount = ARRAY_SIZE(attachments),
             .pAttachments = attachments,
             .width = viewport.width,
             .height = viewport.height,
@@ -204,19 +204,19 @@ void createDeferredRenderPass(DeferredRenderPass *pDeferredRenderPass, const cha
         tryThrowVulkanError(result);
     }
 
-    uint32_t subpassIndex = 0;
-    createGeometrySubpass(&pDeferredRenderPass->geometrySubpass, shadersPath, pDeferredRenderPass->vkRenderPass, subpassIndex, vkDevice, viewport, scissor);
-    subpassIndex++;
-    createLightingSubpass(&pDeferredRenderPass->lightingSubpass, shadersPath, pDeferredRenderPass->vkRenderPass, subpassIndex, vkDevice, viewport, scissor, globalUniformBuffer, lightsUniformBuffer, depthGraphicImage.vkImageView, albedoGraphicImage.vkImageView, normalGraphicImage.vkImageView);
-    subpassIndex++;
-    createPostProcessSubpass(&pDeferredRenderPass->postProcessSubpass, shadersPath, pDeferredRenderPass->vkRenderPass, subpassIndex, vkDevice, viewport, scissor, colorGraphicImage.vkImageView);
+    // uint32_t subpassIndex = 0;
+    // createGeometrySubpass(&pDeferredRenderPass->geometrySubpass, shadersPath, pDeferredRenderPass->vkRenderPass, subpassIndex, vkDevice);
+    // subpassIndex++;
+    // createLightingSubpass(&pDeferredRenderPass->lightingSubpass, shadersPath, pDeferredRenderPass->vkRenderPass, subpassIndex, vkDevice, viewport, scissor, globalUniformBuffer, lightsUniformBuffer, depthGraphicImage.vkImageView, albedoGraphicImage.vkImageView, normalGraphicImage.vkImageView);
+    // subpassIndex++;
+    // createPostProcessSubpass(&pDeferredRenderPass->postProcessSubpass, shadersPath, pDeferredRenderPass->vkRenderPass, subpassIndex, vkDevice, viewport, scissor, colorGraphicImage.vkImageView);
 }
 
 void destroyDeferredRenderPass(DeferredRenderPass *pDeferredRenderPass, VkDevice vkDevice)
 {
-    destroyPostProcessSubpass(&pDeferredRenderPass->postProcessSubpass, vkDevice);
-    destroyGeometrySubpass(&pDeferredRenderPass->geometrySubpass, vkDevice);
-    destroyLightingSubpass(&pDeferredRenderPass->lightingSubpass, vkDevice);
+    // destroyPostProcessSubpass(&pDeferredRenderPass->postProcessSubpass, vkDevice);
+    // destroyGeometrySubpass(&pDeferredRenderPass->geometrySubpass, vkDevice);
+    // destroyLightingSubpass(&pDeferredRenderPass->lightingSubpass, vkDevice);
 
     for (size_t i = 0; i < pDeferredRenderPass->vkFramebufferCount; i++)
     {
@@ -240,7 +240,7 @@ void updateDeferredRenderPass(DeferredRenderPass *pDeferredRenderPass, VkDevice 
             .pNext = NULL,
             .flags = 0,
             .renderPass = pDeferredRenderPass->vkRenderPass,
-            .attachmentCount = 5,
+            .attachmentCount = ARRAY_SIZE(attachments),
             .pAttachments = attachments,
             .width = width,
             .height = height,
