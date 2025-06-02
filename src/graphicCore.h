@@ -118,7 +118,7 @@ typedef struct
     Buffer indexBuffer;
     uint32_t indexCount;
 
-    MappedBuffer instanceBuffer;
+    MappedBuffer instanceMappedBuffer;
     uint32_t instanceCount;
     uint32_t maxInstanceCount;
 } Mesh;

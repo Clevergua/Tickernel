@@ -171,6 +171,23 @@ void updateBuffer(VkDevice vkDevice, VkDeviceMemory vkBufferMemory, VkDeviceSize
     vkUnmapMemory(vkDevice, vkBufferMemory);
 }
 
+void createMappedBuffer(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkDeviceSize bufferSize, VkBufferUsageFlags bufferUsageFlags, VkMemoryPropertyFlags memoryPropertyFlags, MappedBuffer *pMappedBuffer)
+{
+    createBuffer(vkDevice, vkPhysicalDevice, bufferSize, bufferUsageFlags, memoryPropertyFlags, &pMappedBuffer->buffer);
+    vkMapMemory(vkDevice, pMappedBuffer->buffer.vkBufferMemory, 0, bufferSize, 0, &pMappedBuffer->mapped);
+}
+void destroyMappedBuffer(VkDevice vkDevice, MappedBuffer mappedBuffer)
+{
+    vkUnmapMemory(vkDevice, mappedBuffer.buffer.vkBufferMemory);
+    destroyBuffer(vkDevice, mappedBuffer.buffer);
+}
+
+void updateMappedBuffer(MappedBuffer *pMappedBuffer, void *data, VkDeviceSize size)
+{
+    memcpy(pMappedBuffer->mapped, data, size);
+}
+
+
 void findMemoryType(VkPhysicalDevice vkPhysicalDevice, uint32_t typeFilter, VkMemoryPropertyFlags memoryPropertyFlags, uint32_t *memoryTypeIndex)
 {
     VkPhysicalDeviceMemoryProperties physicalDeviceMemoryProperties;
@@ -727,10 +744,10 @@ void createMesh(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkCommandP
         pMesh->instanceCount = instanceCount;
         if (instanceCount > 0)
         {
-            createBuffer(vkDevice, vkPhysicalDevice, instanceBufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &pMesh->instanceBuffer.buffer);
-            vkMapMemory(vkDevice, pMesh->instanceBuffer.buffer.vkBufferMemory, 0, instanceBufferSize, 0, pMesh->instanceBuffer.mapped);
+            createBuffer(vkDevice, vkPhysicalDevice, instanceBufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &pMesh->instanceMappedBuffer.buffer);
+            vkMapMemory(vkDevice, pMesh->instanceMappedBuffer.buffer.vkBufferMemory, 0, instanceBufferSize, 0, pMesh->instanceMappedBuffer.mapped);
 
-            memcpy(pMesh->instanceBuffer.mapped, instanceBufferData, instanceBufferSize);
+            memcpy(pMesh->instanceMappedBuffer.mapped, instanceBufferData, instanceBufferSize);
         }
         else
         {
@@ -764,8 +781,8 @@ void destroyMesh(Mesh *pMesh, VkDevice vkDevice)
 
     if (pMesh->instanceCount > 0)
     {
-        vkUnmapMemory(vkDevice, pMesh->instanceBuffer.buffer.vkBufferMemory);
-        destroyBuffer(vkDevice, pMesh->instanceBuffer.buffer);
+        vkUnmapMemory(vkDevice, pMesh->instanceMappedBuffer.buffer.vkBufferMemory);
+        destroyBuffer(vkDevice, pMesh->instanceMappedBuffer.buffer);
     }
     else
     {
@@ -775,43 +792,27 @@ void destroyMesh(Mesh *pMesh, VkDevice vkDevice)
     tickernelFree(pMesh);
 }
 
-void updateMesh(Mesh *pMesh, VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkCommandPool graphicVkCommandPool, VkQueue vkGraphicQueue, VkBuffer globalUniformBuffer, VkDeviceSize instanceBufferSize, void *instanceBufferData, uint32_t instanceCount)
+void updateMeshInstanceBuffer(Mesh *pMesh, VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkCommandPool graphicVkCommandPool, VkQueue vkGraphicQueue, VkBuffer globalUniformBuffer, VkDeviceSize instanceBufferSize, void *instanceBufferData, uint32_t instanceCount)
 {
     if (0 == pMesh->maxInstanceCount)
     {
         pMesh->maxInstanceCount = instanceCount;
         pMesh->instanceCount = instanceCount;
 
-        createMappedBuffer(vkDevice, vkPhysicalDevice, instanceBufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &pMesh->instanceBuffer);
-        updateMappedBuffer(pMesh->instanceBuffer.mapped, instanceBufferData, instanceBufferSize);
+        createMappedBuffer(vkDevice, vkPhysicalDevice, instanceBufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &pMesh->instanceMappedBuffer);
+        updateMappedBuffer(pMesh->instanceMappedBuffer.mapped, instanceBufferData, instanceBufferSize);
     }
     else if (instanceCount <= pMesh->maxInstanceCount)
     {
         pMesh->instanceCount = instanceCount;
-        updateMappedBuffer(pMesh->instanceBuffer.mapped, instanceBufferData, instanceBufferSize);
+        updateMappedBuffer(pMesh->instanceMappedBuffer.mapped, instanceBufferData, instanceBufferSize);
     }
     else
     {
-        destroyMappedBuffer(vkDevice, pMesh->instanceBuffer);
+        destroyMappedBuffer(vkDevice, pMesh->instanceMappedBuffer);
         pMesh->maxInstanceCount = instanceCount;
         pMesh->instanceCount = instanceCount;
-        createMappedBuffer(vkDevice, vkPhysicalDevice, instanceBufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &pMesh->instanceBuffer);
-        updateMappedBuffer(pMesh->instanceBuffer.mapped, instanceBufferData, instanceBufferSize);
+        createMappedBuffer(vkDevice, vkPhysicalDevice, instanceBufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &pMesh->instanceMappedBuffer);
+        updateMappedBuffer(pMesh->instanceMappedBuffer.mapped, instanceBufferData, instanceBufferSize);
     }
-}
-
-void createMappedBuffer(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkDeviceSize bufferSize, VkBufferUsageFlags bufferUsageFlags, VkMemoryPropertyFlags memoryPropertyFlags, MappedBuffer *pMappedBuffer)
-{
-    createBuffer(vkDevice, vkPhysicalDevice, bufferSize, bufferUsageFlags, memoryPropertyFlags, &pMappedBuffer->buffer);
-    vkMapMemory(vkDevice, pMappedBuffer->buffer.vkBufferMemory, 0, bufferSize, 0, &pMappedBuffer->mapped);
-}
-void destroyMappedBuffer(VkDevice vkDevice, MappedBuffer mappedBuffer)
-{
-    vkUnmapMemory(vkDevice, mappedBuffer.buffer.vkBufferMemory);
-    destroyBuffer(vkDevice, mappedBuffer.buffer);
-}
-
-void updateMappedBuffer(MappedBuffer *pMappedBuffer, void *data, VkDeviceSize size)
-{
-    memcpy(pMappedBuffer->mapped, data, size);
 }
