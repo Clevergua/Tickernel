@@ -1,7 +1,5 @@
 #pragma once
-#include "geometrySubpass.h"
-#include "lightingSubpass.h"
-#include "postProcessSubpass.h"
+#include "graphicCore.h"
 
 typedef struct
 {

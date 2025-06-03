@@ -153,3 +153,4 @@ void destroyMaterial(Material *pMaterial, VkDevice vkDevice);
 
 void createMesh(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkCommandPool graphicVkCommandPool, VkQueue vkGraphicQueue, uint32_t vertexCount, VkDeviceSize vertexBufferSize, void *vertexBufferData, uint32_t indexCount, VkDeviceSize indexBufferSize, void *indexBufferData, uint32_t instanceCount, VkDeviceSize instanceBufferSize, void *instanceBufferData, Mesh *pMesh);
 void destroyMesh(Mesh *pMesh, VkDevice vkDevice);
+void recordSubpass(Subpass *pSubpass, VkCommandBuffer vkCommandBuffer);

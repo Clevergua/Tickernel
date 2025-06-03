@@ -299,10 +299,10 @@ void recordDeferredRenderPass(DeferredRenderPass *pDeferredRenderPass, VkCommand
             .pClearValues = clearValues,
         };
     vkCmdBeginRenderPass(vkCommandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
-    recordGeometrySubpass(&pDeferredRenderPass->geometrySubpass, vkCommandBuffer);
+    recordSubpass(&pDeferredRenderPass->geometrySubpass, vkCommandBuffer);
     vkCmdNextSubpass(vkCommandBuffer, VK_SUBPASS_CONTENTS_INLINE);
-    recordLightingSubpass(&pDeferredRenderPass->lightingSubpass, vkCommandBuffer);
+    recordSubpass(&pDeferredRenderPass->lightingSubpass, vkCommandBuffer);
     vkCmdNextSubpass(vkCommandBuffer, VK_SUBPASS_CONTENTS_INLINE);
-    recordPostProcessSubpass(&pDeferredRenderPass->postProcessSubpass, vkCommandBuffer);
+    recordSubpass(&pDeferredRenderPass->postProcessSubpass, vkCommandBuffer);
     vkCmdEndRenderPass(vkCommandBuffer);
 }

@@ -816,6 +816,7 @@ void updateMeshInstanceBuffer(Mesh *pMesh, VkDevice vkDevice, VkPhysicalDevice v
     }
 }
 
+
 void recordSubpass(Subpass *pSubpass, VkCommandBuffer vkCommandBuffer)
 {
     for (uint32_t i = 0; i < pSubpass->pipelineCount; i++)
@@ -870,7 +871,8 @@ void recordSubpass(Subpass *pSubpass, VkCommandBuffer vkCommandBuffer)
                 }
                 else
                 {
-                    // Skip mesh
+                    vkCmdBindDescriptorSets(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pPipeline->vkPipelineLayout, 0, 1, &pMaterial->vkDescriptorSet, 0, NULL);
+                    vkCmdDraw(vkCommandBuffer, 3, 1, 0, 0);
                 }
             }
         }
