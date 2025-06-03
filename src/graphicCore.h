@@ -84,12 +84,28 @@ typedef struct
 
 typedef struct
 {
+    VkRenderPass vkRenderPass;
+    uint32_t vkFramebufferCount;
+    VkFramebuffer *vkFramebuffers;
+
+    uint32_t subpassCount;
+    Subpass *subpasses;
+} RenderPass;
+
+typedef struct
+{
     VkGraphicsPipelineCreateInfo vkGraphicsPipelineCreateInfo;
     VkDescriptorSetLayoutCreateInfo vkDescriptorSetLayoutCreateInfo;
     char **shaderPaths;
     uint32_t vkDescriptorPoolSizeCount;
     VkDescriptorPoolSize *vkDescriptorPoolSizes;
 } PipelineConfig;
+
+typedef struct
+{
+    VkRenderPassCreateInfo vkRenderPassCreateInfo;
+    PipelineConfig **subpassIndexToPipelineConfigs;
+} RenderPassConfig;
 
 typedef struct
 {

@@ -1,5 +1,5 @@
 #pragma once
-#include "deferredRenderPass.h"
+#include "graphicCore.h"
 typedef struct
 {
     const char *assetsPath;
@@ -17,7 +17,7 @@ typedef struct
     VkDevice vkDevice;
     VkQueue vkGraphicQueue;
     VkQueue vkPresentQueue;
-    
+
     VkSwapchainKHR vkSwapchain;
     VkSurfaceFormatKHR surfaceFormat;
     uint32_t swapchainImageCount;
@@ -31,20 +31,7 @@ typedef struct
     VkSemaphore renderFinishedSemaphore;
     VkFence renderFinishedFence;
 
-    MappedBuffer globalUniformBufferMappedBuffer;
-    MappedBuffer lightsUniformBufferMappedBuffer;
-
-    bool canUpdateGlobalUniformBuffer;
-    bool canUpdateLightsUniformBuffer;
-    GlobalUniformBuffer inputGlobalUniformBuffer;
-    LightsUniformBuffer inputLightsUniformBuffer;
-    
-    GraphicImage colorGraphicImage;
-    GraphicImage depthGraphicImage;
-    GraphicImage albedoGraphicImage;
-    GraphicImage normalGraphicImage;
-    // DeferredRenderPass deferredRenderPass;
-    // UIRenderPass uiRenderPass;
+    RenderPass *RenderPasses;
 } GraphicContext;
 
 GraphicContext *startGraphic(const char *assetsPath, int targetSwapchainImageCount, VkPresentModeKHR targetPresentMode, VkInstance vkInstance, VkSurfaceKHR vkSurface, uint32_t swapchainWidth, uint32_t swapchainHeight);

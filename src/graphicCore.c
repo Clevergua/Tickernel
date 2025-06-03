@@ -69,6 +69,14 @@ static void findSupportedFormat(VkPhysicalDevice vkPhysicalDevice, VkFormat *can
     tickernelError("Target format not found!");
 }
 
+void tryThrowVulkanError(VkResult vkResult)
+{
+    if (vkResult != VK_SUCCESS)
+    {
+        tickernelError("Vulkan error code: %d\n", vkResult);
+    }
+}
+
 void createBuffer(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkDeviceSize bufferSize, VkBufferUsageFlags bufferUsageFlags, VkMemoryPropertyFlags memoryPropertyFlags, Buffer *pBuffer)
 {
     VkResult result = VK_SUCCESS;
@@ -815,7 +823,6 @@ void updateMeshInstanceBuffer(Mesh *pMesh, VkDevice vkDevice, VkPhysicalDevice v
         updateMappedBuffer(pMesh->instanceMappedBuffer.mapped, instanceBufferData, instanceBufferSize);
     }
 }
-
 
 void recordSubpass(Subpass *pSubpass, VkCommandBuffer vkCommandBuffer)
 {
