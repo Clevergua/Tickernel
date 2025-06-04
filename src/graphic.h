@@ -40,11 +40,11 @@ GraphicContext *startGraphic(const char *assetsPath, int targetSwapchainImageCou
 void updateGraphic(GraphicContext *pGraphicContext, uint32_t swapchainWidth, uint32_t swapchainHeight);
 void endGraphic(GraphicContext *pGraphicContext);
 
-void createPipelines(Subpass *pSubpass, PipelineConfig *pipelineConfigs, uint32_t pipelineConfigCount, VkDevice vkDevice);
-void destroyPipelines(Subpass *pSubpass, VkDevice vkDevice);
+void createPipeline(GraphicContext *pGraphicContext, VkGraphicsPipelineCreateInfo vkGraphicsPipelineCreateInfo, VkDescriptorSetLayoutCreateInfo vkDescriptorSetLayoutCreateInfo, char **shaderPaths, uint32_t vkDescriptorPoolSizeCount, VkDescriptorPoolSize *vkDescriptorPoolSizes, Pipeline *pPipeline);
+void destroyPipeline(Pipeline pipeline, VkDevice vkDevice);
 
 void createMaterial(VkDevice vkDevice, Pipeline pipeline, size_t meshSize, VkWriteDescriptorSet *vkWriteDescriptorSets, uint32_t vkWriteDescriptorSetCount, Material *pMaterial);
-void destroyMaterial(Material *pMaterial, VkDevice vkDevice);
+void destroyMaterial(Material material, VkDevice vkDevice);
 
 void createMesh(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkCommandPool graphicVkCommandPool, VkQueue vkGraphicQueue, uint32_t vertexCount, VkDeviceSize vertexBufferSize, void *vertexBufferData, uint32_t indexCount, VkDeviceSize indexBufferSize, void *indexBufferData, uint32_t instanceCount, VkDeviceSize instanceBufferSize, void *instanceBufferData, Mesh *pMesh);
 void destroyMesh(Mesh *pMesh, VkDevice vkDevice);

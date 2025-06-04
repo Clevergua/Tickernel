@@ -423,10 +423,8 @@ static void copyBufferToImage(VkDevice device, VkCommandPool commandPool, VkQueu
     vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
 }
 
-GraphicImage *createASTCGraphicImage(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, const char *fileName, VkCommandPool commandPool, VkQueue graphicQueue)
+void *createASTCGraphicImage(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, const char *fileName, VkCommandPool commandPool, VkQueue graphicQueue, GraphicImage *pGraphicImage)
 {
-    GraphicImage *pGraphicImage = tickernelMalloc(sizeof(GraphicImage));
-
     FILE *file = fopen(fileName, "rb");
     if (!file)
     {
@@ -566,10 +564,9 @@ GraphicImage *createASTCGraphicImage(VkDevice vkDevice, VkPhysicalDevice vkPhysi
     return pGraphicImage;
 }
 
-void destroyASTCGraphicImage(VkDevice vkDevice, GraphicImage *pGraphicImage)
+void destroyASTCGraphicImage(VkDevice vkDevice, GraphicImage graphicImage)
 {
-    destroyGraphicImage(vkDevice, *pGraphicImage);
-    tickernelFree(pGraphicImage);
+    destroyGraphicImage(vkDevice, graphicImage);
 }
 
 void createSampler(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkSampler *pVkSampler)

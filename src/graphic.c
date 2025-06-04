@@ -836,78 +836,64 @@ void endGraphic(GraphicContext *pGraphicContext)
     tickernelFree(pGraphicContext);
 }
 
-// void createPipelines(Subpass *pSubpass, PipelineConfig *pipelineConfigs, uint32_t pipelineConfigCount, VkDevice vkDevice)
-// {
-//     tickernelCreateDynamicArray(&pSubpass->pipelineDynamicArray, pipelineConfigCount, sizeof(Pipeline));
+void createPipeline(GraphicContext *pGraphicContext, VkGraphicsPipelineCreateInfo vkGraphicsPipelineCreateInfo, VkDescriptorSetLayoutCreateInfo vkDescriptorSetLayoutCreateInfo, char **shaderPaths, uint32_t vkDescriptorPoolSizeCount, VkDescriptorPoolSize *vkDescriptorPoolSizes, Pipeline *pPipeline)
+{
+    VkPipelineCache pipelineCache = NULL;
+    VkDevice vkDevice = pGraphicContext->vkDevice;
+    for (uint32_t i = 0; i < vkGraphicsPipelineCreateInfo.stageCount; i++)
+    {
+        VkPipelineShaderStageCreateInfo vkPipelineShaderStageCreateInfo = vkGraphicsPipelineCreateInfo.pStages[i];
+        createVkShaderModule(vkDevice, shaderPaths[i], &vkPipelineShaderStageCreateInfo.module);
+    }
 
-//     for (uint32_t i = 0; i < pipelineConfigCount; i++)
-//     {
-//         PipelineConfig *pPipelineConfig = &pipelineConfigs[i];
-//         Pipeline *pPipeline = pSubpass->pipelineDynamicArray.array[i];
-//         VkPipelineCache pipelineCache = NULL;
-//         VkGraphicsPipelineCreateInfo *pVkGraphicsPipelineCreateInfo = &pPipelineConfig->vkGraphicsPipelineCreateInfo;
-//         for (uint32_t j = 0; j < pVkGraphicsPipelineCreateInfo->stageCount; j++)
-//         {
-//             VkPipelineShaderStageCreateInfo vkPipelineShaderStageCreateInfo = pVkGraphicsPipelineCreateInfo->pStages[j];
-//             createVkShaderModule(vkDevice, pPipelineConfig->shaderPaths[j], &vkPipelineShaderStageCreateInfo.module);
-//         }
+    VkResult result = vkCreateDescriptorSetLayout(vkDevice, &vkDescriptorSetLayoutCreateInfo, NULL, &pPipeline->descriptorSetLayout);
+    tryThrowVulkanError(result);
 
-//         VkResult result = vkCreateDescriptorSetLayout(vkDevice, &pPipelineConfig->vkDescriptorSetLayoutCreateInfo, NULL, &pPipeline->descriptorSetLayout);
-//         tryThrowVulkanError(result);
+    VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+        .pNext = NULL,
+        .flags = 0,
+        .setLayoutCount = 1,
+        .pSetLayouts = &pPipeline->descriptorSetLayout,
+        .pushConstantRangeCount = 0,
+        .pPushConstantRanges = NULL,
+    };
 
-//         VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {
-//             .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
-//             .pNext = NULL,
-//             .flags = 0,
-//             .setLayoutCount = 1,
-//             .pSetLayouts = &pPipeline->descriptorSetLayout,
-//             .pushConstantRangeCount = 0,
-//             .pPushConstantRanges = NULL,
-//         };
+    result = vkCreatePipelineLayout(vkDevice, &pipelineLayoutCreateInfo, NULL, &pPipeline->vkPipelineLayout);
+    tryThrowVulkanError(result);
 
-//         result = vkCreatePipelineLayout(vkDevice, &pipelineLayoutCreateInfo, NULL, &pPipeline->vkPipelineLayout);
-//         tryThrowVulkanError(result);
+    vkGraphicsPipelineCreateInfo.layout = pPipeline->vkPipelineLayout;
+    result = vkCreateGraphicsPipelines(vkDevice, pipelineCache, 1, &vkGraphicsPipelineCreateInfo, NULL, &pPipeline->vkPipeline);
+    tryThrowVulkanError(result);
 
-//         pVkGraphicsPipelineCreateInfo->layout = pPipeline->vkPipelineLayout;
-//         result = vkCreateGraphicsPipelines(vkDevice, pipelineCache, 1, pVkGraphicsPipelineCreateInfo, NULL, &pPipeline->vkPipeline);
-//         tryThrowVulkanError(result);
+    for (uint32_t i = 0; i < vkGraphicsPipelineCreateInfo.stageCount; i++)
+    {
+        VkPipelineShaderStageCreateInfo vkPipelineShaderStageCreateInfo = vkGraphicsPipelineCreateInfo.pStages[i];
+        destroyVkShaderModule(vkDevice, vkPipelineShaderStageCreateInfo.module);
+    }
 
-//         for (uint32_t j = 0; j < pVkGraphicsPipelineCreateInfo->stageCount; j++)
-//         {
-//             VkPipelineShaderStageCreateInfo vkPipelineShaderStageCreateInfo = pVkGraphicsPipelineCreateInfo->pStages[j];
-//             destroyVkShaderModule(vkDevice, vkPipelineShaderStageCreateInfo.module);
-//         }
+    pPipeline->vkDescriptorPoolSizeCount = vkDescriptorPoolSizeCount;
+    pPipeline->vkDescriptorPoolSizes = tickernelMalloc(sizeof(VkDescriptorPoolSize) * pPipeline->vkDescriptorPoolSizeCount);
+    memcpy(pPipeline->vkDescriptorPoolSizes, vkDescriptorPoolSizes, sizeof(VkDescriptorPoolSize) * pPipeline->vkDescriptorPoolSizeCount);
+    tickernelCreateDynamicArray(&pPipeline->materialDynamicArray, 1, sizeof(Material));
+}
 
-//         pPipeline->vkDescriptorPoolSizeCount = pPipelineConfig->vkDescriptorPoolSizeCount;
-//         pPipeline->vkDescriptorPoolSizes = tickernelMalloc(sizeof(VkDescriptorPoolSize) * pPipeline->vkDescriptorPoolSizeCount);
-//         memcpy(pPipeline->vkDescriptorPoolSizes, pPipelineConfig->vkDescriptorPoolSizes, sizeof(VkDescriptorPoolSize) * pPipeline->vkDescriptorPoolSizeCount);
+void destroyPipeline(Pipeline pipeline, VkDevice vkDevice)
+{
+    for (uint32_t i = 0; i < pipeline.materialDynamicArray.length; i++)
+    {
+        Material *pMaterial = pipeline.materialDynamicArray.array[i];
+        destroyMaterial(*pMaterial, vkDevice);
+        tickernelDestroyDynamicArray(&pMaterial->meshDynamicArray);
+    }
+    tickernelDestroyDynamicArray(&pipeline.materialDynamicArray);
 
-//         tickernelCreateDynamicArray(&pPipeline->materialDynamicArray, 1, sizeof(Material));
-//     }
-// }
+    tickernelFree(pipeline.vkDescriptorPoolSizes);
 
-// void destroyPipelines(Subpass *pSubpass, VkDevice vkDevice)
-// {
-//     for (uint32_t i = 0; i < pSubpass->pipelineDynamicArray.length; i++)
-//     {
-//         Pipeline *pPipeline = pSubpass->pipelineDynamicArray.array[i];
-//         for (uint32_t i = 0; i < pPipeline->materialDynamicArray.length; i++)
-//         {
-//             Material *pMaterial = pPipeline->materialDynamicArray.array[i];
-//             destroyMaterial(pMaterial, vkDevice);
-//             tickernelDestroyDynamicArray(&pMaterial->meshDynamicArray);
-//         }
-//         tickernelDestroyDynamicArray(&pPipeline->materialDynamicArray);
-
-//         tickernelFree(pPipeline->vkDescriptorPoolSizes);
-
-//         vkDestroyPipeline(vkDevice, pPipeline->vkPipeline, NULL);
-//         vkDestroyPipelineLayout(vkDevice, pPipeline->vkPipelineLayout, NULL);
-//         vkDestroyDescriptorSetLayout(vkDevice, pPipeline->descriptorSetLayout, NULL);
-//     }
-
-//     tickernelDestroyDynamicArray(&pSubpass->pipelineDynamicArray);
-// }
+    vkDestroyPipeline(vkDevice, pipeline.vkPipeline, NULL);
+    vkDestroyPipelineLayout(vkDevice, pipeline.vkPipelineLayout, NULL);
+    vkDestroyDescriptorSetLayout(vkDevice, pipeline.descriptorSetLayout, NULL);
+}
 
 void createMaterial(VkDevice vkDevice, Pipeline pipeline, size_t meshSize, VkWriteDescriptorSet *vkWriteDescriptorSets, uint32_t vkWriteDescriptorSetCount, Material *pMaterial)
 {
@@ -939,20 +925,20 @@ void createMaterial(VkDevice vkDevice, Pipeline pipeline, size_t meshSize, VkWri
     vkUpdateDescriptorSets(vkDevice, vkWriteDescriptorSetCount, vkWriteDescriptorSets, 0, NULL);
 }
 
-void destroyMaterial(Material *pMaterial, VkDevice vkDevice)
+void destroyMaterial(Material material, VkDevice vkDevice)
 {
-    vkFreeDescriptorSets(vkDevice, pMaterial->vkDescriptorPool, 1, &pMaterial->vkDescriptorSet);
-    vkDestroyDescriptorPool(vkDevice, pMaterial->vkDescriptorPool, NULL);
+    vkFreeDescriptorSets(vkDevice, material.vkDescriptorPool, 1, &material.vkDescriptorSet);
+    vkDestroyDescriptorPool(vkDevice, material.vkDescriptorPool, NULL);
 
-    for (size_t i = pMaterial->meshDynamicArray.length - 1; i > -1; i--)
+    for (size_t i = material.meshDynamicArray.length - 1; i > -1; i--)
     {
-        Mesh *pMesh = pMaterial->meshDynamicArray.array[i];
+        Mesh *pMesh = material.meshDynamicArray.array[i];
         if (pMesh)
         {
             destroyMesh(pMesh, vkDevice);
         }
     }
-    tickernelDestroyDynamicArray(&pMaterial->meshDynamicArray);
+    tickernelDestroyDynamicArray(&material.meshDynamicArray);
 }
 
 void createMesh(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkCommandPool graphicVkCommandPool, VkQueue vkGraphicQueue, uint32_t vertexCount, VkDeviceSize vertexBufferSize, void *vertexBufferData, uint32_t indexCount, VkDeviceSize indexBufferSize, void *indexBufferData, uint32_t instanceCount, VkDeviceSize instanceBufferSize, void *instanceBufferData, Mesh *pMesh)
@@ -1118,13 +1104,14 @@ void createRenderPass(GraphicContext *pGraphicContext, uint32_t attachmentCount,
 
 void destroyRenderPass(GraphicContext *pGraphicContext, uint32_t attachmentCount, VkAttachmentDescription *vkAttachmentDescriptions, Attachment *attachments, uint32_t subpassCount, VkSubpassDescription *vkSubpassDescriptions, uint32_t vkSubpassDependencyCount, VkSubpassDependency *vkSubpassDependencies, RenderPass *pRenderPass)
 {
-
+    VkDevice vkDevice = pGraphicContext->vkDevice;
     for (uint32_t i = 0; i < pRenderPass->subpassCount; i++)
     {
         Subpass *pSubpass = &pRenderPass->subpasses[i];
         for (uint32_t i = 0; i < pSubpass->pipelineDynamicArray.length; i++)
         {
-            destroyPipeline(pSubpass, pGraphicContext->vkDevice);
+            Pipeline *pPipeline = pSubpass->pipelineDynamicArray.array[i];
+            destroyPipeline(*pPipeline, vkDevice);
         }
         tickernelDestroyDynamicArray(&pSubpass->pipelineDynamicArray);
     }

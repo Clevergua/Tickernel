@@ -58,21 +58,6 @@ typedef struct
 
 typedef struct
 {
-    VkGraphicsPipelineCreateInfo vkGraphicsPipelineCreateInfo;
-    VkDescriptorSetLayoutCreateInfo vkDescriptorSetLayoutCreateInfo;
-    char **shaderPaths;
-    uint32_t vkDescriptorPoolSizeCount;
-    VkDescriptorPoolSize *vkDescriptorPoolSizes;
-} PipelineConfig;
-
-typedef struct
-{
-    VkRenderPassCreateInfo vkRenderPassCreateInfo;
-
-} RenderPassConfig;
-
-typedef struct
-{
     VkImage vkImage;
     VkFormat vkFormat;
     VkImageView vkImageView;
@@ -159,5 +144,5 @@ void createMappedBuffer(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, Vk
 void destroyMappedBuffer(VkDevice vkDevice, MappedBuffer mappedBuffer);
 void updateMappedBuffer(MappedBuffer *pMappedBuffer, void *data, VkDeviceSize size);
 
-GraphicImage *createASTCGraphicImage(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, const char *fileName, VkCommandPool commandPool, VkQueue graphicQueue);
-void destroyASTCGraphicImage(VkDevice vkDevice, GraphicImage *pGraphicImage);
+void *createASTCGraphicImage(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, const char *fileName, VkCommandPool commandPool, VkQueue graphicQueue, GraphicImage *pGraphicImage);
+void destroyASTCGraphicImage(VkDevice vkDevice, GraphicImage graphicImage);
