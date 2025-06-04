@@ -884,9 +884,9 @@ void destroyPipeline(Pipeline pipeline, VkDevice vkDevice)
     {
         Material *pMaterial = pipeline.materialDynamicArray.array[i];
         destroyMaterial(*pMaterial, vkDevice);
-        tickernelDestroyDynamicArray(&pMaterial->meshDynamicArray);
+        tickernelDestroyDynamicArray(pMaterial->meshDynamicArray);
     }
-    tickernelDestroyDynamicArray(&pipeline.materialDynamicArray);
+    tickernelDestroyDynamicArray(pipeline.materialDynamicArray);
 
     tickernelFree(pipeline.vkDescriptorPoolSizes);
 
@@ -938,7 +938,7 @@ void destroyMaterial(Material material, VkDevice vkDevice)
             destroyMesh(pMesh, vkDevice);
         }
     }
-    tickernelDestroyDynamicArray(&material.meshDynamicArray);
+    tickernelDestroyDynamicArray(material.meshDynamicArray);
 }
 
 void createMesh(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkCommandPool graphicVkCommandPool, VkQueue vkGraphicQueue, uint32_t vertexCount, VkDeviceSize vertexBufferSize, void *vertexBufferData, uint32_t indexCount, VkDeviceSize indexBufferSize, void *indexBufferData, uint32_t instanceCount, VkDeviceSize instanceBufferSize, void *instanceBufferData, Mesh *pMesh)
@@ -1113,6 +1113,6 @@ void destroyRenderPass(GraphicContext *pGraphicContext, uint32_t attachmentCount
             Pipeline *pPipeline = pSubpass->pipelineDynamicArray.array[i];
             destroyPipeline(*pPipeline, vkDevice);
         }
-        tickernelDestroyDynamicArray(&pSubpass->pipelineDynamicArray);
+        tickernelDestroyDynamicArray(pSubpass->pipelineDynamicArray);
     }
 }

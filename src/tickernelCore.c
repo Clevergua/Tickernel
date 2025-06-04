@@ -55,14 +55,10 @@ void tickernelCreateDynamicArray(TickernelDynamicArray *pDynamicArray, uint32_t 
         pDynamicArray->array[i] = NULL;
     }
 }
-void tickernelDestroyDynamicArray(TickernelDynamicArray *pDynamicArray)
+void tickernelDestroyDynamicArray(TickernelDynamicArray dynamicArray)
 {
-    tickernelClearDynamicArray(pDynamicArray);
-    tickernelFree(pDynamicArray->array);
-    pDynamicArray->array = NULL;
-    pDynamicArray->maxLength = 0;
-    pDynamicArray->length = 0;
-    pDynamicArray->dataSize = 0;
+    tickernelClearDynamicArray(&dynamicArray);
+    tickernelFree(dynamicArray.array);
 }
 
 void *tickernelAddToDynamicArray(TickernelDynamicArray *pDynamicArray, void *pData, uint32_t index)

@@ -29,7 +29,7 @@ void *tickernelMalloc(size_t size);
 void tickernelFree(void *block);
 
 void tickernelCreateDynamicArray(TickernelDynamicArray *pDynamicArray, uint32_t maxLength, size_t dataSize);
-void tickernelDestroyDynamicArray(TickernelDynamicArray *pDynamicArray);
+void tickernelDestroyDynamicArray(TickernelDynamicArray dynamicArray);
 void *tickernelAddToDynamicArray(TickernelDynamicArray *pDynamicArray, void *pData, uint32_t index);
 void tickernelRemoveFromDynamicArray(TickernelDynamicArray *pDynamicArray, void* pData);
 void tickernelRemoveAtIndexFromDynamicArray(TickernelDynamicArray *pDynamicArray, uint32_t index);

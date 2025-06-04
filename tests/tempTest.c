@@ -68,7 +68,7 @@ int main()
     assert(dynamicArray.length == 0);
 
     // Test tickernelDestroyDynamicArray
-    tickernelDestroyDynamicArray(&dynamicArray);
+    tickernelDestroyDynamicArray(dynamicArray);
     assert(dynamicArray.array == NULL);
     return 0;
 }
