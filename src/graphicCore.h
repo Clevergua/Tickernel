@@ -12,41 +12,6 @@
 
 typedef struct
 {
-    mat4 view;
-    mat4 proj;
-    mat4 inv_view_proj;
-    float pointSizeFactor;
-    float time;
-    int frameCount;
-    float near;
-    float far;
-    float fov;
-    int width;
-    int height;
-} GlobalUniformBuffer;
-
-typedef struct
-{
-    vec4 color;
-    vec3 direction;
-} DirectionalLight;
-
-typedef struct
-{
-    vec4 color;
-    vec3 position;
-    float range;
-} PointLight;
-
-typedef struct
-{
-    DirectionalLight directionalLight;
-    int pointLightCount;
-    PointLight pointLights[MAX_POINT_LIGHT_COUNT];
-} LightsUniformBuffer;
-
-typedef struct
-{
     VkBuffer vkBuffer;
     VkDeviceMemory vkBufferMemory;
 } Buffer;
@@ -78,8 +43,7 @@ typedef struct
 
 typedef struct
 {
-    uint32_t pipelineCount;
-    Pipeline *pipelines;
+    TickernelDynamicArray pipelineDynamicArray;
 } Subpass;
 
 typedef struct
@@ -104,7 +68,7 @@ typedef struct
 typedef struct
 {
     VkRenderPassCreateInfo vkRenderPassCreateInfo;
-    PipelineConfig **subpassIndexToPipelineConfigs;
+
 } RenderPassConfig;
 
 typedef struct
@@ -114,6 +78,43 @@ typedef struct
     VkImageView vkImageView;
     VkDeviceMemory vkDeviceMemory;
 } GraphicImage;
+
+typedef enum
+{
+    ATTACHMENT_TYPE_DYNAMIC,
+    ATTACHMENT_TYPE_FIXED,
+    ATTACHMENT_TYPE_SWAPCHAIN,
+} AttachmentType;
+
+typedef struct
+{
+} SwapchainAttachment;
+
+typedef struct
+{
+    GraphicImage graphicImage;
+    uint32_t width;
+    uint32_t height;
+} FixedAttachment;
+
+typedef struct
+{
+    GraphicImage graphicImage;
+    float32_t scaler; 
+} DynamicAttachment;
+
+typedef union
+{
+    SwapchainAttachment swapchainAttachment;
+    FixedAttachment fixedAttachment;
+    DynamicAttachment dynamicAttachment;
+} AttachmentContent;
+
+typedef struct
+{
+    AttachmentType attachmentType;
+    AttachmentContent attachmentContent;
+} Attachment;
 
 typedef struct
 {
@@ -160,13 +161,3 @@ void updateMappedBuffer(MappedBuffer *pMappedBuffer, void *data, VkDeviceSize si
 
 GraphicImage *createASTCGraphicImage(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, const char *fileName, VkCommandPool commandPool, VkQueue graphicQueue);
 void destroyASTCGraphicImage(VkDevice vkDevice, GraphicImage *pGraphicImage);
-
-void createPipelines(Subpass *pSubpass, PipelineConfig *pipelineConfigs, uint32_t pipelineConfigCount, VkDevice vkDevice);
-void destroyPipelines(Subpass *pSubpass, VkDevice vkDevice);
-
-void createMaterial(VkDevice vkDevice, Pipeline pipeline, size_t meshSize, VkWriteDescriptorSet *vkWriteDescriptorSets, uint32_t vkWriteDescriptorSetCount, Material *pMaterial);
-void destroyMaterial(Material *pMaterial, VkDevice vkDevice);
-
-void createMesh(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkCommandPool graphicVkCommandPool, VkQueue vkGraphicQueue, uint32_t vertexCount, VkDeviceSize vertexBufferSize, void *vertexBufferData, uint32_t indexCount, VkDeviceSize indexBufferSize, void *indexBufferData, uint32_t instanceCount, VkDeviceSize instanceBufferSize, void *instanceBufferData, Mesh *pMesh);
-void destroyMesh(Mesh *pMesh, VkDevice vkDevice);
-void recordSubpass(Subpass *pSubpass, VkCommandBuffer vkCommandBuffer);

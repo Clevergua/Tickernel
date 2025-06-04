@@ -598,27 +598,6 @@ static void destroyVkCommandBuffers(GraphicContext *pGraphicContext)
 static void recordCommandBuffer(GraphicContext *pGraphicContext)
 {
     VkCommandBuffer vkCommandBuffer = pGraphicContext->graphicVkCommandBuffers[pGraphicContext->swapchainIndex];
-
-    VkViewport viewport = {
-        .x = 0.0f,
-        .y = 0.0f,
-        .width = pGraphicContext->swapchainWidth,
-        .height = pGraphicContext->swapchainHeight,
-        .minDepth = 0.0f,
-        .maxDepth = 1.0f,
-    };
-    VkOffset2D offset = {
-        .x = 0,
-        .y = 0,
-    };
-    VkExtent2D extent = {
-        .width = pGraphicContext->swapchainWidth,
-        .height = pGraphicContext->swapchainHeight,
-    };
-    VkRect2D scissor = {
-        .offset = offset,
-        .extent = extent,
-    };
     VkCommandBufferBeginInfo vkCommandBufferBeginInfo =
         {
             .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
@@ -629,9 +608,124 @@ static void recordCommandBuffer(GraphicContext *pGraphicContext)
     VkResult result = vkBeginCommandBuffer(vkCommandBuffer, &vkCommandBufferBeginInfo);
     tryThrowVulkanError(result);
 
+    for (uint32_t i = 0; i < pGraphicContext->RenderPasseDynamicArray.length; i++)
+    {
+        RenderPass *pRenderPass = pGraphicContext->RenderPasseDynamicArray.array[i];
+        for (uint32_t i = 0; i < pRenderPass->subpassCount; i++)
+        {
+            Subpass *pSubpass = &pRenderPass->subpasses[i];
+
+            for (uint32_t j = 0; j < pSubpass->pipelineDynamicArray.length; j++)
+            {
+                Pipeline *pPipeline = pSubpass->pipelineDynamicArray.array[j];
+                vkCmdBindPipeline(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pPipeline->vkPipeline);
+                for (uint32_t modelIndex = 0; modelIndex < pPipeline->materialDynamicArray.length; modelIndex++)
+                {
+                    Material *pMaterial = pPipeline->materialDynamicArray.array[modelIndex];
+                    vkCmdBindDescriptorSets(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pPipeline->vkPipelineLayout, 0, 1, &pMaterial->vkDescriptorSet, 0, NULL);
+                    for (uint32_t meshIndex = 0; meshIndex < pMaterial->meshDynamicArray.length; meshIndex++)
+                    {
+                        Mesh *pMesh = pMaterial->meshDynamicArray.array[meshIndex];
+                        if (pMesh->vertexCount > 0)
+                        {
+                            if (pMesh->indexCount > 0)
+                            {
+                                if (pMesh->instanceCount > 0)
+                                {
+                                    VkBuffer vertexBuffers[] = {pMesh->vertexBuffer.vkBuffer, pMesh->instanceMappedBuffer.buffer.vkBuffer};
+                                    VkDeviceSize offsets[] = {0, 0};
+                                    vkCmdBindVertexBuffers(vkCommandBuffer, 0, 2, vertexBuffers, offsets);
+                                    vkCmdBindIndexBuffer(vkCommandBuffer, pMesh->indexBuffer.vkBuffer, 0, VK_INDEX_TYPE_UINT32);
+                                    vkCmdDrawIndexed(vkCommandBuffer, pMesh->indexCount, pMesh->instanceCount, 0, 0, 0);
+                                }
+                                else
+                                {
+                                    VkBuffer vertexBuffers[] = {pMesh->vertexBuffer.vkBuffer};
+                                    VkDeviceSize offsets[] = {0};
+                                    vkCmdBindVertexBuffers(vkCommandBuffer, 0, 1, vertexBuffers, offsets);
+                                    vkCmdBindIndexBuffer(vkCommandBuffer, pMesh->indexBuffer.vkBuffer, 0, VK_INDEX_TYPE_UINT32);
+                                    vkCmdDrawIndexed(vkCommandBuffer, pMesh->indexCount, 1, 0, 0, 0);
+                                }
+                            }
+                            else
+                            {
+                                if (pMesh->instanceCount > 0)
+                                {
+                                    VkBuffer vertexBuffers[] = {pMesh->vertexBuffer.vkBuffer, pMesh->instanceMappedBuffer.buffer.vkBuffer};
+                                    VkDeviceSize offsets[] = {0, 0};
+                                    vkCmdBindVertexBuffers(vkCommandBuffer, 0, 2, vertexBuffers, offsets);
+                                    vkCmdDraw(vkCommandBuffer, pMesh->vertexCount, pMesh->instanceCount, 0, 0);
+                                }
+                                else
+                                {
+                                    VkBuffer vertexBuffers[] = {pMesh->vertexBuffer.vkBuffer};
+                                    VkDeviceSize offsets[] = {0};
+                                    vkCmdBindVertexBuffers(vkCommandBuffer, 0, 1, vertexBuffers, offsets);
+                                    vkCmdDraw(vkCommandBuffer, pMesh->vertexCount, 1, 0, 0);
+                                }
+                            }
+                        }
+                        else
+                        {
+                            vkCmdBindDescriptorSets(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pPipeline->vkPipelineLayout, 0, 1, &pMaterial->vkDescriptorSet, 0, NULL);
+                            vkCmdDraw(vkCommandBuffer, 3, 1, 0, 0);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     result = vkEndCommandBuffer(vkCommandBuffer);
     tryThrowVulkanError(result);
-    
+}
+
+static void createFramebuffer(GraphicContext *pGraphicContext, uint32_t attachmentCount, Attachment *attachments, RenderPass *pRenderPass, VkFramebuffer *pVkFramebuffer)
+{
+    VkDevice vkDevice = pGraphicContext->vkDevice;
+    VkImageView attachmentVkImageViews[attachmentCount];
+    uint32_t width, height;
+    for (uint32_t j = 0; j < attachmentCount; j++)
+    {
+        Attachment attachment = attachments[j];
+        if (ATTACHMENT_TYPE_SWAPCHAIN == attachment.attachmentType)
+        {
+            attachmentVkImageViews[j] = pGraphicContext->swapchainImageViews[j];
+            width = pGraphicContext->swapchainWidth;
+            height = pGraphicContext->swapchainHeight;
+        }
+        else if (ATTACHMENT_TYPE_DYNAMIC == attachment.attachmentType)
+        {
+            DynamicAttachment dynamicAttachment = attachment.attachmentContent.dynamicAttachment;
+            attachmentVkImageViews[j] = dynamicAttachment.graphicImage.vkImageView;
+            width = pGraphicContext->swapchainWidth * dynamicAttachment.scaler;
+            height = pGraphicContext->swapchainHeight * dynamicAttachment.scaler;
+        }
+        else
+        {
+            FixedAttachment fixedAttachment = attachment.attachmentContent.fixedAttachment;
+            attachmentVkImageViews[j] = fixedAttachment.graphicImage.vkImageView;
+            width = fixedAttachment.width;
+            height = fixedAttachment.height;
+        }
+    }
+    VkFramebufferCreateInfo vkFramebufferCreateInfo = {
+        .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
+        .pNext = NULL,
+        .flags = 0,
+        .renderPass = pRenderPass->vkRenderPass,
+        .attachmentCount = attachmentCount,
+        .pAttachments = attachmentVkImageViews,
+        .width = width,
+        .height = height,
+        .layers = 1,
+    };
+    VkResult result = vkCreateFramebuffer(vkDevice, &vkFramebufferCreateInfo, NULL, pVkFramebuffer);
+    tryThrowVulkanError(result);
+}
+static void destroyFramebuffer(GraphicContext *pGraphicContext, VkFramebuffer vkFramebuffer)
+{
+    vkDestroyFramebuffer(pGraphicContext->vkDevice, vkFramebuffer, NULL);
 }
 
 GraphicContext *startGraphic(const char *assetsPath, int targetSwapchainImageCount, VkPresentModeKHR targetPresentMode, VkInstance vkInstance, VkSurfaceKHR vkSurface, uint32_t swapchainWidth, uint32_t swapchainHeight)
@@ -670,7 +764,7 @@ GraphicContext *startGraphic(const char *assetsPath, int targetSwapchainImageCou
         .offset = offset,
         .extent = extent,
     };
-    createRenderPasses(pGraphicContext);
+
     return pGraphicContext;
 }
 
@@ -733,8 +827,6 @@ void endGraphic(GraphicContext *pGraphicContext)
     VkResult result = vkDeviceWaitIdle(pGraphicContext->vkDevice);
     tryThrowVulkanError(result);
 
-    destroyRenderPasses(pGraphicContext);
-
     destroyVkCommandBuffers(pGraphicContext);
     destroyCommandPools(pGraphicContext);
     destroySignals(pGraphicContext);
@@ -742,4 +834,294 @@ void endGraphic(GraphicContext *pGraphicContext)
     destroyLogicalDevice(pGraphicContext);
 
     tickernelFree(pGraphicContext);
+}
+
+void createPipelines(Subpass *pSubpass, PipelineConfig *pipelineConfigs, uint32_t pipelineConfigCount, VkDevice vkDevice)
+{
+    tickernelCreateDynamicArray(&pSubpass->pipelineDynamicArray, pipelineConfigCount, sizeof(Pipeline));
+
+    for (uint32_t i = 0; i < pipelineConfigCount; i++)
+    {
+        PipelineConfig *pPipelineConfig = &pipelineConfigs[i];
+        Pipeline *pPipeline = pSubpass->pipelineDynamicArray.array[i];
+        VkPipelineCache pipelineCache = NULL;
+        VkGraphicsPipelineCreateInfo *pVkGraphicsPipelineCreateInfo = &pPipelineConfig->vkGraphicsPipelineCreateInfo;
+        for (uint32_t j = 0; j < pVkGraphicsPipelineCreateInfo->stageCount; j++)
+        {
+            VkPipelineShaderStageCreateInfo vkPipelineShaderStageCreateInfo = pVkGraphicsPipelineCreateInfo->pStages[j];
+            createVkShaderModule(vkDevice, pPipelineConfig->shaderPaths[j], &vkPipelineShaderStageCreateInfo.module);
+        }
+
+        VkResult result = vkCreateDescriptorSetLayout(vkDevice, &pPipelineConfig->vkDescriptorSetLayoutCreateInfo, NULL, &pPipeline->descriptorSetLayout);
+        tryThrowVulkanError(result);
+
+        VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {
+            .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+            .pNext = NULL,
+            .flags = 0,
+            .setLayoutCount = 1,
+            .pSetLayouts = &pPipeline->descriptorSetLayout,
+            .pushConstantRangeCount = 0,
+            .pPushConstantRanges = NULL,
+        };
+
+        result = vkCreatePipelineLayout(vkDevice, &pipelineLayoutCreateInfo, NULL, &pPipeline->vkPipelineLayout);
+        tryThrowVulkanError(result);
+
+        pVkGraphicsPipelineCreateInfo->layout = pPipeline->vkPipelineLayout;
+        result = vkCreateGraphicsPipelines(vkDevice, pipelineCache, 1, pVkGraphicsPipelineCreateInfo, NULL, &pPipeline->vkPipeline);
+        tryThrowVulkanError(result);
+
+        for (uint32_t j = 0; j < pVkGraphicsPipelineCreateInfo->stageCount; j++)
+        {
+            VkPipelineShaderStageCreateInfo vkPipelineShaderStageCreateInfo = pVkGraphicsPipelineCreateInfo->pStages[j];
+            destroyVkShaderModule(vkDevice, vkPipelineShaderStageCreateInfo.module);
+        }
+
+        pPipeline->vkDescriptorPoolSizeCount = pPipelineConfig->vkDescriptorPoolSizeCount;
+        pPipeline->vkDescriptorPoolSizes = tickernelMalloc(sizeof(VkDescriptorPoolSize) * pPipeline->vkDescriptorPoolSizeCount);
+        memcpy(pPipeline->vkDescriptorPoolSizes, pPipelineConfig->vkDescriptorPoolSizes, sizeof(VkDescriptorPoolSize) * pPipeline->vkDescriptorPoolSizeCount);
+
+        tickernelCreateDynamicArray(&pPipeline->materialDynamicArray, 1, sizeof(Material));
+    }
+}
+
+void destroyPipelines(Subpass *pSubpass, VkDevice vkDevice)
+{
+    for (uint32_t i = 0; i < pSubpass->pipelineDynamicArray.length; i++)
+    {
+        Pipeline *pPipeline = pSubpass->pipelineDynamicArray.array[i];
+        for (uint32_t i = 0; i < pPipeline->materialDynamicArray.length; i++)
+        {
+            Material *pMaterial = pPipeline->materialDynamicArray.array[i];
+            destroyMaterial(pMaterial, vkDevice);
+            tickernelDestroyDynamicArray(&pMaterial->meshDynamicArray);
+        }
+        tickernelDestroyDynamicArray(&pPipeline->materialDynamicArray);
+
+        tickernelFree(pPipeline->vkDescriptorPoolSizes);
+
+        vkDestroyPipeline(vkDevice, pPipeline->vkPipeline, NULL);
+        vkDestroyPipelineLayout(vkDevice, pPipeline->vkPipelineLayout, NULL);
+        vkDestroyDescriptorSetLayout(vkDevice, pPipeline->descriptorSetLayout, NULL);
+    }
+
+    tickernelDestroyDynamicArray(&pSubpass->pipelineDynamicArray);
+}
+
+void createMaterial(VkDevice vkDevice, Pipeline pipeline, size_t meshSize, VkWriteDescriptorSet *vkWriteDescriptorSets, uint32_t vkWriteDescriptorSetCount, Material *pMaterial)
+{
+    tickernelCreateDynamicArray(&pMaterial->meshDynamicArray, 1, meshSize);
+    pMaterial->vkDescriptorSet = VK_NULL_HANDLE;
+
+    VkDescriptorPoolCreateInfo descriptorPoolCreateInfo = {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+        .pNext = NULL,
+        .flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
+        .maxSets = 1,
+        .poolSizeCount = pipeline.vkDescriptorPoolSizeCount,
+        .pPoolSizes = pipeline.vkDescriptorPoolSizes,
+    };
+    VkResult result = vkCreateDescriptorPool(vkDevice, &descriptorPoolCreateInfo, NULL, &pMaterial->vkDescriptorPool);
+    tryThrowVulkanError(result);
+
+    // Create vkDescriptorSet
+    VkDescriptorSetAllocateInfo descriptorSetAllocateInfo = {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+        .pNext = NULL,
+        .descriptorPool = pMaterial->vkDescriptorPool,
+        .descriptorSetCount = 1,
+        .pSetLayouts = &pipeline.descriptorSetLayout,
+    };
+    result = vkAllocateDescriptorSets(vkDevice, &descriptorSetAllocateInfo, &pMaterial->vkDescriptorSet);
+    tryThrowVulkanError(result);
+
+    vkUpdateDescriptorSets(vkDevice, vkWriteDescriptorSetCount, vkWriteDescriptorSets, 0, NULL);
+}
+
+void destroyMaterial(Material *pMaterial, VkDevice vkDevice)
+{
+    vkFreeDescriptorSets(vkDevice, pMaterial->vkDescriptorPool, 1, &pMaterial->vkDescriptorSet);
+    vkDestroyDescriptorPool(vkDevice, pMaterial->vkDescriptorPool, NULL);
+
+    for (size_t i = pMaterial->meshDynamicArray.length - 1; i > -1; i--)
+    {
+        Mesh *pMesh = pMaterial->meshDynamicArray.array[i];
+        if (pMesh)
+        {
+            destroyMesh(pMesh, vkDevice);
+        }
+    }
+    tickernelDestroyDynamicArray(&pMaterial->meshDynamicArray);
+}
+
+void createMesh(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkCommandPool graphicVkCommandPool, VkQueue vkGraphicQueue, uint32_t vertexCount, VkDeviceSize vertexBufferSize, void *vertexBufferData, uint32_t indexCount, VkDeviceSize indexBufferSize, void *indexBufferData, uint32_t instanceCount, VkDeviceSize instanceBufferSize, void *instanceBufferData, Mesh *pMesh)
+{
+    pMesh = tickernelMalloc(sizeof(Mesh));
+    pMesh->vertexCount = vertexCount;
+    if (vertexCount > 0)
+    {
+        createBuffer(vkDevice, vkPhysicalDevice, vertexBufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &pMesh->vertexBuffer);
+
+        updateBufferWithStagingBuffer(vkDevice, vkPhysicalDevice, 0, vertexBufferSize, vertexBufferData, graphicVkCommandPool, vkGraphicQueue, pMesh->vertexBuffer.vkBuffer);
+
+        pMesh->indexCount = indexCount;
+        if (indexCount > 0)
+        {
+            createBuffer(vkDevice, vkPhysicalDevice, indexBufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &pMesh->indexBuffer);
+
+            updateBufferWithStagingBuffer(vkDevice, vkPhysicalDevice, 0, indexBufferSize, indexBufferData, graphicVkCommandPool, vkGraphicQueue, pMesh->indexBuffer.vkBuffer);
+            pMesh->indexCount = indexCount;
+        }
+        else
+        {
+            // continue;
+        }
+
+        pMesh->maxInstanceCount = instanceCount;
+        pMesh->instanceCount = instanceCount;
+        if (instanceCount > 0)
+        {
+            createBuffer(vkDevice, vkPhysicalDevice, instanceBufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &pMesh->instanceMappedBuffer.buffer);
+            vkMapMemory(vkDevice, pMesh->instanceMappedBuffer.buffer.vkBufferMemory, 0, instanceBufferSize, 0, pMesh->instanceMappedBuffer.mapped);
+
+            memcpy(pMesh->instanceMappedBuffer.mapped, instanceBufferData, instanceBufferSize);
+        }
+        else
+        {
+            // continue;
+        }
+    }
+    else
+    {
+        // continue;
+    }
+}
+
+void destroyMesh(Mesh *pMesh, VkDevice vkDevice)
+{
+    if (pMesh->vertexCount > 0)
+    {
+        destroyBuffer(vkDevice, pMesh->vertexBuffer);
+    }
+    else
+    {
+        // continue;
+    }
+    if (pMesh->indexCount > 0)
+    {
+        destroyBuffer(vkDevice, pMesh->indexBuffer);
+    }
+    else
+    {
+        // continue;
+    }
+
+    if (pMesh->instanceCount > 0)
+    {
+        vkUnmapMemory(vkDevice, pMesh->instanceMappedBuffer.buffer.vkBufferMemory);
+        destroyBuffer(vkDevice, pMesh->instanceMappedBuffer.buffer);
+    }
+    else
+    {
+        // continue;
+    }
+
+    tickernelFree(pMesh);
+}
+
+void updateMeshInstanceBuffer(Mesh *pMesh, VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkCommandPool graphicVkCommandPool, VkQueue vkGraphicQueue, VkBuffer globalUniformBuffer, VkDeviceSize instanceBufferSize, void *instanceBufferData, uint32_t instanceCount)
+{
+    if (0 == pMesh->maxInstanceCount)
+    {
+        pMesh->maxInstanceCount = instanceCount;
+        pMesh->instanceCount = instanceCount;
+
+        createMappedBuffer(vkDevice, vkPhysicalDevice, instanceBufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &pMesh->instanceMappedBuffer);
+        updateMappedBuffer(pMesh->instanceMappedBuffer.mapped, instanceBufferData, instanceBufferSize);
+    }
+    else if (instanceCount <= pMesh->maxInstanceCount)
+    {
+        pMesh->instanceCount = instanceCount;
+        updateMappedBuffer(pMesh->instanceMappedBuffer.mapped, instanceBufferData, instanceBufferSize);
+    }
+    else
+    {
+        destroyMappedBuffer(vkDevice, pMesh->instanceMappedBuffer);
+        pMesh->maxInstanceCount = instanceCount;
+        pMesh->instanceCount = instanceCount;
+        createMappedBuffer(vkDevice, vkPhysicalDevice, instanceBufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &pMesh->instanceMappedBuffer);
+        updateMappedBuffer(pMesh->instanceMappedBuffer.mapped, instanceBufferData, instanceBufferSize);
+    }
+}
+
+void createRenderPass(GraphicContext *pGraphicContext, uint32_t attachmentCount, VkAttachmentDescription *vkAttachmentDescriptions, Attachment *attachments, uint32_t subpassCount, VkSubpassDescription *vkSubpassDescriptions, uint32_t vkSubpassDependencyCount, VkSubpassDependency *vkSubpassDependencies, RenderPass *pRenderPass)
+{
+    VkDevice vkDevice = pGraphicContext->vkDevice;
+    bool useSwapchain = false;
+    for (uint32_t i = 0; i < attachmentCount; i++)
+    {
+        Attachment attachment = attachments[i];
+        if (ATTACHMENT_TYPE_SWAPCHAIN == attachment.attachmentType)
+        {
+            useSwapchain = true;
+            vkAttachmentDescriptions[i].format = pGraphicContext->surfaceFormat.format;
+        }
+        else if (ATTACHMENT_TYPE_DYNAMIC == attachment.attachmentType)
+        {
+            vkAttachmentDescriptions[i].format = attachment.attachmentContent.dynamicAttachment.graphicImage.vkFormat;
+        }
+        else
+        {
+            vkAttachmentDescriptions[i].format = attachment.attachmentContent.fixedAttachment.graphicImage.vkFormat;
+        }
+    }
+
+    VkRenderPassCreateInfo vkRenderPassCreateInfo = {
+        .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
+        .pNext = NULL,
+        .flags = 0,
+        .attachmentCount = attachmentCount,
+        .pAttachments = vkAttachmentDescriptions,
+        .subpassCount = subpassCount,
+        .pSubpasses = vkSubpassDescriptions,
+        .dependencyCount = 0,
+        .pDependencies = NULL,
+    };
+    VkResult result = vkCreateRenderPass(vkDevice, &vkRenderPassCreateInfo, NULL, &pRenderPass->vkRenderPass);
+    tryThrowVulkanError(result);
+
+    if (useSwapchain)
+    {
+        pRenderPass->vkFramebufferCount = pGraphicContext->swapchainImageCount;
+        pRenderPass->vkFramebuffers = tickernelMalloc(sizeof(VkFramebuffer) * pRenderPass->vkFramebufferCount);
+        for (uint32_t i = 0; i < pRenderPass->vkFramebufferCount; i++)
+        {
+            createFramebuffer(pGraphicContext, pRenderPass->vkFramebufferCount, attachments, pRenderPass, &pRenderPass->vkFramebuffers[i]);
+        }
+    }
+    else
+    {
+        pRenderPass->vkFramebufferCount = 1;
+        pRenderPass->vkFramebuffers = tickernelMalloc(sizeof(VkFramebuffer));
+        createFramebuffer(pGraphicContext, pRenderPass->vkFramebufferCount, attachments, pRenderPass, &pRenderPass->vkFramebuffers[0]);
+    }
+
+    pRenderPass->subpassCount = vkRenderPassCreateInfo.subpassCount;
+    pRenderPass->subpasses = tickernelMalloc(sizeof(Subpass) * pRenderPass->subpassCount);
+    for (uint32_t i = 0; i < pRenderPass->subpassCount; i++)
+    {
+        Subpass *pSubpass = &pRenderPass->subpasses[i];
+        tickernelCreateDynamicArray(&pSubpass->pipelineDynamicArray, 0, sizeof(Pipeline));
+    }
+}
+
+void destroyRenderPass(GraphicContext *pGraphicContext, uint32_t attachmentCount, VkAttachmentDescription *vkAttachmentDescriptions, Attachment *attachments, uint32_t subpassCount, VkSubpassDescription *vkSubpassDescriptions, uint32_t vkSubpassDependencyCount, VkSubpassDependency *vkSubpassDependencies, RenderPass *pRenderPass)
+{
+
+    for (uint32_t i = 0; i < pRenderPass->subpassCount; i++)
+    {
+        Subpass *pSubpass = &pRenderPass->subpasses[i];
+        tickernelDestroyDynamicArray(&pSubpass->pipelineDynamicArray);
+    }
 }
