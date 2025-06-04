@@ -836,78 +836,78 @@ void endGraphic(GraphicContext *pGraphicContext)
     tickernelFree(pGraphicContext);
 }
 
-void createPipelines(Subpass *pSubpass, PipelineConfig *pipelineConfigs, uint32_t pipelineConfigCount, VkDevice vkDevice)
-{
-    tickernelCreateDynamicArray(&pSubpass->pipelineDynamicArray, pipelineConfigCount, sizeof(Pipeline));
+// void createPipelines(Subpass *pSubpass, PipelineConfig *pipelineConfigs, uint32_t pipelineConfigCount, VkDevice vkDevice)
+// {
+//     tickernelCreateDynamicArray(&pSubpass->pipelineDynamicArray, pipelineConfigCount, sizeof(Pipeline));
 
-    for (uint32_t i = 0; i < pipelineConfigCount; i++)
-    {
-        PipelineConfig *pPipelineConfig = &pipelineConfigs[i];
-        Pipeline *pPipeline = pSubpass->pipelineDynamicArray.array[i];
-        VkPipelineCache pipelineCache = NULL;
-        VkGraphicsPipelineCreateInfo *pVkGraphicsPipelineCreateInfo = &pPipelineConfig->vkGraphicsPipelineCreateInfo;
-        for (uint32_t j = 0; j < pVkGraphicsPipelineCreateInfo->stageCount; j++)
-        {
-            VkPipelineShaderStageCreateInfo vkPipelineShaderStageCreateInfo = pVkGraphicsPipelineCreateInfo->pStages[j];
-            createVkShaderModule(vkDevice, pPipelineConfig->shaderPaths[j], &vkPipelineShaderStageCreateInfo.module);
-        }
+//     for (uint32_t i = 0; i < pipelineConfigCount; i++)
+//     {
+//         PipelineConfig *pPipelineConfig = &pipelineConfigs[i];
+//         Pipeline *pPipeline = pSubpass->pipelineDynamicArray.array[i];
+//         VkPipelineCache pipelineCache = NULL;
+//         VkGraphicsPipelineCreateInfo *pVkGraphicsPipelineCreateInfo = &pPipelineConfig->vkGraphicsPipelineCreateInfo;
+//         for (uint32_t j = 0; j < pVkGraphicsPipelineCreateInfo->stageCount; j++)
+//         {
+//             VkPipelineShaderStageCreateInfo vkPipelineShaderStageCreateInfo = pVkGraphicsPipelineCreateInfo->pStages[j];
+//             createVkShaderModule(vkDevice, pPipelineConfig->shaderPaths[j], &vkPipelineShaderStageCreateInfo.module);
+//         }
 
-        VkResult result = vkCreateDescriptorSetLayout(vkDevice, &pPipelineConfig->vkDescriptorSetLayoutCreateInfo, NULL, &pPipeline->descriptorSetLayout);
-        tryThrowVulkanError(result);
+//         VkResult result = vkCreateDescriptorSetLayout(vkDevice, &pPipelineConfig->vkDescriptorSetLayoutCreateInfo, NULL, &pPipeline->descriptorSetLayout);
+//         tryThrowVulkanError(result);
 
-        VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {
-            .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
-            .pNext = NULL,
-            .flags = 0,
-            .setLayoutCount = 1,
-            .pSetLayouts = &pPipeline->descriptorSetLayout,
-            .pushConstantRangeCount = 0,
-            .pPushConstantRanges = NULL,
-        };
+//         VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {
+//             .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+//             .pNext = NULL,
+//             .flags = 0,
+//             .setLayoutCount = 1,
+//             .pSetLayouts = &pPipeline->descriptorSetLayout,
+//             .pushConstantRangeCount = 0,
+//             .pPushConstantRanges = NULL,
+//         };
 
-        result = vkCreatePipelineLayout(vkDevice, &pipelineLayoutCreateInfo, NULL, &pPipeline->vkPipelineLayout);
-        tryThrowVulkanError(result);
+//         result = vkCreatePipelineLayout(vkDevice, &pipelineLayoutCreateInfo, NULL, &pPipeline->vkPipelineLayout);
+//         tryThrowVulkanError(result);
 
-        pVkGraphicsPipelineCreateInfo->layout = pPipeline->vkPipelineLayout;
-        result = vkCreateGraphicsPipelines(vkDevice, pipelineCache, 1, pVkGraphicsPipelineCreateInfo, NULL, &pPipeline->vkPipeline);
-        tryThrowVulkanError(result);
+//         pVkGraphicsPipelineCreateInfo->layout = pPipeline->vkPipelineLayout;
+//         result = vkCreateGraphicsPipelines(vkDevice, pipelineCache, 1, pVkGraphicsPipelineCreateInfo, NULL, &pPipeline->vkPipeline);
+//         tryThrowVulkanError(result);
 
-        for (uint32_t j = 0; j < pVkGraphicsPipelineCreateInfo->stageCount; j++)
-        {
-            VkPipelineShaderStageCreateInfo vkPipelineShaderStageCreateInfo = pVkGraphicsPipelineCreateInfo->pStages[j];
-            destroyVkShaderModule(vkDevice, vkPipelineShaderStageCreateInfo.module);
-        }
+//         for (uint32_t j = 0; j < pVkGraphicsPipelineCreateInfo->stageCount; j++)
+//         {
+//             VkPipelineShaderStageCreateInfo vkPipelineShaderStageCreateInfo = pVkGraphicsPipelineCreateInfo->pStages[j];
+//             destroyVkShaderModule(vkDevice, vkPipelineShaderStageCreateInfo.module);
+//         }
 
-        pPipeline->vkDescriptorPoolSizeCount = pPipelineConfig->vkDescriptorPoolSizeCount;
-        pPipeline->vkDescriptorPoolSizes = tickernelMalloc(sizeof(VkDescriptorPoolSize) * pPipeline->vkDescriptorPoolSizeCount);
-        memcpy(pPipeline->vkDescriptorPoolSizes, pPipelineConfig->vkDescriptorPoolSizes, sizeof(VkDescriptorPoolSize) * pPipeline->vkDescriptorPoolSizeCount);
+//         pPipeline->vkDescriptorPoolSizeCount = pPipelineConfig->vkDescriptorPoolSizeCount;
+//         pPipeline->vkDescriptorPoolSizes = tickernelMalloc(sizeof(VkDescriptorPoolSize) * pPipeline->vkDescriptorPoolSizeCount);
+//         memcpy(pPipeline->vkDescriptorPoolSizes, pPipelineConfig->vkDescriptorPoolSizes, sizeof(VkDescriptorPoolSize) * pPipeline->vkDescriptorPoolSizeCount);
 
-        tickernelCreateDynamicArray(&pPipeline->materialDynamicArray, 1, sizeof(Material));
-    }
-}
+//         tickernelCreateDynamicArray(&pPipeline->materialDynamicArray, 1, sizeof(Material));
+//     }
+// }
 
-void destroyPipelines(Subpass *pSubpass, VkDevice vkDevice)
-{
-    for (uint32_t i = 0; i < pSubpass->pipelineDynamicArray.length; i++)
-    {
-        Pipeline *pPipeline = pSubpass->pipelineDynamicArray.array[i];
-        for (uint32_t i = 0; i < pPipeline->materialDynamicArray.length; i++)
-        {
-            Material *pMaterial = pPipeline->materialDynamicArray.array[i];
-            destroyMaterial(pMaterial, vkDevice);
-            tickernelDestroyDynamicArray(&pMaterial->meshDynamicArray);
-        }
-        tickernelDestroyDynamicArray(&pPipeline->materialDynamicArray);
+// void destroyPipelines(Subpass *pSubpass, VkDevice vkDevice)
+// {
+//     for (uint32_t i = 0; i < pSubpass->pipelineDynamicArray.length; i++)
+//     {
+//         Pipeline *pPipeline = pSubpass->pipelineDynamicArray.array[i];
+//         for (uint32_t i = 0; i < pPipeline->materialDynamicArray.length; i++)
+//         {
+//             Material *pMaterial = pPipeline->materialDynamicArray.array[i];
+//             destroyMaterial(pMaterial, vkDevice);
+//             tickernelDestroyDynamicArray(&pMaterial->meshDynamicArray);
+//         }
+//         tickernelDestroyDynamicArray(&pPipeline->materialDynamicArray);
 
-        tickernelFree(pPipeline->vkDescriptorPoolSizes);
+//         tickernelFree(pPipeline->vkDescriptorPoolSizes);
 
-        vkDestroyPipeline(vkDevice, pPipeline->vkPipeline, NULL);
-        vkDestroyPipelineLayout(vkDevice, pPipeline->vkPipelineLayout, NULL);
-        vkDestroyDescriptorSetLayout(vkDevice, pPipeline->descriptorSetLayout, NULL);
-    }
+//         vkDestroyPipeline(vkDevice, pPipeline->vkPipeline, NULL);
+//         vkDestroyPipelineLayout(vkDevice, pPipeline->vkPipelineLayout, NULL);
+//         vkDestroyDescriptorSetLayout(vkDevice, pPipeline->descriptorSetLayout, NULL);
+//     }
 
-    tickernelDestroyDynamicArray(&pSubpass->pipelineDynamicArray);
-}
+//     tickernelDestroyDynamicArray(&pSubpass->pipelineDynamicArray);
+// }
 
 void createMaterial(VkDevice vkDevice, Pipeline pipeline, size_t meshSize, VkWriteDescriptorSet *vkWriteDescriptorSets, uint32_t vkWriteDescriptorSetCount, Material *pMaterial)
 {
@@ -1122,6 +1122,10 @@ void destroyRenderPass(GraphicContext *pGraphicContext, uint32_t attachmentCount
     for (uint32_t i = 0; i < pRenderPass->subpassCount; i++)
     {
         Subpass *pSubpass = &pRenderPass->subpasses[i];
+        for (uint32_t i = 0; i < pSubpass->pipelineDynamicArray.length; i++)
+        {
+            destroyPipeline(pSubpass, pGraphicContext->vkDevice);
+        }
         tickernelDestroyDynamicArray(&pSubpass->pipelineDynamicArray);
     }
 }
