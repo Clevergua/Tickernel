@@ -1,5 +1,20 @@
 #include "graphicCore.h"
 
+static void findMemoryType(VkPhysicalDevice vkPhysicalDevice, uint32_t typeFilter, VkMemoryPropertyFlags memoryPropertyFlags, uint32_t *memoryTypeIndex)
+{
+    VkPhysicalDeviceMemoryProperties physicalDeviceMemoryProperties;
+    vkGetPhysicalDeviceMemoryProperties(vkPhysicalDevice, &physicalDeviceMemoryProperties);
+    for (uint32_t i = 0; i < physicalDeviceMemoryProperties.memoryTypeCount; i++)
+    {
+        if ((typeFilter & (1 << i)) && (physicalDeviceMemoryProperties.memoryTypes[i].propertyFlags & memoryPropertyFlags) == memoryPropertyFlags)
+        {
+            *memoryTypeIndex = i;
+            return;
+        }
+    }
+    printf("Failed to find suitable memory type!");
+}
+
 static void createImage(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkExtent3D vkExtent3D, VkFormat vkFormat, VkImageTiling vkImageTiling, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImage *pVkImage, VkDeviceMemory *pVkDeviceMemory)
 {
     VkResult result = VK_SUCCESS;
@@ -193,21 +208,6 @@ void destroyMappedBuffer(VkDevice vkDevice, MappedBuffer mappedBuffer)
 void updateMappedBuffer(MappedBuffer *pMappedBuffer, void *data, VkDeviceSize size)
 {
     memcpy(pMappedBuffer->mapped, data, size);
-}
-
-void findMemoryType(VkPhysicalDevice vkPhysicalDevice, uint32_t typeFilter, VkMemoryPropertyFlags memoryPropertyFlags, uint32_t *memoryTypeIndex)
-{
-    VkPhysicalDeviceMemoryProperties physicalDeviceMemoryProperties;
-    vkGetPhysicalDeviceMemoryProperties(vkPhysicalDevice, &physicalDeviceMemoryProperties);
-    for (uint32_t i = 0; i < physicalDeviceMemoryProperties.memoryTypeCount; i++)
-    {
-        if ((typeFilter & (1 << i)) && (physicalDeviceMemoryProperties.memoryTypes[i].propertyFlags & memoryPropertyFlags) == memoryPropertyFlags)
-        {
-            *memoryTypeIndex = i;
-            return;
-        }
-    }
-    printf("Failed to find suitable memory type!");
 }
 
 void findDepthFormat(VkPhysicalDevice vkPhysicalDevice, VkFormat *pDepthFormat)
