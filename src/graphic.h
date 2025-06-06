@@ -152,9 +152,9 @@ typedef struct
     VkSemaphore renderFinishedSemaphore;
     VkFence renderFinishedFence;
 
-    TickernelDynamicArray RenderPasseDynamicArray;
-    TickernelDynamicArray AttachmentDynamicArray;
-    TickernelDynamicArray UniformBufferDynamicArray;
+    TickernelDynamicArray renderPasseDynamicArray;
+    TickernelDynamicArray attachmentDynamicArray;
+    TickernelDynamicArray uniformBufferDynamicArray;
 } GraphicContext;
 
 GraphicContext *startGraphic(const char *assetsPath, int targetSwapchainImageCount, VkPresentModeKHR targetPresentMode, VkInstance vkInstance, VkSurfaceKHR vkSurface, uint32_t swapchainWidth, uint32_t swapchainHeight);
@@ -176,3 +176,8 @@ void destroyMaterial(GraphicContext *pGraphicContext, Material material);
 void createMesh(GraphicContext *pGraphicContext, uint32_t vertexCount, VkDeviceSize vertexBufferSize, void *vertexBufferData, uint32_t indexCount, VkDeviceSize indexBufferSize, void *indexBufferData, uint32_t instanceCount, VkDeviceSize instanceBufferSize, void *instanceBufferData, Mesh *pMesh);
 void destroyMesh(GraphicContext *pGraphicContext, Mesh *pMesh);
 void updateMeshInstanceBuffer(GraphicContext *pGraphicContext, Mesh *pMesh, VkDeviceSize instanceBufferSize, void *instanceBufferData, uint32_t instanceCount);
+
+void createRenderPass(GraphicContext *pGraphicContext, uint32_t attachmentCount, VkAttachmentDescription *vkAttachmentDescriptions, Attachment *attachments, uint32_t subpassCount, VkSubpassDescription *vkSubpassDescriptions, uint32_t vkSubpassDependencyCount, VkSubpassDependency *vkSubpassDependencies, RenderPass *pRenderPass);
+void destroyRenderPass(GraphicContext *pGraphicContext, uint32_t attachmentCount, VkAttachmentDescription *vkAttachmentDescriptions, Attachment *attachments, uint32_t subpassCount, VkSubpassDescription *vkSubpassDescriptions, uint32_t vkSubpassDependencyCount, VkSubpassDependency *vkSubpassDependencies, RenderPass *pRenderPass);
+void addRenderPass(GraphicContext *pGraphicContext, RenderPass renderPass, RenderPass *pRenderPass);
+void removeRenderPass(GraphicContext *pGraphicContext, RenderPass *pRenderPass);

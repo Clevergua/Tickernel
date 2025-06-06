@@ -61,7 +61,7 @@ void tickernelDestroyDynamicArray(TickernelDynamicArray dynamicArray)
     tickernelFree(dynamicArray.array);
 }
 
-void *tickernelAddToDynamicArray(TickernelDynamicArray *pDynamicArray, void *pData, uint32_t index)
+void tickernelAddToDynamicArray(TickernelDynamicArray *pDynamicArray, void *pInput, uint32_t index, void *pOutput)
 {
     if (pDynamicArray->length >= pDynamicArray->maxLength)
     {
@@ -72,20 +72,23 @@ void *tickernelAddToDynamicArray(TickernelDynamicArray *pDynamicArray, void *pDa
         pDynamicArray->array = newArray;
     }
 
-    void *newData = tickernelMalloc(pDynamicArray->dataSize);
+    pOutput = tickernelMalloc(pDynamicArray->dataSize);
     if (index < pDynamicArray->length)
     {
         memmove(&pDynamicArray->array[index + 1], &pDynamicArray->array[index], (pDynamicArray->length - index) * sizeof(void *));
-        memcpy(newData, pData, pDynamicArray->dataSize);
-        pDynamicArray->array[index] = newData;
+        memcpy(pOutput, pInput, pDynamicArray->dataSize);
+        pDynamicArray->array[index] = pOutput;
+    }
+    else if (index == pDynamicArray->length)
+    {
+        memcpy(pOutput, pInput, pDynamicArray->dataSize);
+        pDynamicArray->array[pDynamicArray->length] = pOutput;
     }
     else
     {
-        memcpy(newData, pData, pDynamicArray->dataSize);
-        pDynamicArray->array[pDynamicArray->length] = newData;
+        tickernelError("Index out of bounds!\n");
     }
     pDynamicArray->length++;
-    return newData;
 }
 
 void tickernelRemoveFromDynamicArray(TickernelDynamicArray *pDynamicArray, void *pData)

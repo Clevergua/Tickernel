@@ -44,9 +44,11 @@ int main()
 
     // Test tickernelAddToDynamicArray
     int value1 = 10, value2 = 20, value3 = 30;
-    tickernelAddToDynamicArray(&dynamicArray, &value1, 0);
-    tickernelAddToDynamicArray(&dynamicArray, &value2, 1);
-    void *addedValue3 = tickernelAddToDynamicArray(&dynamicArray, &value3, 2); // Capture the returned pointer
+    int *p1, *p2;
+    tickernelAddToDynamicArray(&dynamicArray, &value1, 0, p1);
+    tickernelAddToDynamicArray(&dynamicArray, &value2, 1, p2);
+    void *addedValue3;
+    tickernelAddToDynamicArray(&dynamicArray, &value3, 2, addedValue3); // Capture the returned pointer
     assert(dynamicArray.length == 3);
     assert(*(int *)dynamicArray.array[0] == 10);
     assert(*(int *)dynamicArray.array[1] == 20);

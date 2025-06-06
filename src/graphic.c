@@ -648,9 +648,9 @@ static void recordCommandBuffer(GraphicContext *pGraphicContext)
     VkResult result = vkBeginCommandBuffer(vkCommandBuffer, &vkCommandBufferBeginInfo);
     tryThrowVulkanError(result);
 
-    for (uint32_t i = 0; i < pGraphicContext->RenderPasseDynamicArray.length; i++)
+    for (uint32_t i = 0; i < pGraphicContext->renderPasseDynamicArray.length; i++)
     {
-        RenderPass *pRenderPass = pGraphicContext->RenderPasseDynamicArray.array[i];
+        RenderPass *pRenderPass = pGraphicContext->renderPasseDynamicArray.array[i];
         for (uint32_t i = 0; i < pRenderPass->subpassCount; i++)
         {
             Subpass *pSubpass = &pRenderPass->subpasses[i];
@@ -1703,4 +1703,13 @@ void destroyRenderPass(GraphicContext *pGraphicContext, uint32_t attachmentCount
         }
         tickernelDestroyDynamicArray(pSubpass->pipelineDynamicArray);
     }
+}
+
+void addRenderPass(GraphicContext *pGraphicContext, RenderPass renderPass, RenderPass *pRenderPass)
+{
+    tickernelAddToDynamicArray(&pGraphicContext->renderPasseDynamicArray, &renderPass, pGraphicContext->renderPasseDynamicArray.length, pRenderPass);
+}
+void removeRenderPass(GraphicContext *pGraphicContext, RenderPass *pRenderPass)
+{
+    tickernelRemoveFromDynamicArray(&pGraphicContext->renderPasseDynamicArray, pRenderPass);
 }
