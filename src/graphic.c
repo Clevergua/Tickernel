@@ -1,5 +1,13 @@
 #include "graphic.h"
 
+static void tryThrowVulkanError(VkResult vkResult)
+{
+    if (vkResult != VK_SUCCESS)
+    {
+        tickernelError("Vulkan error code: %d\n", vkResult);
+    }
+}
+
 static void hasAllRequiredExtensions(GraphicContext *pGraphicContext, VkPhysicalDevice vkPhysicalDevice, bool *pHasAllRequiredExtensions)
 {
     VkResult result = VK_SUCCESS;
@@ -319,6 +327,39 @@ static void choosePresentMode(VkPresentModeKHR *supportPresentModes, uint32_t su
     }
 }
 
+static void createImageView(VkDevice vkDevice, VkImage image, VkFormat format, VkImageAspectFlags imageAspectFlags, VkImageView *pImageView)
+{
+    VkComponentMapping components = {
+        .r = VK_COMPONENT_SWIZZLE_IDENTITY,
+        .g = VK_COMPONENT_SWIZZLE_IDENTITY,
+        .b = VK_COMPONENT_SWIZZLE_IDENTITY,
+        .a = VK_COMPONENT_SWIZZLE_IDENTITY,
+    };
+    VkImageSubresourceRange subresourceRange = {
+        .aspectMask = imageAspectFlags,
+        .levelCount = 1,
+        .baseMipLevel = 0,
+        .layerCount = 1,
+        .baseArrayLayer = 0,
+    };
+    VkImageViewCreateInfo imageViewCreateInfo = {
+        .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+        .pNext = NULL,
+        .flags = 0,
+        .image = image,
+        .viewType = VK_IMAGE_VIEW_TYPE_2D,
+        .format = format,
+        .components = components,
+        .subresourceRange = subresourceRange,
+    };
+    VkResult result = vkCreateImageView(vkDevice, &imageViewCreateInfo, NULL, pImageView);
+    tryThrowVulkanError(result);
+}
+static void destroyImageView(VkDevice vkDevice, VkImageView vkImageView)
+{
+    vkDestroyImageView(vkDevice, vkImageView, NULL);
+}
+
 static void createSwapchain(GraphicContext *pGraphicContext, uint32_t swapchainWidth, uint32_t swapchainHeight)
 {
     VkResult result = VK_SUCCESS;
@@ -459,7 +500,7 @@ static void destroySwapchain(GraphicContext *pGraphicContext)
 {
     for (uint32_t i = 0; i < pGraphicContext->swapchainImageCount; i++)
     {
-        vkDestroyImageView(pGraphicContext->vkDevice, pGraphicContext->swapchainImageViews[i], NULL);
+        destroyImageView(pGraphicContext->vkDevice, pGraphicContext->swapchainImageViews[i]);
     }
     tickernelFree(pGraphicContext->swapchainImageViews);
     tickernelFree(pGraphicContext->swapchainImages);
@@ -490,7 +531,6 @@ static void createSignals(GraphicContext *pGraphicContext)
     result = vkCreateFence(vkDevice, &fenceCreateInfo, NULL, &pGraphicContext->renderFinishedFence);
     tryThrowVulkanError(result);
 }
-
 static void destroySignals(GraphicContext *pGraphicContext)
 {
     VkDevice vkDevice = pGraphicContext->vkDevice;
@@ -728,6 +768,389 @@ static void destroyFramebuffer(GraphicContext *pGraphicContext, VkFramebuffer vk
     vkDestroyFramebuffer(pGraphicContext->vkDevice, vkFramebuffer, NULL);
 }
 
+static void findMemoryType(VkPhysicalDevice vkPhysicalDevice, uint32_t typeFilter, VkMemoryPropertyFlags memoryPropertyFlags, uint32_t *memoryTypeIndex)
+{
+    VkPhysicalDeviceMemoryProperties physicalDeviceMemoryProperties;
+    vkGetPhysicalDeviceMemoryProperties(vkPhysicalDevice, &physicalDeviceMemoryProperties);
+    for (uint32_t i = 0; i < physicalDeviceMemoryProperties.memoryTypeCount; i++)
+    {
+        if ((typeFilter & (1 << i)) && (physicalDeviceMemoryProperties.memoryTypes[i].propertyFlags & memoryPropertyFlags) == memoryPropertyFlags)
+        {
+            *memoryTypeIndex = i;
+            return;
+        }
+    }
+    printf("Failed to find suitable memory type!");
+}
+
+static void createImage(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkExtent3D vkExtent3D, VkFormat vkFormat, VkImageTiling vkImageTiling, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImage *pVkImage, VkDeviceMemory *pVkDeviceMemory)
+{
+    VkResult result = VK_SUCCESS;
+
+    VkImageCreateInfo imageCreateInfo = {
+        .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
+        .pNext = NULL,
+        .flags = 0,
+        .imageType = VK_IMAGE_TYPE_2D,
+        .format = vkFormat,
+        .extent = vkExtent3D,
+        .mipLevels = 1,
+        .arrayLayers = 1,
+        .samples = VK_SAMPLE_COUNT_1_BIT,
+        .tiling = vkImageTiling,
+        .usage = vkImageUsageFlags,
+        .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+        .queueFamilyIndexCount = 0,
+        .pQueueFamilyIndices = 0,
+        .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+    };
+    result = vkCreateImage(vkDevice, &imageCreateInfo, NULL, pVkImage);
+    tryThrowVulkanError(result);
+    VkMemoryRequirements memoryRequirements;
+    vkGetImageMemoryRequirements(vkDevice, *pVkImage, &memoryRequirements);
+    uint32_t memoryTypeIndex;
+    findMemoryType(vkPhysicalDevice, memoryRequirements.memoryTypeBits, vkMemoryPropertyFlags, &memoryTypeIndex);
+
+    VkMemoryAllocateInfo memoryAllocateInfo = {
+        .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
+        .pNext = NULL,
+        .allocationSize = memoryRequirements.size,
+        .memoryTypeIndex = memoryTypeIndex,
+    };
+
+    result = vkAllocateMemory(vkDevice, &memoryAllocateInfo, NULL, pVkDeviceMemory);
+    tryThrowVulkanError(result);
+    result = vkBindImageMemory(vkDevice, *pVkImage, *pVkDeviceMemory, 0);
+    tryThrowVulkanError(result);
+}
+
+static void destroyImage(VkDevice vkDevice, VkImage vkImage, VkDeviceMemory vkDeviceMemory)
+{
+    vkDestroyImage(vkDevice, vkImage, NULL);
+    vkFreeMemory(vkDevice, vkDeviceMemory, NULL);
+}
+
+static void findSupportedFormat(VkPhysicalDevice vkPhysicalDevice, VkFormat *candidates, uint32_t candidatesCount, VkImageTiling tiling, VkFormatFeatureFlags features, VkFormat *vkFormat)
+{
+
+    for (uint32_t i = 0; i < candidatesCount; i++)
+    {
+        VkFormat format = candidates[i];
+        VkFormatProperties properties;
+        vkGetPhysicalDeviceFormatProperties(vkPhysicalDevice, format, &properties);
+        if ((properties.optimalTilingFeatures & features) == features)
+        {
+            if (VK_IMAGE_TILING_LINEAR == tiling || VK_IMAGE_TILING_OPTIMAL == tiling)
+            {
+                *vkFormat = format;
+                return;
+            }
+            else
+            {
+                // continue;
+            }
+        }
+        else
+        {
+            // continue;
+        }
+    }
+    tickernelError("Target format not found!");
+}
+
+static void createBuffer(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkDeviceSize bufferSize, VkBufferUsageFlags bufferUsageFlags, VkMemoryPropertyFlags memoryPropertyFlags, Buffer *pBuffer)
+{
+    VkResult result = VK_SUCCESS;
+    VkBufferCreateInfo bufferCreateInfo = {
+        .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+        .pNext = NULL,
+        .flags = 0,
+        .size = bufferSize,
+        .usage = bufferUsageFlags,
+        .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+        .queueFamilyIndexCount = 0,
+        .pQueueFamilyIndices = 0,
+    };
+    result = vkCreateBuffer(vkDevice, &bufferCreateInfo, NULL, &pBuffer->vkBuffer);
+    tryThrowVulkanError(result);
+    VkMemoryRequirements memoryRequirements;
+    vkGetBufferMemoryRequirements(vkDevice, pBuffer->vkBuffer, &memoryRequirements);
+    uint32_t memoryTypeIndex;
+    findMemoryType(vkPhysicalDevice, memoryRequirements.memoryTypeBits, memoryPropertyFlags, &memoryTypeIndex);
+    VkMemoryAllocateInfo memoryAllocateInfo = {
+        .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
+        .pNext = NULL,
+        .allocationSize = memoryRequirements.size,
+        .memoryTypeIndex = memoryTypeIndex,
+    };
+    result = vkAllocateMemory(vkDevice, &memoryAllocateInfo, NULL, &pBuffer->vkBufferMemory);
+    tryThrowVulkanError(result);
+    result = vkBindBufferMemory(vkDevice, pBuffer->vkBuffer, pBuffer->vkBufferMemory, 0);
+    tryThrowVulkanError(result);
+}
+static void destroyBuffer(VkDevice vkDevice, Buffer buffer)
+{
+    vkFreeMemory(vkDevice, buffer.vkBufferMemory, NULL);
+    vkDestroyBuffer(vkDevice, buffer.vkBuffer, NULL);
+}
+
+static void updateBufferWithStagingBuffer(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkDeviceSize offset, VkDeviceSize bufferSize, void *bufferData, VkCommandPool graphicVkCommandPool, VkQueue vkGraphicQueue, VkBuffer vkBuffer)
+{
+    Buffer stagingBuffer;
+    createBuffer(vkDevice, vkPhysicalDevice, bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingBuffer);
+
+    void *pData;
+    VkResult result = vkMapMemory(vkDevice, stagingBuffer.vkBufferMemory, offset, bufferSize, 0, &pData);
+    tryThrowVulkanError(result);
+    memcpy(pData, bufferData, bufferSize);
+    vkUnmapMemory(vkDevice, stagingBuffer.vkBufferMemory);
+
+    VkCommandBuffer vkCommandBuffer;
+    VkCommandBufferAllocateInfo vkCommandBufferAllocateInfo = {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+        .pNext = NULL,
+        .commandPool = graphicVkCommandPool,
+        .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+        .commandBufferCount = 1,
+    };
+    result = vkAllocateCommandBuffers(vkDevice, &vkCommandBufferAllocateInfo, &vkCommandBuffer);
+    tryThrowVulkanError(result);
+
+    VkCommandBufferBeginInfo vkCommandBufferBeginInfo =
+        {
+            .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+            .pNext = NULL,
+            .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
+            .pInheritanceInfo = NULL,
+        };
+    result = vkBeginCommandBuffer(vkCommandBuffer, &vkCommandBufferBeginInfo);
+    tryThrowVulkanError(result);
+
+    VkBufferCopy copyRegion = {
+        .srcOffset = 0,
+        .dstOffset = offset,
+        .size = bufferSize,
+    };
+    vkCmdCopyBuffer(vkCommandBuffer, stagingBuffer.vkBuffer, vkBuffer, 1, &copyRegion);
+
+    vkEndCommandBuffer(vkCommandBuffer);
+    VkSubmitInfo submitInfo = {
+        .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+        .pNext = NULL,
+        .waitSemaphoreCount = 0,
+        .pWaitSemaphores = NULL,
+        .pWaitDstStageMask = NULL,
+        .commandBufferCount = 1,
+        .pCommandBuffers = &vkCommandBuffer,
+        .signalSemaphoreCount = 0,
+        .pSignalSemaphores = NULL,
+    };
+    vkQueueSubmit(vkGraphicQueue, 1, &submitInfo, VK_NULL_HANDLE);
+    vkQueueWaitIdle(vkGraphicQueue);
+
+    vkFreeCommandBuffers(vkDevice, graphicVkCommandPool, 1, &vkCommandBuffer);
+    destroyBuffer(vkDevice, stagingBuffer);
+}
+
+static void updateBuffer(VkDevice vkDevice, VkDeviceMemory vkBufferMemory, VkDeviceSize offset, VkDeviceSize bufferSize, void *bufferData)
+{
+    void *data;
+    vkMapMemory(vkDevice, vkBufferMemory, offset, bufferSize, 0, &data);
+    memcpy(data, bufferData, bufferSize);
+    vkUnmapMemory(vkDevice, vkBufferMemory);
+}
+
+static void createMappedBuffer(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkDeviceSize bufferSize, VkBufferUsageFlags bufferUsageFlags, VkMemoryPropertyFlags memoryPropertyFlags, MappedBuffer *pMappedBuffer)
+{
+    createBuffer(vkDevice, vkPhysicalDevice, bufferSize, bufferUsageFlags, memoryPropertyFlags, &pMappedBuffer->buffer);
+    vkMapMemory(vkDevice, pMappedBuffer->buffer.vkBufferMemory, 0, bufferSize, 0, &pMappedBuffer->mapped);
+}
+static void destroyMappedBuffer(VkDevice vkDevice, MappedBuffer mappedBuffer)
+{
+    vkUnmapMemory(vkDevice, mappedBuffer.buffer.vkBufferMemory);
+    destroyBuffer(vkDevice, mappedBuffer.buffer);
+}
+
+static void updateMappedBuffer(MappedBuffer *pMappedBuffer, void *data, VkDeviceSize size)
+{
+    memcpy(pMappedBuffer->mapped, data, size);
+}
+
+static void createGraphicImage(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkExtent3D vkExtent3D, VkFormat vkFormat, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags, GraphicImage *pGraphicImage)
+{
+    pGraphicImage->vkFormat = vkFormat;
+    createImage(vkDevice, vkPhysicalDevice, vkExtent3D, vkFormat, VK_IMAGE_TILING_OPTIMAL, vkImageUsageFlags, vkMemoryPropertyFlags, &pGraphicImage->vkImage, &pGraphicImage->vkDeviceMemory);
+    createImageView(vkDevice, pGraphicImage->vkImage, pGraphicImage->vkFormat, vkImageAspectFlags, &pGraphicImage->vkImageView);
+}
+
+static void destroyGraphicImage(VkDevice vkDevice, GraphicImage graphicImage)
+{
+    vkDestroyImageView(vkDevice, graphicImage.vkImageView, NULL);
+    destroyImage(vkDevice, graphicImage.vkImage, graphicImage.vkDeviceMemory);
+}
+
+static void createVkShaderModule(VkDevice vkDevice, const char *filePath, VkShaderModule *pVkShaderModule)
+{
+    FILE *pFile = fopen(filePath, "rb");
+    if (NULL == pFile)
+    {
+        tickernelError("Failed to read file with path: %s\n", filePath);
+    }
+    else
+    {
+        fseek(pFile, 0, SEEK_END);
+        size_t fileLength = ftell(pFile);
+        rewind(pFile);
+
+        uint32_t *pCode = tickernelMalloc(fileLength);
+        size_t codeSize = fread(pCode, 1, fileLength, pFile);
+
+        fclose(pFile);
+        if (codeSize == fileLength)
+        {
+            printf("Succeeded to read file!\n");
+            VkShaderModuleCreateInfo shaderModuleCreateInfo = {
+                .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
+                .pNext = NULL,
+                .flags = 0,
+                .codeSize = codeSize,
+                .pCode = pCode,
+            };
+            VkResult result = vkCreateShaderModule(vkDevice, &shaderModuleCreateInfo, NULL, pVkShaderModule);
+            tryThrowVulkanError(result);
+            tickernelFree(pCode);
+        }
+        else
+        {
+            printf("Failed to read file codeSize:%zu fileLength:%zu\n", codeSize, fileLength);
+        }
+    }
+}
+static void destroyVkShaderModule(VkDevice vkDevice, VkShaderModule vkShaderModule)
+{
+    vkDestroyShaderModule(vkDevice, vkShaderModule, NULL);
+}
+
+static void transitionImageLayout(VkDevice device, VkCommandPool commandPool, VkQueue queue, VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout)
+{
+
+    VkCommandBuffer commandBuffer;
+    VkCommandBufferAllocateInfo allocInfo = {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+        .commandPool = commandPool,
+        .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+        .commandBufferCount = 1};
+    vkAllocateCommandBuffers(device, &allocInfo, &commandBuffer);
+
+    VkCommandBufferBeginInfo beginInfo = {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+        .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT};
+    vkBeginCommandBuffer(commandBuffer, &beginInfo);
+
+    VkImageMemoryBarrier barrier = {
+        .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+        .oldLayout = oldLayout,
+        .newLayout = newLayout,
+        .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .image = image,
+        .subresourceRange = {
+            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+            .baseMipLevel = 0,
+            .levelCount = 1,
+            .baseArrayLayer = 0,
+            .layerCount = 1}};
+
+    VkPipelineStageFlags sourceStage;
+    VkPipelineStageFlags destinationStage;
+
+    if (oldLayout == VK_IMAGE_LAYOUT_UNDEFINED &&
+        newLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
+    {
+        barrier.srcAccessMask = 0;
+        barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+        sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+        destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+    }
+    else if (oldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL &&
+             newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+    {
+        barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+        barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+        sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+        destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+    }
+    else
+    {
+        printf("Unsupported layout transition!\n");
+        return;
+    }
+
+    vkCmdPipelineBarrier(
+        commandBuffer,
+        sourceStage, destinationStage,
+        0,
+        0, NULL,
+        0, NULL,
+        1, &barrier);
+
+    vkEndCommandBuffer(commandBuffer);
+    VkSubmitInfo submitInfo = {
+        .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+        .commandBufferCount = 1,
+        .pCommandBuffers = &commandBuffer};
+    vkQueueSubmit(queue, 1, &submitInfo, VK_NULL_HANDLE);
+    vkQueueWaitIdle(queue);
+    vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
+}
+
+static void copyBufferToImage(VkDevice device, VkCommandPool commandPool, VkQueue queue, VkBuffer buffer, VkImage image, uint32_t width, uint32_t height)
+{
+    VkCommandBuffer commandBuffer;
+    VkCommandBufferAllocateInfo allocInfo = {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+        .commandPool = commandPool,
+        .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+        .commandBufferCount = 1};
+    vkAllocateCommandBuffers(device, &allocInfo, &commandBuffer);
+
+    VkCommandBufferBeginInfo beginInfo = {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+        .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT};
+    vkBeginCommandBuffer(commandBuffer, &beginInfo);
+
+    VkBufferImageCopy region = {
+        .bufferOffset = 0,
+        .bufferRowLength = 0,
+        .bufferImageHeight = 0,
+        .imageSubresource = {
+            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+            .mipLevel = 0,
+            .baseArrayLayer = 0,
+            .layerCount = 1},
+        .imageOffset = {0, 0, 0},
+        .imageExtent = {width, height, 1}};
+
+    vkCmdCopyBufferToImage(
+        commandBuffer,
+        buffer,
+        image,
+        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+        1,
+        &region);
+
+    vkEndCommandBuffer(commandBuffer);
+
+    VkSubmitInfo submitInfo = {
+        .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+        .commandBufferCount = 1,
+        .pCommandBuffers = &commandBuffer};
+    vkQueueSubmit(queue, 1, &submitInfo, VK_NULL_HANDLE);
+    vkQueueWaitIdle(queue);
+
+    vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
+}
+
 GraphicContext *startGraphic(const char *assetsPath, int targetSwapchainImageCount, VkPresentModeKHR targetPresentMode, VkInstance vkInstance, VkSurfaceKHR vkSurface, uint32_t swapchainWidth, uint32_t swapchainHeight)
 {
     GraphicContext *pGraphicContext = tickernelMalloc(sizeof(GraphicContext));
@@ -836,6 +1259,165 @@ void endGraphic(GraphicContext *pGraphicContext)
     tickernelFree(pGraphicContext);
 }
 
+void createASTCGraphicImage(GraphicContext *pGraphicContext, const char *fileName, VkCommandPool commandPool, VkQueue graphicQueue, GraphicImage *pGraphicImage)
+{
+    FILE *file = fopen(fileName, "rb");
+    if (!file)
+    {
+        tickernelError("Failed to open ASTC file: %s\n", fileName);
+    }
+
+    ASTCHeader header;
+    if (fread(&header, sizeof(ASTCHeader), 1, file) != 1)
+    {
+        fclose(file);
+        tickernelError("Invalid ASTC file header: %s\n", fileName);
+    }
+
+    if (memcmp(header.magic, "ASTC", 4) != 0)
+    {
+        fclose(file);
+        tickernelError("Not an ASTC file: %s\n", fileName);
+    }
+
+    uint32_t width = (header.width[0] << 16) | (header.width[1] << 8) | header.width[2];
+    uint32_t height = (header.height[0] << 16) | (header.height[1] << 8) | header.height[2];
+    uint8_t blockWidth = header.blockDimX;
+    uint8_t blockHeight = header.blockDimY;
+
+    fseek(file, 0, SEEK_END);
+    size_t fileSize = ftell(file) - sizeof(ASTCHeader);
+    fseek(file, sizeof(ASTCHeader), SEEK_SET);
+
+    uint8_t *astcData = tickernelMalloc(fileSize);
+    if (fread(astcData, 1, fileSize, file) != fileSize)
+    {
+        tickernelFree(astcData);
+        fclose(file);
+        tickernelError("Failed to read ASTC data: %s\n", fileName);
+    }
+    fclose(file);
+
+    VkFormat astcFormat;
+    switch ((blockWidth << 8) | blockHeight)
+    {
+    case 0x0404:
+        astcFormat = VK_FORMAT_ASTC_4x4_UNORM_BLOCK;
+        break;
+    case 0x0504:
+        astcFormat = VK_FORMAT_ASTC_5x4_UNORM_BLOCK;
+        break;
+    case 0x0505:
+        astcFormat = VK_FORMAT_ASTC_5x5_UNORM_BLOCK;
+        break;
+    case 0x0605:
+        astcFormat = VK_FORMAT_ASTC_6x5_UNORM_BLOCK;
+        break;
+    case 0x0606:
+        astcFormat = VK_FORMAT_ASTC_6x6_UNORM_BLOCK;
+        break;
+    case 0x0805:
+        astcFormat = VK_FORMAT_ASTC_8x5_UNORM_BLOCK;
+        break;
+    case 0x0806:
+        astcFormat = VK_FORMAT_ASTC_8x6_UNORM_BLOCK;
+        break;
+    case 0x0808:
+        astcFormat = VK_FORMAT_ASTC_8x8_UNORM_BLOCK;
+        break;
+    case 0x0A05:
+        astcFormat = VK_FORMAT_ASTC_10x5_UNORM_BLOCK;
+        break;
+    case 0x0A06:
+        astcFormat = VK_FORMAT_ASTC_10x6_UNORM_BLOCK;
+        break;
+    case 0x0A08:
+        astcFormat = VK_FORMAT_ASTC_10x8_UNORM_BLOCK;
+        break;
+    case 0x0A0A:
+        astcFormat = VK_FORMAT_ASTC_10x10_UNORM_BLOCK;
+        break;
+    case 0x0C08:
+        astcFormat = VK_FORMAT_ASTC_12x10_UNORM_BLOCK;
+        break;
+    case 0x0C0A:
+        astcFormat = VK_FORMAT_ASTC_12x12_UNORM_BLOCK;
+        break;
+    default:
+        astcFormat = VK_FORMAT_UNDEFINED;
+        tickernelFree(astcData);
+        tickernelError("Unsupported ASTC block size: %dx%d\n", blockWidth, blockHeight);
+    }
+
+    VkFormatProperties props;
+    VkPhysicalDevice vkPhysicalDevice = pGraphicContext->vkPhysicalDevice;
+    VkDevice vkDevice = pGraphicContext->vkDevice;
+    vkGetPhysicalDeviceFormatProperties(vkPhysicalDevice, astcFormat, &props);
+    if (!(props.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT))
+    {
+        tickernelFree(astcData);
+        tickernelError("Device does not support ASTC format: %x\n", astcFormat);
+    }
+
+    VkExtent3D imageExtent = {width, height, 1};
+    createGraphicImage(
+        vkDevice, vkPhysicalDevice,
+        imageExtent,
+        astcFormat,
+        VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+        VK_IMAGE_ASPECT_COLOR_BIT,
+        pGraphicImage);
+
+    Buffer stagingBuffer;
+    createBuffer(
+        vkDevice, vkPhysicalDevice,
+        fileSize,
+        VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+        &stagingBuffer);
+
+    updateBuffer(vkDevice, stagingBuffer.vkBufferMemory, 0, fileSize, astcData);
+    tickernelFree(astcData);
+
+    transitionImageLayout(
+        vkDevice, commandPool, graphicQueue,
+        pGraphicImage->vkImage,
+        astcFormat,
+        VK_IMAGE_LAYOUT_UNDEFINED,
+        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+    copyBufferToImage(
+        vkDevice, commandPool, graphicQueue,
+        stagingBuffer.vkBuffer,
+        pGraphicImage->vkImage,
+        width, height);
+    transitionImageLayout(
+        vkDevice, commandPool, graphicQueue,
+        pGraphicImage->vkImage,
+        astcFormat,
+        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+    destroyBuffer(vkDevice, stagingBuffer);
+}
+void destroyASTCGraphicImage(GraphicContext *pGraphicContext, GraphicImage graphicImage)
+{
+    VkDevice vkDevice = pGraphicContext->vkDevice;
+    destroyGraphicImage(vkDevice, graphicImage);
+}
+
+void createSampler(GraphicContext *pGraphicContext, VkSamplerCreateInfo samplerCreateInfo, VkSampler *pVkSampler)
+{
+    VkDevice vkDevice = pGraphicContext->vkDevice;
+    VkResult result = vkCreateSampler(vkDevice, &samplerCreateInfo, NULL, pVkSampler);
+    tryThrowVulkanError(result);
+}
+void destroySampler(GraphicContext *pGraphicContext, VkSampler vkSampler)
+{
+    VkDevice vkDevice = pGraphicContext->vkDevice;
+    vkDestroySampler(vkDevice, vkSampler, NULL);
+}
+
 void createPipeline(GraphicContext *pGraphicContext, VkGraphicsPipelineCreateInfo vkGraphicsPipelineCreateInfo, VkDescriptorSetLayoutCreateInfo vkDescriptorSetLayoutCreateInfo, char **shaderPaths, uint32_t vkDescriptorPoolSizeCount, VkDescriptorPoolSize *vkDescriptorPoolSizes, Pipeline *pPipeline)
 {
     VkPipelineCache pipelineCache = NULL;
@@ -877,13 +1459,13 @@ void createPipeline(GraphicContext *pGraphicContext, VkGraphicsPipelineCreateInf
     memcpy(pPipeline->vkDescriptorPoolSizes, vkDescriptorPoolSizes, sizeof(VkDescriptorPoolSize) * pPipeline->vkDescriptorPoolSizeCount);
     tickernelCreateDynamicArray(&pPipeline->materialDynamicArray, 1, sizeof(Material));
 }
-
-void destroyPipeline(Pipeline pipeline, VkDevice vkDevice)
+void destroyPipeline(GraphicContext *pGraphicContext, Pipeline pipeline)
 {
+    VkDevice vkDevice = pGraphicContext->vkDevice;
     for (uint32_t i = 0; i < pipeline.materialDynamicArray.length; i++)
     {
         Material *pMaterial = pipeline.materialDynamicArray.array[i];
-        destroyMaterial(*pMaterial, vkDevice);
+        destroyMaterial(pGraphicContext, *pMaterial);
         tickernelDestroyDynamicArray(pMaterial->meshDynamicArray);
     }
     tickernelDestroyDynamicArray(pipeline.materialDynamicArray);
@@ -895,8 +1477,9 @@ void destroyPipeline(Pipeline pipeline, VkDevice vkDevice)
     vkDestroyDescriptorSetLayout(vkDevice, pipeline.descriptorSetLayout, NULL);
 }
 
-void createMaterial(VkDevice vkDevice, Pipeline pipeline, size_t meshSize, VkWriteDescriptorSet *vkWriteDescriptorSets, uint32_t vkWriteDescriptorSetCount, Material *pMaterial)
+void createMaterial(GraphicContext *pGraphicContext, Pipeline pipeline, size_t meshSize, VkWriteDescriptorSet *vkWriteDescriptorSets, uint32_t vkWriteDescriptorSetCount, Material *pMaterial)
 {
+    VkDevice vkDevice = pGraphicContext->vkDevice;
     tickernelCreateDynamicArray(&pMaterial->meshDynamicArray, 1, meshSize);
     pMaterial->vkDescriptorSet = VK_NULL_HANDLE;
 
@@ -924,9 +1507,9 @@ void createMaterial(VkDevice vkDevice, Pipeline pipeline, size_t meshSize, VkWri
 
     vkUpdateDescriptorSets(vkDevice, vkWriteDescriptorSetCount, vkWriteDescriptorSets, 0, NULL);
 }
-
-void destroyMaterial(Material material, VkDevice vkDevice)
+void destroyMaterial(GraphicContext *pGraphicContext, Material material)
 {
+    VkDevice vkDevice = pGraphicContext->vkDevice;
     vkFreeDescriptorSets(vkDevice, material.vkDescriptorPool, 1, &material.vkDescriptorSet);
     vkDestroyDescriptorPool(vkDevice, material.vkDescriptorPool, NULL);
 
@@ -935,14 +1518,18 @@ void destroyMaterial(Material material, VkDevice vkDevice)
         Mesh *pMesh = material.meshDynamicArray.array[i];
         if (pMesh)
         {
-            destroyMesh(pMesh, vkDevice);
+            destroyMesh(pGraphicContext, pMesh);
         }
     }
     tickernelDestroyDynamicArray(material.meshDynamicArray);
 }
 
-void createMesh(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkCommandPool graphicVkCommandPool, VkQueue vkGraphicQueue, uint32_t vertexCount, VkDeviceSize vertexBufferSize, void *vertexBufferData, uint32_t indexCount, VkDeviceSize indexBufferSize, void *indexBufferData, uint32_t instanceCount, VkDeviceSize instanceBufferSize, void *instanceBufferData, Mesh *pMesh)
+void createMesh(GraphicContext *pGraphicContext, uint32_t vertexCount, VkDeviceSize vertexBufferSize, void *vertexBufferData, uint32_t indexCount, VkDeviceSize indexBufferSize, void *indexBufferData, uint32_t instanceCount, VkDeviceSize instanceBufferSize, void *instanceBufferData, Mesh *pMesh)
 {
+    VkDevice vkDevice = pGraphicContext->vkDevice;
+    VkPhysicalDevice vkPhysicalDevice = pGraphicContext->vkPhysicalDevice;
+    VkCommandPool graphicVkCommandPool = pGraphicContext->graphicVkCommandPool;
+    VkQueue vkGraphicQueue = pGraphicContext->vkGraphicQueue;
     pMesh = tickernelMalloc(sizeof(Mesh));
     pMesh->vertexCount = vertexCount;
     if (vertexCount > 0)
@@ -983,9 +1570,10 @@ void createMesh(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkCommandP
         // continue;
     }
 }
-
-void destroyMesh(Mesh *pMesh, VkDevice vkDevice)
+void destroyMesh(GraphicContext *pGraphicContext, Mesh *pMesh)
 {
+    VkDevice vkDevice = pGraphicContext->vkDevice;
+
     if (pMesh->vertexCount > 0)
     {
         destroyBuffer(vkDevice, pMesh->vertexBuffer);
@@ -1015,9 +1603,11 @@ void destroyMesh(Mesh *pMesh, VkDevice vkDevice)
 
     tickernelFree(pMesh);
 }
-
-void updateMeshInstanceBuffer(Mesh *pMesh, VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkCommandPool graphicVkCommandPool, VkQueue vkGraphicQueue, VkBuffer globalUniformBuffer, VkDeviceSize instanceBufferSize, void *instanceBufferData, uint32_t instanceCount)
+void updateMeshInstanceBuffer(GraphicContext *pGraphicContext, Mesh *pMesh, VkDeviceSize instanceBufferSize, void *instanceBufferData, uint32_t instanceCount)
 {
+    VkDevice vkDevice = pGraphicContext->vkDevice;
+    VkPhysicalDevice vkPhysicalDevice = pGraphicContext->vkPhysicalDevice;
+
     if (0 == pMesh->maxInstanceCount)
     {
         pMesh->maxInstanceCount = instanceCount;
@@ -1101,17 +1691,15 @@ void createRenderPass(GraphicContext *pGraphicContext, uint32_t attachmentCount,
         tickernelCreateDynamicArray(&pSubpass->pipelineDynamicArray, 0, sizeof(Pipeline));
     }
 }
-
 void destroyRenderPass(GraphicContext *pGraphicContext, uint32_t attachmentCount, VkAttachmentDescription *vkAttachmentDescriptions, Attachment *attachments, uint32_t subpassCount, VkSubpassDescription *vkSubpassDescriptions, uint32_t vkSubpassDependencyCount, VkSubpassDependency *vkSubpassDependencies, RenderPass *pRenderPass)
 {
-    VkDevice vkDevice = pGraphicContext->vkDevice;
     for (uint32_t i = 0; i < pRenderPass->subpassCount; i++)
     {
         Subpass *pSubpass = &pRenderPass->subpasses[i];
         for (uint32_t i = 0; i < pSubpass->pipelineDynamicArray.length; i++)
         {
             Pipeline *pPipeline = pSubpass->pipelineDynamicArray.array[i];
-            destroyPipeline(*pPipeline, vkDevice);
+            destroyPipeline(pGraphicContext, *pPipeline);
         }
         tickernelDestroyDynamicArray(pSubpass->pipelineDynamicArray);
     }
