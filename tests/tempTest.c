@@ -36,19 +36,22 @@ int main()
     TickernelDynamicArray dynamicArray;
 
     // Test tickernelCreateDynamicArray
-    tickernelCreateDynamicArray(&dynamicArray, 4, sizeof(int));
+    tickernelCreateDynamicArray(&dynamicArray, 4);
     assert(dynamicArray.maxLength == 4);
-    assert(dynamicArray.dataSize == sizeof(int));
     assert(dynamicArray.length == 0);
     assert(dynamicArray.array != NULL);
 
+    // Verify all elements are initialized to NULL
+    for (uint32_t i = 0; i < dynamicArray.maxLength; i++) {
+        assert(dynamicArray.array[i] == NULL);
+    }
+
     // Test tickernelAddToDynamicArray
     int value1 = 10, value2 = 20, value3 = 30;
-    int *p1, *p2;
-    tickernelAddToDynamicArray(&dynamicArray, &value1, 0, p1);
-    tickernelAddToDynamicArray(&dynamicArray, &value2, 1, p2);
-    void *addedValue3;
-    tickernelAddToDynamicArray(&dynamicArray, &value3, 2, addedValue3); // Capture the returned pointer
+    tickernelAddToDynamicArray(&dynamicArray, &value1, 0);
+    tickernelAddToDynamicArray(&dynamicArray, &value2, 1);
+    tickernelAddToDynamicArray(&dynamicArray, &value3, 2);
+    
     assert(dynamicArray.length == 3);
     assert(*(int *)dynamicArray.array[0] == 10);
     assert(*(int *)dynamicArray.array[1] == 20);
@@ -59,18 +62,33 @@ int main()
     assert(dynamicArray.length == 2);
     assert(*(int *)dynamicArray.array[0] == 10);
     assert(*(int *)dynamicArray.array[1] == 30);
+    assert(dynamicArray.array[2] == NULL); // Verify the last element was set to NULL
 
     // Test tickernelRemoveFromDynamicArray
-    tickernelRemoveFromDynamicArray(&dynamicArray, addedValue3); // Use the returned pointer
+    tickernelRemoveFromDynamicArray(&dynamicArray, &value3);
     assert(dynamicArray.length == 1);
     assert(*(int *)dynamicArray.array[0] == 10);
+    assert(dynamicArray.array[1] == NULL);
 
     // Test tickernelClearDynamicArray
     tickernelClearDynamicArray(&dynamicArray);
     assert(dynamicArray.length == 0);
+    // Elements might still contain pointers - your implementation doesn't clear them
 
     // Test tickernelDestroyDynamicArray
     tickernelDestroyDynamicArray(dynamicArray);
-    assert(dynamicArray.array == NULL);
+    
+    // Test resize functionality
+    TickernelDynamicArray smallArray;
+    tickernelCreateDynamicArray(&smallArray, 2);
+    int values[4] = {1, 2, 3, 4};
+    for (int i = 0; i < 4; i++) {
+        tickernelAddToDynamicArray(&smallArray, &values[i], i);
+    }
+    assert(smallArray.maxLength == 4); // Should have doubled from 2
+    assert(smallArray.length == 4);
+    tickernelDestroyDynamicArray(smallArray);
+
+    printf("All tests passed!\n");
     return 0;
 }

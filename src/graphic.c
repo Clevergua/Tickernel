@@ -1167,27 +1167,7 @@ GraphicContext *startGraphic(const char *assetsPath, int targetSwapchainImageCou
     createCommandPools(pGraphicContext);
     createVkCommandBuffers(pGraphicContext);
 
-    VkViewport viewport = {
-        .x = 0.0f,
-        .y = 0.0f,
-        .width = pGraphicContext->swapchainWidth,
-        .height = pGraphicContext->swapchainHeight,
-        .minDepth = 0.0f,
-        .maxDepth = 1.0f,
-    };
-    VkOffset2D offset = {
-        .x = 0,
-        .y = 0,
-    };
-    VkExtent2D extent = {
-        .width = pGraphicContext->swapchainWidth,
-        .height = pGraphicContext->swapchainHeight,
-    };
-    VkRect2D scissor = {
-        .offset = offset,
-        .extent = extent,
-    };
-
+    tickernelCreateDynamicArray(&pGraphicContext->renderPasseDynamicArray, 1);
     return pGraphicContext;
 }
 
@@ -1247,6 +1227,12 @@ void updateGraphic(GraphicContext *pGraphicContext, uint32_t swapchainWidth, uin
 
 void endGraphic(GraphicContext *pGraphicContext)
 {
+    for (uint32_t i = 0; i < pGraphicContext->renderPasseDynamicArray.length; i++)
+    {
+        destroyRenderPass(pGraphicContext, pGraphicContext->renderPasseDynamicArray.array[i]);
+    }
+    tickernelDestroyDynamicArray(pGraphicContext->renderPasseDynamicArray);
+
     VkResult result = vkDeviceWaitIdle(pGraphicContext->vkDevice);
     tryThrowVulkanError(result);
 
@@ -1418,14 +1404,15 @@ void destroySampler(GraphicContext *pGraphicContext, VkSampler vkSampler)
     vkDestroySampler(vkDevice, vkSampler, NULL);
 }
 
-void createPipeline(GraphicContext *pGraphicContext, VkGraphicsPipelineCreateInfo vkGraphicsPipelineCreateInfo, VkDescriptorSetLayoutCreateInfo vkDescriptorSetLayoutCreateInfo, char **shaderPaths, uint32_t vkDescriptorPoolSizeCount, VkDescriptorPoolSize *vkDescriptorPoolSizes, Pipeline *pPipeline)
+void createPipeline(GraphicContext *pGraphicContext, uint32_t stageCount, char **shaderPaths, VkPipelineShaderStageCreateInfo *stages, VkPipelineVertexInputStateCreateInfo *pVertexInputState, VkPipelineInputAssemblyStateCreateInfo *pInputAssemblyState, VkPipelineViewportStateCreateInfo *pViewportState, VkPipelineRasterizationStateCreateInfo *pRasterizationState, VkPipelineMultisampleStateCreateInfo *pMultisampleState, VkPipelineDepthStencilStateCreateInfo *pDepthStencilState, VkPipelineColorBlendStateCreateInfo *pColorBlendState, VkPipelineDynamicStateCreateInfo *pDynamicState, VkDescriptorSetLayoutCreateInfo vkDescriptorSetLayoutCreateInfo, RenderPass *pRenderPass, uint32_t subpassIndex, uint32_t vkDescriptorPoolSizeCount, VkDescriptorPoolSize *vkDescriptorPoolSizes, uint32_t pipelineIndex, Pipeline *pPipeline)
 {
+    pPipeline = tickernelMalloc(sizeof(Pipeline));
+
     VkPipelineCache pipelineCache = NULL;
     VkDevice vkDevice = pGraphicContext->vkDevice;
-    for (uint32_t i = 0; i < vkGraphicsPipelineCreateInfo.stageCount; i++)
+    for (uint32_t i = 0; i < stageCount; i++)
     {
-        VkPipelineShaderStageCreateInfo vkPipelineShaderStageCreateInfo = vkGraphicsPipelineCreateInfo.pStages[i];
-        createVkShaderModule(vkDevice, shaderPaths[i], &vkPipelineShaderStageCreateInfo.module);
+        createVkShaderModule(vkDevice, shaderPaths[i], &stages[i].module);
     }
 
     VkResult result = vkCreateDescriptorSetLayout(vkDevice, &vkDescriptorSetLayoutCreateInfo, NULL, &pPipeline->descriptorSetLayout);
@@ -1444,43 +1431,67 @@ void createPipeline(GraphicContext *pGraphicContext, VkGraphicsPipelineCreateInf
     result = vkCreatePipelineLayout(vkDevice, &pipelineLayoutCreateInfo, NULL, &pPipeline->vkPipelineLayout);
     tryThrowVulkanError(result);
 
-    vkGraphicsPipelineCreateInfo.layout = pPipeline->vkPipelineLayout;
+    VkGraphicsPipelineCreateInfo vkGraphicsPipelineCreateInfo = {
+        .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
+        .pNext = NULL,
+        .flags = 0,
+        .stageCount = stageCount,
+        .pStages = stages,
+        .pVertexInputState = pVertexInputState,
+        .pInputAssemblyState = pInputAssemblyState,
+        .pTessellationState = NULL,
+        .pViewportState = pViewportState,
+        .pRasterizationState = pRasterizationState,
+        .pMultisampleState = pMultisampleState,
+        .pDepthStencilState = pDepthStencilState,
+        .pColorBlendState = pColorBlendState,
+        .pDynamicState = pDynamicState,
+        .layout = pPipeline->vkPipelineLayout,
+        .renderPass = pRenderPass->vkRenderPass,
+        .subpass = subpassIndex,
+        .basePipelineHandle = VK_NULL_HANDLE,
+        .basePipelineIndex = -1,
+    };
     result = vkCreateGraphicsPipelines(vkDevice, pipelineCache, 1, &vkGraphicsPipelineCreateInfo, NULL, &pPipeline->vkPipeline);
     tryThrowVulkanError(result);
 
     for (uint32_t i = 0; i < vkGraphicsPipelineCreateInfo.stageCount; i++)
     {
-        VkPipelineShaderStageCreateInfo vkPipelineShaderStageCreateInfo = vkGraphicsPipelineCreateInfo.pStages[i];
-        destroyVkShaderModule(vkDevice, vkPipelineShaderStageCreateInfo.module);
+        destroyVkShaderModule(vkDevice, stages[i].module);
     }
 
     pPipeline->vkDescriptorPoolSizeCount = vkDescriptorPoolSizeCount;
     pPipeline->vkDescriptorPoolSizes = tickernelMalloc(sizeof(VkDescriptorPoolSize) * pPipeline->vkDescriptorPoolSizeCount);
     memcpy(pPipeline->vkDescriptorPoolSizes, vkDescriptorPoolSizes, sizeof(VkDescriptorPoolSize) * pPipeline->vkDescriptorPoolSizeCount);
-    tickernelCreateDynamicArray(&pPipeline->materialDynamicArray, 1, sizeof(Material));
+    tickernelCreateDynamicArray(&pPipeline->materialDynamicArray, 1);
+
+    tickernelAddToDynamicArray(&pRenderPass->subpasses[subpassIndex].pipelineDynamicArray, pPipeline, pipelineIndex);
 }
-void destroyPipeline(GraphicContext *pGraphicContext, Pipeline pipeline)
+void destroyPipeline(GraphicContext *pGraphicContext, RenderPass *pRenderPass, uint32_t subpassIndex, Pipeline *pPipeline)
 {
+    tickernelRemoveFromDynamicArray(&pRenderPass->subpasses[subpassIndex].pipelineDynamicArray, pPipeline);
+
     VkDevice vkDevice = pGraphicContext->vkDevice;
-    for (uint32_t i = 0; i < pipeline.materialDynamicArray.length; i++)
+    for (uint32_t i = 0; i < pPipeline->materialDynamicArray.length; i++)
     {
-        Material *pMaterial = pipeline.materialDynamicArray.array[i];
-        destroyMaterial(pGraphicContext, *pMaterial);
-        tickernelDestroyDynamicArray(pMaterial->meshDynamicArray);
+        destroyMaterial(pGraphicContext, pPipeline, pPipeline->materialDynamicArray.array[i]);
     }
-    tickernelDestroyDynamicArray(pipeline.materialDynamicArray);
+    tickernelDestroyDynamicArray(pPipeline->materialDynamicArray);
 
-    tickernelFree(pipeline.vkDescriptorPoolSizes);
+    tickernelFree(pPipeline->vkDescriptorPoolSizes);
 
-    vkDestroyPipeline(vkDevice, pipeline.vkPipeline, NULL);
-    vkDestroyPipelineLayout(vkDevice, pipeline.vkPipelineLayout, NULL);
-    vkDestroyDescriptorSetLayout(vkDevice, pipeline.descriptorSetLayout, NULL);
+    vkDestroyPipeline(vkDevice, pPipeline->vkPipeline, NULL);
+    vkDestroyPipelineLayout(vkDevice, pPipeline->vkPipelineLayout, NULL);
+    vkDestroyDescriptorSetLayout(vkDevice, pPipeline->descriptorSetLayout, NULL);
+
+    tickernelFree(pPipeline);
 }
 
-void createMaterial(GraphicContext *pGraphicContext, Pipeline pipeline, size_t meshSize, VkWriteDescriptorSet *vkWriteDescriptorSets, uint32_t vkWriteDescriptorSetCount, Material *pMaterial)
+void createMaterial(GraphicContext *pGraphicContext, Pipeline *pPipeline, VkWriteDescriptorSet *vkWriteDescriptorSets, uint32_t vkWriteDescriptorSetCount, Material *pMaterial)
 {
+    pMaterial = tickernelMalloc(sizeof(Material));
     VkDevice vkDevice = pGraphicContext->vkDevice;
-    tickernelCreateDynamicArray(&pMaterial->meshDynamicArray, 1, meshSize);
+    tickernelCreateDynamicArray(&pMaterial->meshDynamicArray, 1);
     pMaterial->vkDescriptorSet = VK_NULL_HANDLE;
 
     VkDescriptorPoolCreateInfo descriptorPoolCreateInfo = {
@@ -1488,8 +1499,8 @@ void createMaterial(GraphicContext *pGraphicContext, Pipeline pipeline, size_t m
         .pNext = NULL,
         .flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
         .maxSets = 1,
-        .poolSizeCount = pipeline.vkDescriptorPoolSizeCount,
-        .pPoolSizes = pipeline.vkDescriptorPoolSizes,
+        .poolSizeCount = pPipeline->vkDescriptorPoolSizeCount,
+        .pPoolSizes = pPipeline->vkDescriptorPoolSizes,
     };
     VkResult result = vkCreateDescriptorPool(vkDevice, &descriptorPoolCreateInfo, NULL, &pMaterial->vkDescriptorPool);
     tryThrowVulkanError(result);
@@ -1500,37 +1511,35 @@ void createMaterial(GraphicContext *pGraphicContext, Pipeline pipeline, size_t m
         .pNext = NULL,
         .descriptorPool = pMaterial->vkDescriptorPool,
         .descriptorSetCount = 1,
-        .pSetLayouts = &pipeline.descriptorSetLayout,
+        .pSetLayouts = &pPipeline->descriptorSetLayout,
     };
     result = vkAllocateDescriptorSets(vkDevice, &descriptorSetAllocateInfo, &pMaterial->vkDescriptorSet);
     tryThrowVulkanError(result);
 
     vkUpdateDescriptorSets(vkDevice, vkWriteDescriptorSetCount, vkWriteDescriptorSets, 0, NULL);
-}
-void destroyMaterial(GraphicContext *pGraphicContext, Material material)
-{
-    VkDevice vkDevice = pGraphicContext->vkDevice;
-    vkFreeDescriptorSets(vkDevice, material.vkDescriptorPool, 1, &material.vkDescriptorSet);
-    vkDestroyDescriptorPool(vkDevice, material.vkDescriptorPool, NULL);
 
-    for (size_t i = material.meshDynamicArray.length - 1; i > -1; i--)
-    {
-        Mesh *pMesh = material.meshDynamicArray.array[i];
-        if (pMesh)
-        {
-            destroyMesh(pGraphicContext, pMesh);
-        }
-    }
-    tickernelDestroyDynamicArray(material.meshDynamicArray);
+    tickernelAddToDynamicArray(&pPipeline->materialDynamicArray, pMaterial, pPipeline->materialDynamicArray.length);
+}
+void destroyMaterial(GraphicContext *pGraphicContext, Pipeline *pPipeline, Material *pMaterial)
+{
+    tickernelRemoveFromDynamicArray(&pPipeline->materialDynamicArray, pMaterial);
+
+    VkDevice vkDevice = pGraphicContext->vkDevice;
+    vkFreeDescriptorSets(vkDevice, pMaterial->vkDescriptorPool, 1, &pMaterial->vkDescriptorSet);
+    vkDestroyDescriptorPool(vkDevice, pMaterial->vkDescriptorPool, NULL);
+
+    tickernelDestroyDynamicArray(pMaterial->meshDynamicArray);
+    tickernelFree(pMaterial);
 }
 
 void createMesh(GraphicContext *pGraphicContext, uint32_t vertexCount, VkDeviceSize vertexBufferSize, void *vertexBufferData, uint32_t indexCount, VkDeviceSize indexBufferSize, void *indexBufferData, uint32_t instanceCount, VkDeviceSize instanceBufferSize, void *instanceBufferData, Mesh *pMesh)
 {
+    pMesh = tickernelMalloc(sizeof(Mesh));
     VkDevice vkDevice = pGraphicContext->vkDevice;
     VkPhysicalDevice vkPhysicalDevice = pGraphicContext->vkPhysicalDevice;
     VkCommandPool graphicVkCommandPool = pGraphicContext->graphicVkCommandPool;
     VkQueue vkGraphicQueue = pGraphicContext->vkGraphicQueue;
-    pMesh = tickernelMalloc(sizeof(Mesh));
+
     pMesh->vertexCount = vertexCount;
     if (vertexCount > 0)
     {
@@ -1631,8 +1640,10 @@ void updateMeshInstanceBuffer(GraphicContext *pGraphicContext, Mesh *pMesh, VkDe
     }
 }
 
-void createRenderPass(GraphicContext *pGraphicContext, uint32_t attachmentCount, VkAttachmentDescription *vkAttachmentDescriptions, Attachment *attachments, uint32_t subpassCount, VkSubpassDescription *vkSubpassDescriptions, uint32_t vkSubpassDependencyCount, VkSubpassDependency *vkSubpassDependencies, RenderPass *pRenderPass)
+void createRenderPass(GraphicContext *pGraphicContext, uint32_t attachmentCount, VkAttachmentDescription *vkAttachmentDescriptions, Attachment *attachments, uint32_t subpassCount, VkSubpassDescription *vkSubpassDescriptions, uint32_t vkSubpassDependencyCount, VkSubpassDependency *vkSubpassDependencies, uint32_t renderPassIndex, RenderPass *pRenderPass)
 {
+    pRenderPass = tickernelMalloc(sizeof(RenderPass));
+
     VkDevice vkDevice = pGraphicContext->vkDevice;
     bool useSwapchain = false;
     for (uint32_t i = 0; i < attachmentCount; i++)
@@ -1688,28 +1699,35 @@ void createRenderPass(GraphicContext *pGraphicContext, uint32_t attachmentCount,
     for (uint32_t i = 0; i < pRenderPass->subpassCount; i++)
     {
         Subpass *pSubpass = &pRenderPass->subpasses[i];
-        tickernelCreateDynamicArray(&pSubpass->pipelineDynamicArray, 0, sizeof(Pipeline));
+        tickernelCreateDynamicArray(&pSubpass->pipelineDynamicArray, 1);
     }
+
+    tickernelAddToDynamicArray(&pGraphicContext->renderPasseDynamicArray, pRenderPass, renderPassIndex);
 }
-void destroyRenderPass(GraphicContext *pGraphicContext, uint32_t attachmentCount, VkAttachmentDescription *vkAttachmentDescriptions, Attachment *attachments, uint32_t subpassCount, VkSubpassDescription *vkSubpassDescriptions, uint32_t vkSubpassDependencyCount, VkSubpassDependency *vkSubpassDependencies, RenderPass *pRenderPass)
+void destroyRenderPass(GraphicContext *pGraphicContext, RenderPass *pRenderPass)
 {
+    tickernelRemoveFromDynamicArray(&pGraphicContext->renderPasseDynamicArray, pRenderPass);
+
     for (uint32_t i = 0; i < pRenderPass->subpassCount; i++)
     {
         Subpass *pSubpass = &pRenderPass->subpasses[i];
-        for (uint32_t i = 0; i < pSubpass->pipelineDynamicArray.length; i++)
+        for (uint32_t j = 0; j < pSubpass->pipelineDynamicArray.length; j++)
         {
-            Pipeline *pPipeline = pSubpass->pipelineDynamicArray.array[i];
-            destroyPipeline(pGraphicContext, *pPipeline);
+            Pipeline *pPipeline = pSubpass->pipelineDynamicArray.array[j];
+            destroyPipeline(pGraphicContext, pRenderPass, i, pPipeline);
         }
         tickernelDestroyDynamicArray(pSubpass->pipelineDynamicArray);
     }
-}
 
-void addRenderPass(GraphicContext *pGraphicContext, RenderPass renderPass, RenderPass *pRenderPass)
-{
-    tickernelAddToDynamicArray(&pGraphicContext->renderPasseDynamicArray, &renderPass, pGraphicContext->renderPasseDynamicArray.length, pRenderPass);
-}
-void removeRenderPass(GraphicContext *pGraphicContext, RenderPass *pRenderPass)
-{
-    tickernelRemoveFromDynamicArray(&pGraphicContext->renderPasseDynamicArray, pRenderPass);
+    tickernelFree(pRenderPass->subpasses);
+
+    for (uint32_t i = 0; i < pRenderPass->vkFramebufferCount; i++)
+    {
+        destroyFramebuffer(pGraphicContext, pRenderPass->vkFramebuffers[i]);
+    }
+    tickernelFree(pRenderPass->vkFramebuffers);
+
+    vkDestroyRenderPass(pGraphicContext->vkDevice, pRenderPass->vkRenderPass, NULL);
+
+    tickernelFree(pRenderPass);
 }

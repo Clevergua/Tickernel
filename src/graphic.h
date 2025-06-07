@@ -167,17 +167,15 @@ void destroyASTCGraphicImage(GraphicContext *pGraphicContext, GraphicImage graph
 void createSampler(GraphicContext *pGraphicContext, VkSamplerCreateInfo samplerCreateInfo, VkSampler *pVkSampler);
 void destroySampler(GraphicContext *pGraphicContext, VkSampler vkSampler);
 
-void createPipeline(GraphicContext *pGraphicContext, VkGraphicsPipelineCreateInfo vkGraphicsPipelineCreateInfo, VkDescriptorSetLayoutCreateInfo vkDescriptorSetLayoutCreateInfo, char **shaderPaths, uint32_t vkDescriptorPoolSizeCount, VkDescriptorPoolSize *vkDescriptorPoolSizes, Pipeline *pPipeline);
-void destroyPipeline(GraphicContext *pGraphicContext, Pipeline pipeline);
+void createPipeline(GraphicContext *pGraphicContext, uint32_t stageCount, char **shaderPaths, VkPipelineShaderStageCreateInfo *stages, VkPipelineVertexInputStateCreateInfo *pVertexInputState, VkPipelineInputAssemblyStateCreateInfo *pInputAssemblyState, VkPipelineViewportStateCreateInfo *pViewportState, VkPipelineRasterizationStateCreateInfo *pRasterizationState, VkPipelineMultisampleStateCreateInfo *pMultisampleState, VkPipelineDepthStencilStateCreateInfo *pDepthStencilState, VkPipelineColorBlendStateCreateInfo *pColorBlendState, VkPipelineDynamicStateCreateInfo *pDynamicState, VkDescriptorSetLayoutCreateInfo vkDescriptorSetLayoutCreateInfo, RenderPass *pRenderPass, uint32_t subpassIndex, uint32_t vkDescriptorPoolSizeCount, VkDescriptorPoolSize *vkDescriptorPoolSizes, uint32_t pipelineIndex, Pipeline *pPipeline);
+void destroyPipeline(GraphicContext *pGraphicContext, RenderPass *pRenderPass, uint32_t subpassIndex, Pipeline *pPipeline);
 
-void createMaterial(GraphicContext *pGraphicContext, Pipeline pipeline, size_t meshSize, VkWriteDescriptorSet *vkWriteDescriptorSets, uint32_t vkWriteDescriptorSetCount, Material *pMaterial);
-void destroyMaterial(GraphicContext *pGraphicContext, Material material);
+void createMaterial(GraphicContext *pGraphicContext, Pipeline *pPipeline, VkWriteDescriptorSet *vkWriteDescriptorSets, uint32_t vkWriteDescriptorSetCount, Material *pMaterial);
+void destroyMaterial(GraphicContext *pGraphicContext, Pipeline *pPipeline, Material *pMaterial);
 
 void createMesh(GraphicContext *pGraphicContext, uint32_t vertexCount, VkDeviceSize vertexBufferSize, void *vertexBufferData, uint32_t indexCount, VkDeviceSize indexBufferSize, void *indexBufferData, uint32_t instanceCount, VkDeviceSize instanceBufferSize, void *instanceBufferData, Mesh *pMesh);
 void destroyMesh(GraphicContext *pGraphicContext, Mesh *pMesh);
 void updateMeshInstanceBuffer(GraphicContext *pGraphicContext, Mesh *pMesh, VkDeviceSize instanceBufferSize, void *instanceBufferData, uint32_t instanceCount);
 
-void createRenderPass(GraphicContext *pGraphicContext, uint32_t attachmentCount, VkAttachmentDescription *vkAttachmentDescriptions, Attachment *attachments, uint32_t subpassCount, VkSubpassDescription *vkSubpassDescriptions, uint32_t vkSubpassDependencyCount, VkSubpassDependency *vkSubpassDependencies, RenderPass *pRenderPass);
-void destroyRenderPass(GraphicContext *pGraphicContext, uint32_t attachmentCount, VkAttachmentDescription *vkAttachmentDescriptions, Attachment *attachments, uint32_t subpassCount, VkSubpassDescription *vkSubpassDescriptions, uint32_t vkSubpassDependencyCount, VkSubpassDependency *vkSubpassDependencies, RenderPass *pRenderPass);
-void addRenderPass(GraphicContext *pGraphicContext, RenderPass renderPass, RenderPass *pRenderPass);
-void removeRenderPass(GraphicContext *pGraphicContext, RenderPass *pRenderPass);
+void createRenderPass(GraphicContext *pGraphicContext, uint32_t attachmentCount, VkAttachmentDescription *vkAttachmentDescriptions, Attachment *attachments, uint32_t subpassCount, VkSubpassDescription *vkSubpassDescriptions, uint32_t vkSubpassDependencyCount, VkSubpassDependency *vkSubpassDependencies, uint32_t renderPassIndex, RenderPass *pRenderPass);
+void destroyRenderPass(GraphicContext *pGraphicContext, RenderPass *pRenderPass);

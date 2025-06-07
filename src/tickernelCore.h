@@ -17,7 +17,6 @@
 
 typedef struct
 {
-    size_t dataSize;
     uint32_t maxLength;
     uint32_t length;
     void **array;
@@ -28,9 +27,10 @@ void tickernelSleep(uint32_t milliseconds);
 void *tickernelMalloc(size_t size);
 void tickernelFree(void *block);
 
-void tickernelCreateDynamicArray(TickernelDynamicArray *pDynamicArray, uint32_t maxLength, size_t dataSize);
+
+void tickernelCreateDynamicArray(TickernelDynamicArray *pDynamicArray, uint32_t maxLength);
 void tickernelDestroyDynamicArray(TickernelDynamicArray dynamicArray);
-void tickernelAddToDynamicArray(TickernelDynamicArray *pDynamicArray, void *pInput, uint32_t index, void *pOutput);
+void tickernelAddToDynamicArray(TickernelDynamicArray *pDynamicArray, void *pInput, uint32_t index);
 void tickernelRemoveFromDynamicArray(TickernelDynamicArray *pDynamicArray, void *pData);
 void tickernelRemoveAtIndexFromDynamicArray(TickernelDynamicArray *pDynamicArray, uint32_t index);
 void tickernelClearDynamicArray(TickernelDynamicArray *pDynamicArray);
