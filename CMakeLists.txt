@@ -9,6 +9,7 @@ file(GLOB_RECURSE SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/*.c)
 set(HEADER_DIRS
     ${Vulkan_INCLUDE_DIRS}
     ${CMAKE_CURRENT_SOURCE_DIR}/include/cglm
+    # ${CMAKE_CURRENT_SOURCE_DIR}/include/lua
     ${CMAKE_CURRENT_SOURCE_DIR}/src)
 set(LIBRARYS
     ${Vulkan_LIBRARIES}

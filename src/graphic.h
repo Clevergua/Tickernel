@@ -179,3 +179,14 @@ void updateMeshInstanceBuffer(GraphicContext *pGraphicContext, Mesh *pMesh, VkDe
 
 void createRenderPass(GraphicContext *pGraphicContext, uint32_t attachmentCount, VkAttachmentDescription *vkAttachmentDescriptions, Attachment *attachments, uint32_t subpassCount, VkSubpassDescription *vkSubpassDescriptions, uint32_t vkSubpassDependencyCount, VkSubpassDependency *vkSubpassDependencies, uint32_t renderPassIndex, RenderPass *pRenderPass);
 void destroyRenderPass(GraphicContext *pGraphicContext, RenderPass *pRenderPass);
+
+void createAttachment(GraphicContext *pGraphicContext, AttachmentType attachmentType, AttachmentContent content, Attachment *pAttachment)
+{
+    pAttachment = tickernelMalloc(sizeof(Attachment));
+    pAttachment->attachmentType = attachmentType;
+    pAttachment->attachmentContent = content;
+}
+void destroyAttachment(GraphicContext *pGraphicContext, AttachmentType attachmentType, AttachmentContent content, Attachment *pAttachment)
+{
+    tickernelFree(pAttachment);
+}

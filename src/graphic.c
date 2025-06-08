@@ -724,7 +724,8 @@ static void createFramebuffer(GraphicContext *pGraphicContext, uint32_t attachme
 {
     VkDevice vkDevice = pGraphicContext->vkDevice;
     VkImageView attachmentVkImageViews[attachmentCount];
-    uint32_t width, height;
+    uint32_t width = 0;
+    uint32_t height = 0;
     for (uint32_t j = 0; j < attachmentCount; j++)
     {
         Attachment attachment = attachments[j];
@@ -828,34 +829,6 @@ static void destroyImage(VkDevice vkDevice, VkImage vkImage, VkDeviceMemory vkDe
 {
     vkDestroyImage(vkDevice, vkImage, NULL);
     vkFreeMemory(vkDevice, vkDeviceMemory, NULL);
-}
-
-static void findSupportedFormat(VkPhysicalDevice vkPhysicalDevice, VkFormat *candidates, uint32_t candidatesCount, VkImageTiling tiling, VkFormatFeatureFlags features, VkFormat *vkFormat)
-{
-
-    for (uint32_t i = 0; i < candidatesCount; i++)
-    {
-        VkFormat format = candidates[i];
-        VkFormatProperties properties;
-        vkGetPhysicalDeviceFormatProperties(vkPhysicalDevice, format, &properties);
-        if ((properties.optimalTilingFeatures & features) == features)
-        {
-            if (VK_IMAGE_TILING_LINEAR == tiling || VK_IMAGE_TILING_OPTIMAL == tiling)
-            {
-                *vkFormat = format;
-                return;
-            }
-            else
-            {
-                // continue;
-            }
-        }
-        else
-        {
-            // continue;
-        }
-    }
-    tickernelError("Target format not found!");
 }
 
 static void createBuffer(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkDeviceSize bufferSize, VkBufferUsageFlags bufferUsageFlags, VkMemoryPropertyFlags memoryPropertyFlags, Buffer *pBuffer)

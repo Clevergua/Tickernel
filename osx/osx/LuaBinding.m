@@ -122,33 +122,9 @@ static int luaSetAudioPosition(lua_State *L) {
     lua_pushstring(pLuaState, cAssetPath);
     lua_setfield(pLuaState, -2, "assetsPath");
     
-    lua_pushcfunction(pLuaState, luaAddModelToGeometrySubpass);
-    lua_setfield(pLuaState, -2, "addModelToGeometrySubpass");
-    
-    lua_pushcfunction(pLuaState, luaRemoveModelFromGeometrySubpass);
-    lua_setfield(pLuaState, -2, "removeModelFromGeometrySubpass");
-    
-    lua_pushcfunction(pLuaState, luaUpdateInstancesInGeometrySubpass);
-    lua_setfield(pLuaState, -2, "updateInstancesInGeometrySubpass");
-    
-    lua_pushcfunction(pLuaState, luaAddModelToWaterGeometrySubpass);
-    lua_setfield(pLuaState, -2, "addModelToWaterGeometrySubpass");
-    
-    lua_pushcfunction(pLuaState, luaRemoveModelFromWaterGeometrySubpass);
-    lua_setfield(pLuaState, -2, "removeModelFromWaterGeometrySubpass");
-    
-    lua_pushcfunction(pLuaState, luaUpdateInstancesInWaterGeometrySubpass);
-    lua_setfield(pLuaState, -2, "updateInstancesInWaterGeometrySubpass");
-    
-    lua_pushcfunction(pLuaState, luaUpdateGlobalUniformBuffer);
-    lua_setfield(pLuaState, -2, "updateGlobalUniformBuffer");
-    
-    lua_pushcfunction(pLuaState, luaUpdateLightsUniformBuffer);
-    lua_setfield(pLuaState, -2, "updateLightsUniformBuffer");
-    
-    lua_pushcfunction(pLuaState, luaLoadModel);
-    lua_setfield(pLuaState, -2, "loadModel");
-    
+    lua_pushcfunction(pLuaState, luaCreateRenderPass);
+    lua_setfield(pLuaState, -2, "createRenderPass");
+
     lua_pushcfunction(pLuaState, luaLoadAudio);
     lua_setfield(pLuaState, -2, "loadAudio");
     

@@ -1,3 +1,4 @@
+require("vulkan")
 table.empty = {}
 
 local engine = {
@@ -113,49 +114,52 @@ engine.keyCodes = {
     MaxEnum = 95,
 }
 
-local integer = 0
-local userdata 
----Add model to geometry subpass
----@param vertices table
----@param colors table
----@return userdata model
-function engine.addModelToGeometrySubpass(vertices, colors, normals)
-    return userdata
+
+-- VkAttachmentDescription = {
+--     format = VkFormat,
+--     samples = VkSampleCountFlagBits,
+--     loadOp = VkAttachmentLoadOp,
+--     storeOp = VkAttachmentStoreOp,
+--     stencilLoadOp = VkAttachmentLoadOp,
+--     stencilStoreOp = VkAttachmentStoreOp,
+--     initialLayout = VkImageLayout,
+--     finalLayout = VkImageLayout,
+-- }
+
+-- VkAttachmentReference = {
+--     attachment = 0,
+--     layout = VkImageLayout,
+-- }
+-- VkSubpassDescription = {
+--     pipelineBindPoint = VkPipelineBindPoint,
+--     inputAttachmentCount = 0,
+--     pInputAttachments = { VkAttachmentReference },
+--     colorAttachmentCount = 0,
+--     pColorAttachments = { VkAttachmentReference },
+--     pResolveAttachments = { VkAttachmentReference },
+--     pDepthStencilAttachment = { VkAttachmentReference },
+--     preserveAttachmentCount = 0,
+--     pPreserveAttachments = { 0 },
+-- }
+
+-- VkSubpassDependency = {
+--     srcSubpass = 0,
+--     dstSubpass = 0,
+--     srcStageMask = VkPipelineStageFlagBits,
+--     dstStageMask = VkPipelineStageFlagBits,
+--     srcAccessMask = VkAccessFlagBits,
+--     dstAccessMask = VkAccessFlagBits,
+--     dependencyFlags = VkDependencyFlagBits,
+-- }
+
+function engine.createRenderPass(vkAttachmentDescriptions, pAttachments, vkSubpassDescriptions, vkSubpassDependencies,
+                                 renderPassIndex)
+    local pRenderPass = 0
+    return pRenderPass
 end
 
----Add model to geometry subpass
----@param model userdata
-function engine.removeModelFromGeometrySubpass(model)
-end
-
----Update model unifrom buffer
----@param model userdata
----@param instances table
-function engine.updateInstancesInGeometrySubpass(model, instances)
-end
-
----UpdateGlobalUniformBuffer
----@param globalUniformBuffer table
-function engine.updateGlobalUniformBuffer(globalUniformBuffer)
-end
-
----UpdateGlobalUniformBuffer
----@param directionalLight table
----@param pointLights table
-function engine.updateLightsUniformBuffer(directionalLight, pointLights)
-end
-
-local model = {
-    vertexCount = 0,
-    propertyCount = 0,
-    names = {},
-    types = {},
-    indexToProperties = {},
-}
----Deserialize .ply model
----@param path string
-function engine.loadModel(path)
-    return model
+function engine.destroyRenderPass(pRenderPass)
+    return
 end
 
 function engine.setNormals(vertices, normals, voxelMap)
