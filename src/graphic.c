@@ -1709,7 +1709,7 @@ void destroyRenderPass(GraphicContext *pGraphicContext, RenderPass *pRenderPass)
     tickernelFree(pRenderPass);
 }
 
-void createDynamicAttachmentContent(GraphicContext *pGraphicContext, VkExtent3D vkExtent3D, VkFormat vkFormat, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags, float scaler, Attachment *pAttachment)
+void createDynamicAttachment(GraphicContext *pGraphicContext, VkExtent3D vkExtent3D, VkFormat vkFormat, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags, float scaler, Attachment *pAttachment)
 {
     pAttachment = tickernelMalloc(sizeof(Attachment));
     pAttachment->attachmentType = ATTACHMENT_TYPE_DYNAMIC;
@@ -1726,14 +1726,14 @@ void createDynamicAttachmentContent(GraphicContext *pGraphicContext, VkExtent3D 
     pAttachment->attachmentContent.dynamicAttachmentContent.scaler = scaler;
     tickernelAddToDynamicArray(&pGraphicContext->dynamicAttachmentDynamicArray, &pAttachment->attachmentContent.dynamicAttachmentContent.graphicImage, pGraphicContext->dynamicAttachmentDynamicArray.length);
 }
-void destroyDynamicAttachmentContent(GraphicContext *pGraphicContext, Attachment *pAttachment)
+void destroyDynamicAttachment(GraphicContext *pGraphicContext, Attachment *pAttachment)
 {
     tickernelRemoveFromDynamicArray(&pGraphicContext->dynamicAttachmentDynamicArray, &pAttachment->attachmentContent.dynamicAttachmentContent.graphicImage);
     destroyGraphicImage(pGraphicContext, pAttachment->attachmentContent.dynamicAttachmentContent.graphicImage);
     tickernelFree(pAttachment);
 }
 
-void createFixedAttachmentContent(GraphicContext *pGraphicContext, VkExtent3D vkExtent3D, VkFormat vkFormat, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags, uint32_t width, uint32_t height, Attachment *pAttachment)
+void createFixedAttachment(GraphicContext *pGraphicContext, VkExtent3D vkExtent3D, VkFormat vkFormat, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags, uint32_t width, uint32_t height, Attachment *pAttachment)
 {
     pAttachment = tickernelMalloc(sizeof(Attachment));
     pAttachment->attachmentType = ATTACHMENT_TYPE_DYNAMIC;
@@ -1750,7 +1750,7 @@ void createFixedAttachmentContent(GraphicContext *pGraphicContext, VkExtent3D vk
     pAttachment->attachmentContent.fixedAttachmentContent.width = width;
     pAttachment->attachmentContent.fixedAttachmentContent.height = height;
 }
-void destroyFixedAttachmentContent(GraphicContext *pGraphicContext, Attachment *pAttachment)
+void destroyFixedAttachment(GraphicContext *pGraphicContext, Attachment *pAttachment)
 {
     destroyGraphicImage(pGraphicContext, pAttachment->attachmentContent.dynamicAttachmentContent.graphicImage);
     tickernelFree(pAttachment);

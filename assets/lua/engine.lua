@@ -471,4 +471,20 @@ function engine.drawModel(instances, model)
     return model
 end
 
+function engine.createFixedAttachment(vkExtent3D, vkFormat, vkImageUsageFlags, vkMemoryPropertyFlags, vkImageAspectFlags, width, height)
+    local pAttachment
+    return pAttachment
+end
+function engine.destroyFixedAttachment(pAttachment)
+end
+
+function engine.createDynamicAttachment(vkExtent3D, vkFormat, vkImageUsageFlags, vkMemoryPropertyFlags, vkImageAspectFlags, scaler)
+    local pAttachment
+    return pAttachment
+end
+function engine.destroyDynamicAttachment(pAttachment)
+end
+
+
+
 return engine

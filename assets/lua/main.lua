@@ -3,7 +3,7 @@ local graphic = require("graphic")
 _G.engine = engine
 function engine.start()
     print("Lua Start")
-    graphic.
+
     local pAttachments = {
         
     }
