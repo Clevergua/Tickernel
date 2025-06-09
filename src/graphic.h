@@ -82,26 +82,26 @@ typedef enum
 
 typedef struct
 {
-} SwapchainAttachment;
+} swapchainAttachmentContent;
 
 typedef struct
 {
     GraphicImage graphicImage;
     uint32_t width;
     uint32_t height;
-} FixedAttachment;
+} fixedAttachmentContent;
 
 typedef struct
 {
     GraphicImage graphicImage;
     float32_t scaler;
-} DynamicAttachment;
+} dynamicAttachmentContent;
 
 typedef union
 {
-    SwapchainAttachment swapchainAttachment;
-    FixedAttachment fixedAttachment;
-    DynamicAttachment dynamicAttachment;
+    swapchainAttachmentContent swapchainAttachmentContent;
+    fixedAttachmentContent fixedAttachmentContent;
+    dynamicAttachmentContent dynamicAttachmentContent;
 } AttachmentContent;
 
 typedef struct
@@ -145,6 +145,7 @@ typedef struct
     VkImage *swapchainImages;
     VkImageView *swapchainImageViews;
     uint32_t swapchainIndex;
+    Attachment swapchainAttachmentContent;
 
     VkCommandPool graphicVkCommandPool;
     VkCommandBuffer *graphicVkCommandBuffers;
@@ -152,8 +153,9 @@ typedef struct
     VkSemaphore renderFinishedSemaphore;
     VkFence renderFinishedFence;
 
+    
     TickernelDynamicArray renderPasseDynamicArray;
-    TickernelDynamicArray attachmentDynamicArray;
+    TickernelDynamicArray dynamicAttachmentDynamicArray;
     TickernelDynamicArray uniformBufferDynamicArray;
 } GraphicContext;
 
@@ -180,13 +182,8 @@ void updateMeshInstanceBuffer(GraphicContext *pGraphicContext, Mesh *pMesh, VkDe
 void createRenderPass(GraphicContext *pGraphicContext, uint32_t attachmentCount, VkAttachmentDescription *vkAttachmentDescriptions, Attachment *attachments, uint32_t subpassCount, VkSubpassDescription *vkSubpassDescriptions, uint32_t vkSubpassDependencyCount, VkSubpassDependency *vkSubpassDependencies, uint32_t renderPassIndex, RenderPass *pRenderPass);
 void destroyRenderPass(GraphicContext *pGraphicContext, RenderPass *pRenderPass);
 
-void createAttachment(GraphicContext *pGraphicContext, AttachmentType attachmentType, AttachmentContent content, Attachment *pAttachment)
-{
-    pAttachment = tickernelMalloc(sizeof(Attachment));
-    pAttachment->attachmentType = attachmentType;
-    pAttachment->attachmentContent = content;
-}
-void destroyAttachment(GraphicContext *pGraphicContext, AttachmentType attachmentType, AttachmentContent content, Attachment *pAttachment)
-{
-    tickernelFree(pAttachment);
-}
+void createDynamicAttachmentContent(GraphicContext *pGraphicContext, VkExtent3D vkExtent3D, VkFormat vkFormat, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags, float scaler, Attachment *pAttachment);
+void destroyDynamicAttachmentContent(GraphicContext *pGraphicContext, Attachment *pAttachment);
+
+void createFixedAttachmentContent(GraphicContext *pGraphicContext, VkExtent3D vkExtent3D, VkFormat vkFormat, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags, uint32_t width, uint32_t height, Attachment *pAttachment);
+void destroyFixedAttachmentContent(GraphicContext *pGraphicContext, Attachment *pAttachment);
