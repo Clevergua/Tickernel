@@ -2,7 +2,7 @@ local engine = require("engine")
 
 local graphic = {}
 
-function graphic.createDeferredRenderPipeline(pAttachments)
+function graphic.createDeferredRenderPass(pAttachments)
     local colorAttachmentDescription = {
         samples = VK_SAMPLE_COUNT_1_BIT,
         loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
@@ -49,7 +49,7 @@ function graphic.createDeferredRenderPipeline(pAttachments)
         finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
     };
 
-    local vkAttachmentDescriptions ={
+    local vkAttachmentDescriptions = {
         colorAttachmentDescription,
         depthAttachmentDescription,
         albedoAttachmentDescription,
@@ -60,9 +60,21 @@ function graphic.createDeferredRenderPipeline(pAttachments)
     engine.createRenderPass(vkAttachmentDescriptions, pAttachments)
 end
 
-function graphic.destroyDeferredRenderPipeline()
-    
+function graphic.destroyDeferredRenderPass()
+
 end
 
+function graphic.setUp()
+    graphic.pColorAttachment = engine.createDynamicAttachment(VK_FORMAT_R8G8B8A8_UNORM,
+        VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT |
+        VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_IMAGE_ASPECT_COLOR_BIT, 1)
+    graphic.depthAttachment = engine.createDynamicAttachment(VK_FORMAT_R8G8B8A8_UNORM,
+        VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT |
+        VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_IMAGE_ASPECT_COLOR_BIT, 1)
+end
+
+function graphic.tearDown()
+    engine.destroyDynamicAttachment(graphic.pColorAttachment)
+end
 
 return graphic

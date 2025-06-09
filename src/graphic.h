@@ -153,7 +153,6 @@ typedef struct
     VkSemaphore renderFinishedSemaphore;
     VkFence renderFinishedFence;
 
-    
     TickernelDynamicArray renderPasseDynamicArray;
     TickernelDynamicArray dynamicAttachmentDynamicArray;
     TickernelDynamicArray uniformBufferDynamicArray;
@@ -182,8 +181,10 @@ void updateMeshInstanceBuffer(GraphicContext *pGraphicContext, Mesh *pMesh, VkDe
 void createRenderPass(GraphicContext *pGraphicContext, uint32_t attachmentCount, VkAttachmentDescription *vkAttachmentDescriptions, Attachment *attachments, uint32_t subpassCount, VkSubpassDescription *vkSubpassDescriptions, uint32_t vkSubpassDependencyCount, VkSubpassDependency *vkSubpassDependencies, uint32_t renderPassIndex, RenderPass *pRenderPass);
 void destroyRenderPass(GraphicContext *pGraphicContext, RenderPass *pRenderPass);
 
-void createDynamicAttachment(GraphicContext *pGraphicContext, VkExtent3D vkExtent3D, VkFormat vkFormat, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags, float scaler, Attachment *pAttachment);
+void createDynamicAttachment(GraphicContext *pGraphicContext, VkFormat vkFormat, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags, float scaler, Attachment *pAttachment);
 void destroyDynamicAttachment(GraphicContext *pGraphicContext, Attachment *pAttachment);
 
-void createFixedAttachment(GraphicContext *pGraphicContext, VkExtent3D vkExtent3D, VkFormat vkFormat, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags, uint32_t width, uint32_t height, Attachment *pAttachment);
+void createFixedAttachment(GraphicContext *pGraphicContext, VkFormat vkFormat, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags, uint32_t width, uint32_t height, Attachment *pAttachment);
 void destroyFixedAttachment(GraphicContext *pGraphicContext, Attachment *pAttachment);
+
+void findSupportedFormat(GraphicContext *pGraphicContext, VkFormat *candidates, uint32_t candidatesCount, VkFormatFeatureFlags features, VkImageTiling tiling, VkFormat *pVkFormat);

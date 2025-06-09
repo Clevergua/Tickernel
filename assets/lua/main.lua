@@ -4,10 +4,8 @@ _G.engine = engine
 function engine.start()
     print("Lua Start")
 
-    local pAttachments = {
-        
-    }
-    graphic.createDeferredRenderPipeline(pAttachments);
+
+    graphic.createRenderPipelines();
 end
 
 function engine.stop()

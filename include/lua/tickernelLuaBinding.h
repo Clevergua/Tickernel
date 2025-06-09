@@ -17,6 +17,24 @@ static void assertLuaType(int type, int targetType)
 
 int luaCreateRenderPass(lua_State *pLuaState)
 {
+    
+    return 1;
+}
+
+int luaDestroyRenderPass(lua_State *pLuaState)
+{
+
+    return 0;
+}
+
+int luaCreateAttachment(lua_State *pLuaState)
+{
 
     return 1;
+}
+
+int luaDestroyAttachment(lua_State *pLuaState)
+{
+
+    return 0;
 }

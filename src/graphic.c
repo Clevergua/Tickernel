@@ -1709,11 +1709,16 @@ void destroyRenderPass(GraphicContext *pGraphicContext, RenderPass *pRenderPass)
     tickernelFree(pRenderPass);
 }
 
-void createDynamicAttachment(GraphicContext *pGraphicContext, VkExtent3D vkExtent3D, VkFormat vkFormat, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags, float scaler, Attachment *pAttachment)
+void createDynamicAttachment(GraphicContext *pGraphicContext, VkFormat vkFormat, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags, float scaler, Attachment *pAttachment)
 {
     pAttachment = tickernelMalloc(sizeof(Attachment));
     pAttachment->attachmentType = ATTACHMENT_TYPE_DYNAMIC;
-
+    VkExtent3D vkExtent3D = 
+    {
+        .width = (uint32_t)(pGraphicContext->swapchainWidth * scaler),
+        .height = (uint32_t)(pGraphicContext->swapchainHeight * scaler),
+        .depth = 1,
+    };
     createGraphicImage(
         pGraphicContext,
         vkExtent3D,
@@ -1733,11 +1738,16 @@ void destroyDynamicAttachment(GraphicContext *pGraphicContext, Attachment *pAtta
     tickernelFree(pAttachment);
 }
 
-void createFixedAttachment(GraphicContext *pGraphicContext, VkExtent3D vkExtent3D, VkFormat vkFormat, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags, uint32_t width, uint32_t height, Attachment *pAttachment)
+void createFixedAttachment(GraphicContext *pGraphicContext, VkFormat vkFormat, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags, uint32_t width, uint32_t height, Attachment *pAttachment)
 {
     pAttachment = tickernelMalloc(sizeof(Attachment));
     pAttachment->attachmentType = ATTACHMENT_TYPE_DYNAMIC;
-
+    VkExtent3D vkExtent3D = 
+    {
+        .width = width,
+        .height = height,
+        .depth = 1,
+    };
     createGraphicImage(
         pGraphicContext,
         vkExtent3D,
@@ -1754,4 +1764,26 @@ void destroyFixedAttachment(GraphicContext *pGraphicContext, Attachment *pAttach
 {
     destroyGraphicImage(pGraphicContext, pAttachment->attachmentContent.dynamicAttachmentContent.graphicImage);
     tickernelFree(pAttachment);
+}
+
+void findSupportedFormat(GraphicContext *pGraphicContext, VkFormat *candidates, uint32_t candidatesCount, VkFormatFeatureFlags features, VkImageTiling tiling, VkFormat *pVkFormat)
+{
+    VkPhysicalDevice vkPhysicalDevice = pGraphicContext->vkPhysicalDevice;
+    for (uint32_t i = 0; i < candidatesCount; i++)
+    {
+        VkFormat format = candidates[i];
+        VkFormatProperties properties;
+        vkGetPhysicalDeviceFormatProperties(vkPhysicalDevice, format, &properties);
+        if ((tiling == VK_IMAGE_TILING_LINEAR && (properties.linearTilingFeatures & features) == features) ||
+            (tiling == VK_IMAGE_TILING_OPTIMAL && (properties.optimalTilingFeatures & features) == features))
+        {
+            *pVkFormat = format;
+            return;
+        }
+        else
+        {
+            // continue;
+        }
+    }
+    *pVkFormat = VK_FORMAT_UNDEFINED;
 }
