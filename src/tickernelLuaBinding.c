@@ -14,6 +14,15 @@ static void assertLuaType(int type, int targetType)
     }
 }
 
+static GraphicContext *getGraphicContextPointer(lua_State *pLuaState)
+{
+    int pGraphicContextType = lua_getfield(pLuaState, LUA_REGISTRYINDEX, PGRAPHICCONTEXT_NAME);
+    assertLuaType(pGraphicContextType, LUA_TLIGHTUSERDATA);
+    GraphicContext *pGraphicContext = lua_touserdata(pLuaState, -1);
+    lua_pop(pLuaState, 1);
+    return pGraphicContext;
+}
+
 // function engine.findSupportedFormat(vkformats, features, tiling)
 //     local vkFormat = 0
 //     return vkFormat
@@ -33,17 +42,55 @@ int luaFindSupportedFormat(lua_State *pLuaState)
     VkFormatFeatureFlags features = luaL_checkinteger(pLuaState, 2);
     VkImageTiling tiling = luaL_checkinteger(pLuaState, 3);
 
-    int pGraphicContextType = lua_getfield(pLuaState, LUA_REGISTRYINDEX, PGRAPHICCONTEXT_NAME);
-    assertLuaType(pGraphicContextType, LUA_TLIGHTUSERDATA);
-    GraphicContext *pGraphicContext = lua_touserdata(pLuaState, -1);
-    lua_pop(pLuaState, 1);
-
-    VkFormat vkFormat = 0;
-    findSupportedFormat(pGraphicContext, vkFormats, vkFormatCount, features, tiling, &vkFormat);
+    VkFormat vkFormat;
+    findSupportedFormat(getGraphicContextPointer(pLuaState), vkFormats, vkFormatCount, features, tiling, &vkFormat);
 
     lua_pushinteger(pLuaState, vkFormat); // return vkFormat
     return 1;
 }
+
+// function engine.createDynamicAttachment(vkFormat, vkImageUsageFlags, vkMemoryPropertyFlags, vkImageAspectFlags, scaler)
+//     local pAttachment
+//     return pAttachment
+// end
+int luaCreateDynamicAttachment(lua_State *pLuaState)
+{
+    VkFormat vkFormat = luaL_checkinteger(pLuaState, 1);
+    VkImageUsageFlags vkImageUsageFlags = luaL_checkinteger(pLuaState, 2);
+    VkMemoryPropertyFlags vkMemoryPropertyFlags = luaL_checkinteger(pLuaState, 3);
+    VkImageAspectFlags vkImageAspectFlags = luaL_checkinteger(pLuaState, 4);
+    float scaler = luaL_checknumber(pLuaState, 5);
+
+    Attachment *pAttachment;
+    createDynamicAttachment(getGraphicContextPointer(pLuaState), vkFormat, vkImageUsageFlags, vkMemoryPropertyFlags, vkImageAspectFlags, scaler, pAttachment);
+    lua_pushlightuserdata(pLuaState, pAttachment); // return pAttachment
+    return 1;
+}
+
+// function engine.destroyDynamicAttachment(pAttachment)
+// end
+int luaDestroyDynamicAttachment(lua_State *pLuaState)
+{
+    VkFormat vkFormat = luaL_checkinteger(pLuaState, 1);
+    VkImageUsageFlags vkImageUsageFlags = luaL_checkinteger(pLuaState, 2);
+    VkMemoryPropertyFlags vkMemoryPropertyFlags = luaL_checkinteger(pLuaState, 3);
+    VkImageAspectFlags vkImageAspectFlags = luaL_checkinteger(pLuaState, 4);
+    float scaler = luaL_checknumber(pLuaState, 5);
+
+    Attachment *pAttachment = tickernelMalloc(sizeof(Attachment));
+    createDynamicAttachment(getGraphicContextPointer(pLuaState), vkFormat, vkImageUsageFlags, vkMemoryPropertyFlags, vkImageAspectFlags, scaler, pAttachment);
+    lua_pushlightuserdata(pLuaState, pAttachment); // return pAttachment
+    return 1;
+}
+
+// -- void createFixedAttachment(GraphicContext *pGraphicContext, VkFormat vkFormat, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags, uint32_t width, uint32_t height, Attachment *pAttachment);
+// function engine.createFixedAttachment(vkFormat, vkImageUsageFlags, vkMemoryPropertyFlags, vkImageAspectFlags, width, height)
+//     local pAttachment
+//     return pAttachment
+// end
+// -- void destroyFixedAttachment(GraphicContext *pGraphicContext, Attachment *pAttachment);
+// function engine.destroyFixedAttachment(pAttachment)
+// end
 
 int luaCreateRenderPass(lua_State *pLuaState)
 {

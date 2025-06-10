@@ -186,5 +186,4 @@ void destroyDynamicAttachment(GraphicContext *pGraphicContext, Attachment *pAtta
 
 void createFixedAttachment(GraphicContext *pGraphicContext, VkFormat vkFormat, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags, uint32_t width, uint32_t height, Attachment *pAttachment);
 void destroyFixedAttachment(GraphicContext *pGraphicContext, Attachment *pAttachment);
-
 void findSupportedFormat(GraphicContext *pGraphicContext, VkFormat *candidates, uint32_t candidatesCount, VkFormatFeatureFlags features, VkImageTiling tiling, VkFormat *pVkFormat);
