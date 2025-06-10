@@ -495,7 +495,7 @@ static void createSwapchain(GraphicContext *pGraphicContext, uint32_t swapchainW
     {
         createImageView(pGraphicContext->vkDevice, pGraphicContext->swapchainImages[i], pGraphicContext->surfaceFormat.format, VK_IMAGE_ASPECT_COLOR_BIT, &pGraphicContext->swapchainImageViews[i]);
     }
-    pGraphicContext->swapchainAttachmentContent.attachmentType = ATTACHMENT_TYPE_SWAPCHAIN;
+    pGraphicContext->swapchainAttachment.attachmentType = ATTACHMENT_TYPE_SWAPCHAIN;
 };
 static void destroySwapchain(GraphicContext *pGraphicContext)
 {
@@ -1223,9 +1223,10 @@ void endGraphic(GraphicContext *pGraphicContext)
     tickernelFree(pGraphicContext);
 }
 
-void createASTCGraphicImage(GraphicContext *pGraphicContext, const char *fileName, GraphicImage *pGraphicImage)
+void createASTCGraphicImage(GraphicContext *pGraphicContext, const char *fileName, GraphicImage **ppGraphicImage)
 {
-    pGraphicImage = tickernelMalloc(sizeof(GraphicImage));
+    GraphicImage *pGraphicImage = tickernelMalloc(sizeof(GraphicImage));
+    *ppGraphicImage = pGraphicImage;
     FILE *file = fopen(fileName, "rb");
     if (!file)
     {
@@ -1366,7 +1367,7 @@ void createASTCGraphicImage(GraphicContext *pGraphicContext, const char *fileNam
 
     destroyBuffer(vkDevice, stagingBuffer);
 }
-void destroyASTCGraphicImage(GraphicContext *pGraphicContext, GraphicImage* pGraphicImage)
+void destroyASTCGraphicImage(GraphicContext *pGraphicContext, GraphicImage *pGraphicImage)
 {
     destroyGraphicImage(pGraphicContext, *pGraphicImage);
     tickernelFree(pGraphicImage);
@@ -1384,9 +1385,10 @@ void destroySampler(GraphicContext *pGraphicContext, VkSampler vkSampler)
     vkDestroySampler(vkDevice, vkSampler, NULL);
 }
 
-void createPipeline(GraphicContext *pGraphicContext, uint32_t stageCount, char **shaderPaths, VkPipelineShaderStageCreateInfo *stages, VkPipelineVertexInputStateCreateInfo *pVertexInputState, VkPipelineInputAssemblyStateCreateInfo *pInputAssemblyState, VkPipelineViewportStateCreateInfo *pViewportState, VkPipelineRasterizationStateCreateInfo *pRasterizationState, VkPipelineMultisampleStateCreateInfo *pMultisampleState, VkPipelineDepthStencilStateCreateInfo *pDepthStencilState, VkPipelineColorBlendStateCreateInfo *pColorBlendState, VkPipelineDynamicStateCreateInfo *pDynamicState, VkDescriptorSetLayoutCreateInfo vkDescriptorSetLayoutCreateInfo, RenderPass *pRenderPass, uint32_t subpassIndex, uint32_t vkDescriptorPoolSizeCount, VkDescriptorPoolSize *vkDescriptorPoolSizes, uint32_t pipelineIndex, Pipeline *pPipeline)
+void createPipeline(GraphicContext *pGraphicContext, uint32_t stageCount, char **shaderPaths, VkPipelineShaderStageCreateInfo *stages, VkPipelineVertexInputStateCreateInfo *pVertexInputState, VkPipelineInputAssemblyStateCreateInfo *pInputAssemblyState, VkPipelineViewportStateCreateInfo *pViewportState, VkPipelineRasterizationStateCreateInfo *pRasterizationState, VkPipelineMultisampleStateCreateInfo *pMultisampleState, VkPipelineDepthStencilStateCreateInfo *pDepthStencilState, VkPipelineColorBlendStateCreateInfo *pColorBlendState, VkPipelineDynamicStateCreateInfo *pDynamicState, VkDescriptorSetLayoutCreateInfo vkDescriptorSetLayoutCreateInfo, RenderPass *pRenderPass, uint32_t subpassIndex, uint32_t vkDescriptorPoolSizeCount, VkDescriptorPoolSize *vkDescriptorPoolSizes, uint32_t pipelineIndex, Pipeline **ppPipeline)
 {
-    pPipeline = tickernelMalloc(sizeof(Pipeline));
+    Pipeline *pPipeline = tickernelMalloc(sizeof(Pipeline));
+    *ppPipeline = pPipeline;
 
     VkPipelineCache pipelineCache = NULL;
     VkDevice vkDevice = pGraphicContext->vkDevice;
@@ -1467,9 +1469,10 @@ void destroyPipeline(GraphicContext *pGraphicContext, RenderPass *pRenderPass, u
     tickernelFree(pPipeline);
 }
 
-void createMaterial(GraphicContext *pGraphicContext, Pipeline *pPipeline, VkWriteDescriptorSet *vkWriteDescriptorSets, uint32_t vkWriteDescriptorSetCount, Material *pMaterial)
+void createMaterial(GraphicContext *pGraphicContext, Pipeline *pPipeline, VkWriteDescriptorSet *vkWriteDescriptorSets, uint32_t vkWriteDescriptorSetCount, Material **ppMaterial)
 {
-    pMaterial = tickernelMalloc(sizeof(Material));
+    Material *pMaterial = tickernelMalloc(sizeof(Material));
+    *ppMaterial = pMaterial;
     VkDevice vkDevice = pGraphicContext->vkDevice;
     tickernelCreateDynamicArray(&pMaterial->meshDynamicArray, 1);
     pMaterial->vkDescriptorSet = VK_NULL_HANDLE;
@@ -1512,9 +1515,10 @@ void destroyMaterial(GraphicContext *pGraphicContext, Pipeline *pPipeline, Mater
     tickernelFree(pMaterial);
 }
 
-void createMesh(GraphicContext *pGraphicContext, uint32_t vertexCount, VkDeviceSize vertexBufferSize, void *vertexBufferData, uint32_t indexCount, VkDeviceSize indexBufferSize, void *indexBufferData, uint32_t instanceCount, VkDeviceSize instanceBufferSize, void *instanceBufferData, Mesh *pMesh)
+void createMesh(GraphicContext *pGraphicContext, uint32_t vertexCount, VkDeviceSize vertexBufferSize, void *vertexBufferData, uint32_t indexCount, VkDeviceSize indexBufferSize, void *indexBufferData, uint32_t instanceCount, VkDeviceSize instanceBufferSize, void *instanceBufferData, Mesh **ppMesh)
 {
-    pMesh = tickernelMalloc(sizeof(Mesh));
+    Mesh *pMesh = tickernelMalloc(sizeof(Mesh));
+
     VkDevice vkDevice = pGraphicContext->vkDevice;
     VkPhysicalDevice vkPhysicalDevice = pGraphicContext->vkPhysicalDevice;
     VkCommandPool graphicVkCommandPool = pGraphicContext->graphicVkCommandPool;
@@ -1558,6 +1562,7 @@ void createMesh(GraphicContext *pGraphicContext, uint32_t vertexCount, VkDeviceS
     {
         // continue;
     }
+    *ppMesh = pMesh;
 }
 void destroyMesh(GraphicContext *pGraphicContext, Mesh *pMesh)
 {
@@ -1620,9 +1625,9 @@ void updateMeshInstanceBuffer(GraphicContext *pGraphicContext, Mesh *pMesh, VkDe
     }
 }
 
-void createRenderPass(GraphicContext *pGraphicContext, uint32_t attachmentCount, VkAttachmentDescription *vkAttachmentDescriptions, Attachment *attachments, uint32_t subpassCount, VkSubpassDescription *vkSubpassDescriptions, uint32_t vkSubpassDependencyCount, VkSubpassDependency *vkSubpassDependencies, uint32_t renderPassIndex, RenderPass *pRenderPass)
+void createRenderPass(GraphicContext *pGraphicContext, uint32_t attachmentCount, VkAttachmentDescription *vkAttachmentDescriptions, Attachment *attachments, uint32_t subpassCount, VkSubpassDescription *vkSubpassDescriptions, uint32_t vkSubpassDependencyCount, VkSubpassDependency *vkSubpassDependencies, uint32_t renderPassIndex, RenderPass **ppRenderPass)
 {
-    pRenderPass = tickernelMalloc(sizeof(RenderPass));
+    RenderPass *pRenderPass = tickernelMalloc(sizeof(RenderPass));
 
     VkDevice vkDevice = pGraphicContext->vkDevice;
     bool useSwapchain = false;
@@ -1683,6 +1688,7 @@ void createRenderPass(GraphicContext *pGraphicContext, uint32_t attachmentCount,
     }
 
     tickernelAddToDynamicArray(&pGraphicContext->renderPasseDynamicArray, pRenderPass, renderPassIndex);
+    *ppRenderPass = pRenderPass;
 }
 void destroyRenderPass(GraphicContext *pGraphicContext, RenderPass *pRenderPass)
 {
@@ -1712,9 +1718,9 @@ void destroyRenderPass(GraphicContext *pGraphicContext, RenderPass *pRenderPass)
     tickernelFree(pRenderPass);
 }
 
-void createDynamicAttachment(GraphicContext *pGraphicContext, VkFormat vkFormat, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags, float scaler, Attachment *pAttachment)
+void createDynamicAttachment(GraphicContext *pGraphicContext, VkFormat vkFormat, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags, float scaler, Attachment **ppAttachment)
 {
-    pAttachment = tickernelMalloc(sizeof(Attachment));
+    Attachment *pAttachment = tickernelMalloc(sizeof(Attachment));
     pAttachment->attachmentType = ATTACHMENT_TYPE_DYNAMIC;
     VkExtent3D vkExtent3D =
         {
@@ -1733,6 +1739,8 @@ void createDynamicAttachment(GraphicContext *pGraphicContext, VkFormat vkFormat,
 
     pAttachment->attachmentContent.dynamicAttachmentContent.scaler = scaler;
     tickernelAddToDynamicArray(&pGraphicContext->dynamicAttachmentDynamicArray, &pAttachment->attachmentContent.dynamicAttachmentContent.graphicImage, pGraphicContext->dynamicAttachmentDynamicArray.length);
+
+    *ppAttachment = pAttachment;
 }
 void destroyDynamicAttachment(GraphicContext *pGraphicContext, Attachment *pAttachment)
 {
@@ -1741,9 +1749,10 @@ void destroyDynamicAttachment(GraphicContext *pGraphicContext, Attachment *pAtta
     tickernelFree(pAttachment);
 }
 
-void createFixedAttachment(GraphicContext *pGraphicContext, VkFormat vkFormat, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags, uint32_t width, uint32_t height, Attachment *pAttachment)
+void createFixedAttachment(GraphicContext *pGraphicContext, VkFormat vkFormat, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags, uint32_t width, uint32_t height, Attachment **ppAttachment)
 {
-    pAttachment = tickernelMalloc(sizeof(Attachment));
+    Attachment *pAttachment = tickernelMalloc(sizeof(Attachment));
+    *ppAttachment = pAttachment;
     pAttachment->attachmentType = ATTACHMENT_TYPE_DYNAMIC;
     VkExtent3D vkExtent3D =
         {

@@ -152,15 +152,6 @@ engine.keyCodes = {
 --     dependencyFlags = VkDependencyFlagBits,
 -- }
 
-function engine.createRenderPass(vkAttachmentDescriptions, pAttachments, vkSubpassDescriptions, vkSubpassDependencies,
-                                 renderPassIndex)
-    local pRenderPass = 0
-    return pRenderPass
-end
-
-function engine.destroyRenderPass(pRenderPass)
-    return
-end
 
 function engine.setNormals(vertices, normals, voxelMap)
     local vertexCount = #vertices
@@ -498,6 +489,10 @@ end
 function engine.destroyFixedAttachment(pAttachment)
 end
 
+function engine.getSwapchainAttachment()
+    local pAttachment
+    return pAttachment
+end
 
 -- void createASTCGraphicImage(GraphicContext *pGraphicContext, const char *fileName, VkCommandPool commandPool, VkQueue graphicQueue, GraphicImage *pGraphicImage);
 -- void destroyASTCGraphicImage(GraphicContext *pGraphicContext, GraphicImage graphicImage);
@@ -516,7 +511,16 @@ end
 -- void updateMeshInstanceBuffer(GraphicContext *pGraphicContext, Mesh *pMesh, VkDeviceSize instanceBufferSize, void *instanceBufferData, uint32_t instanceCount);
 
 -- void createRenderPass(GraphicContext *pGraphicContext, uint32_t attachmentCount, VkAttachmentDescription *vkAttachmentDescriptions, Attachment *attachments, uint32_t subpassCount, VkSubpassDescription *vkSubpassDescriptions, uint32_t vkSubpassDependencyCount, VkSubpassDependency *vkSubpassDependencies, uint32_t renderPassIndex, RenderPass *pRenderPass);
+function engine.createRenderPass(vkAttachmentDescriptions, pAttachments, vkSubpassDescriptions, vkSubpassDependencies,
+                                 renderPassIndex)
+    local pRenderPass = 0
+    return pRenderPass
+end
+
 -- void destroyRenderPass(GraphicContext *pGraphicContext, RenderPass *pRenderPass);
+function engine.destroyRenderPass(pRenderPass)
+end
+
 
 
 return engine

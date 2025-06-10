@@ -14,7 +14,7 @@ function engine.stop()
 end
 
 function engine.update()
-
+    
 end
 
 print("Lua initialized!")
