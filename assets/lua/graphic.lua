@@ -1,8 +1,7 @@
 local engine = require("engine")
-
 local graphic = {}
 
-function graphic.createDeferredRenderPass(pAttachments)
+function engine.createDeferredRenderPass(pAttachments)
     local colorAttachmentDescription = {
         samples = VK_SAMPLE_COUNT_1_BIT,
         loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
@@ -57,23 +56,141 @@ function graphic.createDeferredRenderPass(pAttachments)
         swapchainAttachmentDescription,
     };
 
-    engine.createRenderPass(vkAttachmentDescriptions, pAttachments)
+    local geometrySubpassDescription = {
+        pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
+        inputAttachmentCount = 0,
+        pInputAttachments = nil,
+        colorAttachmentCount = 2,
+        pColorAttachments = {
+            { attachment = 2, layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL },
+            { attachment = 3, layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL },
+        },
+        pResolveAttachments = nil,
+        pDepthStencilAttachment = { attachment = 1, layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL },
+        preserveAttachmentCount = 0,
+        pPreserveAttachments = nil,
+    }
+
+    local ligthtingSubpassDescription = {
+        pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
+        inputAttachmentCount = 3,
+        pInputAttachments = {
+            { attachment = 1, layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL },
+            { attachment = 2, layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL },
+            { attachment = 3, layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL },
+        },
+        colorAttachmentCount = 1,
+        pColorAttachments = {
+            { attachment = 0, layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL },
+        },
+        pResolveAttachments = nil,
+        pDepthStencilAttachment = nil,
+        preserveAttachmentCount = 0,
+        pPreserveAttachments = nil,
+    }
+
+    local postProcessSubpassDescription = {
+        pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
+        inputAttachmentCount = 1,
+        pInputAttachments = {
+            { attachment = 0, layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL },
+        },
+        colorAttachmentCount = 1,
+        pColorAttachments = {
+            { attachment = 4, layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL },
+        },
+        pResolveAttachments = nil,
+        pDepthStencilAttachment = nil,
+        preserveAttachmentCount = 0,
+        pPreserveAttachments = nil,
+    }
+
+    local vkSubpassDescriptions = {
+        geometrySubpassDescription,
+        ligthtingSubpassDescription,
+        postProcessSubpassDescription,
+    }
+
+    local vkSubpassDependencies = {
+        {
+            srcSubpass = VK_SUBPASS_EXTERNAL,
+            dstSubpass = 0,
+            srcStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+            dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+            srcAccessMask = VK_ACCESS_MEMORY_READ_BIT,
+            dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+            dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT
+        },
+        {
+            srcSubpass = 0,
+            dstSubpass = 1,
+            srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+            dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+            srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+            dstAccessMask = VK_ACCESS_INPUT_ATTACHMENT_READ_BIT,
+            dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT
+        },
+        {
+            srcSubpass = 1,
+            dstSubpass = 2,
+            srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+            dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+            srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+            dstAccessMask = VK_ACCESS_INPUT_ATTACHMENT_READ_BIT,
+            dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT
+        },
+        {
+            srcSubpass = 2,
+            dstSubpass = VK_SUBPASS_EXTERNAL,
+            srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+            dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+            srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+            dstAccessMask = VK_ACCESS_MEMORY_READ_BIT,
+            dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT
+        }
+    }
+
+    return engine.createRenderPass(vkAttachmentDescriptions, pAttachments, vkSubpassDescriptions, vkSubpassDependencies,
+        0)
 end
 
-function graphic.destroyDeferredRenderPass()
-
+function engine.destroyDeferredRenderPass(pRenderPass)
+    engine.destroyRenderPass(pRenderPass)
 end
 
 function graphic.setUp()
+    local depthVkFormat = engine.findSupportedFormat({
+        VK_FORMAT_D32_SFLOAT,
+        VK_FORMAT_D32_SFLOAT_S8_UINT,
+        VK_FORMAT_D24_UNORM_S8_UINT,
+    }, VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT)
     graphic.pColorAttachment = engine.createDynamicAttachment(VK_FORMAT_R8G8B8A8_UNORM,
         VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT |
         VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_IMAGE_ASPECT_COLOR_BIT, 1)
-    graphic.depthAttachment = engine.createDynamicAttachment(VK_FORMAT_R8G8B8A8_UNORM,
+    graphic.pDepthAttachment = engine.createDynamicAttachment(depthVkFormat,
+        VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT |
+        VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_IMAGE_ASPECT_DEPTH_BIT, 1)
+    graphic.pAlbedoAttachment = engine.createDynamicAttachment(VK_FORMAT_R8G8B8A8_UNORM,
         VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT |
         VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_IMAGE_ASPECT_COLOR_BIT, 1)
+    graphic.pNormalAttachment = engine.createDynamicAttachment(VK_FORMAT_A2R10G10B10_UNORM_PACK32,
+        VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT |
+        VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_IMAGE_ASPECT_COLOR_BIT, 1)
+    graphic.pSwapchainAttachment = engine.getSwapchainAttachment()
+
+    graphic.createDeferredRenderPass({
+        graphic.pColorAttachment,
+        graphic.pDepthAttachment,
+        graphic.pAlbedoAttachment,
+        graphic.pNormalAttachment,
+        graphic.pSwapchainAttachment
+    })
 end
 
 function graphic.tearDown()
+    engine.destroyDynamicAttachment(graphic.pNormalAttachment)
+    engine.destroyDynamicAttachment(graphic.pAlbedoAttachment)
+    engine.destroyDynamicAttachment(graphic.pDepthAttachment)
     engine.destroyDynamicAttachment(graphic.pColorAttachment)
 end
 

@@ -74,7 +74,11 @@
         "lightingsubpass.h": "c",
         "geometrysubpass.h": "c",
         "streambuf": "c",
-        "__node_handle": "c"
+        "__node_handle": "c",
+        "tickernelluabinding.h": "c",
+        "lualib.h": "c",
+        "luaconf.h": "c",
+        "a.h": "c"
     },
     "cmake.sourceDirectory": "/Users/hema/Documents/GitHub/Tickernel"
 }

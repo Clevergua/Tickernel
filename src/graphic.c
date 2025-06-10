@@ -1223,8 +1223,9 @@ void endGraphic(GraphicContext *pGraphicContext)
     tickernelFree(pGraphicContext);
 }
 
-void createASTCGraphicImage(GraphicContext *pGraphicContext, const char *fileName, VkCommandPool commandPool, VkQueue graphicQueue, GraphicImage *pGraphicImage)
+void createASTCGraphicImage(GraphicContext *pGraphicContext, const char *fileName, GraphicImage *pGraphicImage)
 {
+    pGraphicImage = tickernelMalloc(sizeof(GraphicImage));
     FILE *file = fopen(fileName, "rb");
     if (!file)
     {
@@ -1343,7 +1344,8 @@ void createASTCGraphicImage(GraphicContext *pGraphicContext, const char *fileNam
 
     updateBuffer(vkDevice, stagingBuffer.vkBufferMemory, 0, fileSize, astcData);
     tickernelFree(astcData);
-
+    VkCommandPool commandPool = pGraphicContext->graphicVkCommandPool;
+    VkQueue graphicQueue = pGraphicContext->vkGraphicQueue;
     transitionImageLayout(
         vkDevice, commandPool, graphicQueue,
         pGraphicImage->vkImage,
@@ -1364,9 +1366,10 @@ void createASTCGraphicImage(GraphicContext *pGraphicContext, const char *fileNam
 
     destroyBuffer(vkDevice, stagingBuffer);
 }
-void destroyASTCGraphicImage(GraphicContext *pGraphicContext, GraphicImage graphicImage)
+void destroyASTCGraphicImage(GraphicContext *pGraphicContext, GraphicImage* pGraphicImage)
 {
-    destroyGraphicImage(pGraphicContext, graphicImage);
+    destroyGraphicImage(pGraphicContext, *pGraphicImage);
+    tickernelFree(pGraphicImage);
 }
 
 void createSampler(GraphicContext *pGraphicContext, VkSamplerCreateInfo samplerCreateInfo, VkSampler *pVkSampler)
@@ -1713,12 +1716,12 @@ void createDynamicAttachment(GraphicContext *pGraphicContext, VkFormat vkFormat,
 {
     pAttachment = tickernelMalloc(sizeof(Attachment));
     pAttachment->attachmentType = ATTACHMENT_TYPE_DYNAMIC;
-    VkExtent3D vkExtent3D = 
-    {
-        .width = (uint32_t)(pGraphicContext->swapchainWidth * scaler),
-        .height = (uint32_t)(pGraphicContext->swapchainHeight * scaler),
-        .depth = 1,
-    };
+    VkExtent3D vkExtent3D =
+        {
+            .width = (uint32_t)(pGraphicContext->swapchainWidth * scaler),
+            .height = (uint32_t)(pGraphicContext->swapchainHeight * scaler),
+            .depth = 1,
+        };
     createGraphicImage(
         pGraphicContext,
         vkExtent3D,
@@ -1742,12 +1745,12 @@ void createFixedAttachment(GraphicContext *pGraphicContext, VkFormat vkFormat, V
 {
     pAttachment = tickernelMalloc(sizeof(Attachment));
     pAttachment->attachmentType = ATTACHMENT_TYPE_DYNAMIC;
-    VkExtent3D vkExtent3D = 
-    {
-        .width = width,
-        .height = height,
-        .depth = 1,
-    };
+    VkExtent3D vkExtent3D =
+        {
+            .width = width,
+            .height = height,
+            .depth = 1,
+        };
     createGraphicImage(
         pGraphicContext,
         vkExtent3D,

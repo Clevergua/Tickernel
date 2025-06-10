@@ -162,8 +162,8 @@ GraphicContext *startGraphic(const char *assetsPath, int targetSwapchainImageCou
 void updateGraphic(GraphicContext *pGraphicContext, uint32_t swapchainWidth, uint32_t swapchainHeight);
 void endGraphic(GraphicContext *pGraphicContext);
 
-void createASTCGraphicImage(GraphicContext *pGraphicContext, const char *fileName, VkCommandPool commandPool, VkQueue graphicQueue, GraphicImage *pGraphicImage);
-void destroyASTCGraphicImage(GraphicContext *pGraphicContext, GraphicImage graphicImage);
+void createASTCGraphicImage(GraphicContext *pGraphicContext, const char *fileName, GraphicImage *pGraphicImage);
+void destroyASTCGraphicImage(GraphicContext *pGraphicContext, GraphicImage* pGraphicImage);
 
 void createSampler(GraphicContext *pGraphicContext, VkSamplerCreateInfo samplerCreateInfo, VkSampler *pVkSampler);
 void destroySampler(GraphicContext *pGraphicContext, VkSampler vkSampler);

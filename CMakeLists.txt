@@ -3,18 +3,23 @@ project(Tickernel VERSION 1.1 LANGUAGES C)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 # Because of this use c99: https://stackoverflow.com/questions/40829032/how-to-install-c11-compiler-on-mac-os-with-optional-string-functions-included
 set(CMAKE_C_STANDARD 99)
-message(${CMAKE_BUILD_TYPE})
+
+# message(${CMAKE_BUILD_TYPE})
 find_package(Vulkan REQUIRED)
 file(GLOB_RECURSE SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/*.c)
+
+find_library(LUA_LIBRARY NAMES "liblua.dylib" "lualib53.dylib" "liblua.dll" "liblua.lib" PATHS ${CMAKE_CURRENT_SOURCE_DIR}/lib/lua)
 set(HEADER_DIRS
     ${Vulkan_INCLUDE_DIRS}
     ${CMAKE_CURRENT_SOURCE_DIR}/include/cglm
-    # ${CMAKE_CURRENT_SOURCE_DIR}/include/lua
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/lua
     ${CMAKE_CURRENT_SOURCE_DIR}/src)
 set(LIBRARYS
     ${Vulkan_LIBRARIES}
-    ${CGLM_LIBRARY}
+    ${LUA_LIBRARY}
 )
+
+message("   PROJECT_NAME:${PROJECT_NAME}")
 
 message("   SOURCES:${SOURCES}")
 add_library(${PROJECT_NAME} SHARED ${SOURCES})
@@ -22,6 +27,14 @@ message("   HEADER_DIRS:${HEADER_DIRS}")
 target_include_directories(${PROJECT_NAME} PUBLIC ${HEADER_DIRS})
 message("   LIBRARYS:${LIBRARYS}")
 target_link_libraries(${PROJECT_NAME} ${LIBRARYS})
+
+# # Copy libs
+# set(DLL_LIBS)
+# file(GLOB_RECURSE DLL_LIBS ${CMAKE_SOURCE_DIR}/lib/*.dylib ${CMAKE_SOURCE_DIR}/lib/*.dll)
+# message(DLL_LIBS: ${DLL_LIBS})
+# add_custom_target(CopyDLL COMMAND ${CMAKE_COMMAND} -E copy_if_different ${DLL_LIBS} ${CMAKE_BINARY_DIR}/${DLL_FILENAME})
+# add_dependencies(${PROJECT_NAME} CopyDLL)
+
 
 # Compile shaders
 find_program(GLSLC_EXECUTABLE glslc)
@@ -82,16 +95,6 @@ else()
     add_custom_target(CompressTextures DEPENDS ${ASTC_TEXTURES})
     add_dependencies(${PROJECT_NAME} CompressTextures)
 endif()
-
-
-
-# # Copy assets
-# add_custom_target(CopyAssets
-#     COMMAND ${CMAKE_COMMAND} -E copy_directory
-#     ${CMAKE_SOURCE_DIR}/assets
-#     ${CMAKE_BINARY_DIR}/assets
-# )
-# add_dependencies(${PROJECT_NAME} CopyAssets)
 
 enable_testing() 
 set(TEST_SOURCES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/tests)
