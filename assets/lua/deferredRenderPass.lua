@@ -151,7 +151,6 @@ function deferredRenderPass.createRenderPass(pAttachments)
         }
     }
 
-    
     return engine.createRenderPass(vkAttachmentDescriptions, pAttachments, vkSubpassDescriptions, vkSubpassDependencies,
         0)
 end

@@ -373,6 +373,7 @@ int luaCreateRenderPass(lua_State *pLuaState)
     }
     tickernelFree(vkSubpassDescriptions);
     tickernelFree(vkSubpassDependencies);
+
     lua_pushlightuserdata(pLuaState, pRenderPass);
 
     return 1;
@@ -387,15 +388,47 @@ int luaDestroyRenderPass(lua_State *pLuaState)
     return 0;
 }
 
-int luaGetSwapchainExtent(lua_State *pLuaState)
+// function engine.createPipeline(stages, pVertexInputState, pInputAssemblyState, pViewportState,
+//                                pRasterizationState,
+//                                pMultisampleState, pDepthStencilState, pColorBlendState,
+//                                pDynamicState, vkDescriptorSetLayoutCreateInfo, pRenderPass, subpassIndex,
+//                                vkDescriptorPoolSizes, pipelineIndex)
+//     local pPipeline
+//     return pPipeline
+// end
+int luaCreatePipeline(lua_State *pLuaState)
 {
-    
+    luaL_checktype(pLuaState, 1, LUA_TTABLE);
+    uint32_t stageCount = lua_rawlen(pLuaState, 1);
+    char **shaderPaths = tickernelMalloc(sizeof(char *) * stageCount);
+    VkPipelineShaderStageCreateInfo *stages = tickernelMalloc(sizeof(VkPipelineShaderStageCreateInfo) * stageCount);
+
+    for (uint32_t i = 0; i < stageCount; i++)
+    {
+        lua_rawgeti(pLuaState, 1, i + 1);
+
+        lua_getfield(pLuaState, -1, "stage");
+        VkShaderStageFlagBits stage = luaL_checkinteger(pLuaState, -1);
+        stages[i].stage = stage;
+        lua_pop(pLuaState, 1);
+    }
+    Pipeline *pPipeline;
+    createPipeline(getGraphicContextPointer(pLuaState), stageCount, shaderPaths, stages, pVertexInputState, pInputAssemblyState, pViewportState,
+                   pRasterizationState, pMultisampleState, pDepthStencilState, pColorBlendState, pDynamicState,
+                   vkDescriptorSetLayoutCreateInfo, pRenderPass, subpassIndex, vkDescriptorPoolSizeCount,
+                   vkDescriptorPoolSizes, pipelineIndex, &pPipeline);
+
+    tickernelFree(shaderPaths);
+    tickernelFree(stages);
+
+    lua_pushlightuserdata(pLuaState, pPipeline);
     return 1;
 }
 
-int luaDestroyAttachment(lua_State *pLuaState)
+// function engine.destroyPipeline(pRenderPass, subpassIndex, pPipeline)
+// end
+int luaDestroyPipeline(lua_State *pLuaState)
 {
 
     return 0;
 }
-
