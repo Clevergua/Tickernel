@@ -721,7 +721,7 @@ static void recordCommandBuffer(GraphicContext *pGraphicContext)
     tryThrowVulkanError(result);
 }
 
-static void createFramebuffer(GraphicContext *pGraphicContext, uint32_t attachmentCount, Attachment *attachments, RenderPass *pRenderPass, VkFramebuffer *pVkFramebuffer)
+static void createFramebuffer(GraphicContext *pGraphicContext, uint32_t attachmentCount, Attachment **pAttachments, RenderPass *pRenderPass, VkFramebuffer *pVkFramebuffer)
 {
     VkDevice vkDevice = pGraphicContext->vkDevice;
     VkImageView attachmentVkImageViews[attachmentCount];
@@ -729,23 +729,23 @@ static void createFramebuffer(GraphicContext *pGraphicContext, uint32_t attachme
     uint32_t height = 0;
     for (uint32_t j = 0; j < attachmentCount; j++)
     {
-        Attachment attachment = attachments[j];
-        if (ATTACHMENT_TYPE_SWAPCHAIN == attachment.attachmentType)
+        Attachment* pAttachment = pAttachments[j];
+        if (ATTACHMENT_TYPE_SWAPCHAIN == pAttachment->attachmentType)
         {
             attachmentVkImageViews[j] = pGraphicContext->swapchainImageViews[j];
             width = pGraphicContext->swapchainWidth;
             height = pGraphicContext->swapchainHeight;
         }
-        else if (ATTACHMENT_TYPE_DYNAMIC == attachment.attachmentType)
+        else if (ATTACHMENT_TYPE_DYNAMIC == pAttachment->attachmentType)
         {
-            dynamicAttachmentContent dynamicAttachmentContent = attachment.attachmentContent.dynamicAttachmentContent;
+            dynamicAttachmentContent dynamicAttachmentContent = pAttachment->attachmentContent.dynamicAttachmentContent;
             attachmentVkImageViews[j] = dynamicAttachmentContent.graphicImage.vkImageView;
             width = pGraphicContext->swapchainWidth * dynamicAttachmentContent.scaler;
             height = pGraphicContext->swapchainHeight * dynamicAttachmentContent.scaler;
         }
         else
         {
-            fixedAttachmentContent fixedAttachmentContent = attachment.attachmentContent.fixedAttachmentContent;
+            fixedAttachmentContent fixedAttachmentContent = pAttachment->attachmentContent.fixedAttachmentContent;
             attachmentVkImageViews[j] = fixedAttachmentContent.graphicImage.vkImageView;
             width = fixedAttachmentContent.width;
             height = fixedAttachmentContent.height;
@@ -1625,7 +1625,7 @@ void updateMeshInstanceBuffer(GraphicContext *pGraphicContext, Mesh *pMesh, VkDe
     }
 }
 
-void createRenderPass(GraphicContext *pGraphicContext, uint32_t attachmentCount, VkAttachmentDescription *vkAttachmentDescriptions, Attachment *attachments, uint32_t subpassCount, VkSubpassDescription *vkSubpassDescriptions, uint32_t vkSubpassDependencyCount, VkSubpassDependency *vkSubpassDependencies, uint32_t renderPassIndex, RenderPass **ppRenderPass)
+void createRenderPass(GraphicContext *pGraphicContext, uint32_t attachmentCount, VkAttachmentDescription *vkAttachmentDescriptions, Attachment **pAttachments, uint32_t subpassCount, VkSubpassDescription *vkSubpassDescriptions, uint32_t vkSubpassDependencyCount, VkSubpassDependency *vkSubpassDependencies, uint32_t renderPassIndex, RenderPass **ppRenderPass)
 {
     RenderPass *pRenderPass = tickernelMalloc(sizeof(RenderPass));
 
@@ -1633,19 +1633,19 @@ void createRenderPass(GraphicContext *pGraphicContext, uint32_t attachmentCount,
     bool useSwapchain = false;
     for (uint32_t i = 0; i < attachmentCount; i++)
     {
-        Attachment attachment = attachments[i];
-        if (ATTACHMENT_TYPE_SWAPCHAIN == attachment.attachmentType)
+        Attachment *pAttachment = pAttachments[i];
+        if (ATTACHMENT_TYPE_SWAPCHAIN == pAttachment->attachmentType)
         {
             useSwapchain = true;
             vkAttachmentDescriptions[i].format = pGraphicContext->surfaceFormat.format;
         }
-        else if (ATTACHMENT_TYPE_DYNAMIC == attachment.attachmentType)
+        else if (ATTACHMENT_TYPE_DYNAMIC == pAttachment->attachmentType)
         {
-            vkAttachmentDescriptions[i].format = attachment.attachmentContent.dynamicAttachmentContent.graphicImage.vkFormat;
+            vkAttachmentDescriptions[i].format = pAttachment->attachmentContent.dynamicAttachmentContent.graphicImage.vkFormat;
         }
         else
         {
-            vkAttachmentDescriptions[i].format = attachment.attachmentContent.fixedAttachmentContent.graphicImage.vkFormat;
+            vkAttachmentDescriptions[i].format = pAttachment->attachmentContent.fixedAttachmentContent.graphicImage.vkFormat;
         }
     }
 
@@ -1669,14 +1669,14 @@ void createRenderPass(GraphicContext *pGraphicContext, uint32_t attachmentCount,
         pRenderPass->vkFramebuffers = tickernelMalloc(sizeof(VkFramebuffer) * pRenderPass->vkFramebufferCount);
         for (uint32_t i = 0; i < pRenderPass->vkFramebufferCount; i++)
         {
-            createFramebuffer(pGraphicContext, pRenderPass->vkFramebufferCount, attachments, pRenderPass, &pRenderPass->vkFramebuffers[i]);
+            createFramebuffer(pGraphicContext, pRenderPass->vkFramebufferCount, pAttachments, pRenderPass, &pRenderPass->vkFramebuffers[i]);
         }
     }
     else
     {
         pRenderPass->vkFramebufferCount = 1;
         pRenderPass->vkFramebuffers = tickernelMalloc(sizeof(VkFramebuffer));
-        createFramebuffer(pGraphicContext, pRenderPass->vkFramebufferCount, attachments, pRenderPass, &pRenderPass->vkFramebuffers[0]);
+        createFramebuffer(pGraphicContext, pRenderPass->vkFramebufferCount, pAttachments, pRenderPass, &pRenderPass->vkFramebuffers[0]);
     }
 
     pRenderPass->subpassCount = vkRenderPassCreateInfo.subpassCount;

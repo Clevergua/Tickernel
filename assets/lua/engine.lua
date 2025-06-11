@@ -1,5 +1,6 @@
 require("vulkan")
-table.empty = {}
+
+table.emptyTable = {}
 
 local engine = {
     assetsPath = "",
@@ -462,8 +463,6 @@ function engine.drawModel(instances, model)
     return model
 end
 
-
-
 -- void findSupportedFormat(GraphicContext *pGraphicContext, VkFormat *candidates, uint32_t candidatesCount, VkFormatFeatureFlags features, VkImageTiling tiling, VkFormat *pVkFormat);
 function engine.findSupportedFormat(vkformats, features, tiling)
     local vkFormat = 0
@@ -475,16 +474,18 @@ function engine.createDynamicAttachment(vkFormat, vkImageUsageFlags, vkMemoryPro
     local pAttachment
     return pAttachment
 end
+
 -- void destroyDynamicAttachment(GraphicContext *pGraphicContext, Attachment *pAttachment);
 function engine.destroyDynamicAttachment(pAttachment)
 end
 
-
 -- void createFixedAttachment(GraphicContext *pGraphicContext, VkFormat vkFormat, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags, uint32_t width, uint32_t height, Attachment *pAttachment);
-function engine.createFixedAttachment(vkFormat, vkImageUsageFlags, vkMemoryPropertyFlags, vkImageAspectFlags, width, height)
+function engine.createFixedAttachment(vkFormat, vkImageUsageFlags, vkMemoryPropertyFlags, vkImageAspectFlags, width,
+                                      height)
     local pAttachment
     return pAttachment
 end
+
 -- void destroyFixedAttachment(GraphicContext *pGraphicContext, Attachment *pAttachment);
 function engine.destroyFixedAttachment(pAttachment)
 end
@@ -500,8 +501,6 @@ end
 -- void createSampler(GraphicContext *pGraphicContext, VkSamplerCreateInfo samplerCreateInfo, VkSampler *pVkSampler);
 -- void destroySampler(GraphicContext *pGraphicContext, VkSampler vkSampler);
 
--- void createPipeline(GraphicContext *pGraphicContext, uint32_t stageCount, char **shaderPaths, VkPipelineShaderStageCreateInfo *stages, VkPipelineVertexInputStateCreateInfo *pVertexInputState, VkPipelineInputAssemblyStateCreateInfo *pInputAssemblyState, VkPipelineViewportStateCreateInfo *pViewportState, VkPipelineRasterizationStateCreateInfo *pRasterizationState, VkPipelineMultisampleStateCreateInfo *pMultisampleState, VkPipelineDepthStencilStateCreateInfo *pDepthStencilState, VkPipelineColorBlendStateCreateInfo *pColorBlendState, VkPipelineDynamicStateCreateInfo *pDynamicState, VkDescriptorSetLayoutCreateInfo vkDescriptorSetLayoutCreateInfo, RenderPass *pRenderPass, uint32_t subpassIndex, uint32_t vkDescriptorPoolSizeCount, VkDescriptorPoolSize *vkDescriptorPoolSizes, uint32_t pipelineIndex, Pipeline *pPipeline);
--- void destroyPipeline(GraphicContext *pGraphicContext, RenderPass *pRenderPass, uint32_t subpassIndex, Pipeline *pPipeline);
 
 -- void createMaterial(GraphicContext *pGraphicContext, Pipeline *pPipeline, VkWriteDescriptorSet *vkWriteDescriptorSets, uint32_t vkWriteDescriptorSetCount, Material *pMaterial);
 -- void destroyMaterial(GraphicContext *pGraphicContext, Pipeline *pPipeline, Material *pMaterial);
@@ -521,6 +520,19 @@ end
 function engine.destroyRenderPass(pRenderPass)
 end
 
+-- void createPipeline(GraphicContext *pGraphicContext, uint32_t stageCount, char **shaderPaths, VkPipelineShaderStageCreateInfo *stages, VkPipelineVertexInputStateCreateInfo *pVertexInputState, VkPipelineInputAssemblyStateCreateInfo *pInputAssemblyState, VkPipelineViewportStateCreateInfo *pViewportState, VkPipelineRasterizationStateCreateInfo *pRasterizationState, VkPipelineMultisampleStateCreateInfo *pMultisampleState, VkPipelineDepthStencilStateCreateInfo *pDepthStencilState, VkPipelineColorBlendStateCreateInfo *pColorBlendState, VkPipelineDynamicStateCreateInfo *pDynamicState, VkDescriptorSetLayoutCreateInfo vkDescriptorSetLayoutCreateInfo, RenderPass *pRenderPass, uint32_t subpassIndex, uint32_t vkDescriptorPoolSizeCount, VkDescriptorPoolSize *vkDescriptorPoolSizes, uint32_t pipelineIndex, Pipeline *pPipeline);
+function engine.createPipeline(stages, pVertexInputState, pInputAssemblyState, pViewportState,
+                               pRasterizationState,
+                               pMultisampleState, pDepthStencilState, pColorBlendState,
+                               pDynamicState, vkDescriptorSetLayoutCreateInfo, pRenderPass, subpassIndex,
+                               vkDescriptorPoolSizes, pipelineIndex)
+    local pPipeline
+    return pPipeline
+end
 
+-- void destroyPipeline(GraphicContext *pGraphicContext, RenderPass *pRenderPass, uint32_t subpassIndex, Pipeline *pPipeline);
+function engine.destroyPipeline()
+
+end
 
 return engine
