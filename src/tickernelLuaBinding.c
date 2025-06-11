@@ -387,11 +387,9 @@ int luaDestroyRenderPass(lua_State *pLuaState)
     return 0;
 }
 
-
-
-int luaCreateAttachment(lua_State *pLuaState)
+int luaGetSwapchainExtent(lua_State *pLuaState)
 {
-
+    
     return 1;
 }
 
@@ -400,3 +398,4 @@ int luaDestroyAttachment(lua_State *pLuaState)
 
     return 0;
 }
+

@@ -520,6 +520,11 @@ end
 function engine.destroyRenderPass(pRenderPass)
 end
 
+
+function engine.getSwapchainExtent()
+    local width, height
+    return width, height
+end
 -- void createPipeline(GraphicContext *pGraphicContext, uint32_t stageCount, char **shaderPaths, VkPipelineShaderStageCreateInfo *stages, VkPipelineVertexInputStateCreateInfo *pVertexInputState, VkPipelineInputAssemblyStateCreateInfo *pInputAssemblyState, VkPipelineViewportStateCreateInfo *pViewportState, VkPipelineRasterizationStateCreateInfo *pRasterizationState, VkPipelineMultisampleStateCreateInfo *pMultisampleState, VkPipelineDepthStencilStateCreateInfo *pDepthStencilState, VkPipelineColorBlendStateCreateInfo *pColorBlendState, VkPipelineDynamicStateCreateInfo *pDynamicState, VkDescriptorSetLayoutCreateInfo vkDescriptorSetLayoutCreateInfo, RenderPass *pRenderPass, uint32_t subpassIndex, uint32_t vkDescriptorPoolSizeCount, VkDescriptorPoolSize *vkDescriptorPoolSizes, uint32_t pipelineIndex, Pipeline *pPipeline);
 function engine.createPipeline(stages, pVertexInputState, pInputAssemblyState, pViewportState,
                                pRasterizationState,
@@ -531,8 +536,9 @@ function engine.createPipeline(stages, pVertexInputState, pInputAssemblyState, p
 end
 
 -- void destroyPipeline(GraphicContext *pGraphicContext, RenderPass *pRenderPass, uint32_t subpassIndex, Pipeline *pPipeline);
-function engine.destroyPipeline()
+function engine.destroyPipeline(pRenderPass, subpassIndex, pPipeline)
 
 end
+
 
 return engine

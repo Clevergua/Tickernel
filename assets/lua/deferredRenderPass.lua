@@ -2,7 +2,7 @@ local deferredRenderPass = {}
 local engine = require("engine")
 local geometryPipeline = require("geometryPipeline")
 
-function deferredRenderPass.createDeferredRenderPass(pAttachments)
+function deferredRenderPass.createRenderPass(pAttachments)
     local colorAttachmentDescription = {
         samples = VK_SAMPLE_COUNT_1_BIT,
         loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
@@ -151,13 +151,16 @@ function deferredRenderPass.createDeferredRenderPass(pAttachments)
         }
     }
 
+    
     return engine.createRenderPass(vkAttachmentDescriptions, pAttachments, vkSubpassDescriptions, vkSubpassDependencies,
         0)
 end
 
 
-function deferredRenderPass.destroyDeferredRenderPass(pRenderPass)
+function deferredRenderPass.destroyRenderPass(pRenderPass)
     engine.destroyRenderPass(pRenderPass)
 end
+
+
 
 return deferredRenderPass
