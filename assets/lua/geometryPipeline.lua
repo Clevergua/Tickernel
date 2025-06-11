@@ -118,7 +118,7 @@ geometryPipeline.createPipeline = function(pRenderPass, subpassIndex, pipelineIn
         rasterizationSamples = VK_SAMPLE_COUNT_1_BIT,
         sampleShadingEnable = false,
         minSampleShading = 0,
-        pSampleMask = nil,
+        sampleMask = 0,
         alphaToCoverageEnable = false,
         alphaToOneEnable = false,
     }

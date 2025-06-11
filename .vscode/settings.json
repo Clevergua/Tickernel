@@ -78,7 +78,10 @@
         "tickernelluabinding.h": "c",
         "lualib.h": "c",
         "luaconf.h": "c",
-        "a.h": "c"
+        "a.h": "c",
+        "iterator": "c",
+        "forward_list": "c",
+        "initializer_list": "c"
     },
-    "cmake.sourceDirectory": "/Users/hema/Documents/GitHub/Tickernel"
+    "cmake.sourceDirectory": "/Users/forgemastergua/Documents/GitHub/Tickernel"
 }
