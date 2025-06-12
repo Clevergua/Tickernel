@@ -38,8 +38,8 @@ function graphic.setUp()
     graphic.pGeometryPipeline = geometryPipeline.createPipeline(graphic.pDeferredRenderPass, 0, 0)
     -- graphic.pLightingPipeline = lightingPipeline.createPipeline(graphic.pDeferredRenderPass, 1, 0)
     -- graphic.pPostProgressPipeline = postProgressPipeline.createPipeline(graphic.pDeferredRenderPass, 2, 0)
-    
-    engine.createMaterial("assets/materials/geometry.material", graphic.pGeometryPipeline, 0)
+
+    engine.createMaterial(graphic.pGeometryPipeline, 0)
 end
 
 function graphic.tearDown()

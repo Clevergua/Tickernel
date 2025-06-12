@@ -955,22 +955,22 @@ int luaDestroyPipeline(lua_State *pLuaState)
 
 int luaCreateMaterial(lua_State *pLuaState)
 {
-    // Get the parameters from Lua
-    const char *name = luaL_checkstring(pLuaState, 1);
-    const char *shaderPath = luaL_checkstring(pLuaState, 2);
-    // Create the material
-    Material *pMaterial;
-    createMaterial(getGraphicContextPointer(pLuaState), name, shaderPath,&pMaterial);
-    // Push the material pointer to Lua
-    lua_pushlightuserdata(pLuaState, pMaterial);
+    // // Get the parameters from Lua
+    // const char *name = luaL_checkstring(pLuaState, 1);
+    // const char *shaderPath = luaL_checkstring(pLuaState, 2);
+    // // Create the material
+    // Material *pMaterial;
+    // createMaterial(getGraphicContextPointer(pLuaState), name, shaderPath,&pMaterial);
+    // // Push the material pointer to Lua
+    // lua_pushlightuserdata(pLuaState, pMaterial);
     return 1;
 }
 
 int luaDestroyMaterial(lua_State *pLuaState)
 {
-    // Get the material pointer from Lua
-    Material *pMaterial = lua_touserdata(pLuaState, 1);
-    // Destroy the material
-    destroyMaterial(getGraphicContextPointer(pLuaState), pMaterial);
+    // // Get the material pointer from Lua
+    // Material *pMaterial = lua_touserdata(pLuaState, 1);
+    // // Destroy the material
+    // destroyMaterial(getGraphicContextPointer(pLuaState), pMaterial);
     return 0;
 }

@@ -155,7 +155,7 @@ typedef struct
 
     TickernelDynamicArray renderPasseDynamicArray;
     TickernelDynamicArray dynamicAttachmentDynamicArray;
-    TickernelDynamicArray uniformBufferDynamicArray;
+
 } GraphicContext;
 
 GraphicContext *startGraphic(const char *assetsPath, int targetSwapchainImageCount, VkPresentModeKHR targetPresentMode, VkInstance vkInstance, VkSurfaceKHR vkSurface, uint32_t swapchainWidth, uint32_t swapchainHeight);
@@ -168,18 +168,18 @@ void destroyASTCGraphicImage(GraphicContext *pGraphicContext, GraphicImage *pGra
 void createSampler(GraphicContext *pGraphicContext, VkSamplerCreateInfo samplerCreateInfo, VkSampler *pVkSampler);
 void destroySampler(GraphicContext *pGraphicContext, VkSampler vkSampler);
 
-void createPipeline(GraphicContext *pGraphicContext, uint32_t stageCount,const char **shaderPaths, VkPipelineShaderStageCreateInfo *stages, VkPipelineVertexInputStateCreateInfo vertexInputState, VkPipelineInputAssemblyStateCreateInfo inputAssemblyState, VkPipelineViewportStateCreateInfo viewportState, VkPipelineRasterizationStateCreateInfo rasterizationState, VkPipelineMultisampleStateCreateInfo multisampleState, VkPipelineDepthStencilStateCreateInfo depthStencilState, VkPipelineColorBlendStateCreateInfo colorBlendState, VkPipelineDynamicStateCreateInfo dynamicState, VkDescriptorSetLayoutCreateInfo vkDescriptorSetLayoutCreateInfo, RenderPass *pRenderPass, uint32_t subpassIndex, uint32_t vkDescriptorPoolSizeCount, VkDescriptorPoolSize *vkDescriptorPoolSizes, uint32_t pipelineIndex, Pipeline **ppPipeline);
-void destroyPipeline(GraphicContext *pGraphicContext, RenderPass *pRenderPass, uint32_t subpassIndex, Pipeline *pPipeline);
-
-void createMaterial(GraphicContext *pGraphicContext, Pipeline *pPipeline, VkWriteDescriptorSet *vkWriteDescriptorSets, uint32_t vkWriteDescriptorSetCount, Material **ppMaterial);
-void destroyMaterial(GraphicContext *pGraphicContext, Pipeline *pPipeline, Material *pMaterial);
-
 void createMesh(GraphicContext *pGraphicContext, uint32_t vertexCount, VkDeviceSize vertexBufferSize, void *vertexBufferData, uint32_t indexCount, VkDeviceSize indexBufferSize, void *indexBufferData, uint32_t instanceCount, VkDeviceSize instanceBufferSize, void *instanceBufferData, Mesh **ppMesh);
 void destroyMesh(GraphicContext *pGraphicContext, Mesh *pMesh);
 void updateMeshInstanceBuffer(GraphicContext *pGraphicContext, Mesh *pMesh, VkDeviceSize instanceBufferSize, void *instanceBufferData, uint32_t instanceCount);
 
 void createRenderPass(GraphicContext *pGraphicContext, uint32_t attachmentCount, VkAttachmentDescription *vkAttachmentDescriptions, Attachment **pAttachments, uint32_t subpassCount, VkSubpassDescription *vkSubpassDescriptions, uint32_t vkSubpassDependencyCount, VkSubpassDependency *vkSubpassDependencies, uint32_t renderPassIndex, RenderPass **ppRenderPass);
 void destroyRenderPass(GraphicContext *pGraphicContext, RenderPass *pRenderPass);
+
+void createPipeline(GraphicContext *pGraphicContext, uint32_t stageCount,const char **shaderPaths, VkPipelineShaderStageCreateInfo *stages, VkPipelineVertexInputStateCreateInfo vertexInputState, VkPipelineInputAssemblyStateCreateInfo inputAssemblyState, VkPipelineViewportStateCreateInfo viewportState, VkPipelineRasterizationStateCreateInfo rasterizationState, VkPipelineMultisampleStateCreateInfo multisampleState, VkPipelineDepthStencilStateCreateInfo depthStencilState, VkPipelineColorBlendStateCreateInfo colorBlendState, VkPipelineDynamicStateCreateInfo dynamicState, VkDescriptorSetLayoutCreateInfo vkDescriptorSetLayoutCreateInfo, RenderPass *pRenderPass, uint32_t subpassIndex, uint32_t vkDescriptorPoolSizeCount, VkDescriptorPoolSize *vkDescriptorPoolSizes, uint32_t pipelineIndex, Pipeline **ppPipeline);
+void destroyPipeline(GraphicContext *pGraphicContext, RenderPass *pRenderPass, uint32_t subpassIndex, Pipeline *pPipeline);
+
+void createMaterial(GraphicContext *pGraphicContext, Pipeline *pPipeline, VkWriteDescriptorSet *vkWriteDescriptorSets, uint32_t vkWriteDescriptorSetCount, Material **ppMaterial);
+void destroyMaterial(GraphicContext *pGraphicContext, Pipeline *pPipeline, Material *pMaterial);
 
 void createDynamicAttachment(GraphicContext *pGraphicContext, VkFormat vkFormat, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags, float scaler, Attachment **ppAttachment);
 void destroyDynamicAttachment(GraphicContext *pGraphicContext, Attachment *pAttachment);
