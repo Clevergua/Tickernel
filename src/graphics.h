@@ -82,26 +82,26 @@ typedef enum
 
 typedef struct
 {
-} swapchainAttachmentContent;
+} SwapchainAttachmentContent;
 
 typedef struct
 {
     GraphicsImage graphicsImage;
     uint32_t width;
     uint32_t height;
-} fixedAttachmentContent;
+} FixedAttachmentContent;
 
 typedef struct
 {
     GraphicsImage graphicsImage;
     float32_t scaler;
-} dynamicAttachmentContent;
+} DynamicAttachmentContent;
 
 typedef union
 {
-    swapchainAttachmentContent swapchainAttachmentContent;
-    fixedAttachmentContent fixedAttachmentContent;
-    dynamicAttachmentContent dynamicAttachmentContent;
+    SwapchainAttachmentContent swapchainAttachmentContent;
+    FixedAttachmentContent fixedAttachmentContent;
+    DynamicAttachmentContent dynamicAttachmentContent;
 } AttachmentContent;
 
 typedef struct
@@ -109,6 +109,28 @@ typedef struct
     AttachmentType attachmentType;
     AttachmentContent attachmentContent;
 } Attachment;
+
+
+typedef enum
+{
+    GRAPHICS_RESOURCE_TYPE_ATTACHMENT,
+    GRAPHICS_RESOURCE_TYPE_DEPTH_STENCIL_ATTACHMENT,
+    GRAPHICS_RESOURCE_TYPE_IMAGE,
+    GRAPHICS_RESOURCE_TYPE_UNIFORM_BUFFER,
+} GraphicsResourceType;
+
+typedef union
+{
+    Attachment* pAttachment;
+    GraphicsImage* pGraphicsImage;
+    MappedBuffer* pUniformBuffer;
+} GraphicsResourceContent;
+
+typedef struct
+{
+    GraphicsResourceType graphicsResourceType;
+    GraphicsResourceContent resourceContent;
+} GraphicsResource;
 
 typedef struct
 {
@@ -187,3 +209,6 @@ void destroyDynamicAttachment(GraphicsContext *pGraphicsContext, Attachment *pAt
 void createFixedAttachment(GraphicsContext *pGraphicsContext, VkFormat vkFormat, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags, uint32_t width, uint32_t height, Attachment **ppAttachment);
 void destroyFixedAttachment(GraphicsContext *pGraphicsContext, Attachment *pAttachment);
 void findSupportedFormat(GraphicsContext *pGraphicsContext, VkFormat *candidates, uint32_t candidatesCount, VkFormatFeatureFlags features, VkImageTiling tiling, VkFormat *pVkFormat);
+
+void createUniformBuffer(GraphicsContext *pGraphicsContext, VkDeviceSize vkBufferSize, VkBufferUsageFlags vkBufferUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, MappedBuffer *pUniformBuffer);
+void destroyUniformBuffer(GraphicsContext *pGraphicsContext, MappedBuffer *pUniformBuffer);

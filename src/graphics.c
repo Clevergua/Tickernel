@@ -738,17 +738,17 @@ static void createFramebuffer(GraphicsContext *pGraphicsContext, uint32_t attach
         }
         else if (ATTACHMENT_TYPE_DYNAMIC == pAttachment->attachmentType)
         {
-            dynamicAttachmentContent dynamicAttachmentContent = pAttachment->attachmentContent.dynamicAttachmentContent;
-            attachmentVkImageViews[j] = dynamicAttachmentContent.graphicsImage.vkImageView;
-            width = pGraphicsContext->swapchainWidth * dynamicAttachmentContent.scaler;
-            height = pGraphicsContext->swapchainHeight * dynamicAttachmentContent.scaler;
+            DynamicAttachmentContent DynamicAttachmentContent = pAttachment->attachmentContent.dynamicAttachmentContent;
+            attachmentVkImageViews[j] = DynamicAttachmentContent.graphicsImage.vkImageView;
+            width = pGraphicsContext->swapchainWidth * DynamicAttachmentContent.scaler;
+            height = pGraphicsContext->swapchainHeight * DynamicAttachmentContent.scaler;
         }
         else
         {
-            fixedAttachmentContent fixedAttachmentContent = pAttachment->attachmentContent.fixedAttachmentContent;
-            attachmentVkImageViews[j] = fixedAttachmentContent.graphicsImage.vkImageView;
-            width = fixedAttachmentContent.width;
-            height = fixedAttachmentContent.height;
+            FixedAttachmentContent FixedAttachmentContent = pAttachment->attachmentContent.fixedAttachmentContent;
+            attachmentVkImageViews[j] = FixedAttachmentContent.graphicsImage.vkImageView;
+            width = FixedAttachmentContent.width;
+            height = FixedAttachmentContent.height;
         }
     }
     VkFramebufferCreateInfo vkFramebufferCreateInfo = {
