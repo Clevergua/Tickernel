@@ -1,8 +1,8 @@
 local engine = require("engine")
 local deferredRenderPass = require("deferredRenderPass")
 local geometryPipeline = require("geometryPipeline")
-local lightingPipeline = require("lightingPipeline")
-local postProgressPipeline = require("postProgressPipeline")
+-- local lightingPipeline = require("lightingPipeline")
+-- local postProgressPipeline = require("postProgressPipeline")
 local graphic = {}
 
 
@@ -36,13 +36,15 @@ function graphic.setUp()
 
 
     graphic.pGeometryPipeline = geometryPipeline.createPipeline(graphic.pDeferredRenderPass, 0, 0)
-    graphic.pLightingPipeline = lightingPipeline.createPipeline(graphic.pDeferredRenderPass, 1, 0)
-    graphic.pPostProgressPipeline = postProgressPipeline.createPipeline(graphic.pDeferredRenderPass, 2, 0)
+    -- graphic.pLightingPipeline = lightingPipeline.createPipeline(graphic.pDeferredRenderPass, 1, 0)
+    -- graphic.pPostProgressPipeline = postProgressPipeline.createPipeline(graphic.pDeferredRenderPass, 2, 0)
+    
+    engine.createMaterial("assets/materials/geometry.material", graphic.pGeometryPipeline, 0)
 end
 
 function graphic.tearDown()
-    postProgressPipeline.destroyPipeline(graphic.pDeferredRenderPass, 2, graphic.pPostProgressPipeline)
-    lightingPipeline.destroyPipeline(graphic.pDeferredRenderPass, 1, graphic.graphiclightingPipeline)
+    -- postProgressPipeline.destroyPipeline(graphic.pDeferredRenderPass, 2, graphic.pPostProgressPipeline)
+    -- lightingPipeline.destroyPipeline(graphic.pDeferredRenderPass, 1, graphic.graphiclightingPipeline)
     geometryPipeline.destroyPipeline(graphic.pDeferredRenderPass, 0, graphic.pGeometryPipeline)
 
     deferredRenderPass.destroyRenderPass(graphic.pDeferredRenderPass)

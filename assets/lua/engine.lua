@@ -501,10 +501,6 @@ end
 -- void createSampler(GraphicContext *pGraphicContext, VkSamplerCreateInfo samplerCreateInfo, VkSampler *pVkSampler);
 -- void destroySampler(GraphicContext *pGraphicContext, VkSampler vkSampler);
 
-
--- void createMaterial(GraphicContext *pGraphicContext, Pipeline *pPipeline, VkWriteDescriptorSet *vkWriteDescriptorSets, uint32_t vkWriteDescriptorSetCount, Material *pMaterial);
--- void destroyMaterial(GraphicContext *pGraphicContext, Pipeline *pPipeline, Material *pMaterial);
-
 -- void createMesh(GraphicContext *pGraphicContext, uint32_t vertexCount, VkDeviceSize vertexBufferSize, void *vertexBufferData, uint32_t indexCount, VkDeviceSize indexBufferSize, void *indexBufferData, uint32_t instanceCount, VkDeviceSize instanceBufferSize, void *instanceBufferData, Mesh *pMesh);
 -- void destroyMesh(GraphicContext *pGraphicContext, Mesh *pMesh);
 -- void updateMeshInstanceBuffer(GraphicContext *pGraphicContext, Mesh *pMesh, VkDeviceSize instanceBufferSize, void *instanceBufferData, uint32_t instanceCount);
@@ -536,6 +532,16 @@ end
 
 -- void destroyPipeline(GraphicContext *pGraphicContext, RenderPass *pRenderPass, uint32_t subpassIndex, Pipeline *pPipeline);
 function engine.destroyPipeline(pRenderPass, subpassIndex, pPipeline)
+
+end
+
+-- void createMaterial(GraphicContext *pGraphicContext, Pipeline *pPipeline, VkWriteDescriptorSet *vkWriteDescriptorSets, uint32_t vkWriteDescriptorSetCount, Material *pMaterial);
+function engine.createMaterial(pPipeline, vkWriteDescriptorSets)
+    local pMaterial;
+    return pMaterial
+end
+-- void destroyMaterial(GraphicContext *pGraphicContext, Pipeline *pPipeline, Material *pMaterial);
+function engine.destroyMaterial(pPipeline, pMaterial)
 
 end
 

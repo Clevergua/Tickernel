@@ -15,7 +15,6 @@ geometryPipeline.createPipeline = function(pRenderPass, subpassIndex, pipelineIn
         }
     }
 
-
     local vertexInputState = {
         pVertexBindingDescriptions = {
             {
