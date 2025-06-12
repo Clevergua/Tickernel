@@ -14,20 +14,20 @@ TickernelEngine *tickernelStart(const char *assetsPath, uint32_t targetSwapchain
     pTickernelEngine->vkInstance = vkInstance;
     pTickernelEngine->vkSurface = vkSurface;
 
-    pTickernelEngine->pGraphicContext = startGraphic(assetsPath, targetSwapchainImageCount, targetPresentMode, vkInstance, vkSurface, swapchainWidth, swapchainHeight);
+    pTickernelEngine->pGraphicsContext = createGraphicsContext(assetsPath, targetSwapchainImageCount, targetPresentMode, vkInstance, vkSurface, swapchainWidth, swapchainHeight);
     return pTickernelEngine;
 }
 
 void tickernelUpdate(TickernelEngine *pTickernelEngine, uint32_t swapchainWidth, uint32_t swapchainHeight)
 {
     pTickernelEngine->frameCount++;
-    updateGraphic(pTickernelEngine->pGraphicContext, swapchainWidth, swapchainHeight);
+    updateGraphicsContext(pTickernelEngine->pGraphicsContext, swapchainWidth, swapchainHeight);
 }
 
 void tickernelEnd(TickernelEngine *pTickernelEngine)
 {
-    GraphicContext *pGraphicContext = pTickernelEngine->pGraphicContext;
-    endGraphic(pGraphicContext);
+    GraphicsContext *pGraphicsContext = pTickernelEngine->pGraphicsContext;
+    destroyGraphicsContext(pGraphicsContext);
     tickernelFree(pTickernelEngine);
     printf("Tickernel End!\n");
 }

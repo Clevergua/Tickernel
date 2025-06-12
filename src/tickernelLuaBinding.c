@@ -1,6 +1,6 @@
 #include "tickernelLuaBinding.h"
 
-#define PGRAPHICCONTEXT_NAME "pGraphicContext"
+#define PGRAPHICCONTEXT_NAME "pGraphicsContext"
 
 static void assertLuaType(int type, int targetType)
 {
@@ -14,13 +14,13 @@ static void assertLuaType(int type, int targetType)
     }
 }
 
-static GraphicContext *getGraphicContextPointer(lua_State *pLuaState)
+static GraphicsContext *getGraphicsContextPointer(lua_State *pLuaState)
 {
-    int pGraphicContextType = lua_getfield(pLuaState, LUA_REGISTRYINDEX, PGRAPHICCONTEXT_NAME);
-    assertLuaType(pGraphicContextType, LUA_TLIGHTUSERDATA);
-    GraphicContext *pGraphicContext = lua_touserdata(pLuaState, -1);
+    int pGraphicsContextType = lua_getfield(pLuaState, LUA_REGISTRYINDEX, PGRAPHICCONTEXT_NAME);
+    assertLuaType(pGraphicsContextType, LUA_TLIGHTUSERDATA);
+    GraphicsContext *pGraphicsContext = lua_touserdata(pLuaState, -1);
     lua_pop(pLuaState, 1);
-    return pGraphicContext;
+    return pGraphicsContext;
 }
 
 // function engine.findSupportedFormat(vkformats, features, tiling)
@@ -43,7 +43,7 @@ int luaFindSupportedFormat(lua_State *pLuaState)
     VkImageTiling tiling = luaL_checkinteger(pLuaState, 3);
 
     VkFormat vkFormat;
-    findSupportedFormat(getGraphicContextPointer(pLuaState), vkFormats, vkFormatCount, features, tiling, &vkFormat);
+    findSupportedFormat(getGraphicsContextPointer(pLuaState), vkFormats, vkFormatCount, features, tiling, &vkFormat);
 
     lua_pushinteger(pLuaState, vkFormat); // return vkFormat
     return 1;
@@ -62,7 +62,7 @@ int luaCreateDynamicAttachment(lua_State *pLuaState)
     float scaler = luaL_checknumber(pLuaState, 5);
 
     Attachment *pAttachment;
-    createDynamicAttachment(getGraphicContextPointer(pLuaState), vkFormat, vkImageUsageFlags, vkMemoryPropertyFlags, vkImageAspectFlags, scaler, &pAttachment);
+    createDynamicAttachment(getGraphicsContextPointer(pLuaState), vkFormat, vkImageUsageFlags, vkMemoryPropertyFlags, vkImageAspectFlags, scaler, &pAttachment);
     lua_pushlightuserdata(pLuaState, pAttachment);
     return 1;
 }
@@ -79,12 +79,12 @@ int luaDestroyDynamicAttachment(lua_State *pLuaState)
 
     Attachment *pAttachment = lua_touserdata(pLuaState, 1);
 
-    destroyDynamicAttachment(getGraphicContextPointer(pLuaState), pAttachment);
+    destroyDynamicAttachment(getGraphicsContextPointer(pLuaState), pAttachment);
 
     return 0;
 }
 
-// -- void createFixedAttachment(GraphicContext *pGraphicContext, VkFormat vkFormat, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags, uint32_t width, uint32_t height, Attachment *pAttachment);
+// -- void createFixedAttachment(GraphicContext *pGraphicsContext, VkFormat vkFormat, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags, uint32_t width, uint32_t height, Attachment *pAttachment);
 // function engine.createFixedAttachment(vkFormat, vkImageUsageFlags, vkMemoryPropertyFlags, vkImageAspectFlags, width, height)
 //     local pAttachment
 //     return pAttachment
@@ -99,7 +99,7 @@ int luaCreateFixedAttachment(lua_State *pLuaState)
     uint32_t height = luaL_checknumber(pLuaState, 6);
 
     Attachment *pAttachment;
-    createFixedAttachment(getGraphicContextPointer(pLuaState), vkFormat, vkImageUsageFlags, vkMemoryPropertyFlags, vkImageAspectFlags, width, height, &pAttachment);
+    createFixedAttachment(getGraphicsContextPointer(pLuaState), vkFormat, vkImageUsageFlags, vkMemoryPropertyFlags, vkImageAspectFlags, width, height, &pAttachment);
     lua_pushlightuserdata(pLuaState, pAttachment);
     return 1;
 }
@@ -109,7 +109,7 @@ int luaCreateFixedAttachment(lua_State *pLuaState)
 int luaDestroyFixedAttachment(lua_State *pLuaState)
 {
     Attachment *pAttachment = lua_touserdata(pLuaState, 1);
-    destroyFixedAttachment(getGraphicContextPointer(pLuaState), pAttachment);
+    destroyFixedAttachment(getGraphicsContextPointer(pLuaState), pAttachment);
     lua_pushlightuserdata(pLuaState, pAttachment);
     return 1;
 }
@@ -120,7 +120,7 @@ int luaDestroyFixedAttachment(lua_State *pLuaState)
 // end
 int luaGetSwapchainAttachment(lua_State *pLuaState)
 {
-    lua_pushlightuserdata(pLuaState, &getGraphicContextPointer(pLuaState)->swapchainAttachment);
+    lua_pushlightuserdata(pLuaState, &getGraphicsContextPointer(pLuaState)->swapchainAttachment);
     return 1;
 }
 
@@ -347,7 +347,7 @@ int luaCreateRenderPass(lua_State *pLuaState)
 
     RenderPass *pRenderPass;
     createRenderPass(
-        getGraphicContextPointer(pLuaState),
+        getGraphicsContextPointer(pLuaState),
         attachmentCount,
         vkAttachmentDescriptions,
         pAttachments,
@@ -380,7 +380,7 @@ int luaCreateRenderPass(lua_State *pLuaState)
 int luaDestroyRenderPass(lua_State *pLuaState)
 {
     RenderPass *pRenderPass = lua_touserdata(pLuaState, 1);
-    destroyRenderPass(getGraphicContextPointer(pLuaState), pRenderPass);
+    destroyRenderPass(getGraphicsContextPointer(pLuaState), pRenderPass);
     return 0;
 }
 
@@ -932,7 +932,7 @@ int luaCreatePipeline(lua_State *pLuaState)
     uint32_t pipelineIndex = luaL_checkinteger(pLuaState, 14);
 
     Pipeline *pPipeline;
-    createPipeline(getGraphicContextPointer(pLuaState), stageCount, shaderPaths, stages, vertexInputState, inputAssemblyState, viewportState,
+    createPipeline(getGraphicsContextPointer(pLuaState), stageCount, shaderPaths, stages, vertexInputState, inputAssemblyState, viewportState,
                    rasterizationState, multisampleState, depthStencilState, colorBlendState, dynamicState,
                    vkDescriptorSetLayoutCreateInfo, pRenderPass, subpassIndex, vkDescriptorPoolSizeCount,
                    vkDescriptorPoolSizes, pipelineIndex, &pPipeline);
@@ -947,7 +947,7 @@ int luaDestroyPipeline(lua_State *pLuaState)
     RenderPass *pRenderPass = lua_touserdata(pLuaState, 1);
     uint32_t subpassIndex = luaL_checkinteger(pLuaState, 2);
     Pipeline *pPipeline = lua_touserdata(pLuaState, 3);
-    destroyPipeline(getGraphicContextPointer(pLuaState), pRenderPass, subpassIndex, pPipeline);
+    destroyPipeline(getGraphicsContextPointer(pLuaState), pRenderPass, subpassIndex, pPipeline);
     return 0;
 }
 
@@ -960,7 +960,7 @@ int luaCreateMaterial(lua_State *pLuaState)
     // const char *shaderPath = luaL_checkstring(pLuaState, 2);
     // // Create the material
     // Material *pMaterial;
-    // createMaterial(getGraphicContextPointer(pLuaState), name, shaderPath,&pMaterial);
+    // createMaterial(getGraphicsContextPointer(pLuaState), name, shaderPath,&pMaterial);
     // // Push the material pointer to Lua
     // lua_pushlightuserdata(pLuaState, pMaterial);
     return 1;
@@ -971,6 +971,6 @@ int luaDestroyMaterial(lua_State *pLuaState)
     // // Get the material pointer from Lua
     // Material *pMaterial = lua_touserdata(pLuaState, 1);
     // // Destroy the material
-    // destroyMaterial(getGraphicContextPointer(pLuaState), pMaterial);
+    // destroyMaterial(getGraphicsContextPointer(pLuaState), pMaterial);
     return 0;
 }
