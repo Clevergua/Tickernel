@@ -1,4 +1,4 @@
-#include "graphic.h"
+#include "graphics.h"
 
 static void tryThrowVulkanError(VkResult vkResult)
 {

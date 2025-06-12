@@ -1,4 +1,4 @@
 #pragma once
-#include "graphic.h"
+#include "graphics.h"
 #include "lauxlib.h"
 #include "lualib.h"

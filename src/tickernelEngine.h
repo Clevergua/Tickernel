@@ -1,5 +1,5 @@
 #pragma once
-#include "graphic.h"
+#include "graphics.h"
 typedef struct
 {
     uint32_t frameCount;
