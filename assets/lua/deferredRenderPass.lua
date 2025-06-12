@@ -161,5 +161,4 @@ function deferredRenderPass.destroyRenderPass(pRenderPass)
 end
 
 
-
 return deferredRenderPass

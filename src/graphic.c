@@ -1385,7 +1385,7 @@ void destroySampler(GraphicContext *pGraphicContext, VkSampler vkSampler)
     vkDestroySampler(vkDevice, vkSampler, NULL);
 }
 
-void createPipeline(GraphicContext *pGraphicContext, uint32_t stageCount, char **shaderPaths, VkPipelineShaderStageCreateInfo *stages, VkPipelineVertexInputStateCreateInfo *pVertexInputState, VkPipelineInputAssemblyStateCreateInfo *pInputAssemblyState, VkPipelineViewportStateCreateInfo *pViewportState, VkPipelineRasterizationStateCreateInfo *pRasterizationState, VkPipelineMultisampleStateCreateInfo *pMultisampleState, VkPipelineDepthStencilStateCreateInfo *pDepthStencilState, VkPipelineColorBlendStateCreateInfo *pColorBlendState, VkPipelineDynamicStateCreateInfo *pDynamicState, VkDescriptorSetLayoutCreateInfo vkDescriptorSetLayoutCreateInfo, RenderPass *pRenderPass, uint32_t subpassIndex, uint32_t vkDescriptorPoolSizeCount, VkDescriptorPoolSize *vkDescriptorPoolSizes, uint32_t pipelineIndex, Pipeline **ppPipeline)
+void createPipeline(GraphicContext *pGraphicContext, uint32_t stageCount,const char **shaderPaths, VkPipelineShaderStageCreateInfo *stages, VkPipelineVertexInputStateCreateInfo vertexInputState, VkPipelineInputAssemblyStateCreateInfo inputAssemblyState, VkPipelineViewportStateCreateInfo viewportState, VkPipelineRasterizationStateCreateInfo rasterizationState, VkPipelineMultisampleStateCreateInfo multisampleState, VkPipelineDepthStencilStateCreateInfo depthStencilState, VkPipelineColorBlendStateCreateInfo colorBlendState, VkPipelineDynamicStateCreateInfo dynamicState, VkDescriptorSetLayoutCreateInfo vkDescriptorSetLayoutCreateInfo, RenderPass *pRenderPass, uint32_t subpassIndex, uint32_t vkDescriptorPoolSizeCount, VkDescriptorPoolSize *vkDescriptorPoolSizes, uint32_t pipelineIndex, Pipeline **ppPipeline)
 {
     Pipeline *pPipeline = tickernelMalloc(sizeof(Pipeline));
     *ppPipeline = pPipeline;
@@ -1419,15 +1419,15 @@ void createPipeline(GraphicContext *pGraphicContext, uint32_t stageCount, char *
         .flags = 0,
         .stageCount = stageCount,
         .pStages = stages,
-        .pVertexInputState = pVertexInputState,
-        .pInputAssemblyState = pInputAssemblyState,
+        .pVertexInputState = &vertexInputState,
+        .pInputAssemblyState = &inputAssemblyState,
         .pTessellationState = NULL,
-        .pViewportState = pViewportState,
-        .pRasterizationState = pRasterizationState,
-        .pMultisampleState = pMultisampleState,
-        .pDepthStencilState = pDepthStencilState,
-        .pColorBlendState = pColorBlendState,
-        .pDynamicState = pDynamicState,
+        .pViewportState = &viewportState,
+        .pRasterizationState = &rasterizationState,
+        .pMultisampleState = &multisampleState,
+        .pDepthStencilState = &depthStencilState,
+        .pColorBlendState = &colorBlendState,
+        .pDynamicState = &dynamicState,
         .layout = pPipeline->vkPipelineLayout,
         .renderPass = pRenderPass->vkRenderPass,
         .subpass = subpassIndex,

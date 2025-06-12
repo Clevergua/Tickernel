@@ -16,7 +16,7 @@ geometryPipeline.createPipeline = function(pRenderPass, subpassIndex, pipelineIn
     }
 
 
-    local pVertexInputState = {
+    local vertexInputState = {
         pVertexBindingDescriptions = {
             {
                 binding = 0,
@@ -77,12 +77,12 @@ geometryPipeline.createPipeline = function(pRenderPass, subpassIndex, pipelineIn
         },
     }
 
-    local pInputAssemblyState = {
+    local inputAssemblyState = {
         topology = VK_PRIMITIVE_TOPOLOGY_POINT_LIST,
         primitiveRestartEnable = false,
     }
 
-    local pViewportState = {
+    local viewportState = {
         pViewports = {
             {
                 x = 0.0,
@@ -101,7 +101,7 @@ geometryPipeline.createPipeline = function(pRenderPass, subpassIndex, pipelineIn
         },
     }
 
-    local pRasterizationState = {
+    local rasterizationState = {
         depthClampEnable = false,
         rasterizerDiscardEnable = false,
         polygonMode = VK_POLYGON_MODE_POINT,
@@ -114,7 +114,7 @@ geometryPipeline.createPipeline = function(pRenderPass, subpassIndex, pipelineIn
         lineWidth = 1.0,
     }
 
-    local pMultisampleState = {
+    local multisampleState = {
         rasterizationSamples = VK_SAMPLE_COUNT_1_BIT,
         sampleShadingEnable = false,
         minSampleShading = 0,
@@ -123,7 +123,7 @@ geometryPipeline.createPipeline = function(pRenderPass, subpassIndex, pipelineIn
         alphaToOneEnable = false,
     }
 
-    local pDepthStencilState = {
+    local depthStencilState = {
         depthTestEnable = true,
         depthWriteEnable = true,
         depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL,
@@ -149,7 +149,7 @@ geometryPipeline.createPipeline = function(pRenderPass, subpassIndex, pipelineIn
         },
     }
 
-    local pColorBlendState = {
+    local colorBlendState = {
         logicOpEnable = false,
         logicOp = VK_LOGIC_OP_COPY,
         pAttachments = {
@@ -161,7 +161,7 @@ geometryPipeline.createPipeline = function(pRenderPass, subpassIndex, pipelineIn
         },
         blendConstants = { 0.0, 0.0, 0.0, 0.0 },
     }
-    local pDynamicState = {
+    local dynamicState = {
         pDynamicStates = {
             VK_DYNAMIC_STATE_VIEWPORT,
             VK_DYNAMIC_STATE_SCISSOR,
@@ -169,12 +169,15 @@ geometryPipeline.createPipeline = function(pRenderPass, subpassIndex, pipelineIn
     }
 
     local vkDescriptorSetLayoutCreateInfo = {
-        bindings = {
-            binding = 0,
-            descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-            descriptorCount = 1,
-            stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
-            pImmutableSamplers = {},
+        bindings =
+        {
+            {
+                binding = 0,
+                descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                descriptorCount = 1,
+                stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
+                pImmutableSamplers = {},
+            }
         }
     }
 
@@ -185,11 +188,9 @@ geometryPipeline.createPipeline = function(pRenderPass, subpassIndex, pipelineIn
         }
     }
 
-    local pPipeline = engine.createPipeline(stages, pVertexInputState, pInputAssemblyState, pViewportState,
-        pRasterizationState, pMultisampleState, pDepthStencilState, pColorBlendState, pDynamicState,
-        vkDescriptorSetLayoutCreateInfo, pRenderPass, subpassIndex, vkDescriptorPoolSizes, pipelineIndex);
-
-
+    local pPipeline = engine.createPipeline(stages, vertexInputState, inputAssemblyState, viewportState,
+        rasterizationState, multisampleState, depthStencilState, colorBlendState, dynamicState,
+        vkDescriptorSetLayoutCreateInfo, pRenderPass, subpassIndex, vkDescriptorPoolSizes, pipelineIndex)
     return pPipeline
 end
 
