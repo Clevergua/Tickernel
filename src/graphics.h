@@ -110,26 +110,17 @@ typedef struct
     AttachmentContent attachmentContent;
 } Attachment;
 
-
 typedef enum
 {
     GRAPHICS_RESOURCE_TYPE_ATTACHMENT,
-    GRAPHICS_RESOURCE_TYPE_DEPTH_STENCIL_ATTACHMENT,
     GRAPHICS_RESOURCE_TYPE_IMAGE,
     GRAPHICS_RESOURCE_TYPE_UNIFORM_BUFFER,
 } GraphicsResourceType;
 
-typedef union
-{
-    Attachment* pAttachment;
-    GraphicsImage* pGraphicsImage;
-    MappedBuffer* pUniformBuffer;
-} GraphicsResourceContent;
-
 typedef struct
 {
     GraphicsResourceType graphicsResourceType;
-    GraphicsResourceContent resourceContent;
+    void *pResource;
 } GraphicsResource;
 
 typedef struct
@@ -197,7 +188,7 @@ void updateMeshInstanceBuffer(GraphicsContext *pGraphicsContext, Mesh *pMesh, Vk
 void createRenderPass(GraphicsContext *pGraphicsContext, uint32_t attachmentCount, VkAttachmentDescription *vkAttachmentDescriptions, Attachment **pAttachments, uint32_t subpassCount, VkSubpassDescription *vkSubpassDescriptions, uint32_t vkSubpassDependencyCount, VkSubpassDependency *vkSubpassDependencies, uint32_t renderPassIndex, RenderPass **ppRenderPass);
 void destroyRenderPass(GraphicsContext *pGraphicsContext, RenderPass *pRenderPass);
 
-void createPipeline(GraphicsContext *pGraphicsContext, uint32_t stageCount,const char **shaderPaths, VkPipelineShaderStageCreateInfo *stages, VkPipelineVertexInputStateCreateInfo vertexInputState, VkPipelineInputAssemblyStateCreateInfo inputAssemblyState, VkPipelineViewportStateCreateInfo viewportState, VkPipelineRasterizationStateCreateInfo rasterizationState, VkPipelineMultisampleStateCreateInfo multisampleState, VkPipelineDepthStencilStateCreateInfo depthStencilState, VkPipelineColorBlendStateCreateInfo colorBlendState, VkPipelineDynamicStateCreateInfo dynamicState, VkDescriptorSetLayoutCreateInfo vkDescriptorSetLayoutCreateInfo, RenderPass *pRenderPass, uint32_t subpassIndex, uint32_t vkDescriptorPoolSizeCount, VkDescriptorPoolSize *vkDescriptorPoolSizes, uint32_t pipelineIndex, Pipeline **ppPipeline);
+void createPipeline(GraphicsContext *pGraphicsContext, uint32_t stageCount, const char **shaderPaths, VkPipelineShaderStageCreateInfo *stages, VkPipelineVertexInputStateCreateInfo vertexInputState, VkPipelineInputAssemblyStateCreateInfo inputAssemblyState, VkPipelineViewportStateCreateInfo viewportState, VkPipelineRasterizationStateCreateInfo rasterizationState, VkPipelineMultisampleStateCreateInfo multisampleState, VkPipelineDepthStencilStateCreateInfo depthStencilState, VkPipelineColorBlendStateCreateInfo colorBlendState, VkPipelineDynamicStateCreateInfo dynamicState, VkDescriptorSetLayoutCreateInfo vkDescriptorSetLayoutCreateInfo, RenderPass *pRenderPass, uint32_t subpassIndex, uint32_t vkDescriptorPoolSizeCount, VkDescriptorPoolSize *vkDescriptorPoolSizes, uint32_t pipelineIndex, Pipeline **ppPipeline);
 void destroyPipeline(GraphicsContext *pGraphicsContext, RenderPass *pRenderPass, uint32_t subpassIndex, Pipeline *pPipeline);
 
 void createMaterial(GraphicsContext *pGraphicsContext, Pipeline *pPipeline, VkWriteDescriptorSet *vkWriteDescriptorSets, uint32_t vkWriteDescriptorSetCount, Material **ppMaterial);
@@ -210,5 +201,5 @@ void createFixedAttachment(GraphicsContext *pGraphicsContext, VkFormat vkFormat,
 void destroyFixedAttachment(GraphicsContext *pGraphicsContext, Attachment *pAttachment);
 void findSupportedFormat(GraphicsContext *pGraphicsContext, VkFormat *candidates, uint32_t candidatesCount, VkFormatFeatureFlags features, VkImageTiling tiling, VkFormat *pVkFormat);
 
-void createUniformBuffer(GraphicsContext *pGraphicsContext, VkDeviceSize vkBufferSize, VkBufferUsageFlags vkBufferUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, MappedBuffer *pUniformBuffer);
+void createUniformBuffer(GraphicsContext *pGraphicsContext, VkDeviceSize vkBufferSize, VkBufferUsageFlags vkBufferUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, MappedBuffer **ppUniformBuffer);
 void destroyUniformBuffer(GraphicsContext *pGraphicsContext, MappedBuffer *pUniformBuffer);
