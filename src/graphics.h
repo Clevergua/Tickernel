@@ -204,4 +204,4 @@ void findSupportedFormat(GraphicsContext *pGraphicsContext, VkFormat *candidates
 
 void createUniformBuffer(GraphicsContext *pGraphicsContext, VkDeviceSize vkBufferSize, MappedBuffer **ppUniformBuffer);
 void destroyUniformBuffer(GraphicsContext *pGraphicsContext, MappedBuffer *pUniformBuffer);
-void updateGlobalUniformBuffer(GraphicsContext *pGraphicContext, MappedBuffer *pUniformBuffer, void *data, size_t size);
+void updateUniformBuffer(GraphicsContext *pGraphicContext, MappedBuffer *pUniformBuffer, size_t offset, void *data, size_t size);

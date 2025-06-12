@@ -2,10 +2,7 @@
 
 static void tryThrowVulkanError(VkResult vkResult)
 {
-    if (vkResult != VK_SUCCESS)
-    {
-        tickernelError("Vulkan error code: %d\n", vkResult);
-    }
+    tickernelAssert(vkResult == VK_SUCCESS, "Vulkan error code: %d\n", vkResult);
 }
 
 static void hasAllRequiredExtensions(GraphicsContext *pGraphicsContext, VkPhysicalDevice vkPhysicalDevice, bool *pHasAllRequiredExtensions)
@@ -1538,6 +1535,77 @@ void createMaterial(GraphicsContext *pGraphicsContext, Pipeline *pPipeline, uint
                 .pBufferInfo = &vkDescriptorBufferInfo,
                 .pTexelBufferView = NULL,
             };
+        }
+        else if (GRAPHICS_RESOURCE_TYPE_ATTACHMENT == graphicsResource.graphicsResourceType)
+        {
+            // TODO: 如果是Attachment还需要动态的更新ImageView
+            // Handle attachment resources
+            Attachment *pAttachment = (Attachment *)graphicsResource.pResource;
+            VkImageView imageView;
+            if (ATTACHMENT_TYPE_DYNAMIC == pAttachment->attachmentType)
+            {
+                // For dynamic attachments, we assume the image view is already created and set
+                imageView = pAttachment->attachmentContent.dynamicAttachmentContent.graphicsImage.vkImageView;
+            }
+            else if (ATTACHMENT_TYPE_FIXED == pAttachment->attachmentType)
+            {
+                // For fixed attachments, we assume the image view is already created and set
+                imageView = pAttachment->attachmentContent.fixedAttachmentContent.graphicsImage.vkImageView;
+            }
+            else if (ATTACHMENT_TYPE_SWAPCHAIN == pAttachment->attachmentType)
+            {
+                // For swapchain attachments, we assume the image view is already created and set
+                imageView = pGraphicsContext->swapchainImageViews[pGraphicsContext->swapchainIndex];
+            }
+            else
+            {
+                tickernelError("Unknown attachment type: %d\n", pAttachment->attachmentType);
+            }
+            
+            
+            VkDescriptorImageInfo vkDescriptorImageInfo = {
+                .sampler = VK_NULL_HANDLE, // Assuming no sampler is used
+                .imageView = imageView,
+                .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+            };
+            vkWriteDescriptorSets[i] = (VkWriteDescriptorSet){
+                .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+                .pNext = NULL,
+                .dstSet = pMaterial->vkDescriptorSet,
+                .dstBinding = i,
+                .dstArrayElement = 0,
+                .descriptorCount = 1,
+                .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
+                .pImageInfo = &vkDescriptorImageInfo,
+                .pBufferInfo = NULL,
+                .pTexelBufferView = NULL,
+            };
+        }
+        else if (GRAPHICS_RESOURCE_TYPE_IMAGE == graphicsResource.graphicsResourceType)
+        {
+            GraphicsImage *pGraphicsImage = (GraphicsImage *)graphicsResource.pResource;
+            VkDescriptorImageInfo vkDescriptorImageInfo = {
+                .sampler = VK_NULL_HANDLE, // Assuming no sampler is used
+                .imageView = pGraphicsImage->vkImageView,
+                .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+            };
+
+            vkWriteDescriptorSets[i] = (VkWriteDescriptorSet){
+                .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+                .pNext = NULL,
+                .dstSet = pMaterial->vkDescriptorSet,
+                .dstBinding = i,
+                .dstArrayElement = 0,
+                .descriptorCount = 1,
+                .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
+                .pImageInfo = &vkDescriptorImageInfo,
+                .pBufferInfo = NULL,
+                .pTexelBufferView = NULL,
+            };
+        }
+        else
+        {
+            tickernelError("Unknown graphics resource type: %d\n", graphicsResource.graphicsResourceType);
         }
     }
     vkUpdateDescriptorSets(vkDevice, graphicsResourceCount, vkWriteDescriptorSets, 0, NULL);
