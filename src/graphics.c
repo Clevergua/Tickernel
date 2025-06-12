@@ -878,6 +878,7 @@ static void createBuffer(GraphicsContext *pGraphicsContext, VkDeviceSize bufferS
     tryThrowVulkanError(result);
     result = vkBindBufferMemory(vkDevice, pBuffer->vkBuffer, pBuffer->vkBufferMemory, 0);
     tryThrowVulkanError(result);
+    pBuffer->size = bufferSize;
 }
 static void destroyBuffer(GraphicsContext *pGraphicsContext, Buffer buffer)
 {
@@ -885,11 +886,24 @@ static void destroyBuffer(GraphicsContext *pGraphicsContext, Buffer buffer)
     vkFreeMemory(vkDevice, buffer.vkBufferMemory, NULL);
     vkDestroyBuffer(vkDevice, buffer.vkBuffer, NULL);
 }
+static void updateBuffer(GraphicsContext *pGraphicsContext, Buffer *pBuffer, VkDeviceSize offset, VkDeviceSize bufferSize, void *bufferData)
+{
+    tickernelAssert(offset + bufferSize <= pBuffer->size, "Buffer update out of bounds!");
+    void *data;
+    VkDevice vkDevice = pGraphicsContext->vkDevice;
+    VkDeviceMemory vkBufferMemory = pBuffer->vkBufferMemory;
+    VkResult result = vkMapMemory(vkDevice, vkBufferMemory, offset, bufferSize, 0, &data);
+    tryThrowVulkanError(result);
 
-static void updateBufferWithStagingBuffer(GraphicsContext *pGraphicsContext, VkDeviceSize offset, VkDeviceSize bufferSize, void *bufferData, VkCommandPool graphicsVkCommandPool, VkQueue vkGraphicsQueue, VkBuffer vkBuffer)
+    memcpy(data, bufferData, bufferSize);
+    vkUnmapMemory(vkDevice, vkBufferMemory);
+}
+
+static void updateBufferWithStagingBuffer(GraphicsContext *pGraphicsContext, VkDeviceSize offset, VkDeviceSize bufferSize, void *bufferData, Buffer buffer)
 {
     Buffer stagingBuffer;
     VkDevice vkDevice = pGraphicsContext->vkDevice;
+    tickernelAssert(offset + bufferSize <= buffer.size, "Buffer update out of bounds!");
     createBuffer(pGraphicsContext, bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingBuffer);
 
     void *pData;
@@ -899,6 +913,7 @@ static void updateBufferWithStagingBuffer(GraphicsContext *pGraphicsContext, VkD
     vkUnmapMemory(vkDevice, stagingBuffer.vkBufferMemory);
 
     VkCommandBuffer vkCommandBuffer;
+    VkCommandPool graphicsVkCommandPool = pGraphicsContext->graphicsVkCommandPool;
     VkCommandBufferAllocateInfo vkCommandBufferAllocateInfo = {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
         .pNext = NULL,
@@ -924,7 +939,7 @@ static void updateBufferWithStagingBuffer(GraphicsContext *pGraphicsContext, VkD
         .dstOffset = offset,
         .size = bufferSize,
     };
-    vkCmdCopyBuffer(vkCommandBuffer, stagingBuffer.vkBuffer, vkBuffer, 1, &copyRegion);
+    vkCmdCopyBuffer(vkCommandBuffer, stagingBuffer.vkBuffer, buffer.vkBuffer, 1, &copyRegion);
 
     vkEndCommandBuffer(vkCommandBuffer);
     VkSubmitInfo submitInfo = {
@@ -938,19 +953,12 @@ static void updateBufferWithStagingBuffer(GraphicsContext *pGraphicsContext, VkD
         .signalSemaphoreCount = 0,
         .pSignalSemaphores = NULL,
     };
+    VkQueue vkGraphicsQueue = pGraphicsContext->vkGraphicsQueue;
     vkQueueSubmit(vkGraphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
     vkQueueWaitIdle(vkGraphicsQueue);
 
     vkFreeCommandBuffers(vkDevice, graphicsVkCommandPool, 1, &vkCommandBuffer);
     destroyBuffer(pGraphicsContext, stagingBuffer);
-}
-
-static void updateBuffer(VkDevice vkDevice, VkDeviceMemory vkBufferMemory, VkDeviceSize offset, VkDeviceSize bufferSize, void *bufferData)
-{
-    void *data;
-    vkMapMemory(vkDevice, vkBufferMemory, offset, bufferSize, 0, &data);
-    memcpy(data, bufferData, bufferSize);
-    vkUnmapMemory(vkDevice, vkBufferMemory);
 }
 
 static void createMappedBuffer(GraphicsContext *pGraphicsContext, VkDeviceSize bufferSize, VkBufferUsageFlags bufferUsageFlags, VkMemoryPropertyFlags memoryPropertyFlags, MappedBuffer *pMappedBuffer)
@@ -963,10 +971,10 @@ static void destroyMappedBuffer(GraphicsContext *pGraphicsContext, MappedBuffer 
     vkUnmapMemory(pGraphicsContext->vkDevice, mappedBuffer.buffer.vkBufferMemory);
     destroyBuffer(pGraphicsContext, mappedBuffer.buffer);
 }
-
-static void updateMappedBuffer(MappedBuffer *pMappedBuffer, void *data, VkDeviceSize size)
+static void updateMappedBuffer(MappedBuffer *pMappedBuffer, VkDeviceSize offset, void *data, VkDeviceSize size)
 {
-    memcpy(pMappedBuffer->mapped, data, size);
+    tickernelAssert(offset + size <= pMappedBuffer->buffer.size, "Mapped buffer update out of bounds!");
+    memcpy(pMappedBuffer->mapped + offset, data, size);
 }
 
 static void createVkShaderModule(VkDevice vkDevice, const char *filePath, VkShaderModule *pVkShaderModule)
@@ -1173,7 +1181,7 @@ void updateGraphicsContext(GraphicsContext *pGraphicsContext, uint32_t swapchain
     }
     else
     {
-        
+
         result = vkAcquireNextImageKHR(vkDevice, pGraphicsContext->vkSwapchain, UINT64_MAX, pGraphicsContext->imageAvailableSemaphore, VK_NULL_HANDLE, &pGraphicsContext->swapchainIndex);
         if (result != VK_SUCCESS)
         {
@@ -1349,7 +1357,7 @@ void createASTCGraphicsImage(GraphicsContext *pGraphicsContext, const char *file
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
         &stagingBuffer);
 
-    updateBuffer(vkDevice, stagingBuffer.vkBufferMemory, 0, fileSize, astcData);
+    updateBuffer(pGraphicsContext, &stagingBuffer, 0, fileSize, astcData);
     tickernelFree(astcData);
     VkCommandPool commandPool = pGraphicsContext->graphicsVkCommandPool;
     VkQueue graphicsQueue = pGraphicsContext->vkGraphicsQueue;
@@ -1475,7 +1483,7 @@ void destroyPipeline(GraphicsContext *pGraphicsContext, RenderPass *pRenderPass,
     tickernelFree(pPipeline);
 }
 
-void createMaterial(GraphicsContext *pGraphicsContext, Pipeline *pPipeline, VkWriteDescriptorSet *vkWriteDescriptorSets, uint32_t vkWriteDescriptorSetCount, Material **ppMaterial)
+void createMaterial(GraphicsContext *pGraphicsContext, Pipeline *pPipeline, uint32_t graphicsResourceCount, GraphicsResource *graphicsResources, Material **ppMaterial)
 {
     Material *pMaterial = tickernelMalloc(sizeof(Material));
     *ppMaterial = pMaterial;
@@ -1505,7 +1513,34 @@ void createMaterial(GraphicsContext *pGraphicsContext, Pipeline *pPipeline, VkWr
     result = vkAllocateDescriptorSets(vkDevice, &descriptorSetAllocateInfo, &pMaterial->vkDescriptorSet);
     tryThrowVulkanError(result);
 
-    vkUpdateDescriptorSets(vkDevice, vkWriteDescriptorSetCount, vkWriteDescriptorSets, 0, NULL);
+    VkWriteDescriptorSet vkWriteDescriptorSets[graphicsResourceCount];
+    for (uint32_t i = 0; i < graphicsResourceCount; i++)
+    {
+        GraphicsResource graphicsResource = graphicsResources[i];
+        if (GRAPHICS_RESOURCE_TYPE_ATTACHMENT == graphicsResource.graphicsResourceType)
+        {
+            MappedBuffer *pMappedBuffer = (MappedBuffer *)graphicsResource.pResource;
+            VkDescriptorBufferInfo vkDescriptorBufferInfo = {
+                .buffer = pMappedBuffer->buffer.vkBuffer,
+                .offset = 0,
+                .range = pMappedBuffer->buffer.size,
+            };
+
+            vkWriteDescriptorSets[i] = (VkWriteDescriptorSet){
+                .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+                .pNext = NULL,
+                .dstSet = pMaterial->vkDescriptorSet,
+                .dstBinding = i,
+                .dstArrayElement = 0,
+                .descriptorCount = 1,
+                .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                .pImageInfo = NULL,
+                .pBufferInfo = &vkDescriptorBufferInfo,
+                .pTexelBufferView = NULL,
+            };
+        }
+    }
+    vkUpdateDescriptorSets(vkDevice, graphicsResourceCount, vkWriteDescriptorSets, 0, NULL);
 
     tickernelAddToDynamicArray(&pPipeline->materialDynamicArray, pMaterial, pPipeline->materialDynamicArray.length);
 }
@@ -1521,7 +1556,7 @@ void destroyMaterial(GraphicsContext *pGraphicsContext, Pipeline *pPipeline, Mat
     tickernelFree(pMaterial);
 }
 
-void createMesh(GraphicsContext *pGraphicsContext, uint32_t vertexCount, VkDeviceSize vertexBufferSize, void *vertexBufferData, uint32_t indexCount, VkDeviceSize indexBufferSize, void *indexBufferData, uint32_t instanceCount, VkDeviceSize instanceBufferSize, void *instanceBufferData, Mesh **ppMesh)
+void createMesh(GraphicsContext *pGraphicsContext, uint32_t vertexCount, VkDeviceSize vertexBufferSize, void *vertexBufferData, uint32_t indexCount, VkDeviceSize indexBufferSize, void *indexBufferData, uint32_t instanceCount, VkDeviceSize instanceSize, void *instanceBufferData, Mesh **ppMesh)
 {
     Mesh *pMesh = tickernelMalloc(sizeof(Mesh));
 
@@ -1535,13 +1570,13 @@ void createMesh(GraphicsContext *pGraphicsContext, uint32_t vertexCount, VkDevic
     {
         createBuffer(pGraphicsContext, vertexBufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &pMesh->vertexBuffer);
 
-        updateBufferWithStagingBuffer(pGraphicsContext, 0, vertexBufferSize, vertexBufferData, graphicsVkCommandPool, vkGraphicsQueue, pMesh->vertexBuffer.vkBuffer);
+        updateBufferWithStagingBuffer(pGraphicsContext, 0, vertexBufferSize, vertexBufferData, pMesh->vertexBuffer);
 
         pMesh->indexCount = indexCount;
         if (indexCount > 0)
         {
             createBuffer(pGraphicsContext, indexBufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &pMesh->indexBuffer);
-            updateBufferWithStagingBuffer(pGraphicsContext, 0, indexBufferSize, indexBufferData, graphicsVkCommandPool, vkGraphicsQueue, pMesh->indexBuffer.vkBuffer);
+            updateBufferWithStagingBuffer(pGraphicsContext, 0, indexBufferSize, indexBufferData, pMesh->indexBuffer);
             pMesh->indexCount = indexCount;
         }
         else
@@ -1553,6 +1588,7 @@ void createMesh(GraphicsContext *pGraphicsContext, uint32_t vertexCount, VkDevic
         pMesh->instanceCount = instanceCount;
         if (instanceCount > 0)
         {
+            VkDeviceSize instanceBufferSize = instanceSize * instanceCount;
             createBuffer(pGraphicsContext, instanceBufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &pMesh->instanceMappedBuffer.buffer);
             vkMapMemory(vkDevice, pMesh->instanceMappedBuffer.buffer.vkBufferMemory, 0, instanceBufferSize, 0, pMesh->instanceMappedBuffer.mapped);
 
@@ -1602,23 +1638,23 @@ void destroyMesh(GraphicsContext *pGraphicsContext, Mesh *pMesh)
 
     tickernelFree(pMesh);
 }
-void updateMeshInstanceBuffer(GraphicsContext *pGraphicsContext, Mesh *pMesh, VkDeviceSize instanceBufferSize, void *instanceBufferData, uint32_t instanceCount)
+void updateMeshInstanceBuffer(GraphicsContext *pGraphicsContext, Mesh *pMesh, VkDeviceSize instanceSize, void *instanceBufferData, uint32_t instanceCount)
 {
     VkDevice vkDevice = pGraphicsContext->vkDevice;
     VkPhysicalDevice vkPhysicalDevice = pGraphicsContext->vkPhysicalDevice;
-
+    VkDeviceSize instanceBufferSize = instanceSize * instanceCount;
     if (0 == pMesh->maxInstanceCount)
     {
         pMesh->maxInstanceCount = instanceCount;
         pMesh->instanceCount = instanceCount;
 
         createMappedBuffer(pGraphicsContext, instanceBufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &pMesh->instanceMappedBuffer);
-        updateMappedBuffer(pMesh->instanceMappedBuffer.mapped, instanceBufferData, instanceBufferSize);
+        updateMappedBuffer(pMesh->instanceMappedBuffer.mapped, 0, instanceBufferData, instanceBufferSize);
     }
     else if (instanceCount <= pMesh->maxInstanceCount)
     {
         pMesh->instanceCount = instanceCount;
-        updateMappedBuffer(pMesh->instanceMappedBuffer.mapped, instanceBufferData, instanceBufferSize);
+        updateMappedBuffer(pMesh->instanceMappedBuffer.mapped, 0, instanceBufferData, instanceBufferSize);
     }
     else
     {
@@ -1626,7 +1662,7 @@ void updateMeshInstanceBuffer(GraphicsContext *pGraphicsContext, Mesh *pMesh, Vk
         pMesh->maxInstanceCount = instanceCount;
         pMesh->instanceCount = instanceCount;
         createMappedBuffer(pGraphicsContext, instanceBufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &pMesh->instanceMappedBuffer);
-        updateMappedBuffer(pMesh->instanceMappedBuffer.mapped, instanceBufferData, instanceBufferSize);
+        updateMappedBuffer(pMesh->instanceMappedBuffer.mapped, 0, instanceBufferData, instanceBufferSize);
     }
 }
 
@@ -1805,16 +1841,19 @@ void findSupportedFormat(GraphicsContext *pGraphicsContext, VkFormat *candidates
     *pVkFormat = VK_FORMAT_UNDEFINED;
 }
 
-void createUniformBuffer(GraphicsContext *pGraphicsContext, VkDeviceSize vkBufferSize, VkBufferUsageFlags vkBufferUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, MappedBuffer **ppUniformBuffer)
+void createUniformBuffer(GraphicsContext *pGraphicsContext, VkDeviceSize vkBufferSize, MappedBuffer **ppUniformBuffer)
 {
     *ppUniformBuffer = tickernelMalloc(sizeof(MappedBuffer));
-
     VkDevice vkDevice = pGraphicsContext->vkDevice;
     VkPhysicalDevice vkPhysicalDevice = pGraphicsContext->vkPhysicalDevice;
-
-    createMappedBuffer(pGraphicsContext, vkBufferSize, vkBufferUsageFlags, vkMemoryPropertyFlags, *ppUniformBuffer);
+    createMappedBuffer(pGraphicsContext, vkBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, *ppUniformBuffer);
 }
 void destroyUniformBuffer(GraphicsContext *pGraphicsContext, MappedBuffer *pUniformBuffer)
 {
     destroyMappedBuffer(pGraphicsContext, *pUniformBuffer);
+    tickernelFree(pUniformBuffer);
+}
+void updateUniformBuffer(GraphicsContext *pGraphicContext, MappedBuffer *pUniformBuffer, size_t offset, void *data, size_t size)
+{
+    updateMappedBuffer(pUniformBuffer->mapped, offset, data, size);
 }

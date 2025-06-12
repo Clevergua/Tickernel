@@ -29,6 +29,40 @@ void tickernelError(char const *const _Format, ...)
     abort();
 }
 
+void tickernelAssert(bool condition, char const *const _Format, ...)
+{
+    if (condition)
+    {
+        // continue
+    }
+    else
+    {
+        va_list args;
+        va_start(args, _Format);
+        vfprintf(stderr, _Format, args);
+        va_end(args);
+
+        void *buffer[100];
+        int nptrs = backtrace(buffer, 100);
+        char **symbols = backtrace_symbols(buffer, nptrs);
+
+        if (symbols == NULL)
+        {
+            tickernelError("backtrace_symbols");
+            exit(EXIT_FAILURE);
+        }
+
+        for (int i = 0; i < nptrs; i++)
+        {
+            printf("%s\n", symbols[i]);
+        }
+
+        tickernelFree(symbols);
+
+        abort();
+    }
+}
+
 void tickernelSleep(uint32_t milliseconds)
 {
     usleep(milliseconds * 1000);

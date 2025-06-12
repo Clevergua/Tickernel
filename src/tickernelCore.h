@@ -23,6 +23,7 @@ typedef struct
 } TickernelDynamicArray;
 
 void tickernelError(char const *const _Format, ...);
+void tickernelAssert(bool condition, char const *const _Format, ...);
 void tickernelSleep(uint32_t milliseconds);
 void *tickernelMalloc(size_t size);
 void tickernelFree(void *block);
