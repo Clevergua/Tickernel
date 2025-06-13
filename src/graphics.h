@@ -115,8 +115,10 @@ typedef enum
 {
     GRAPHICS_RESOURCE_TYPE_ATTACHMENT,
     GRAPHICS_RESOURCE_TYPE_IMAGE,
+    GRAPHICS_RESOURCE_TYPE_SAMPLER,
     GRAPHICS_RESOURCE_TYPE_UNIFORM_BUFFER,
 } GraphicsResourceType;
+
 
 typedef struct
 {
@@ -176,16 +178,6 @@ GraphicsContext *createGraphicsContext(const char *assetsPath, int targetSwapcha
 void updateGraphicsContext(GraphicsContext *pGraphicsContext, uint32_t swapchainWidth, uint32_t swapchainHeight);
 void destroyGraphicsContext(GraphicsContext *pGraphicsContext);
 
-void createASTCGraphicsImage(GraphicsContext *pGraphicsContext, const char *fileName, GraphicsImage **ppGraphicsImage);
-void destroyASTCGraphicsImage(GraphicsContext *pGraphicsContext, GraphicsImage *pGraphicsImage);
-
-void createSampler(GraphicsContext *pGraphicsContext, VkSamplerCreateInfo samplerCreateInfo, VkSampler *pVkSampler);
-void destroySampler(GraphicsContext *pGraphicsContext, VkSampler vkSampler);
-
-void createMesh(GraphicsContext *pGraphicsContext, uint32_t vertexCount, VkDeviceSize vertexBufferSize, void *vertexBufferData, uint32_t indexCount, VkDeviceSize indexBufferSize, void *indexBufferData, uint32_t instanceCount, VkDeviceSize instanceBufferSize, void *instanceBufferData, Mesh **ppMesh);
-void destroyMesh(GraphicsContext *pGraphicsContext, Mesh *pMesh);
-void updateMeshInstanceBuffer(GraphicsContext *pGraphicsContext, Mesh *pMesh, VkDeviceSize instanceBufferSize, void *instanceBufferData, uint32_t instanceCount);
-
 void createRenderPass(GraphicsContext *pGraphicsContext, uint32_t attachmentCount, VkAttachmentDescription *vkAttachmentDescriptions, Attachment **pAttachments, uint32_t subpassCount, VkSubpassDescription *vkSubpassDescriptions, uint32_t vkSubpassDependencyCount, VkSubpassDependency *vkSubpassDependencies, uint32_t renderPassIndex, RenderPass **ppRenderPass);
 void destroyRenderPass(GraphicsContext *pGraphicsContext, RenderPass *pRenderPass);
 
@@ -195,13 +187,24 @@ void destroyPipeline(GraphicsContext *pGraphicsContext, RenderPass *pRenderPass,
 void createMaterial(GraphicsContext *pGraphicsContext, Pipeline *pPipeline, uint32_t graphicsResourceCount, GraphicsResource *graphicsResources, Material **ppMaterial);
 void destroyMaterial(GraphicsContext *pGraphicsContext, Pipeline *pPipeline, Material *pMaterial);
 
+void findSupportedFormat(GraphicsContext *pGraphicsContext, VkFormat *candidates, uint32_t candidatesCount, VkFormatFeatureFlags features, VkImageTiling tiling, VkFormat *pVkFormat);
+
 void createDynamicAttachment(GraphicsContext *pGraphicsContext, VkFormat vkFormat, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags, float scaler, Attachment **ppAttachment);
 void destroyDynamicAttachment(GraphicsContext *pGraphicsContext, Attachment *pAttachment);
 
 void createFixedAttachment(GraphicsContext *pGraphicsContext, VkFormat vkFormat, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags, uint32_t width, uint32_t height, Attachment **ppAttachment);
 void destroyFixedAttachment(GraphicsContext *pGraphicsContext, Attachment *pAttachment);
-void findSupportedFormat(GraphicsContext *pGraphicsContext, VkFormat *candidates, uint32_t candidatesCount, VkFormatFeatureFlags features, VkImageTiling tiling, VkFormat *pVkFormat);
 
 void createUniformBuffer(GraphicsContext *pGraphicsContext, VkDeviceSize vkBufferSize, MappedBuffer **ppUniformBuffer);
 void destroyUniformBuffer(GraphicsContext *pGraphicsContext, MappedBuffer *pUniformBuffer);
 void updateUniformBuffer(GraphicsContext *pGraphicContext, MappedBuffer *pUniformBuffer, size_t offset, void *data, size_t size);
+
+void createASTCGraphicsImage(GraphicsContext *pGraphicsContext, const char *fileName, GraphicsImage **ppGraphicsImage);
+void destroyASTCGraphicsImage(GraphicsContext *pGraphicsContext, GraphicsImage *pGraphicsImage);
+
+void createSampler(GraphicsContext *pGraphicsContext, VkSamplerCreateInfo samplerCreateInfo, VkSampler *pVkSampler);
+void destroySampler(GraphicsContext *pGraphicsContext, VkSampler vkSampler);
+
+void createMesh(GraphicsContext *pGraphicsContext, uint32_t vertexCount, VkDeviceSize vertexBufferSize, void *vertexBufferData, uint32_t indexCount, VkDeviceSize indexBufferSize, void *indexBufferData, uint32_t instanceCount, VkDeviceSize instanceBufferSize, void *instanceBufferData, Mesh **ppMesh);
+void destroyMesh(GraphicsContext *pGraphicsContext, Mesh *pMesh);
+void updateMeshInstanceBuffer(GraphicsContext *pGraphicsContext, Mesh *pMesh, VkDeviceSize instanceBufferSize, void *instanceBufferData, uint32_t instanceCount);

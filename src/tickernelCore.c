@@ -2,64 +2,47 @@
 
 #define TICKERNEL_POINTER_SIZE sizeof(void *)
 
-void tickernelError(char const *const _Format, ...)
+static void tickernelInternalError(const char *prefix, const char *format, va_list args)
 {
-    va_list args;
-    va_start(args, _Format);
-    vfprintf(stderr, _Format, args);
-    va_end(args);
-
+    if (prefix) {
+        fprintf(stderr, "%s: ", prefix);
+    }
+    
+    vfprintf(stderr, format, args);
+    fprintf(stderr, "\n");
+    
     void *buffer[100];
     int nptrs = backtrace(buffer, 100);
     char **symbols = backtrace_symbols(buffer, nptrs);
-
-    if (symbols == NULL)
-    {
-        tickernelError("backtrace_symbols");
-        exit(EXIT_FAILURE);
+    
+    if (symbols) {
+        fprintf(stderr, "Backtrace:\n");
+        for (int i = 0; i < nptrs; i++) {
+            fprintf(stderr, "  %s\n", symbols[i]);
+        }
+        free(symbols);
+    } else {
+        fprintf(stderr, "Failed to get backtrace symbols\n");
     }
-
-    for (int i = 0; i < nptrs; i++)
-    {
-        printf("%s\n", symbols[i]);
-    }
-
-    tickernelFree(symbols);
-
+    
     abort();
 }
 
-void tickernelAssert(bool condition, char const *const _Format, ...)
+void tickernelError(const char *format, ...)
 {
-    if (condition)
-    {
-        // continue
-    }
-    else
-    {
+    va_list args;
+    va_start(args, format);
+    tickernelInternalError("ERROR", format, args);
+    va_end(args);
+}
+
+void tickernelAssert(bool condition, const char *format, ...)
+{
+    if (!condition) {
         va_list args;
-        va_start(args, _Format);
-        vfprintf(stderr, _Format, args);
+        va_start(args, format);
+        tickernelInternalError("ASSERTION FAILED", format, args);
         va_end(args);
-
-        void *buffer[100];
-        int nptrs = backtrace(buffer, 100);
-        char **symbols = backtrace_symbols(buffer, nptrs);
-
-        if (symbols == NULL)
-        {
-            tickernelError("backtrace_symbols");
-            exit(EXIT_FAILURE);
-        }
-
-        for (int i = 0; i < nptrs; i++)
-        {
-            printf("%s\n", symbols[i]);
-        }
-
-        tickernelFree(symbols);
-
-        abort();
     }
 }
 

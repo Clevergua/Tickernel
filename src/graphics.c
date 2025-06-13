@@ -1514,9 +1514,9 @@ void createMaterial(GraphicsContext *pGraphicsContext, Pipeline *pPipeline, uint
     for (uint32_t i = 0; i < graphicsResourceCount; i++)
     {
         GraphicsResource graphicsResource = graphicsResources[i];
-        if (GRAPHICS_RESOURCE_TYPE_ATTACHMENT == graphicsResource.graphicsResourceType)
+        if (GRAPHICS_RESOURCE_TYPE_UNIFORM_BUFFER == graphicsResource.graphicsResourceType)
         {
-            MappedBuffer *pMappedBuffer = (MappedBuffer *)graphicsResource.pResource;
+            MappedBuffer *pMappedBuffer = graphicsResource.pResource;
             VkDescriptorBufferInfo vkDescriptorBufferInfo = {
                 .buffer = pMappedBuffer->buffer.vkBuffer,
                 .offset = 0,
@@ -1540,33 +1540,43 @@ void createMaterial(GraphicsContext *pGraphicsContext, Pipeline *pPipeline, uint
         {
             // TODO: 如果是Attachment还需要动态的更新ImageView
             // Handle attachment resources
-            Attachment *pAttachment = (Attachment *)graphicsResource.pResource;
+            Attachment *pAttachment = graphicsResource.pResource;
             VkImageView imageView;
+            VkFormat vkFormat = VK_FORMAT_UNDEFINED;
             if (ATTACHMENT_TYPE_DYNAMIC == pAttachment->attachmentType)
             {
-                // For dynamic attachments, we assume the image view is already created and set
                 imageView = pAttachment->attachmentContent.dynamicAttachmentContent.graphicsImage.vkImageView;
+                vkFormat = pAttachment->attachmentContent.dynamicAttachmentContent.graphicsImage.vkFormat;
             }
             else if (ATTACHMENT_TYPE_FIXED == pAttachment->attachmentType)
             {
-                // For fixed attachments, we assume the image view is already created and set
                 imageView = pAttachment->attachmentContent.fixedAttachmentContent.graphicsImage.vkImageView;
-            }
-            else if (ATTACHMENT_TYPE_SWAPCHAIN == pAttachment->attachmentType)
-            {
-                // For swapchain attachments, we assume the image view is already created and set
-                imageView = pGraphicsContext->swapchainImageViews[pGraphicsContext->swapchainIndex];
+                vkFormat = pAttachment->attachmentContent.fixedAttachmentContent.graphicsImage.vkFormat;
             }
             else
             {
-                tickernelError("Unknown attachment type: %d\n", pAttachment->attachmentType);
+                tickernelError("Unsupported input attachment type: %d\n", pAttachment->attachmentType);
             }
-            
-            
+            VkImageLayout imageLayout;
+            if (
+                vkFormat == VK_FORMAT_D16_UNORM ||
+                vkFormat == VK_FORMAT_D32_SFLOAT ||
+                vkFormat == VK_FORMAT_S8_UINT ||
+                vkFormat == VK_FORMAT_D16_UNORM_S8_UINT ||
+                vkFormat == VK_FORMAT_D24_UNORM_S8_UINT ||
+                vkFormat == VK_FORMAT_D32_SFLOAT_S8_UINT)
+            {
+                imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
+            }
+            else
+            {
+                imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+            }
+
             VkDescriptorImageInfo vkDescriptorImageInfo = {
-                .sampler = VK_NULL_HANDLE, // Assuming no sampler is used
+                .sampler = VK_NULL_HANDLE,
                 .imageView = imageView,
-                .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                .imageLayout = imageLayout,
             };
             vkWriteDescriptorSets[i] = (VkWriteDescriptorSet){
                 .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
@@ -1583,9 +1593,9 @@ void createMaterial(GraphicsContext *pGraphicsContext, Pipeline *pPipeline, uint
         }
         else if (GRAPHICS_RESOURCE_TYPE_IMAGE == graphicsResource.graphicsResourceType)
         {
-            GraphicsImage *pGraphicsImage = (GraphicsImage *)graphicsResource.pResource;
+            GraphicsImage *pGraphicsImage = graphicsResource.pResource;
             VkDescriptorImageInfo vkDescriptorImageInfo = {
-                .sampler = VK_NULL_HANDLE, // Assuming no sampler is used
+                .sampler = NULL,
                 .imageView = pGraphicsImage->vkImageView,
                 .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
             };
