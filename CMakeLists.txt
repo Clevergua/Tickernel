@@ -6,6 +6,7 @@ set(CMAKE_C_STANDARD 99)
 
 # message(${CMAKE_BUILD_TYPE})
 find_package(Vulkan REQUIRED)
+
 file(GLOB_RECURSE SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/*.c)
 
 find_library(LUA_LIBRARY NAMES "liblua.dylib" "lualib53.dylib" "liblua.dll" "liblua.lib" PATHS ${CMAKE_CURRENT_SOURCE_DIR}/lib/lua)
@@ -20,7 +21,7 @@ set(LIBRARYS
 )
 
 message("   PROJECT_NAME:${PROJECT_NAME}")
-
+add_definitions(-DSPIRV_REFLECT_USE_SYSTEM_SPIRV_H)
 message("   SOURCES:${SOURCES}")
 add_library(${PROJECT_NAME} SHARED ${SOURCES})
 message("   HEADER_DIRS:${HEADER_DIRS}")
