@@ -83,7 +83,8 @@
         "forward_list": "c",
         "initializer_list": "c",
         "graphics.h": "c",
-        "spirv.h": "c"
+        "spirv.h": "c",
+        "spirv_reflect.h": "c"
     },
     "cmake.sourceDirectory": "/Users/forgemastergua/Documents/GitHub/Tickernel"
 }

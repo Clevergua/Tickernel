@@ -722,7 +722,7 @@ static void recordCommandBuffer(GraphicsContext *pGraphicsContext)
 static void createFramebuffer(GraphicsContext *pGraphicsContext, uint32_t attachmentCount, Attachment **pAttachments, RenderPass *pRenderPass, VkFramebuffer *pVkFramebuffer)
 {
     VkDevice vkDevice = pGraphicsContext->vkDevice;
-    VkImageView attachmentVkImageViews[attachmentCount];
+    VkImageView *attachmentVkImageViews = tickernelMalloc(sizeof(VkImageView) * attachmentCount);
     uint32_t width = 0;
     uint32_t height = 0;
     for (uint32_t j = 0; j < attachmentCount; j++)
@@ -761,6 +761,7 @@ static void createFramebuffer(GraphicsContext *pGraphicsContext, uint32_t attach
         .layers = 1,
     };
     VkResult result = vkCreateFramebuffer(vkDevice, &vkFramebufferCreateInfo, NULL, pVkFramebuffer);
+    tickernelFree(attachmentVkImageViews);
     tryThrowVulkanError(result);
 }
 static void destroyFramebuffer(GraphicsContext *pGraphicsContext, VkFramebuffer vkFramebuffer)
@@ -972,48 +973,6 @@ static void updateMappedBuffer(MappedBuffer *pMappedBuffer, VkDeviceSize offset,
 {
     tickernelAssert(offset + size <= pMappedBuffer->buffer.size, "Mapped buffer update out of bounds!");
     memcpy(pMappedBuffer->mapped + offset, data, size);
-}
-
-static void createVkShaderModule(VkDevice vkDevice, const char *filePath, VkShaderModule *pVkShaderModule)
-{
-    FILE *pFile = fopen(filePath, "rb");
-    if (NULL == pFile)
-    {
-        tickernelError("Failed to read file with path: %s\n", filePath);
-    }
-    else
-    {
-        fseek(pFile, 0, SEEK_END);
-        size_t fileLength = ftell(pFile);
-        rewind(pFile);
-
-        uint32_t *pCode = tickernelMalloc(fileLength);
-        size_t codeSize = fread(pCode, 1, fileLength, pFile);
-
-        fclose(pFile);
-        if (codeSize == fileLength)
-        {
-            printf("Succeeded to read file!\n");
-            VkShaderModuleCreateInfo shaderModuleCreateInfo = {
-                .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
-                .pNext = NULL,
-                .flags = 0,
-                .codeSize = codeSize,
-                .pCode = pCode,
-            };
-            VkResult result = vkCreateShaderModule(vkDevice, &shaderModuleCreateInfo, NULL, pVkShaderModule);
-            tryThrowVulkanError(result);
-            tickernelFree(pCode);
-        }
-        else
-        {
-            printf("Failed to read file codeSize:%zu fileLength:%zu\n", codeSize, fileLength);
-        }
-    }
-}
-static void destroyVkShaderModule(VkDevice vkDevice, VkShaderModule vkShaderModule)
-{
-    vkDestroyShaderModule(vkDevice, vkShaderModule, NULL);
 }
 
 static void transitionImageLayout(VkDevice device, VkCommandPool commandPool, VkQueue queue, VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout)
@@ -1396,242 +1355,141 @@ void destroySampler(GraphicsContext *pGraphicsContext, VkSampler vkSampler)
     vkDestroySampler(vkDevice, vkSampler, NULL);
 }
 
-void createPipeline(GraphicsContext *pGraphicsContext, uint32_t stageCount, const char **shaderPaths, VkPipelineShaderStageCreateInfo *stages, VkPipelineVertexInputStateCreateInfo vertexInputState, VkPipelineInputAssemblyStateCreateInfo inputAssemblyState, VkPipelineViewportStateCreateInfo viewportState, VkPipelineRasterizationStateCreateInfo rasterizationState, VkPipelineMultisampleStateCreateInfo multisampleState, VkPipelineDepthStencilStateCreateInfo depthStencilState, VkPipelineColorBlendStateCreateInfo colorBlendState, VkPipelineDynamicStateCreateInfo dynamicState, VkDescriptorSetLayoutCreateInfo vkDescriptorSetLayoutCreateInfo, RenderPass *pRenderPass, uint32_t subpassIndex, uint32_t vkDescriptorPoolSizeCount, VkDescriptorPoolSize *vkDescriptorPoolSizes, uint32_t pipelineIndex, Pipeline **ppPipeline)
+void createPipeline(GraphicsContext *pGraphicsContext, uint32_t stageCount, const char **shaderPaths, VkPipelineVertexInputStateCreateInfo vertexInputState, VkPipelineInputAssemblyStateCreateInfo inputAssemblyState, VkPipelineViewportStateCreateInfo viewportState, VkPipelineRasterizationStateCreateInfo rasterizationState, VkPipelineMultisampleStateCreateInfo multisampleState, VkPipelineDepthStencilStateCreateInfo depthStencilState, VkPipelineColorBlendStateCreateInfo colorBlendState, VkPipelineDynamicStateCreateInfo dynamicState, RenderPass *pRenderPass, uint32_t subpassIndex, uint32_t pipelineIndex, Pipeline **ppPipeline)
 {
     Pipeline *pPipeline = tickernelMalloc(sizeof(Pipeline));
     *ppPipeline = pPipeline;
-
-    VkPipelineCache pipelineCache = NULL;
+    VkResult result = VK_SUCCESS;
     VkDevice vkDevice = pGraphicsContext->vkDevice;
-    for (uint32_t i = 0; i < stageCount; i++)
-    {
-        createVkShaderModule(vkDevice, shaderPaths[i], &stages[i].module);
-    }
+    SpvReflectShaderModule *spvReflectShaderModules = tickernelMalloc(sizeof(SpvReflectShaderModule) * stageCount);
+    // for (uint32_t i = 0; i < stageCount; i++)
+    // {
+    //     const char *filePath = shaderPaths[i];
+    //     FILE *file = fopen(filePath, "rb");
+    //     if (!file)
+    //     {
+    //         printf("Failed to open file: %s\n", filePath);
+    //         *ppPipeline = NULL;
+    //         return;
+    //     }
+    //     fseek(file, 0, SEEK_END);
+    //     size_t shaderSize = ftell(file);
+    //     fseek(file, 0, SEEK_SET);
 
-    VkResult result = vkCreateDescriptorSetLayout(vkDevice, &vkDescriptorSetLayoutCreateInfo, NULL, &pPipeline->descriptorSetLayout);
-    tryThrowVulkanError(result);
+    //     if (shaderSize % 4 != 0)
+    //     {
+    //         printf("Invalid SPIR-V file size: %s\n", filePath);
+    //         fclose(file);
+    //         *ppPipeline = NULL;
+    //         return;
+    //     }
+    //     void *shaderCode = tickernelMalloc(shaderSize);
+    //     size_t bytesRead = fread(shaderCode, 1, shaderSize, file);
 
-    VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
-        .pNext = NULL,
-        .flags = 0,
-        .setLayoutCount = 1,
-        .pSetLayouts = &pPipeline->descriptorSetLayout,
-        .pushConstantRangeCount = 0,
-        .pPushConstantRanges = NULL,
-    };
+    //     fclose(file);
 
-    result = vkCreatePipelineLayout(vkDevice, &pipelineLayoutCreateInfo, NULL, &pPipeline->vkPipelineLayout);
-    tryThrowVulkanError(result);
+    //     if (bytesRead != shaderSize)
+    //     {
+    //         printf("Failed to read entire file: %s\n", filePath);
+    //         *ppPipeline = NULL;
+    //         return;
+    //     }
 
-    VkGraphicsPipelineCreateInfo vkGraphicsPipelineCreateInfo = {
-        .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
-        .pNext = NULL,
-        .flags = 0,
-        .stageCount = stageCount,
-        .pStages = stages,
-        .pVertexInputState = &vertexInputState,
-        .pInputAssemblyState = &inputAssemblyState,
-        .pTessellationState = NULL,
-        .pViewportState = &viewportState,
-        .pRasterizationState = &rasterizationState,
-        .pMultisampleState = &multisampleState,
-        .pDepthStencilState = &depthStencilState,
-        .pColorBlendState = &colorBlendState,
-        .pDynamicState = &dynamicState,
-        .layout = pPipeline->vkPipelineLayout,
-        .renderPass = pRenderPass->vkRenderPass,
-        .subpass = subpassIndex,
-        .basePipelineHandle = VK_NULL_HANDLE,
-        .basePipelineIndex = -1,
-    };
-    result = vkCreateGraphicsPipelines(vkDevice, pipelineCache, 1, &vkGraphicsPipelineCreateInfo, NULL, &pPipeline->vkPipeline);
-    tryThrowVulkanError(result);
+    //     SpvReflectResult spvReflectResult = spvReflectCreateShaderModule(shaderSize, shaderCode, &spvReflectShaderModules[i]);
+    //     tickernelAssert(spvReflectResult == SPV_REFLECT_RESULT_SUCCESS, "Failed to reflect shader module: %s", shaderPaths[i]);
+    //     tickernelFree(shaderCode);
+    // }
+    // // Create stages
+    VkPipelineShaderStageCreateInfo *stages = tickernelMalloc(sizeof(VkPipelineShaderStageCreateInfo) * stageCount);
+    // for (uint32_t i = 0; i < stageCount; i++)
+    // {
+    //     VkShaderModuleCreateInfo shaderModuleCreateInfo = {
+    //         .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
+    //         .pNext = NULL,
+    //         .flags = 0,
+    //         .codeSize = spvReflectGetCodeSize(&spvReflectShaderModules[i]),
+    //         .pCode = spvReflectGetCode(&spvReflectShaderModules[i]),
+    //     };
+    //     VkShaderModule shaderModule;
+    //     result = vkCreateShaderModule(vkDevice, &shaderModuleCreateInfo, NULL, &shaderModule);
+    //     tryThrowVulkanError(result);
+    //     stages[i] = (VkPipelineShaderStageCreateInfo){
+    //         .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+    //         .pNext = NULL,
+    //         .flags = 0,
+    //         .stage = (VkShaderStageFlagBits)spvReflectShaderModules[i].shader_stage,
+    //         .module = shaderModule,
+    //         .pName = spvReflectShaderModules[i].entry_point_name,
+    //         .pSpecializationInfo = NULL,
+    //     };
+    // }
 
-    for (uint32_t i = 0; i < vkGraphicsPipelineCreateInfo.stageCount; i++)
-    {
-        destroyVkShaderModule(vkDevice, stages[i].module);
-    }
+   
+    // VkPipelineLayoutCreateInfo vkPipelineLayoutCreateInfo = {
+    //     .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+    //     .pNext = NULL,
+    //     .flags = 0,
+    //     .setLayoutCount = setLayoutCount,
+    //     .pSetLayouts = setLayouts,
+    //     .pushConstantRangeCount = 0,
+    //     .pPushConstantRanges = NULL,
+    // };
+    // result = vkCreatePipelineLayout(vkDevice, &vkPipelineLayoutCreateInfo, NULL, &pPipeline->vkPipelineLayout);
 
-    pPipeline->vkDescriptorPoolSizeCount = vkDescriptorPoolSizeCount;
-    pPipeline->vkDescriptorPoolSizes = tickernelMalloc(sizeof(VkDescriptorPoolSize) * pPipeline->vkDescriptorPoolSizeCount);
-    memcpy(pPipeline->vkDescriptorPoolSizes, vkDescriptorPoolSizes, sizeof(VkDescriptorPoolSize) * pPipeline->vkDescriptorPoolSizeCount);
-    tickernelCreateDynamicArray(&pPipeline->materialDynamicArray, 1);
+    // VkGraphicsPipelineCreateInfo vkGraphicsPipelineCreateInfo = {
+    //     .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
+    //     .pNext = NULL,
+    //     .flags = 0,
+    //     .stageCount = stageCount,
+    //     .pStages = stages,
+    //     .pVertexInputState = &vertexInputState,
+    //     .pInputAssemblyState = &inputAssemblyState,
+    //     .pTessellationState = NULL,
+    //     .pViewportState = &viewportState,
+    //     .pRasterizationState = &rasterizationState,
+    //     .pMultisampleState = &multisampleState,
+    //     .pDepthStencilState = &depthStencilState,
+    //     .pColorBlendState = &colorBlendState,
+    //     .pDynamicState = &dynamicState,
+    //     .layout = vkPipelineLayout,
+    //     .renderPass = pRenderPass->vkRenderPass,
+    //     .subpass = subpassIndex,
+    //     .basePipelineHandle = VK_NULL_HANDLE,
+    //     .basePipelineIndex = -1,
+    // };
+    // result = vkCreateGraphicsPipelines(vkDevice, NULL, 1, &vkGraphicsPipelineCreateInfo, NULL, &pPipeline->vkPipeline);
+    // tryThrowVulkanError(result);
 
-    tickernelAddToDynamicArray(&pRenderPass->subpasses[subpassIndex].pipelineDynamicArray, pPipeline, pipelineIndex);
+    // for (uint32_t i = 0; i < stageCount; i++)
+    // {
+    //     vkDestroyShaderModule(vkDevice, stages[i].module, NULL);
+    // }
+
+    // for (uint32_t i = 0; i < stageCount; i++)
+    // {
+    //     spvReflectDestroyShaderModule(&spvReflectShaderModules[i]);
+    // }
+    tickernelFree(stages);
+    tickernelFree(spvReflectShaderModules);
 }
 void destroyPipeline(GraphicsContext *pGraphicsContext, RenderPass *pRenderPass, uint32_t subpassIndex, Pipeline *pPipeline)
 {
-    tickernelRemoveFromDynamicArray(&pRenderPass->subpasses[subpassIndex].pipelineDynamicArray, pPipeline);
+    // tickernelRemoveFromDynamicArray(&pRenderPass->subpasses[subpassIndex].pipelineDynamicArray, pPipeline);
 
-    VkDevice vkDevice = pGraphicsContext->vkDevice;
-    for (uint32_t i = 0; i < pPipeline->materialDynamicArray.length; i++)
-    {
-        destroyMaterial(pGraphicsContext, pPipeline, pPipeline->materialDynamicArray.array[i]);
-    }
-    tickernelDestroyDynamicArray(pPipeline->materialDynamicArray);
+    // VkDevice vkDevice = pGraphicsContext->vkDevice;
+    // for (uint32_t i = 0; i < pPipeline->materialDynamicArray.length; i++)
+    // {
+    //     destroyMaterial(pGraphicsContext, pPipeline, pPipeline->materialDynamicArray.array[i]);
+    // }
+    // tickernelDestroyDynamicArray(pPipeline->materialDynamicArray);
 
-    tickernelFree(pPipeline->vkDescriptorPoolSizes);
+    // tickernelFree(pPipeline->vkDescriptorPoolSizes);
 
-    vkDestroyPipeline(vkDevice, pPipeline->vkPipeline, NULL);
-    vkDestroyPipelineLayout(vkDevice, pPipeline->vkPipelineLayout, NULL);
-    vkDestroyDescriptorSetLayout(vkDevice, pPipeline->descriptorSetLayout, NULL);
+    // vkDestroyPipeline(vkDevice, pPipeline->vkPipeline, NULL);
+    // vkDestroyPipelineLayout(vkDevice, pPipeline->vkPipelineLayout, NULL);
+    // vkDestroyDescriptorSetLayout(vkDevice, pPipeline->descriptorSetLayout, NULL);
 
-    tickernelFree(pPipeline);
-}
-
-void createMaterial(GraphicsContext *pGraphicsContext, Pipeline *pPipeline, uint32_t graphicsResourceCount, GraphicsResource *graphicsResources, Material **ppMaterial)
-{
-    Material *pMaterial = tickernelMalloc(sizeof(Material));
-    *ppMaterial = pMaterial;
-    VkDevice vkDevice = pGraphicsContext->vkDevice;
-    tickernelCreateDynamicArray(&pMaterial->meshDynamicArray, 1);
-    pMaterial->vkDescriptorSet = VK_NULL_HANDLE;
-
-    VkDescriptorPoolCreateInfo descriptorPoolCreateInfo = {
-        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
-        .pNext = NULL,
-        .flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
-        .maxSets = 1,
-        .poolSizeCount = pPipeline->vkDescriptorPoolSizeCount,
-        .pPoolSizes = pPipeline->vkDescriptorPoolSizes,
-    };
-    VkResult result = vkCreateDescriptorPool(vkDevice, &descriptorPoolCreateInfo, NULL, &pMaterial->vkDescriptorPool);
-    tryThrowVulkanError(result);
-
-    // Create vkDescriptorSet
-    VkDescriptorSetAllocateInfo descriptorSetAllocateInfo = {
-        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-        .pNext = NULL,
-        .descriptorPool = pMaterial->vkDescriptorPool,
-        .descriptorSetCount = 1,
-        .pSetLayouts = &pPipeline->descriptorSetLayout,
-    };
-    result = vkAllocateDescriptorSets(vkDevice, &descriptorSetAllocateInfo, &pMaterial->vkDescriptorSet);
-    tryThrowVulkanError(result);
-
-    VkWriteDescriptorSet vkWriteDescriptorSets[graphicsResourceCount];
-    for (uint32_t i = 0; i < graphicsResourceCount; i++)
-    {
-        GraphicsResource graphicsResource = graphicsResources[i];
-        if (GRAPHICS_RESOURCE_TYPE_UNIFORM_BUFFER == graphicsResource.graphicsResourceType)
-        {
-            MappedBuffer *pMappedBuffer = graphicsResource.pResource;
-            VkDescriptorBufferInfo vkDescriptorBufferInfo = {
-                .buffer = pMappedBuffer->buffer.vkBuffer,
-                .offset = 0,
-                .range = pMappedBuffer->buffer.size,
-            };
-
-            vkWriteDescriptorSets[i] = (VkWriteDescriptorSet){
-                .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-                .pNext = NULL,
-                .dstSet = pMaterial->vkDescriptorSet,
-                .dstBinding = i,
-                .dstArrayElement = 0,
-                .descriptorCount = 1,
-                .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-                .pImageInfo = NULL,
-                .pBufferInfo = &vkDescriptorBufferInfo,
-                .pTexelBufferView = NULL,
-            };
-        }
-        else if (GRAPHICS_RESOURCE_TYPE_ATTACHMENT == graphicsResource.graphicsResourceType)
-        {
-            // TODO: 如果是Attachment还需要动态的更新ImageView
-            // Handle attachment resources
-            Attachment *pAttachment = graphicsResource.pResource;
-            VkImageView imageView;
-            VkFormat vkFormat = VK_FORMAT_UNDEFINED;
-            if (ATTACHMENT_TYPE_DYNAMIC == pAttachment->attachmentType)
-            {
-                imageView = pAttachment->attachmentContent.dynamicAttachmentContent.graphicsImage.vkImageView;
-                vkFormat = pAttachment->attachmentContent.dynamicAttachmentContent.graphicsImage.vkFormat;
-            }
-            else if (ATTACHMENT_TYPE_FIXED == pAttachment->attachmentType)
-            {
-                imageView = pAttachment->attachmentContent.fixedAttachmentContent.graphicsImage.vkImageView;
-                vkFormat = pAttachment->attachmentContent.fixedAttachmentContent.graphicsImage.vkFormat;
-            }
-            else
-            {
-                tickernelError("Unsupported input attachment type: %d\n", pAttachment->attachmentType);
-            }
-            VkImageLayout imageLayout;
-            if (
-                vkFormat == VK_FORMAT_D16_UNORM ||
-                vkFormat == VK_FORMAT_D32_SFLOAT ||
-                vkFormat == VK_FORMAT_S8_UINT ||
-                vkFormat == VK_FORMAT_D16_UNORM_S8_UINT ||
-                vkFormat == VK_FORMAT_D24_UNORM_S8_UINT ||
-                vkFormat == VK_FORMAT_D32_SFLOAT_S8_UINT)
-            {
-                imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
-            }
-            else
-            {
-                imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-            }
-
-            VkDescriptorImageInfo vkDescriptorImageInfo = {
-                .sampler = VK_NULL_HANDLE,
-                .imageView = imageView,
-                .imageLayout = imageLayout,
-            };
-            vkWriteDescriptorSets[i] = (VkWriteDescriptorSet){
-                .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-                .pNext = NULL,
-                .dstSet = pMaterial->vkDescriptorSet,
-                .dstBinding = i,
-                .dstArrayElement = 0,
-                .descriptorCount = 1,
-                .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
-                .pImageInfo = &vkDescriptorImageInfo,
-                .pBufferInfo = NULL,
-                .pTexelBufferView = NULL,
-            };
-        }
-        else if (GRAPHICS_RESOURCE_TYPE_IMAGE == graphicsResource.graphicsResourceType)
-        {
-            GraphicsImage *pGraphicsImage = graphicsResource.pResource;
-            VkDescriptorImageInfo vkDescriptorImageInfo = {
-                .sampler = NULL,
-                .imageView = pGraphicsImage->vkImageView,
-                .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-            };
-
-            vkWriteDescriptorSets[i] = (VkWriteDescriptorSet){
-                .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-                .pNext = NULL,
-                .dstSet = pMaterial->vkDescriptorSet,
-                .dstBinding = i,
-                .dstArrayElement = 0,
-                .descriptorCount = 1,
-                .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
-                .pImageInfo = &vkDescriptorImageInfo,
-                .pBufferInfo = NULL,
-                .pTexelBufferView = NULL,
-            };
-        }
-        else
-        {
-            tickernelError("Unknown graphics resource type: %d\n", graphicsResource.graphicsResourceType);
-        }
-    }
-    vkUpdateDescriptorSets(vkDevice, graphicsResourceCount, vkWriteDescriptorSets, 0, NULL);
-
-    tickernelAddToDynamicArray(&pPipeline->materialDynamicArray, pMaterial, pPipeline->materialDynamicArray.length);
-}
-void destroyMaterial(GraphicsContext *pGraphicsContext, Pipeline *pPipeline, Material *pMaterial)
-{
-    tickernelRemoveFromDynamicArray(&pPipeline->materialDynamicArray, pMaterial);
-
-    VkDevice vkDevice = pGraphicsContext->vkDevice;
-    vkFreeDescriptorSets(vkDevice, pMaterial->vkDescriptorPool, 1, &pMaterial->vkDescriptorSet);
-    vkDestroyDescriptorPool(vkDevice, pMaterial->vkDescriptorPool, NULL);
-
-    tickernelDestroyDynamicArray(pMaterial->meshDynamicArray);
-    tickernelFree(pMaterial);
+    // tickernelFree(pPipeline);
 }
 
 void createMesh(GraphicsContext *pGraphicsContext, uint32_t vertexCount, VkDeviceSize vertexBufferSize, void *vertexBufferData, uint32_t indexCount, VkDeviceSize indexBufferSize, void *indexBufferData, uint32_t instanceCount, VkDeviceSize instanceSize, void *instanceBufferData, Mesh **ppMesh)

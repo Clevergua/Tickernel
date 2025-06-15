@@ -42,9 +42,10 @@ typedef struct
 
 typedef struct
 {
-    VkPipeline vkPipeline;
-    VkDescriptorSetLayout descriptorSetLayout;
+    uint32_t descriptorSetLayoutCount;
+    VkDescriptorSetLayout *descriptorSetLayouts;
     VkPipelineLayout vkPipelineLayout;
+    VkPipeline vkPipeline;
 
     uint32_t vkDescriptorPoolSizeCount;
     VkDescriptorPoolSize *vkDescriptorPoolSizes;
@@ -120,7 +121,6 @@ typedef enum
     GRAPHICS_RESOURCE_TYPE_UNIFORM_BUFFER,
 } GraphicsResourceType;
 
-
 typedef struct
 {
     GraphicsResourceType graphicsResourceType;
@@ -181,9 +181,6 @@ void destroyGraphicsContext(GraphicsContext *pGraphicsContext);
 
 void createRenderPass(GraphicsContext *pGraphicsContext, uint32_t attachmentCount, VkAttachmentDescription *vkAttachmentDescriptions, Attachment **pAttachments, uint32_t subpassCount, VkSubpassDescription *vkSubpassDescriptions, uint32_t vkSubpassDependencyCount, VkSubpassDependency *vkSubpassDependencies, uint32_t renderPassIndex, RenderPass **ppRenderPass);
 void destroyRenderPass(GraphicsContext *pGraphicsContext, RenderPass *pRenderPass);
-
-void createPipeline(GraphicsContext *pGraphicsContext, uint32_t stageCount, const char **shaderPaths, VkPipelineShaderStageCreateInfo *stages, VkPipelineVertexInputStateCreateInfo vertexInputState, VkPipelineInputAssemblyStateCreateInfo inputAssemblyState, VkPipelineViewportStateCreateInfo viewportState, VkPipelineRasterizationStateCreateInfo rasterizationState, VkPipelineMultisampleStateCreateInfo multisampleState, VkPipelineDepthStencilStateCreateInfo depthStencilState, VkPipelineColorBlendStateCreateInfo colorBlendState, VkPipelineDynamicStateCreateInfo dynamicState, VkDescriptorSetLayoutCreateInfo vkDescriptorSetLayoutCreateInfo, RenderPass *pRenderPass, uint32_t subpassIndex, uint32_t vkDescriptorPoolSizeCount, VkDescriptorPoolSize *vkDescriptorPoolSizes, uint32_t pipelineIndex, Pipeline **ppPipeline);
-void destroyPipeline(GraphicsContext *pGraphicsContext, RenderPass *pRenderPass, uint32_t subpassIndex, Pipeline *pPipeline);
 
 void createMaterial(GraphicsContext *pGraphicsContext, Pipeline *pPipeline, uint32_t graphicsResourceCount, GraphicsResource *graphicsResources, Material **ppMaterial);
 void destroyMaterial(GraphicsContext *pGraphicsContext, Pipeline *pPipeline, Material *pMaterial);
