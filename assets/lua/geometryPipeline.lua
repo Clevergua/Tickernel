@@ -1,7 +1,7 @@
 local geometryPipeline = {}
 local engine = require("engine")
 
-geometryPipeline.createPipeline = function(pRenderPass, subpassIndex, pipelineIndex)
+geometryPipeline.createPipeline = function(pRenderPass, subpassIndex, pipelineIndex, meshLayout)
     local stages = {
         {
             stage = VK_SHADER_STAGE_VERTEX_BIT,
@@ -13,67 +13,6 @@ geometryPipeline.createPipeline = function(pRenderPass, subpassIndex, pipelineIn
             shaderPath = "assets/shaders/geometry.frag",
             pName = "main",
         }
-    }
-
-    local vertexInputState = {
-        pVertexBindingDescriptions = {
-            {
-                binding = 0,
-                stride = 0,
-                inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
-            },
-            {
-                binding = 1,
-                stride = 0,
-                inputRate = VK_VERTEX_INPUT_RATE_INSTANCE,
-            },
-        },
-
-        pVertexAttributeDescriptions = {
-            {
-                location = 0,
-                binding = 0,
-                format = VK_FORMAT_R32G32B32_SFLOAT,
-                offset = 0,
-            },
-            {
-                location = 1,
-                binding = 0,
-                format = VK_FORMAT_R32G32B32A32_SFLOAT,
-                offset = 12,
-            },
-            {
-                location = 2,
-                binding = 0,
-                format = VK_FORMAT_R32G32B32_SFLOAT,
-                offset = 28,
-            },
-
-            {
-                location = 3,
-                binding = 1,
-                format = VK_FORMAT_R32G32B32A32_SFLOAT,
-                offset = 0,
-            },
-            {
-                location = 4,
-                binding = 1,
-                format = VK_FORMAT_R32G32B32A32_SFLOAT,
-                offset = 16,
-            },
-            {
-                location = 5,
-                binding = 1,
-                format = VK_FORMAT_R32G32B32A32_SFLOAT,
-                offset = 32,
-            },
-            {
-                location = 6,
-                binding = 1,
-                format = VK_FORMAT_R32G32B32A32_SFLOAT,
-                offset = 48,
-            },
-        },
     }
 
     local inputAssemblyState = {
@@ -187,7 +126,7 @@ geometryPipeline.createPipeline = function(pRenderPass, subpassIndex, pipelineIn
         }
     }
 
-    local pPipeline = engine.createPipeline(stages, vertexInputState, inputAssemblyState, viewportState,
+    local pPipeline = engine.createPipeline(stages, meshLayout, inputAssemblyState, viewportState,
         rasterizationState, multisampleState, depthStencilState, colorBlendState, dynamicState,
         vkDescriptorSetLayoutCreateInfo, pRenderPass, subpassIndex, vkDescriptorPoolSizes, pipelineIndex)
     return pPipeline

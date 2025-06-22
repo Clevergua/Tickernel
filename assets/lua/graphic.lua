@@ -34,7 +34,28 @@ function graphic.setUp()
         graphic.pSwapchainAttachment
     })
 
-
+    local meshLayout = {
+        vertexLayouts = {
+            {
+                name = "inputPosition",
+                size = 12,
+            },
+            {
+                name = "inputColor",
+                size = 16
+            },
+            {
+                name = "inputNormal",
+                size = 12,
+            }
+        },
+        instanceLayouts = {
+            {
+                name = "inputModel",
+                size = 64,
+            }
+        }
+    }
     graphic.pGeometryPipeline = geometryPipeline.createPipeline(graphic.pDeferredRenderPass, 0, 0)
     -- graphic.pLightingPipeline = lightingPipeline.createPipeline(graphic.pDeferredRenderPass, 1, 0)
     -- graphic.pPostProgressPipeline = postProgressPipeline.createPipeline(graphic.pDeferredRenderPass, 2, 0)

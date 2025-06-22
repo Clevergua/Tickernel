@@ -31,62 +31,59 @@ struct PreparedRendererInfo
     struct aabb_storage localAABB;
     void *calcSkinMatricesTask;
 };
+
+
 int main()
 {
     TickernelDynamicArray dynamicArray;
 
-    // Test tickernelCreateDynamicArray
-    tickernelCreateDynamicArray(&dynamicArray, 4);
-    assert(dynamicArray.maxLength == 4);
-    assert(dynamicArray.length == 0);
+    // Test tickernelCreateDynamicArray (指定初始容量为4)
+    tickernelCreateDynamicArray(&dynamicArray, sizeof(int), 4);
+    assert(dynamicArray.maxCount == 4);
+    assert(dynamicArray.count == 0);
     assert(dynamicArray.array != NULL);
-
-    // Verify all elements are initialized to NULL
-    for (uint32_t i = 0; i < dynamicArray.maxLength; i++) {
-        assert(dynamicArray.array[i] == NULL);
-    }
 
     // Test tickernelAddToDynamicArray
     int value1 = 10, value2 = 20, value3 = 30;
     tickernelAddToDynamicArray(&dynamicArray, &value1, 0);
     tickernelAddToDynamicArray(&dynamicArray, &value2, 1);
     tickernelAddToDynamicArray(&dynamicArray, &value3, 2);
-    
-    assert(dynamicArray.length == 3);
-    assert(*(int *)dynamicArray.array[0] == 10);
-    assert(*(int *)dynamicArray.array[1] == 20);
-    assert(*(int *)dynamicArray.array[2] == 30);
+
+    assert(dynamicArray.count == 3);
+    assert(*(int*)tickernelGetFromDynamicArray(&dynamicArray, 0) == 10);
+    assert(*(int*)tickernelGetFromDynamicArray(&dynamicArray, 1) == 20);
+    assert(*(int*)tickernelGetFromDynamicArray(&dynamicArray, 2) == 30);
 
     // Test tickernelRemoveAtIndexFromDynamicArray
     tickernelRemoveAtIndexFromDynamicArray(&dynamicArray, 1);
-    assert(dynamicArray.length == 2);
-    assert(*(int *)dynamicArray.array[0] == 10);
-    assert(*(int *)dynamicArray.array[1] == 30);
-    assert(dynamicArray.array[2] == NULL); // Verify the last element was set to NULL
+    assert(dynamicArray.count == 2);
+    assert(*(int*)tickernelGetFromDynamicArray(&dynamicArray, 0) == 10);
+    assert(*(int*)tickernelGetFromDynamicArray(&dynamicArray, 1) == 30);
 
     // Test tickernelRemoveFromDynamicArray
     tickernelRemoveFromDynamicArray(&dynamicArray, &value3);
-    assert(dynamicArray.length == 1);
-    assert(*(int *)dynamicArray.array[0] == 10);
-    assert(dynamicArray.array[1] == NULL);
+    assert(dynamicArray.count == 1);
+    assert(*(int*)tickernelGetFromDynamicArray(&dynamicArray, 0) == 10);
 
     // Test tickernelClearDynamicArray
     tickernelClearDynamicArray(&dynamicArray);
-    assert(dynamicArray.length == 0);
-    // Elements might still contain pointers - your implementation doesn't clear them
+    assert(dynamicArray.count == 0);
 
     // Test tickernelDestroyDynamicArray
-    tickernelDestroyDynamicArray(dynamicArray);
-    
+    tickernelDestroyDynamicArray(dynamicArray); // 修正：传递指针
+
     // Test resize functionality
     TickernelDynamicArray smallArray;
-    tickernelCreateDynamicArray(&smallArray, 2);
+    tickernelCreateDynamicArray(&smallArray, sizeof(int), 2); // 元素大小为int，初始容量2
     int values[4] = {1, 2, 3, 4};
     for (int i = 0; i < 4; i++) {
         tickernelAddToDynamicArray(&smallArray, &values[i], i);
     }
-    assert(smallArray.maxLength == 4); // Should have doubled from 2
-    assert(smallArray.length == 4);
+    assert(smallArray.maxCount == 4); // 验证扩容
+    assert(smallArray.count == 4);
+    for (int i = 0; i < 4; i++) {
+        assert(*(int*)tickernelGetFromDynamicArray(&smallArray, i) == values[i]);
+    }
     tickernelDestroyDynamicArray(smallArray);
 
     printf("All tests passed!\n");

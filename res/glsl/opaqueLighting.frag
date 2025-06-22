@@ -17,7 +17,13 @@ layout(binding = 3) uniform GlobalUniform {
     int width;
     int height;
 } globalUniform;
-
+layout(set = 1, binding = 3) uniform PPP {
+    float pointSizeFactor;
+    float time;
+    float fov;
+    int width;
+    int height;
+} QQQQQ;
 struct DirectionalLight {
     vec4 color;
     vec3 direction;
@@ -63,6 +69,6 @@ void main() {
         o_rgb += albedo.rgb * light.color.rgb * light.color.a * pointHalfLambert * attenuation;
     }
     float linearDepth = (2.0 * globalUniform.near * globalUniform.far) / (globalUniform.far + globalUniform.near - depth * (globalUniform.far - globalUniform.near)) / globalUniform.far;
-    o_rgb = mix(o_rgb,vec3(0.6, 0.6, 0.6), linearDepth * linearDepth * linearDepth);
+    o_rgb = mix(o_rgb, vec3(0.6, 0.6, 0.6), linearDepth * linearDepth * linearDepth);
     o_color = vec4(o_rgb, 1.0);
 }

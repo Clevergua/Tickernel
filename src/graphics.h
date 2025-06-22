@@ -35,6 +35,23 @@ typedef struct
 
 typedef struct
 {
+    const char *name;
+    uint32_t size;
+    uint32_t offset;
+} FieldLayout;
+
+typedef struct
+{
+    uint32_t vertexLayoutCount;
+    FieldLayout *vertexLayouts;
+    uint32_t vertexSize;
+    uint32_t instanceLayoutCount;
+    FieldLayout *instanceLayouts;
+    uint32_t instanceSize;
+} MeshLayout;
+
+typedef struct
+{
     TickernelDynamicArray meshDynamicArray;
     VkDescriptorPool vkDescriptorPool;
     VkDescriptorSet vkDescriptorSet;
@@ -50,12 +67,12 @@ typedef struct
     uint32_t vkDescriptorPoolSizeCount;
     VkDescriptorPoolSize *vkDescriptorPoolSizes;
 
-    TickernelDynamicArray materialDynamicArray;
+    TickernelDynamicArray pMaterialDynamicArray;
 } Pipeline;
 
 typedef struct
 {
-    TickernelDynamicArray pipelineDynamicArray;
+    TickernelDynamicArray pPipelineDynamicArray;
 } Subpass;
 
 typedef struct
@@ -140,7 +157,7 @@ typedef struct
 
 typedef struct
 {
-    const char *assetsPath;
+    VkPhysicalDeviceProperties vkPhysicalDeviceProperties;
     int targetSwapchainImageCount;
     VkPresentModeKHR targetPresentMode;
     VkInstance vkInstance;
@@ -170,12 +187,12 @@ typedef struct
     VkSemaphore renderFinishedSemaphore;
     VkFence renderFinishedFence;
 
-    TickernelDynamicArray renderPasseDynamicArray;
-    TickernelDynamicArray dynamicAttachmentDynamicArray;
+    TickernelDynamicArray pRenderPassDynamicArray;
+    TickernelDynamicArray pDynamicAttachmentDynamicArray;
 
 } GraphicsContext;
 
-GraphicsContext *createGraphicsContext(const char *assetsPath, int targetSwapchainImageCount, VkPresentModeKHR targetPresentMode, VkInstance vkInstance, VkSurfaceKHR vkSurface, uint32_t swapchainWidth, uint32_t swapchainHeight);
+GraphicsContext *createGraphicsContext(int targetSwapchainImageCount, VkPresentModeKHR targetPresentMode, VkInstance vkInstance, VkSurfaceKHR vkSurface, uint32_t swapchainWidth, uint32_t swapchainHeight);
 void updateGraphicsContext(GraphicsContext *pGraphicsContext, uint32_t swapchainWidth, uint32_t swapchainHeight);
 void destroyGraphicsContext(GraphicsContext *pGraphicsContext);
 
