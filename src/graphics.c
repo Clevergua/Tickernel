@@ -1095,9 +1095,8 @@ static void copyBufferToImage(VkDevice device, VkCommandPool commandPool, VkQueu
     vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
 }
 
-GraphicsContext *createGraphicsContext(int targetSwapchainImageCount, VkPresentModeKHR targetPresentMode, VkInstance vkInstance, VkSurfaceKHR vkSurface, uint32_t swapchainWidth, uint32_t swapchainHeight)
+void createGraphicsContext(int targetSwapchainImageCount, VkPresentModeKHR targetPresentMode, VkInstance vkInstance, VkSurfaceKHR vkSurface, uint32_t swapchainWidth, uint32_t swapchainHeight, GraphicsContext *pGraphicsContext)
 {
-    GraphicsContext *pGraphicsContext = tickernelMalloc(sizeof(GraphicsContext));
     pGraphicsContext->targetSwapchainImageCount = targetSwapchainImageCount;
     pGraphicsContext->targetPresentMode = targetPresentMode;
     pGraphicsContext->vkInstance = vkInstance;
@@ -1112,7 +1111,6 @@ GraphicsContext *createGraphicsContext(int targetSwapchainImageCount, VkPresentM
 
     tickernelCreateDynamicArray(&pGraphicsContext->pRenderPassDynamicArray, sizeof(RenderPass *), 1);
     tickernelCreateDynamicArray(&pGraphicsContext->pDynamicAttachmentDynamicArray, sizeof(Attachment *), 1);
-    return pGraphicsContext;
 }
 
 void updateGraphicsContext(GraphicsContext *pGraphicsContext, uint32_t swapchainWidth, uint32_t swapchainHeight)
@@ -1188,8 +1186,6 @@ void destroyGraphicsContext(GraphicsContext *pGraphicsContext)
     destroySignals(pGraphicsContext);
     destroySwapchain(pGraphicsContext);
     destroyLogicalDevice(pGraphicsContext);
-
-    tickernelFree(pGraphicsContext);
 }
 
 void createASTCGraphicsImage(GraphicsContext *pGraphicsContext, const char *fileName, GraphicsImage **ppGraphicsImage)
@@ -1367,19 +1363,20 @@ void createPipeline(GraphicsContext *pGraphicsContext, uint32_t stageCount, cons
     uint32_t vkVertexInputAttributeDescriptionCount = 0;
     VkVertexInputAttributeDescription *vkVertexInputAttributeDescriptions = tickernelMalloc(sizeof(VkVertexInputAttributeDescription) * maxVertexInputAttributes);
 
-    uint32_t vDescriptorSetLayoutCount = 0;
+    pPipeline->descriptorSetLayoutCount = 0;
     uint32_t maxDescriptorSetLayouts = pGraphicsContext->vkPhysicalDeviceProperties.limits.maxBoundDescriptorSets < SPV_REFLECT_MAX_DESCRIPTOR_SETS ? pGraphicsContext->vkPhysicalDeviceProperties.limits.maxBoundDescriptorSets : SPV_REFLECT_MAX_DESCRIPTOR_SETS;
-    VkDescriptorSetLayout *vDescriptorSetLayouts = tickernelMalloc(sizeof(VkDescriptorSetLayout) * maxDescriptorSetLayouts);
     TickernelDynamicArray *bindingDynamicArrays = tickernelMalloc(sizeof(TickernelDynamicArray) * maxDescriptorSetLayouts);
-
+    for (uint32_t i = 0; i < maxDescriptorSetLayouts; i++)
+    {
+        tickernelCreateDynamicArray(&bindingDynamicArrays[i], sizeof(VkDescriptorSetLayoutBinding), 1);
+    }
     for (uint32_t i = 0; i < stageCount; i++)
     {
         const char *filePath = shaderPaths[i];
         FILE *file = fopen(filePath, "rb");
         if (!file)
         {
-            printf("Failed to open file: %s\n", filePath);
-            tickernelError("Failed to open SPIR-V file");
+            tickernelError("Failed to open file: %s\n", filePath);
         }
         fseek(file, 0, SEEK_END);
         size_t shaderSize = ftell(file);
@@ -1387,9 +1384,8 @@ void createPipeline(GraphicsContext *pGraphicsContext, uint32_t stageCount, cons
 
         if (shaderSize % 4 != 0)
         {
-            printf("Invalid SPIR-V file size: %s\n", filePath);
             fclose(file);
-            tickernelError("Invalid SPIR-V file size");
+            tickernelError("Invalid SPIR-V file size: %s\n", filePath);
         }
         void *shaderCode = tickernelMalloc(shaderSize);
         size_t bytesRead = fread(shaderCode, 1, shaderSize, file);
@@ -1398,8 +1394,7 @@ void createPipeline(GraphicsContext *pGraphicsContext, uint32_t stageCount, cons
 
         if (bytesRead != shaderSize)
         {
-            printf("Failed to read entire file: %s\n", filePath);
-            tickernelError("Failed to read entire SPIR-V file");
+            tickernelError("Failed to read entire file: %s\n", filePath);
         }
         SpvReflectShaderModule spvReflectShaderModule;
         SpvReflectResult spvReflectResult = spvReflectCreateShaderModule(shaderSize, shaderCode, &spvReflectShaderModule);
@@ -1434,27 +1429,24 @@ void createPipeline(GraphicsContext *pGraphicsContext, uint32_t stageCount, cons
                 SpvReflectInterfaceVariable inputVariable = *spvReflectShaderModule.input_variables[j];
                 uint32_t binding = UINT32_MAX;
                 FieldLayout fieldLayout;
-                for (uint32_t i = 0; i < meshLayout.vertexLayoutCount; i++)
+
+                for (uint32_t k = 0; k < meshLayout.vertexLayoutCount; k++)
                 {
-                    if (strcmp(meshLayout.vertexLayouts[i].name, inputVariable.name) == 0)
+                    if (strcmp(meshLayout.vertexLayouts[k].name, inputVariable.name) == 0)
                     {
                         binding = 0;
-                        fieldLayout = meshLayout.vertexLayouts[i];
+                        fieldLayout = meshLayout.vertexLayouts[k];
                         break;
                     }
                 }
                 if (binding == UINT32_MAX)
                 {
-                    // continue;
-                }
-                else
-                {
-                    for (uint32_t i = 0; i < meshLayout.instanceLayoutCount; i++)
+                    for (uint32_t k = 0; k < meshLayout.instanceLayoutCount; k++)
                     {
-                        if (strcmp(meshLayout.instanceLayouts[i].name, inputVariable.name) == 0)
+                        if (strcmp(meshLayout.instanceLayouts[k].name, inputVariable.name) == 0)
                         {
                             binding = 1;
-                            fieldLayout = meshLayout.instanceLayouts[i];
+                            fieldLayout = meshLayout.instanceLayouts[k];
                             break;
                         }
                     }
@@ -1499,9 +1491,39 @@ void createPipeline(GraphicsContext *pGraphicsContext, uint32_t stageCount, cons
         for (uint32_t j = 0; j < descriptorSetCount; j++)
         {
             SpvReflectDescriptorSet spvReflectDescriptorSet = spvReflectShaderModule.descriptor_sets[j];
-            if (spvReflectDescriptorSet.set > vDescriptorSetLayoutCount)
+            if (spvReflectDescriptorSet.set > pPipeline->descriptorSetLayoutCount)
             {
-                vDescriptorSetLayoutCount = spvReflectDescriptorSet.set + 1;
+                pPipeline->descriptorSetLayoutCount = spvReflectDescriptorSet.set + 1;
+            }
+            for (uint32_t k = 0; k < spvReflectDescriptorSet.binding_count; k++)
+            {
+                TickernelDynamicArray *pBindingDynamicArray = &bindingDynamicArrays[spvReflectDescriptorSet.set];
+                bool bindingExists = false;
+                for (uint32_t l = 0; l < pBindingDynamicArray->count; l++)
+                {
+                    VkDescriptorSetLayoutBinding *pVkDescriptorSetLayoutBinding = tickernelGetFromDynamicArray(pBindingDynamicArray, l);
+                    if (spvReflectDescriptorSet.bindings[k]->binding == pVkDescriptorSetLayoutBinding->binding)
+                    {
+                        bindingExists = true;
+                        break;
+                    }
+                }
+                if (bindingExists)
+                {
+                    printf("Binding %d already exists in descriptor set %d, skipping.\n", spvReflectDescriptorSet.bindings[k]->binding, spvReflectDescriptorSet.set);
+                }
+                else
+                {
+                    VkDescriptorSetLayoutBinding vkDescriptorSetLayoutBinding = {
+                        .binding = spvReflectDescriptorSet.bindings[k]->binding,
+                        .descriptorType = (VkDescriptorType)spvReflectDescriptorSet.bindings[k]->descriptor_type,
+                        .descriptorCount = spvReflectDescriptorSet.bindings[k]->count,
+                        .stageFlags = (VkShaderStageFlags)spvReflectShaderModule.shader_stage,
+                        .pImmutableSamplers = NULL,
+                    };
+
+                    tickernelAddToDynamicArray(pBindingDynamicArray, &vkDescriptorSetLayoutBinding, pBindingDynamicArray->count);
+                }
             }
         }
     }
@@ -1534,18 +1556,36 @@ void createPipeline(GraphicsContext *pGraphicsContext, uint32_t stageCount, cons
     {
         vertexBindingDescriptionCount = 0;
     }
-    VkPipelineLayout vkPipelineLayout;
+
+    pPipeline->descriptorSetLayouts = tickernelMalloc(sizeof(VkDescriptorSetLayout) * pPipeline->descriptorSetLayoutCount);
+    for (uint32_t i = 0; i < pPipeline->descriptorSetLayoutCount; i++)
+    {
+        VkDescriptorSetLayoutCreateInfo vkDescriptorSetLayoutCreateInfo = {
+            .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+            .pNext = NULL,
+            .flags = 0,
+            .bindingCount = bindingDynamicArrays[i].count,
+            .pBindings = (VkDescriptorSetLayoutBinding *)bindingDynamicArrays[i].array,
+        };
+        vkCreateDescriptorSetLayout(vkDevice, &vkDescriptorSetLayoutCreateInfo, NULL, &pPipeline->descriptorSetLayouts[i]);
+    }
     VkPipelineLayoutCreateInfo vkPipelineLayoutCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
         .pNext = NULL,
         .flags = 0,
-        .setLayoutCount = vDescriptorSetLayoutCount,
-        .pSetLayouts = vDescriptorSetLayouts,
+        .setLayoutCount = pPipeline->descriptorSetLayoutCount,
+        .pSetLayouts = pPipeline->descriptorSetLayouts,
         .pushConstantRangeCount = 0,
         .pPushConstantRanges = NULL,
     };
-    result = vkCreatePipelineLayout(vkDevice, &vkPipelineLayoutCreateInfo, NULL, &vkPipelineLayout);
+    result = vkCreatePipelineLayout(vkDevice, &vkPipelineLayoutCreateInfo, NULL, &pPipeline->vkPipelineLayout);
     tryThrowVulkanError(result);
+
+    for (uint32_t i = 0; i < maxDescriptorSetLayouts; i++)
+    {
+        tickernelDestroyDynamicArray(bindingDynamicArrays[i]);
+    }
+    tickernelFree(bindingDynamicArrays);
 
     VkPipelineVertexInputStateCreateInfo vertexInputState = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
@@ -1572,7 +1612,7 @@ void createPipeline(GraphicsContext *pGraphicsContext, uint32_t stageCount, cons
         .pDepthStencilState = &depthStencilState,
         .pColorBlendState = &colorBlendState,
         .pDynamicState = &dynamicState,
-        .layout = vkPipelineLayout,
+        .layout = pPipeline->vkPipelineLayout,
         .renderPass = pRenderPass->vkRenderPass,
         .subpass = subpassIndex,
         .basePipelineHandle = VK_NULL_HANDLE,
@@ -1581,36 +1621,32 @@ void createPipeline(GraphicsContext *pGraphicsContext, uint32_t stageCount, cons
     result = vkCreateGraphicsPipelines(vkDevice, NULL, 1, &vkGraphicsPipelineCreateInfo, NULL, &pPipeline->vkPipeline);
     tryThrowVulkanError(result);
 
+    tickernelFree(vertexBindingDescriptions);
     tickernelFree(vkVertexInputAttributeDescriptions);
     for (uint32_t i = 0; i < stageCount; i++)
     {
         vkDestroyShaderModule(vkDevice, stages[i].module, NULL);
     }
+    tickernelFree(stages);
     for (uint32_t i = 0; i < stageCount; i++)
     {
         spvReflectDestroyShaderModule(&spvReflectShaderModules[i]);
     }
-    tickernelFree(stages);
     tickernelFree(spvReflectShaderModules);
+    
 }
+
 void destroyPipeline(GraphicsContext *pGraphicsContext, RenderPass *pRenderPass, uint32_t subpassIndex, Pipeline *pPipeline)
 {
-    // tickernelRemoveFromDynamicArray(&pRenderPass->subpasses[subpassIndex].pPipelineDynamicArray, pPipeline);
-
-    // VkDevice vkDevice = pGraphicsContext->vkDevice;
-    // for (uint32_t i = 0; i < pPipeline->pMaterialDynamicArray.length; i++)
-    // {
-    //     destroyMaterial(pGraphicsContext, pPipeline, pPipeline->pMaterialDynamicArray.array[i]);
-    // }
-    // tickernelDestroyDynamicArray(pPipeline->pMaterialDynamicArray);
-
-    // tickernelFree(pPipeline->vkDescriptorPoolSizes);
-
-    // vkDestroyPipeline(vkDevice, pPipeline->vkPipeline, NULL);
-    // vkDestroyPipelineLayout(vkDevice, pPipeline->vkPipelineLayout, NULL);
-    // vkDestroyDescriptorSetLayout(vkDevice, pPipeline->descriptorSetLayout, NULL);
-
-    // tickernelFree(pPipeline);
+    VkDevice vkDevice = pGraphicsContext->vkDevice;
+    vkDestroyPipeline(vkDevice, pPipeline->vkPipeline, NULL);
+    vkDestroyPipelineLayout(vkDevice, pPipeline->vkPipelineLayout, NULL);
+    for (uint32_t i = 0; i < pPipeline->descriptorSetLayoutCount; i++)
+    {
+        vkDestroyDescriptorSetLayout(vkDevice, pPipeline->descriptorSetLayouts[i], NULL);
+    }
+    tickernelFree(pPipeline->descriptorSetLayouts);
+    tickernelFree(pPipeline);
 }
 
 void createMesh(GraphicsContext *pGraphicsContext, uint32_t vertexCount, VkDeviceSize vertexBufferSize, void *vertexBufferData, uint32_t indexCount, VkDeviceSize indexBufferSize, void *indexBufferData, uint32_t instanceCount, VkDeviceSize instanceSize, void *instanceBufferData, Mesh **ppMesh)
@@ -1782,7 +1818,7 @@ void createRenderPass(GraphicsContext *pGraphicsContext, uint32_t attachmentCoun
     for (uint32_t i = 0; i < pRenderPass->subpassCount; i++)
     {
         Subpass *pSubpass = &pRenderPass->subpasses[i];
-        tickernelCreateDynamicArray(&pSubpass->pPipelineDynamicArray, sizeof(Pipeline *), 1);
+        tickernelCreateDynamicArray(&pSubpass->pPipelineDynamicArray, sizeof(Pipeline *), 4);
     }
 
     tickernelAddToDynamicArray(&pGraphicsContext->pRenderPassDynamicArray, pRenderPass, renderPassIndex);

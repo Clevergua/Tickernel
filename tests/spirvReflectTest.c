@@ -53,49 +53,49 @@ void CreateVertexInputState(uint32_t inputVariableCount, SpvReflectInterfaceVari
 
 int main()
 {
-    // VkResult result = VK_SUCCESS;
-    // uint32_t stageCount = 4; // Example stage count
-    // const char *shaderPaths[] = {
-    //     "/Users/forgemastergua/Documents/GitHub/Tickernel/assets/shaders/opaqueGeometry.vert.spv",
-    //     "/Users/forgemastergua/Documents/GitHub/Tickernel/assets/shaders/opaqueGeometry.frag.spv",
-    //     "/Users/forgemastergua/Documents/GitHub/Tickernel/assets/shaders/opaqueLighting.vert.spv",
-    //     "/Users/forgemastergua/Documents/GitHub/Tickernel/assets/shaders/opaqueLighting.frag.spv",
-    // };
-    // SpvReflectShaderModule spvReflectShaderModules[stageCount];
-    // for (uint32_t i = 0; i < stageCount; i++)
-    // {
-    //     const char *filePath = shaderPaths[i];
-    //     FILE *file = fopen(filePath, "rb");
-    //     if (!file)
-    //     {
-    //         printf("Failed to open file: %s\n", filePath);
-    //         tickernelError("Failed to open SPIR-V file");
-    //     }
-    //     fseek(file, 0, SEEK_END);
-    //     size_t shaderSize = ftell(file);
-    //     fseek(file, 0, SEEK_SET);
+    VkResult result = VK_SUCCESS;
+    uint32_t stageCount = 4; // Example stage count
+    const char *shaderPaths[] = {
+        "/Users/hema/Documents/GitHub/Tickernel/assets/shaders/opaqueGeometry.vert.spv",
+        "/Users/hema/Documents/GitHub/Tickernel/assets/shaders/opaqueGeometry.frag.spv",
+        "/Users/hema/Documents/GitHub/Tickernel/assets/shaders/opaqueLighting.vert.spv",
+        "/Users/hema/Documents/GitHub/Tickernel/assets/shaders/opaqueLighting.frag.spv",
+    };
+    SpvReflectShaderModule spvReflectShaderModules[stageCount];
+    for (uint32_t i = 0; i < stageCount; i++)
+    {
+        const char *filePath = shaderPaths[i];
+        FILE *file = fopen(filePath, "rb");
+        if (!file)
+        {
+            printf("Failed to open file: %s\n", filePath);
+            tickernelError("Failed to open SPIR-V file");
+        }
+        fseek(file, 0, SEEK_END);
+        size_t shaderSize = ftell(file);
+        fseek(file, 0, SEEK_SET);
 
-    //     if (shaderSize % 4 != 0)
-    //     {
-    //         printf("Invalid SPIR-V file size: %s\n", filePath);
-    //         fclose(file);
-    //         tickernelError("Invalid SPIR-V file size");
-    //     }
-    //     void *shaderCode = tickernelMalloc(shaderSize);
-    //     size_t bytesRead = fread(shaderCode, 1, shaderSize, file);
+        if (shaderSize % 4 != 0)
+        {
+            printf("Invalid SPIR-V file size: %s\n", filePath);
+            fclose(file);
+            tickernelError("Invalid SPIR-V file size");
+        }
+        void *shaderCode = tickernelMalloc(shaderSize);
+        size_t bytesRead = fread(shaderCode, 1, shaderSize, file);
 
-    //     fclose(file);
+        fclose(file);
 
-    //     if (bytesRead != shaderSize)
-    //     {
-    //         printf("Failed to read entire file: %s\n", filePath);
-    //         tickernelError("Failed to read entire SPIR-V file");
-    //     }
+        if (bytesRead != shaderSize)
+        {
+            printf("Failed to read entire file: %s\n", filePath);
+            tickernelError("Failed to read entire SPIR-V file");
+        }
 
-    //     SpvReflectResult spvReflectResult = spvReflectCreateShaderModule(shaderSize, shaderCode, &spvReflectShaderModules[i]);
-    //     tickernelAssert(spvReflectResult == SPV_REFLECT_RESULT_SUCCESS, "Failed to reflect shader module: %s", shaderPaths[i]);
-    //     tickernelFree(shaderCode);
-    // }
+        SpvReflectResult spvReflectResult = spvReflectCreateShaderModule(shaderSize, shaderCode, &spvReflectShaderModules[i]);
+        tickernelAssert(spvReflectResult == SPV_REFLECT_RESULT_SUCCESS, "Failed to reflect shader module: %s", shaderPaths[i]);
+        tickernelFree(shaderCode);
+    }
 
     // const char *requiredExtensions[] = {
     //     "VK_KHR_portability_enumeration",

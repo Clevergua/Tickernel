@@ -64,10 +64,9 @@ typedef struct
     VkPipelineLayout vkPipelineLayout;
     VkPipeline vkPipeline;
 
+    TickernelDynamicArray pMaterialDynamicArray;
     uint32_t vkDescriptorPoolSizeCount;
     VkDescriptorPoolSize *vkDescriptorPoolSizes;
-
-    TickernelDynamicArray pMaterialDynamicArray;
 } Pipeline;
 
 typedef struct
@@ -189,10 +188,9 @@ typedef struct
 
     TickernelDynamicArray pRenderPassDynamicArray;
     TickernelDynamicArray pDynamicAttachmentDynamicArray;
-
 } GraphicsContext;
 
-GraphicsContext *createGraphicsContext(int targetSwapchainImageCount, VkPresentModeKHR targetPresentMode, VkInstance vkInstance, VkSurfaceKHR vkSurface, uint32_t swapchainWidth, uint32_t swapchainHeight);
+void createGraphicsContext(int targetSwapchainImageCount, VkPresentModeKHR targetPresentMode, VkInstance vkInstance, VkSurfaceKHR vkSurface, uint32_t swapchainWidth, uint32_t swapchainHeight, GraphicsContext *pGraphicsContext);
 void updateGraphicsContext(GraphicsContext *pGraphicsContext, uint32_t swapchainWidth, uint32_t swapchainHeight);
 void destroyGraphicsContext(GraphicsContext *pGraphicsContext);
 

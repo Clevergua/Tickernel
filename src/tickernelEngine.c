@@ -3,30 +3,24 @@
 #define MILLISECONDS_PER_SECOND 1000
 #define NANOSECONDS_PER_MILLISECOND 1000000
 
-TickernelEngine *tickernelStart(const char *assetsPath, uint32_t targetSwapchainImageCount, VkPresentModeKHR targetPresentMode, VkInstance vkInstance, VkSurfaceKHR vkSurface,uint32_t swapchainWidth, uint32_t swapchainHeight)
+void tickernelStart(uint32_t targetSwapchainImageCount, VkPresentModeKHR targetPresentMode, VkInstance vkInstance, VkSurfaceKHR vkSurface, uint32_t swapchainWidth, uint32_t swapchainHeight, TickernelEngine **ppTickernelEngine)
 {
-    printf("Tickernel Start!\n");
     TickernelEngine *pTickernelEngine = tickernelMalloc(sizeof(TickernelEngine));
     pTickernelEngine->frameCount = 0;
     pTickernelEngine->targetSwapchainImageCount = targetSwapchainImageCount;
     pTickernelEngine->targetPresentMode = targetPresentMode;
-    pTickernelEngine->vkInstance = vkInstance;
-    pTickernelEngine->vkSurface = vkSurface;
-
-    pTickernelEngine->pGraphicsContext = createGraphicsContext( targetSwapchainImageCount, targetPresentMode, vkInstance, vkSurface, swapchainWidth, swapchainHeight);
-    return pTickernelEngine;
+    createGraphicsContext(targetSwapchainImageCount, targetPresentMode, vkInstance, vkSurface, swapchainWidth, swapchainHeight, &pTickernelEngine->graphicsContext);
+    *ppTickernelEngine = pTickernelEngine;
 }
 
 void tickernelUpdate(TickernelEngine *pTickernelEngine, uint32_t swapchainWidth, uint32_t swapchainHeight)
 {
     pTickernelEngine->frameCount++;
-    updateGraphicsContext(pTickernelEngine->pGraphicsContext, swapchainWidth, swapchainHeight);
+    updateGraphicsContext(&pTickernelEngine->graphicsContext, swapchainWidth, swapchainHeight);
 }
 
 void tickernelEnd(TickernelEngine *pTickernelEngine)
 {
-    GraphicsContext *pGraphicsContext = pTickernelEngine->pGraphicsContext;
-    destroyGraphicsContext(pGraphicsContext);
+    destroyGraphicsContext(&pTickernelEngine->graphicsContext);
     tickernelFree(pTickernelEngine);
-    printf("Tickernel End!\n");
 }
