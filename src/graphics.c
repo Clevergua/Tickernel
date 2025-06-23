@@ -1370,6 +1370,8 @@ void createPipeline(GraphicsContext *pGraphicsContext, uint32_t stageCount, cons
     {
         tickernelCreateDynamicArray(&bindingDynamicArrays[i], sizeof(VkDescriptorSetLayoutBinding), 1);
     }
+
+    tickernelCreateDynamicArray(&pPipeline->vkDescriptorPoolSizeDynamicArray, sizeof(VkDescriptorPoolSize), 1);
     for (uint32_t stageIndex = 0; stageIndex < stageCount; stageIndex++)
     {
         const char *filePath = shaderPaths[stageIndex];
@@ -1499,10 +1501,11 @@ void createPipeline(GraphicsContext *pGraphicsContext, uint32_t stageCount, cons
             {
                 TickernelDynamicArray *pBindingDynamicArray = &bindingDynamicArrays[spvReflectDescriptorSet.set];
                 bool bindingExists = false;
+                SpvReflectDescriptorBinding *pCurrentBinding = spvReflectDescriptorSet.bindings[bindingIndex];
                 for (uint32_t addedBindingIndex = 0; addedBindingIndex < pBindingDynamicArray->count; addedBindingIndex++)
                 {
-                    VkDescriptorSetLayoutBinding *pVkDescriptorSetLayoutBinding = tickernelGetFromDynamicArray(pBindingDynamicArray, addedBindingIndex);
-                    if (spvReflectDescriptorSet.bindings[bindingIndex]->binding == pVkDescriptorSetLayoutBinding->binding)
+                    VkDescriptorSetLayoutBinding *pAddedBinding = tickernelGetFromDynamicArray(pBindingDynamicArray, addedBindingIndex);
+                    if (pCurrentBinding->binding == pAddedBinding->binding)
                     {
                         bindingExists = true;
                         break;
@@ -1510,21 +1513,45 @@ void createPipeline(GraphicsContext *pGraphicsContext, uint32_t stageCount, cons
                 }
                 if (bindingExists)
                 {
-                    printf("Binding %d already exists in descriptor set %d, skipping.\n", spvReflectDescriptorSet.bindings[bindingIndex]->binding, spvReflectDescriptorSet.set);
+                    printf("Binding %d already exists in descriptor set %d, skipping.\n", pCurrentBinding->binding, spvReflectDescriptorSet.set);
                 }
                 else
                 {
                     VkDescriptorSetLayoutBinding vkDescriptorSetLayoutBinding = {
-                        .binding = spvReflectDescriptorSet.bindings[bindingIndex]->binding,
-                        .descriptorType = (VkDescriptorType)spvReflectDescriptorSet.bindings[bindingIndex]->descriptor_type,
-                        .descriptorCount = spvReflectDescriptorSet.bindings[bindingIndex]->count,
+                        .binding = pCurrentBinding->binding,
+                        .descriptorType = (VkDescriptorType)pCurrentBinding->descriptor_type,
+                        .descriptorCount = pCurrentBinding->count,
                         .stageFlags = (VkShaderStageFlags)spvReflectShaderModule.shader_stage,
                         .pImmutableSamplers = NULL,
                     };
 
                     tickernelAddToDynamicArray(pBindingDynamicArray, &vkDescriptorSetLayoutBinding, pBindingDynamicArray->count);
 
-                    // TODO: Handle VkDescriptorPoolSizes
+                    bool hasFound = false;
+                    for (uint32_t vkDescriptorPoolSizeIndex = 0; vkDescriptorPoolSizeIndex < pPipeline->vkDescriptorPoolSizeDynamicArray.count; vkDescriptorPoolSizeIndex++)
+                    {
+                        VkDescriptorPoolSize *currentPoolSize = tickernelGetFromDynamicArray(&pPipeline->vkDescriptorPoolSizeDynamicArray, vkDescriptorPoolSizeIndex);
+
+                        if (currentPoolSize->type == (VkDescriptorType)pCurrentBinding->descriptor_type)
+                        {
+                            currentPoolSize->descriptorCount += pCurrentBinding->count;
+                            hasFound = true;
+                            break;
+                        }
+                    }
+
+                    if (!hasFound)
+                    {
+                        // do nothing
+                    }
+                    else
+                    {
+                        VkDescriptorPoolSize vkDescriptorPoolSize = {
+                            .type = (VkDescriptorType)pCurrentBinding->descriptor_type,
+                            .descriptorCount = pCurrentBinding->count,
+                        };
+                        tickernelAddToDynamicArray(&pPipeline->vkDescriptorPoolSizeDynamicArray, &vkDescriptorPoolSize, pPipeline->vkDescriptorPoolSizeDynamicArray.count);
+                    }
                 }
             }
         }
@@ -1635,12 +1662,13 @@ void createPipeline(GraphicsContext *pGraphicsContext, uint32_t stageCount, cons
         spvReflectDestroyShaderModule(&spvReflectShaderModules[i]);
     }
     tickernelFree(spvReflectShaderModules);
-    
 }
 
 void destroyPipeline(GraphicsContext *pGraphicsContext, RenderPass *pRenderPass, uint32_t subpassIndex, Pipeline *pPipeline)
 {
     VkDevice vkDevice = pGraphicsContext->vkDevice;
+    
+    tickernelDestroyDynamicArray(pPipeline->vkDescriptorPoolSizeDynamicArray);
     vkDestroyPipeline(vkDevice, pPipeline->vkPipeline, NULL);
     vkDestroyPipelineLayout(vkDevice, pPipeline->vkPipelineLayout, NULL);
     for (uint32_t i = 0; i < pPipeline->descriptorSetLayoutCount; i++)

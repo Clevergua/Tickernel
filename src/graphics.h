@@ -65,8 +65,7 @@ typedef struct
     VkPipeline vkPipeline;
 
     TickernelDynamicArray pMaterialDynamicArray;
-    uint32_t vkDescriptorPoolSizeCount;
-    VkDescriptorPoolSize *vkDescriptorPoolSizes;
+    TickernelDynamicArray vkDescriptorPoolSizeDynamicArray;
 } Pipeline;
 
 typedef struct
