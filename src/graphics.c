@@ -1524,7 +1524,7 @@ void createPipeline(GraphicsContext *pGraphicsContext, uint32_t stageCount, cons
 
                     tickernelAddToDynamicArray(pBindingDynamicArray, &vkDescriptorSetLayoutBinding, pBindingDynamicArray->count);
 
-                    TODO: Handle VkDescriptorPoolSizes
+                    // TODO: Handle VkDescriptorPoolSizes
                 }
             }
         }
