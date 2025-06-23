@@ -1370,9 +1370,9 @@ void createPipeline(GraphicsContext *pGraphicsContext, uint32_t stageCount, cons
     {
         tickernelCreateDynamicArray(&bindingDynamicArrays[i], sizeof(VkDescriptorSetLayoutBinding), 1);
     }
-    for (uint32_t i = 0; i < stageCount; i++)
+    for (uint32_t stageIndex = 0; stageIndex < stageCount; stageIndex++)
     {
-        const char *filePath = shaderPaths[i];
+        const char *filePath = shaderPaths[stageIndex];
         FILE *file = fopen(filePath, "rb");
         if (!file)
         {
@@ -1398,7 +1398,7 @@ void createPipeline(GraphicsContext *pGraphicsContext, uint32_t stageCount, cons
         }
         SpvReflectShaderModule spvReflectShaderModule;
         SpvReflectResult spvReflectResult = spvReflectCreateShaderModule(shaderSize, shaderCode, &spvReflectShaderModule);
-        tickernelAssert(spvReflectResult == SPV_REFLECT_RESULT_SUCCESS, "Failed to reflect shader module: %s", shaderPaths[i]);
+        tickernelAssert(spvReflectResult == SPV_REFLECT_RESULT_SUCCESS, "Failed to reflect shader module: %s", shaderPaths[stageIndex]);
         tickernelFree(shaderCode);
         VkShaderModuleCreateInfo shaderModuleCreateInfo = {
             .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
@@ -1419,34 +1419,34 @@ void createPipeline(GraphicsContext *pGraphicsContext, uint32_t stageCount, cons
                 .pName = spvReflectShaderModule.entry_point_name,
                 .pSpecializationInfo = NULL,
             };
-        stages[i] = vkPipelineShaderStageCreateInfo;
+        stages[stageIndex] = vkPipelineShaderStageCreateInfo;
         if (SPV_REFLECT_SHADER_STAGE_VERTEX_BIT == spvReflectShaderModule.shader_stage)
         {
             // handle pVertexAttributeDescriptions
             uint32_t inputVariableCount = spvReflectShaderModule.input_variable_count;
-            for (uint32_t j = 0; j < inputVariableCount; j++)
+            for (uint32_t inputVariableIndex = 0; inputVariableIndex < inputVariableCount; inputVariableIndex++)
             {
-                SpvReflectInterfaceVariable inputVariable = *spvReflectShaderModule.input_variables[j];
+                SpvReflectInterfaceVariable inputVariable = *spvReflectShaderModule.input_variables[inputVariableIndex];
                 uint32_t binding = UINT32_MAX;
                 FieldLayout fieldLayout;
 
-                for (uint32_t k = 0; k < meshLayout.vertexLayoutCount; k++)
+                for (uint32_t vertexLayoutIndex = 0; vertexLayoutIndex < meshLayout.vertexLayoutCount; vertexLayoutIndex++)
                 {
-                    if (strcmp(meshLayout.vertexLayouts[k].name, inputVariable.name) == 0)
+                    if (strcmp(meshLayout.vertexLayouts[vertexLayoutIndex].name, inputVariable.name) == 0)
                     {
                         binding = 0;
-                        fieldLayout = meshLayout.vertexLayouts[k];
+                        fieldLayout = meshLayout.vertexLayouts[vertexLayoutIndex];
                         break;
                     }
                 }
                 if (binding == UINT32_MAX)
                 {
-                    for (uint32_t k = 0; k < meshLayout.instanceLayoutCount; k++)
+                    for (uint32_t instanceLayoutIndex = 0; instanceLayoutIndex < meshLayout.instanceLayoutCount; instanceLayoutIndex++)
                     {
-                        if (strcmp(meshLayout.instanceLayouts[k].name, inputVariable.name) == 0)
+                        if (strcmp(meshLayout.instanceLayouts[instanceLayoutIndex].name, inputVariable.name) == 0)
                         {
                             binding = 1;
-                            fieldLayout = meshLayout.instanceLayouts[k];
+                            fieldLayout = meshLayout.instanceLayouts[instanceLayoutIndex];
                             break;
                         }
                     }
@@ -1457,13 +1457,13 @@ void createPipeline(GraphicsContext *pGraphicsContext, uint32_t stageCount, cons
                 {
                     uint32_t columnCount = inputVariable.type_description->traits.numeric.matrix.column_count;
                     uint32_t rowCount = inputVariable.type_description->traits.numeric.matrix.row_count;
-                    for (uint32_t i = 0; i < rowCount; i++)
+                    for (uint32_t rowIndex = 0; rowIndex < rowCount; rowIndex++)
                     {
                         VkVertexInputAttributeDescription vertexAttributeDescription = {
-                            .location = inputVariable.location + i,
+                            .location = inputVariable.location + rowIndex,
                             .binding = binding,
                             .format = (VkFormat)inputVariable.format,
-                            .offset = fieldLayout.offset + i * inputVariable.numeric.scalar.width * columnCount / 8,
+                            .offset = fieldLayout.offset + rowIndex * inputVariable.numeric.scalar.width * columnCount / 8,
                         };
                         tickernelAssert(vkVertexInputAttributeDescriptionCount < maxVertexInputAttributes, "Too many vertex attributes");
                         vkVertexInputAttributeDescriptions[vkVertexInputAttributeDescriptionCount] = vertexAttributeDescription;
@@ -1484,25 +1484,25 @@ void createPipeline(GraphicsContext *pGraphicsContext, uint32_t stageCount, cons
                 }
             }
         }
-        spvReflectShaderModules[i] = spvReflectShaderModule;
+        spvReflectShaderModules[stageIndex] = spvReflectShaderModule;
 
         // handle descriptor sets
         uint32_t descriptorSetCount = spvReflectShaderModule.descriptor_set_count;
-        for (uint32_t j = 0; j < descriptorSetCount; j++)
+        for (uint32_t descriptorSetIndex = 0; descriptorSetIndex < descriptorSetCount; descriptorSetIndex++)
         {
-            SpvReflectDescriptorSet spvReflectDescriptorSet = spvReflectShaderModule.descriptor_sets[j];
+            SpvReflectDescriptorSet spvReflectDescriptorSet = spvReflectShaderModule.descriptor_sets[descriptorSetIndex];
             if (spvReflectDescriptorSet.set > pPipeline->descriptorSetLayoutCount)
             {
                 pPipeline->descriptorSetLayoutCount = spvReflectDescriptorSet.set + 1;
             }
-            for (uint32_t k = 0; k < spvReflectDescriptorSet.binding_count; k++)
+            for (uint32_t bindingIndex = 0; bindingIndex < spvReflectDescriptorSet.binding_count; bindingIndex++)
             {
                 TickernelDynamicArray *pBindingDynamicArray = &bindingDynamicArrays[spvReflectDescriptorSet.set];
                 bool bindingExists = false;
-                for (uint32_t l = 0; l < pBindingDynamicArray->count; l++)
+                for (uint32_t addedBindingIndex = 0; addedBindingIndex < pBindingDynamicArray->count; addedBindingIndex++)
                 {
-                    VkDescriptorSetLayoutBinding *pVkDescriptorSetLayoutBinding = tickernelGetFromDynamicArray(pBindingDynamicArray, l);
-                    if (spvReflectDescriptorSet.bindings[k]->binding == pVkDescriptorSetLayoutBinding->binding)
+                    VkDescriptorSetLayoutBinding *pVkDescriptorSetLayoutBinding = tickernelGetFromDynamicArray(pBindingDynamicArray, addedBindingIndex);
+                    if (spvReflectDescriptorSet.bindings[bindingIndex]->binding == pVkDescriptorSetLayoutBinding->binding)
                     {
                         bindingExists = true;
                         break;
@@ -1510,19 +1510,21 @@ void createPipeline(GraphicsContext *pGraphicsContext, uint32_t stageCount, cons
                 }
                 if (bindingExists)
                 {
-                    printf("Binding %d already exists in descriptor set %d, skipping.\n", spvReflectDescriptorSet.bindings[k]->binding, spvReflectDescriptorSet.set);
+                    printf("Binding %d already exists in descriptor set %d, skipping.\n", spvReflectDescriptorSet.bindings[bindingIndex]->binding, spvReflectDescriptorSet.set);
                 }
                 else
                 {
                     VkDescriptorSetLayoutBinding vkDescriptorSetLayoutBinding = {
-                        .binding = spvReflectDescriptorSet.bindings[k]->binding,
-                        .descriptorType = (VkDescriptorType)spvReflectDescriptorSet.bindings[k]->descriptor_type,
-                        .descriptorCount = spvReflectDescriptorSet.bindings[k]->count,
+                        .binding = spvReflectDescriptorSet.bindings[bindingIndex]->binding,
+                        .descriptorType = (VkDescriptorType)spvReflectDescriptorSet.bindings[bindingIndex]->descriptor_type,
+                        .descriptorCount = spvReflectDescriptorSet.bindings[bindingIndex]->count,
                         .stageFlags = (VkShaderStageFlags)spvReflectShaderModule.shader_stage,
                         .pImmutableSamplers = NULL,
                     };
 
                     tickernelAddToDynamicArray(pBindingDynamicArray, &vkDescriptorSetLayoutBinding, pBindingDynamicArray->count);
+
+                    TODO: Handle VkDescriptorPoolSizes
                 }
             }
         }
