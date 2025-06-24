@@ -1662,12 +1662,24 @@ void createPipeline(GraphicsContext *pGraphicsContext, uint32_t stageCount, cons
         spvReflectDestroyShaderModule(&spvReflectShaderModules[i]);
     }
     tickernelFree(spvReflectShaderModules);
+
+    tickernelCreateDynamicArray(&pPipeline->pMaterialDynamicArray, sizeof(Material *), 1);
 }
 
 void destroyPipeline(GraphicsContext *pGraphicsContext, RenderPass *pRenderPass, uint32_t subpassIndex, Pipeline *pPipeline)
 {
     VkDevice vkDevice = pGraphicsContext->vkDevice;
-    
+    for (uint32_t i = 0; i < pPipeline->pMaterialDynamicArray.count; i++)
+    {
+        Material *pMaterial = tickernelGetFromDynamicArray(&pPipeline->pMaterialDynamicArray, i);
+        if (pMaterial->vkDescriptorSet != VK_NULL_HANDLE)
+        {
+            // destroyMaterial(pGraphicsContext, pPipeline, pMaterial);
+        }
+        tickernelFree(pMaterial);
+    }
+
+    tickernelDestroyDynamicArray(pPipeline->pMaterialDynamicArray);
     tickernelDestroyDynamicArray(pPipeline->vkDescriptorPoolSizeDynamicArray);
     vkDestroyPipeline(vkDevice, pPipeline->vkPipeline, NULL);
     vkDestroyPipelineLayout(vkDevice, pPipeline->vkPipelineLayout, NULL);
@@ -1979,4 +1991,64 @@ void destroyUniformBuffer(GraphicsContext *pGraphicsContext, MappedBuffer *pUnif
 void updateUniformBuffer(GraphicsContext *pGraphicContext, MappedBuffer *pUniformBuffer, size_t offset, void *data, size_t size)
 {
     updateMappedBuffer(pUniformBuffer->mapped, offset, data, size);
+}
+
+void createMaterial(GraphicsContext *pGraphicsContext, Pipeline *pPipeline, Material **ppMaterial)
+{
+    Material *pMaterial = tickernelMalloc(sizeof(Material));
+    VkDevice vkDevice = pGraphicsContext->vkDevice;
+    VkDescriptorPoolCreateInfo descriptorPoolInfo = {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+        .poolSizeCount = pPipeline->vkDescriptorPoolSizeDynamicArray.count,
+        .pPoolSizes = pPipeline->vkDescriptorPoolSizeDynamicArray.array,
+        .maxSets = 1,
+    };
+    vkCreateDescriptorPool(vkDevice, &descriptorPoolInfo, NULL, &pMaterial->vkDescriptorPool);
+    vkAllocateDescriptorSets(vkDevice, &(VkDescriptorSetAllocateInfo){
+                                           .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+                                           .pNext = NULL,
+                                           .descriptorPool = pMaterial->vkDescriptorPool,
+                                           .descriptorSetCount = pPipeline->descriptorSetLayoutCount,
+                                           .pSetLayouts = pPipeline->descriptorSetLayouts,
+                                       },
+                             &pMaterial->vkDescriptorSet);
+
+    *ppMaterial = pMaterial;
+    VkWriteDescriptorSet writeDescriptorSet = {
+        .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+        .pNext = NULL,
+        .dstSet = pMaterial->vkDescriptorSet,
+        .dstBinding = 0,
+        .dstArrayElement = 0,
+        .descriptorCount = 1,
+        .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+        .pImageInfo = NULL,
+        .pBufferInfo = NULL,
+        .pTexelBufferView = NULL,
+    };
+    vkUpdateDescriptorSets(vkDevice, 1, &writeDescriptorSet, 0, NULL);
+}
+
+void destroyMaterial(GraphicsContext *pGraphicsContext, Pipeline *pPipeline, Material *pMaterial)
+{
+    VkDevice vkDevice = pGraphicsContext->vkDevice;
+
+    if (pMaterial->vkDescriptorSet != VK_NULL_HANDLE)
+    {
+        vkFreeDescriptorSets(vkDevice, pMaterial->vkDescriptorPool, 1, &pMaterial->vkDescriptorSet);
+    }
+    if (pMaterial->vkDescriptorPool != VK_NULL_HANDLE)
+    {
+        vkDestroyDescriptorPool(vkDevice, pMaterial->vkDescriptorPool, NULL);
+    }
+    for (uint32_t i = 0; i < pPipeline->pMaterialDynamicArray.count; i++)
+    {
+        Material *pCurrentMaterial = tickernelGetFromDynamicArray(&pPipeline->pMaterialDynamicArray, i);
+        if (pCurrentMaterial == pMaterial)
+        {
+            tickernelRemoveFromDynamicArray(&pPipeline->pMaterialDynamicArray, pCurrentMaterial);
+            break;
+        }
+    }
+    tickernelFree(pMaterial);
 }

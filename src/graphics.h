@@ -64,8 +64,9 @@ typedef struct
     VkPipelineLayout vkPipelineLayout;
     VkPipeline vkPipeline;
 
-    TickernelDynamicArray pMaterialDynamicArray;
     TickernelDynamicArray vkDescriptorPoolSizeDynamicArray;
+    TickernelDynamicArray pMaterialDynamicArray;
+
 } Pipeline;
 
 typedef struct
@@ -195,9 +196,6 @@ void destroyGraphicsContext(GraphicsContext *pGraphicsContext);
 
 void createRenderPass(GraphicsContext *pGraphicsContext, uint32_t attachmentCount, VkAttachmentDescription *vkAttachmentDescriptions, Attachment **pAttachments, uint32_t subpassCount, VkSubpassDescription *vkSubpassDescriptions, uint32_t vkSubpassDependencyCount, VkSubpassDependency *vkSubpassDependencies, uint32_t renderPassIndex, RenderPass **ppRenderPass);
 void destroyRenderPass(GraphicsContext *pGraphicsContext, RenderPass *pRenderPass);
-
-void createMaterial(GraphicsContext *pGraphicsContext, Pipeline *pPipeline, uint32_t graphicsResourceCount, GraphicsResource *graphicsResources, Material **ppMaterial);
-void destroyMaterial(GraphicsContext *pGraphicsContext, Pipeline *pPipeline, Material *pMaterial);
 
 void findSupportedFormat(GraphicsContext *pGraphicsContext, VkFormat *candidates, uint32_t candidatesCount, VkFormatFeatureFlags features, VkImageTiling tiling, VkFormat *pVkFormat);
 
