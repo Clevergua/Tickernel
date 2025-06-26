@@ -65,12 +65,12 @@ typedef struct
 
     TickernelDynamicArray vkDescriptorPoolSizeDynamicArray;
     TickernelDynamicArray pMaterialDynamicArray;
-
 } Pipeline;
 
 typedef struct
 {
     TickernelDynamicArray pPipelineDynamicArray;
+
 } Subpass;
 
 typedef struct
@@ -78,6 +78,10 @@ typedef struct
     VkRenderPass vkRenderPass;
     uint32_t vkFramebufferCount;
     VkFramebuffer *vkFramebuffers;
+
+    uint32_t pAttachmentCount;
+    Attachment **pAttachments;
+    VkImageLayout *attachmentLayouts;
 
     uint32_t subpassCount;
     Subpass *subpasses;
@@ -107,7 +111,6 @@ typedef struct
     VkFormat vkFormat;
     uint32_t width;
     uint32_t height;
-    
 } FixedAttachmentContent;
 
 typedef struct

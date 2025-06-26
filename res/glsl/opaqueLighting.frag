@@ -1,9 +1,9 @@
 #version 450
 precision highp float;
 
-layout(input_attachment_index = 0, binding = 0) uniform subpassInput i_depth;
-layout(input_attachment_index = 1, binding = 1) uniform subpassInput i_albedo;
-layout(input_attachment_index = 2, binding = 2) uniform subpassInput i_normal;
+layout(set = 1, input_attachment_index = 0, binding = 0) uniform subpassInput i_depth;
+layout(set = 1, input_attachment_index = 1, binding = 1) uniform subpassInput i_albedo;
+layout(set = 1, input_attachment_index = 2, binding = 2) uniform subpassInput i_normal;
 layout(binding = 3) uniform GlobalUniform {
     mat4 view;
     mat4 proj;
