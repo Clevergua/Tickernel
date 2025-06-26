@@ -59,8 +59,7 @@ typedef struct
 
 typedef struct
 {
-    uint32_t descriptorSetLayoutCount;
-    VkDescriptorSetLayout *descriptorSetLayouts;
+    TickernelDynamicArray vkDescriptorSetLayoutDynamicArray;
     VkPipelineLayout vkPipelineLayout;
     VkPipeline vkPipeline;
 
@@ -134,20 +133,6 @@ typedef struct
     AttachmentType attachmentType;
     AttachmentContent attachmentContent;
 } Attachment;
-
-typedef enum
-{
-    GRAPHICS_RESOURCE_TYPE_ATTACHMENT,
-    GRAPHICS_RESOURCE_TYPE_IMAGE,
-    GRAPHICS_RESOURCE_TYPE_SAMPLER,
-    GRAPHICS_RESOURCE_TYPE_UNIFORM_BUFFER,
-} GraphicsResourceType;
-
-typedef struct
-{
-    GraphicsResourceType graphicsResourceType;
-    void *pResource;
-} GraphicsResource;
 
 typedef struct
 {
