@@ -87,7 +87,6 @@ typedef struct
 typedef struct
 {
     VkImage vkImage;
-    VkFormat vkFormat;
     VkImageView vkImageView;
     VkDeviceMemory vkDeviceMemory;
 } GraphicsImage;
@@ -106,14 +105,21 @@ typedef struct
 typedef struct
 {
     GraphicsImage graphicsImage;
+    VkFormat vkFormat;
     uint32_t width;
     uint32_t height;
+    
 } FixedAttachmentContent;
 
 typedef struct
 {
     GraphicsImage graphicsImage;
+    VkFormat vkFormat;
     float32_t scaler;
+    VkImageUsageFlags vkImageUsageFlags;
+    VkMemoryPropertyFlags vkMemoryPropertyFlags;
+    VkImageAspectFlags vkImageAspectFlags;
+    TickernelDynamicArray pPipelineDynamicArray;
 } DynamicAttachmentContent;
 
 typedef union

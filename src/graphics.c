@@ -834,9 +834,10 @@ static void createGraphicsImage(GraphicsContext *pGraphicsContext, VkExtent3D vk
 {
     VkDevice vkDevice = pGraphicsContext->vkDevice;
     VkPhysicalDevice vkPhysicalDevice = pGraphicsContext->vkPhysicalDevice;
-    pGraphicsImage->vkFormat = vkFormat;
+    // pGraphicsImage->vkFormat = vkFormat;
+
     createImage(vkDevice, vkPhysicalDevice, vkExtent3D, vkFormat, VK_IMAGE_TILING_OPTIMAL, vkImageUsageFlags, vkMemoryPropertyFlags, &pGraphicsImage->vkImage, &pGraphicsImage->vkDeviceMemory);
-    createImageView(vkDevice, pGraphicsImage->vkImage, pGraphicsImage->vkFormat, vkImageAspectFlags, &pGraphicsImage->vkImageView);
+    createImageView(vkDevice, pGraphicsImage->vkImage, vkFormat, vkImageAspectFlags, &pGraphicsImage->vkImageView);
 }
 static void destroyGraphicsImage(GraphicsContext *pGraphicsContext, GraphicsImage graphicsImage)
 {
@@ -1131,6 +1132,37 @@ void updateGraphicsContext(GraphicsContext *pGraphicsContext, uint32_t swapchain
         pGraphicsContext->swapchainWidth = swapchainWidth;
         pGraphicsContext->swapchainHeight = swapchainHeight;
         recreateSwapchain(pGraphicsContext);
+        for (uint32_t i = 0; i < pGraphicsContext->pDynamicAttachmentDynamicArray.count; i++)
+        {
+            Attachment *pAttachment = tickernelGetFromDynamicArray(&pGraphicsContext->pDynamicAttachmentDynamicArray, i);
+            resizeDynamicAttachment(pGraphicsContext, pAttachment);
+            for (uint32_t j = 0; j < pAttachment->attachmentContent.dynamicAttachmentContent.pPipelineDynamicArray.count; j++)
+            {
+                Pipeline *pPipeline = tickernelGetFromDynamicArray(&pAttachment->attachmentContent.dynamicAttachmentContent.pPipelineDynamicArray, j);
+                for (uint32_t k = 0; k < pPipeline->pMaterialDynamicArray.count; k++)
+                {
+                    Material *pMaterial = tickernelGetFromDynamicArray(&pPipeline->pMaterialDynamicArray, k);
+                    VkDescriptorImageInfo imageInfo = {
+                        .sampler = VK_NULL_HANDLE,
+                        .imageView = pAttachment->attachmentContent.dynamicAttachmentContent.graphicsImage.vkImageView,
+                        .imageLayout = 
+                    };
+                    VkWriteDescriptorSet writeDescriptorSet = {
+                        .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+                        .pNext = NULL,
+                        .dstSet = pMaterial->vkDescriptorSet,
+                        .dstBinding = 0,
+                        .dstArrayElement = 0,
+                        .descriptorCount = 1,
+                        .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
+                        .pImageInfo = &imageInfo,
+                    };
+                    vkUpdateDescriptorSets(vkDevice, 1, &writeDescriptorSet, 0, NULL);
+                }
+                
+            }
+            
+        }
     }
     else
     {
@@ -1817,11 +1849,11 @@ void createRenderPass(GraphicsContext *pGraphicsContext, uint32_t attachmentCoun
         }
         else if (ATTACHMENT_TYPE_DYNAMIC == pAttachment->attachmentType)
         {
-            vkAttachmentDescriptions[i].format = pAttachment->attachmentContent.dynamicAttachmentContent.graphicsImage.vkFormat;
+            vkAttachmentDescriptions[i].format = pAttachment->attachmentContent.dynamicAttachmentContent.vkFormat;
         }
         else
         {
-            vkAttachmentDescriptions[i].format = pAttachment->attachmentContent.fixedAttachmentContent.graphicsImage.vkFormat;
+            vkAttachmentDescriptions[i].format = pAttachment->attachmentContent.fixedAttachmentContent.vkFormat;
         }
     }
 
@@ -1897,13 +1929,20 @@ void destroyRenderPass(GraphicsContext *pGraphicsContext, RenderPass *pRenderPas
 void createDynamicAttachment(GraphicsContext *pGraphicsContext, VkFormat vkFormat, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags, float scaler, Attachment **ppAttachment)
 {
     Attachment *pAttachment = tickernelMalloc(sizeof(Attachment));
+
     pAttachment->attachmentType = ATTACHMENT_TYPE_DYNAMIC;
+    pAttachment->attachmentContent.dynamicAttachmentContent.vkFormat = vkFormat;
+    pAttachment->attachmentContent.dynamicAttachmentContent.vkImageUsageFlags = vkImageUsageFlags;
+    pAttachment->attachmentContent.dynamicAttachmentContent.vkMemoryPropertyFlags = vkMemoryPropertyFlags;
+    pAttachment->attachmentContent.dynamicAttachmentContent.vkImageAspectFlags = vkImageAspectFlags;
+
     VkExtent3D vkExtent3D =
         {
             .width = (uint32_t)(pGraphicsContext->swapchainWidth * scaler),
             .height = (uint32_t)(pGraphicsContext->swapchainHeight * scaler),
             .depth = 1,
         };
+
     createGraphicsImage(
         pGraphicsContext,
         vkExtent3D,
@@ -1917,6 +1956,26 @@ void createDynamicAttachment(GraphicsContext *pGraphicsContext, VkFormat vkForma
     tickernelAddToDynamicArray(&pGraphicsContext->pDynamicAttachmentDynamicArray, &pAttachment->attachmentContent.dynamicAttachmentContent.graphicsImage, pGraphicsContext->pDynamicAttachmentDynamicArray.count);
 
     *ppAttachment = pAttachment;
+}
+static void resizeDynamicAttachment(GraphicsContext *pGraphicsContext, Attachment *pAttachment)
+{
+    DynamicAttachmentContent *pDynamicAttachmentContent = &pAttachment->attachmentContent.dynamicAttachmentContent;
+    float scaler = pDynamicAttachmentContent->scaler;
+    VkExtent3D vkExtent3D =
+        {
+            .width = (uint32_t)(pGraphicsContext->swapchainWidth * scaler),
+            .height = (uint32_t)(pGraphicsContext->swapchainHeight * scaler),
+            .depth = 1,
+        };
+    destroyGraphicsImage(pGraphicsContext, pAttachment->attachmentContent.dynamicAttachmentContent.graphicsImage);
+    createGraphicsImage(
+        pGraphicsContext,
+        vkExtent3D,
+        pDynamicAttachmentContent->vkFormat,
+        pDynamicAttachmentContent->vkImageUsageFlags,
+        pDynamicAttachmentContent->vkMemoryPropertyFlags,
+        pDynamicAttachmentContent->vkImageAspectFlags,
+        &pDynamicAttachmentContent->graphicsImage);
 }
 void destroyDynamicAttachment(GraphicsContext *pGraphicsContext, Attachment *pAttachment)
 {
