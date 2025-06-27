@@ -1,91 +1,133 @@
-#include "tickernelCore.h"
-#include <assert.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <assert.h>
+#include "tickernelCore.h"
 
-struct aabb_storage
-{
-    float center[3];
-    float extents[3];
-};
+// 测试用结构体类型
+typedef struct {
+    int id;
+    char name[20];
+} TestStruct;
 
-struct PreparedRendererInfo
-{
-    bool isOptimizedMesh;
-    bool removeScaleFromWorldMatrix;
-    bool hasNonUniformScaleTransform;
-    bool calculateAnimatedPosesReturnValue;
-    bool calculateBoneBasedBounds;
-    void *invalidationRoot;
-    void *hierarchy;
-    uint32_t rendererTransformIndex;
-    uint32_t rootBoneTransformIndex;
-    uint32_t tempTransformCount;
-    uint32_t boneTransformCount;
-    uint32_t boundsCount;
-    uint32_t *tempTransformParentIndices;
-    uint32_t *tempTransformHierarchyIndices;
-    uint32_t *boneTransformIndices;
-    uint32_t *boundsTransformIndices;
-    void *boundsAABBs;
-    struct aabb_storage localAABB;
-    void *calcSkinMatricesTask;
-};
+// 填充测试结构体
+void fillStruct(TestStruct* s, int id, const char* name) {
+    s->id = id;
+    strncpy(s->name, name, sizeof(s->name) - 1);
+    s->name[sizeof(s->name) - 1] = '\0';
+}
+
+// 比较两个结构体是否相等
+int structsEqual(const TestStruct* a, const TestStruct* b) {
+    return a->id == b->id && strcmp(a->name, b->name) == 0;
+}
+
+int main() {
+    printf("=== TickernelDynamicArray 简化测试 ===\n\n");
+
+    /*---------------------
+     * 指针存储测试
+     *---------------------*/
+    printf("--- 指针存储测试 ---\n");
+    TickernelDynamicArray ptrArray;
+    
+    // 1. 创建存储int*的动态数组
+    tickernelCreateDynamicArray(&ptrArray, sizeof(int*), 2);
+    assert(ptrArray.maxCount == 2);
+    assert(ptrArray.count == 0);
+    printf("  动态数组创建 - 通过\n");
+
+    // 2. 添加指针元素
+    int num1 = 100, num2 = 200, num3 = 300;
+    int* ptr1 = &num1, *ptr2 = &num2, *ptr3 = &num3;
+    
+    tickernelAddToDynamicArray(&ptrArray, &ptr1, 0);
+    tickernelAddToDynamicArray(&ptrArray, &ptr2, 1);
+    
+    int** retrievedPtr1, **retrievedPtr2;
+    tickernelGetFromDynamicArray(&ptrArray, 0, (void**)&retrievedPtr1);
+    tickernelGetFromDynamicArray(&ptrArray, 1, (void**)&retrievedPtr2);
+    
+    assert(ptrArray.count == 2);
+    assert(*retrievedPtr1 == ptr1);
+    assert(*retrievedPtr2 == ptr2);
+    printf("  指针添加与获取 - 通过\n");
+
+    // 3. 扩容测试
+    tickernelAddToDynamicArray(&ptrArray, &ptr3, 2);  // 触发扩容
+    assert(ptrArray.maxCount == 4);
+    assert(ptrArray.count == 3);
+    
+    int** retrievedPtr3;
+    tickernelGetFromDynamicArray(&ptrArray, 2, (void**)&retrievedPtr3);
+    assert(*retrievedPtr3 == ptr3);
+    printf("  指针数组扩容 - 通过\n");
+
+    // 4. 删除测试
+    tickernelRemoveAtIndexFromDynamicArray(&ptrArray, 1);
+    assert(ptrArray.count == 2);
+    
+    tickernelGetFromDynamicArray(&ptrArray, 0, (void**)&retrievedPtr1);
+    tickernelGetFromDynamicArray(&ptrArray, 1, (void**)&retrievedPtr3);
+    
+    assert(*retrievedPtr1 == ptr1);
+    assert(*retrievedPtr3 == ptr3);
+    printf("  指针删除 - 通过\n");
+
+    tickernelDestroyDynamicArray(ptrArray);
+    printf("  指针数组销毁 - 通过\n");
 
 
-int main()
-{
-    TickernelDynamicArray dynamicArray;
+    /*-------------------------
+     * 结构体存储测试
+     *-------------------------*/
+    printf("\n--- 结构体存储测试 ---\n");
+    TickernelDynamicArray structArray;
+    tickernelCreateDynamicArray(&structArray, sizeof(TestStruct), 2);
+    
+    // 1. 创建并添加结构体
+    TestStruct struct1, struct2, struct3;
+    fillStruct(&struct1, 1, "One");
+    fillStruct(&struct2, 2, "Two");
+    fillStruct(&struct3, 3, "Three");
+    
+    tickernelAddToDynamicArray(&structArray, &struct1, 0);
+    tickernelAddToDynamicArray(&structArray, &struct2, 1);
+    
+    TestStruct* retrieved1, *retrieved2;
+    tickernelGetFromDynamicArray(&structArray, 0, (void**)&retrieved1);
+    tickernelGetFromDynamicArray(&structArray, 1, (void**)&retrieved2);
+    
+    assert(structArray.count == 2);
+    assert(structsEqual(retrieved1, &struct1));
+    assert(structsEqual(retrieved2, &struct2));
+    printf("  结构体添加与获取 - 通过\n");
 
-    // Test tickernelCreateDynamicArray (指定初始容量为4)
-    tickernelCreateDynamicArray(&dynamicArray, sizeof(int), 4);
-    assert(dynamicArray.maxCount == 4);
-    assert(dynamicArray.count == 0);
-    assert(dynamicArray.array != NULL);
+    // 2. 扩容测试
+    tickernelAddToDynamicArray(&structArray, &struct3, 2);  // 触发扩容
+    assert(structArray.maxCount == 4);
+    assert(structArray.count == 3);
+    
+    TestStruct* retrieved3;
+    tickernelGetFromDynamicArray(&structArray, 2, (void**)&retrieved3);
+    assert(structsEqual(retrieved3, &struct3));
+    printf("  结构体数组扩容 - 通过\n");
 
-    // Test tickernelAddToDynamicArray
-    int value1 = 10, value2 = 20, value3 = 30;
-    tickernelAddToDynamicArray(&dynamicArray, &value1, 0);
-    tickernelAddToDynamicArray(&dynamicArray, &value2, 1);
-    tickernelAddToDynamicArray(&dynamicArray, &value3, 2);
+    // 3. 删除测试
+    tickernelRemoveFromDynamicArray(&structArray, &struct2);
+    assert(structArray.count == 2);
+    
+    tickernelGetFromDynamicArray(&structArray, 0, (void**)&retrieved1);
+    tickernelGetFromDynamicArray(&structArray, 1, (void**)&retrieved3);
+    
+    assert(structsEqual(retrieved1, &struct1));
+    assert(structsEqual(retrieved3, &struct3));
+    printf("  结构体删除 - 通过\n");
 
-    assert(dynamicArray.count == 3);
-    assert(*(int*)tickernelGetFromDynamicArray(&dynamicArray, 0) == 10);
-    assert(*(int*)tickernelGetFromDynamicArray(&dynamicArray, 1) == 20);
-    assert(*(int*)tickernelGetFromDynamicArray(&dynamicArray, 2) == 30);
+    tickernelDestroyDynamicArray(structArray);
+    printf("  结构体数组销毁 - 通过\n");
 
-    // Test tickernelRemoveAtIndexFromDynamicArray
-    tickernelRemoveAtIndexFromDynamicArray(&dynamicArray, 1);
-    assert(dynamicArray.count == 2);
-    assert(*(int*)tickernelGetFromDynamicArray(&dynamicArray, 0) == 10);
-    assert(*(int*)tickernelGetFromDynamicArray(&dynamicArray, 1) == 30);
 
-    // Test tickernelRemoveFromDynamicArray
-    tickernelRemoveFromDynamicArray(&dynamicArray, &value3);
-    assert(dynamicArray.count == 1);
-    assert(*(int*)tickernelGetFromDynamicArray(&dynamicArray, 0) == 10);
-
-    // Test tickernelClearDynamicArray
-    tickernelClearDynamicArray(&dynamicArray);
-    assert(dynamicArray.count == 0);
-
-    // Test tickernelDestroyDynamicArray
-    tickernelDestroyDynamicArray(dynamicArray); // 修正：传递指针
-
-    // Test resize functionality
-    TickernelDynamicArray smallArray;
-    tickernelCreateDynamicArray(&smallArray, sizeof(int), 2); // 元素大小为int，初始容量2
-    int values[4] = {1, 2, 3, 4};
-    for (int i = 0; i < 4; i++) {
-        tickernelAddToDynamicArray(&smallArray, &values[i], i);
-    }
-    assert(smallArray.maxCount == 4); // 验证扩容
-    assert(smallArray.count == 4);
-    for (int i = 0; i < 4; i++) {
-        assert(*(int*)tickernelGetFromDynamicArray(&smallArray, i) == values[i]);
-    }
-    tickernelDestroyDynamicArray(smallArray);
-
-    printf("All tests passed!\n");
+    printf("\n=== 简化测试完成 ===\n");
     return 0;
 }

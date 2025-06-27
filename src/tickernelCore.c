@@ -145,7 +145,15 @@ void tickernelClearDynamicArray(TickernelDynamicArray *pDynamicArray)
     memset(pDynamicArray->array, 0, pDynamicArray->dataSize * pDynamicArray->maxCount);
 }
 
-void *tickernelGetFromDynamicArray(TickernelDynamicArray *pDynamicArray, uint32_t index)
+void tickernelGetFromDynamicArray(TickernelDynamicArray *pDynamicArray, uint32_t index, void **output)
 {
-    return (char *)pDynamicArray->array + index * pDynamicArray->dataSize;
+    if (index < pDynamicArray->count)
+    {
+        *output = (char *)pDynamicArray->array + index * pDynamicArray->dataSize;
+    }
+    else
+    {
+        tickernelError("Index %u is out of bounds for count %u\n", index, pDynamicArray->count);
+        *output = NULL; // Set output to NULL if index is out of bounds
+    }
 }

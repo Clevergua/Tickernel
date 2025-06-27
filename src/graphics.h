@@ -52,43 +52,6 @@ typedef struct
 
 typedef struct
 {
-    TickernelDynamicArray meshDynamicArray;
-    VkDescriptorPool vkDescriptorPool;
-    VkDescriptorSet vkDescriptorSet;
-} Material;
-
-typedef struct
-{
-    TickernelDynamicArray vkDescriptorSetLayoutDynamicArray;
-    VkPipelineLayout vkPipelineLayout;
-    VkPipeline vkPipeline;
-
-    TickernelDynamicArray vkDescriptorPoolSizeDynamicArray;
-    TickernelDynamicArray pMaterialDynamicArray;
-} Pipeline;
-
-typedef struct
-{
-    TickernelDynamicArray pPipelineDynamicArray;
-
-} Subpass;
-
-typedef struct
-{
-    VkRenderPass vkRenderPass;
-    uint32_t vkFramebufferCount;
-    VkFramebuffer *vkFramebuffers;
-
-    uint32_t pAttachmentCount;
-    Attachment **pAttachments;
-    VkImageLayout *attachmentLayouts;
-
-    uint32_t subpassCount;
-    Subpass *subpasses;
-} RenderPass;
-
-typedef struct
-{
     VkImage vkImage;
     VkImageView vkImageView;
     VkDeviceMemory vkDeviceMemory;
@@ -139,6 +102,55 @@ typedef struct
 
 typedef struct
 {
+    uint32_t attachmentIndex;
+    uint32_t set;
+    uint32_t binding;
+} AttachmentBindingInfo;
+
+typedef struct
+{
+    struct PipelineStruct *pPipeline;
+    uint32_t vkDescriptorSetsCount;
+    VkDescriptorSet *vkDescriptorSets;
+    VkDescriptorPool vkDescriptorPool;
+    TickernelDynamicArray pMeshDynamicArray;
+} Material;
+
+typedef struct PipelineStruct
+{
+    struct SubpassStruct *pSubpass;
+
+    TickernelDynamicArray vkDescriptorSetLayoutDynamicArray;
+    VkPipelineLayout vkPipelineLayout;
+    VkPipeline vkPipeline;
+    TickernelDynamicArray dynamicAttachmentBindingInfoDynamicArray;
+    TickernelDynamicArray vkDescriptorPoolSizeDynamicArray;
+    TickernelDynamicArray pMaterialDynamicArray;
+} Pipeline;
+
+typedef struct SubpassStruct
+{
+    struct RenderPassStruct *pRenderPass;
+    TickernelDynamicArray pPipelineDynamicArray;
+    uint32_t inputAttachmentCount;
+    VkAttachmentReference *inputAttachmentReferences;
+} Subpass;
+
+typedef struct RenderPassStruct
+{
+    VkRenderPass vkRenderPass;
+    uint32_t vkFramebufferCount;
+    VkFramebuffer *vkFramebuffers;
+
+    uint32_t pAttachmentCount;
+    Attachment **pAttachments;
+
+    uint32_t subpassCount;
+    Subpass *subpasses;
+} RenderPass;
+
+typedef struct
+{
     uint8_t magic[4];
     uint8_t blockDimX;
     uint8_t blockDimY;
@@ -181,7 +193,7 @@ typedef struct
     VkFence renderFinishedFence;
 
     TickernelDynamicArray pRenderPassDynamicArray;
-    TickernelDynamicArray pDynamicAttachmentDynamicArray;
+    TickernelDynamicArray pAttachmentDynamicArray;
 } GraphicsContext;
 
 void createGraphicsContext(int targetSwapchainImageCount, VkPresentModeKHR targetPresentMode, VkInstance vkInstance, VkSurfaceKHR vkSurface, uint32_t swapchainWidth, uint32_t swapchainHeight, GraphicsContext *pGraphicsContext);
@@ -195,7 +207,6 @@ void findSupportedFormat(GraphicsContext *pGraphicsContext, VkFormat *candidates
 
 void createDynamicAttachment(GraphicsContext *pGraphicsContext, VkFormat vkFormat, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags, float scaler, Attachment **ppAttachment);
 void destroyDynamicAttachment(GraphicsContext *pGraphicsContext, Attachment *pAttachment);
-
 void createFixedAttachment(GraphicsContext *pGraphicsContext, VkFormat vkFormat, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags, uint32_t width, uint32_t height, Attachment **ppAttachment);
 void destroyFixedAttachment(GraphicsContext *pGraphicsContext, Attachment *pAttachment);
 

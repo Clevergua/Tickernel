@@ -35,4 +35,4 @@ void tickernelAddToDynamicArray(TickernelDynamicArray *pDynamicArray, void *pInp
 void tickernelRemoveFromDynamicArray(TickernelDynamicArray *pDynamicArray, void *pData);
 void tickernelRemoveAtIndexFromDynamicArray(TickernelDynamicArray *pDynamicArray, uint32_t index);
 void tickernelClearDynamicArray(TickernelDynamicArray *pDynamicArray);
-void *tickernelGetFromDynamicArray(TickernelDynamicArray *pDynamicArray, uint32_t index);
+void tickernelGetFromDynamicArray(TickernelDynamicArray *pDynamicArray, uint32_t index, void **output);
