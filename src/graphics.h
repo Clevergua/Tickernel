@@ -78,13 +78,21 @@ typedef struct
 
 typedef struct
 {
+    VkImageLayout vkImageLayout;
+    uint32_t set;
+    uint32_t binding;
+    struct PipelineStruct *pPipeline;
+} DynamicAttachmentPipelineRef;
+
+typedef struct
+{
     GraphicsImage graphicsImage;
     VkFormat vkFormat;
     float32_t scaler;
     VkImageUsageFlags vkImageUsageFlags;
     VkMemoryPropertyFlags vkMemoryPropertyFlags;
     VkImageAspectFlags vkImageAspectFlags;
-    TickernelDynamicArray pPipelineDynamicArray;
+    TickernelDynamicArray pipelineRefDynamicArray;
 } DynamicAttachmentContent;
 
 typedef union
@@ -102,14 +110,6 @@ typedef struct
 
 typedef struct
 {
-    uint32_t attachmentIndex;
-    uint32_t set;
-    uint32_t binding;
-} AttachmentBindingInfo;
-
-typedef struct
-{
-    struct PipelineStruct *pPipeline;
     uint32_t vkDescriptorSetsCount;
     VkDescriptorSet *vkDescriptorSets;
     VkDescriptorPool vkDescriptorPool;
@@ -118,25 +118,22 @@ typedef struct
 
 typedef struct PipelineStruct
 {
-    struct SubpassStruct *pSubpass;
-
     TickernelDynamicArray vkDescriptorSetLayoutDynamicArray;
     VkPipelineLayout vkPipelineLayout;
     VkPipeline vkPipeline;
-    TickernelDynamicArray dynamicAttachmentBindingInfoDynamicArray;
     TickernelDynamicArray vkDescriptorPoolSizeDynamicArray;
     TickernelDynamicArray pMaterialDynamicArray;
+    TickernelDynamicArray pDynamicAttachmentRefDynamicArray;
 } Pipeline;
 
-typedef struct SubpassStruct
+typedef struct
 {
-    struct RenderPassStruct *pRenderPass;
     TickernelDynamicArray pPipelineDynamicArray;
     uint32_t inputAttachmentCount;
     VkAttachmentReference *inputAttachmentReferences;
 } Subpass;
 
-typedef struct RenderPassStruct
+typedef struct
 {
     VkRenderPass vkRenderPass;
     uint32_t vkFramebufferCount;

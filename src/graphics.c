@@ -1120,57 +1120,34 @@ static void resizeDynamicAttachment(GraphicsContext *pGraphicsContext, Attachmen
         pDynamicAttachmentContent->vkImageAspectFlags,
         &pDynamicAttachmentContent->graphicsImage);
 
-    for (uint32_t pPipelineIndex = 0; pPipelineIndex < pDynamicAttachmentContent->pPipelineDynamicArray.count; pPipelineIndex++)
+    for (uint32_t pPipelineIndex = 0; pPipelineIndex < pDynamicAttachmentContent->pipelineRefDynamicArray.count; pPipelineIndex++)
     {
-        Pipeline *pPipeline;
-        tickernelGetFromDynamicArray(&pDynamicAttachmentContent->pPipelineDynamicArray, pPipelineIndex, (void **)&pPipeline);
-        Subpass *pSubpass = pPipeline->pSubpass;
-        RenderPass *pRenderPass = pSubpass->pRenderPass;
-        uint32_t attachmentIndex = 0;
-        for (attachmentIndex = 0; attachmentIndex < pRenderPass->pAttachmentCount; attachmentIndex++)
+        DynamicAttachmentPipelineRef *pDynamicAttachmentPipelineRef;
+        tickernelGetFromDynamicArray(&pDynamicAttachmentContent->pipelineRefDynamicArray, pPipelineIndex, (void **)&pDynamicAttachmentPipelineRef);
+        VkImageLayout vkImageLayout = pDynamicAttachmentPipelineRef->vkImageLayout;
+        uint32_t set = pDynamicAttachmentPipelineRef->set;
+        uint32_t binding = pDynamicAttachmentPipelineRef->binding;
+        Pipeline *pPipeline = pDynamicAttachmentPipelineRef->pPipeline;
+
+        for (uint32_t pMaterialIndex = 0; pMaterialIndex < pPipeline->pMaterialDynamicArray.count; pMaterialIndex++)
         {
-            if (pRenderPass->pAttachments[attachmentIndex] == pAttachment)
-            {
-                break;
-            }
-        }
-        if (attachmentIndex < pRenderPass->pAttachmentCount)
-        {
-            uint32_t dynamicAttachmentBindingInfoIndex, set, binding;
-            for (dynamicAttachmentBindingInfoIndex = 0; dynamicAttachmentBindingInfoIndex < pPipeline->dynamicAttachmentBindingInfoDynamicArray.count; dynamicAttachmentBindingInfoIndex++)
-            {
-                AttachmentBindingInfo *pAttachmentInBindingInfo;
-                tickernelGetFromDynamicArray(&pPipeline->dynamicAttachmentBindingInfoDynamicArray, dynamicAttachmentBindingInfoIndex, (void **)&pAttachmentInBindingInfo);
-                if (pAttachmentInBindingInfo->attachmentIndex == attachmentIndex)
-                {
-                    set = pAttachmentInBindingInfo->set;
-                    binding = pAttachmentInBindingInfo->binding;
-                }
-            }
-            tickernelAssert(dynamicAttachmentBindingInfoIndex < pPipeline->dynamicAttachmentBindingInfoDynamicArray.count, "Dynamic attachment binding info not found!");
-            for (uint32_t pMaterialIndex = 0; pMaterialIndex < pPipeline->pMaterialDynamicArray.count; pMaterialIndex++)
-            {
-                Material *pMaterial;
-                tickernelGetFromDynamicArray(&pPipeline->pMaterialDynamicArray, pMaterialIndex, (void **)&pMaterial);
-                VkWriteDescriptorSet writeDescriptorSet = {
-                    .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-                    .pNext = NULL,
-                    .dstSet = pMaterial->vkDescriptorSets[set],
-                    .dstBinding = binding,
-                    .dstArrayElement = 0,
-                    .descriptorCount = 1,
-                    .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
-                    .pImageInfo = &(VkDescriptorImageInfo){
-                        .sampler = VK_NULL_HANDLE,
-                        .imageView = pDynamicAttachmentContent->graphicsImage.vkImageView,
-                        .imageLayout = pSubpass->inputAttachmentReferences[attachmentIndex].layout},
-                };
-                vkUpdateDescriptorSets(pGraphicsContext->vkDevice, 1, &writeDescriptorSet, 0, NULL);
-            }
-        }
-        else
-        {
-            tickernelError("Dynamic attachment not found in render pass attachment list!");
+            Material *pMaterial;
+            tickernelGetFromDynamicArray(&pPipeline->pMaterialDynamicArray, pMaterialIndex, (void **)&pMaterial);
+            VkWriteDescriptorSet writeDescriptorSet = {
+                .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+                .pNext = NULL,
+                .dstSet = pMaterial->vkDescriptorSets[set],
+                .dstBinding = binding,
+                .dstArrayElement = 0,
+                .descriptorCount = 1,
+                .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
+                .pImageInfo = &(VkDescriptorImageInfo){
+                    .sampler = VK_NULL_HANDLE,
+                    .imageView = pDynamicAttachmentContent->graphicsImage.vkImageView,
+                    .imageLayout = vkImageLayout,
+                },
+            };
+            vkUpdateDescriptorSets(pGraphicsContext->vkDevice, 1, &writeDescriptorSet, 0, NULL);
         }
     }
 }
@@ -1455,7 +1432,6 @@ void createPipeline(GraphicsContext *pGraphicsContext, uint32_t stageCount, cons
     uint32_t vkVertexInputAttributeDescriptionCount = 0;
     VkVertexInputAttributeDescription *vkVertexInputAttributeDescriptions = tickernelMalloc(sizeof(VkVertexInputAttributeDescription) * maxVertexInputAttributes);
 
-    tickernelCreateDynamicArray(&pPipeline->dynamicAttachmentBindingInfoDynamicArray, sizeof(AttachmentBindingInfo), 1);
     tickernelCreateDynamicArray(&pPipeline->vkDescriptorSetLayoutDynamicArray, sizeof(VkDescriptorSetLayout), 1);
     uint32_t maxDescriptorSetLayouts = pGraphicsContext->vkPhysicalDeviceProperties.limits.maxBoundDescriptorSets < SPV_REFLECT_MAX_DESCRIPTOR_SETS ? pGraphicsContext->vkPhysicalDeviceProperties.limits.maxBoundDescriptorSets : SPV_REFLECT_MAX_DESCRIPTOR_SETS;
     TickernelDynamicArray *bindingDynamicArrays = tickernelMalloc(sizeof(TickernelDynamicArray) * maxDescriptorSetLayouts);
@@ -1605,18 +1581,16 @@ void createPipeline(GraphicsContext *pGraphicsContext, uint32_t stageCount, cons
             }
             else
             {
-                if (VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT == currentBinding.descriptor_type)
+                Attachment *pAttachment = pRenderPass->pAttachments[currentBinding.input_attachment_index];
+                if (SPV_REFLECT_DESCRIPTOR_TYPE_INPUT_ATTACHMENT == currentBinding.descriptor_type && pAttachment->attachmentType == ATTACHMENT_TYPE_DYNAMIC)
                 {
-                    Attachment *pAttachment = pRenderPass->pAttachments[currentBinding.input_attachment_index];
-                    if (ATTACHMENT_TYPE_DYNAMIC == pAttachment->attachmentType)
-                    {
-                        AttachmentBindingInfo attachmentBindingInfo = {
-                            .attachmentIndex = currentBinding.input_attachment_index,
-                            .binding = currentBinding.binding,
-                            .set = currentBinding.set,
-                        };
-                        tickernelAddToDynamicArray(&pPipeline->dynamicAttachmentBindingInfoDynamicArray, &attachmentBindingInfo, pPipeline->dynamicAttachmentBindingInfoDynamicArray.count);
-                    }
+                    DynamicAttachmentPipelineRef dynamicAttachmentPipelineRef = {
+                        .set = currentBinding.set,
+                        .binding = currentBinding.binding,
+                        .pPipeline = pPipeline,
+                    };
+                    tickernelAddToDynamicArray(&pAttachment->attachmentContent.dynamicAttachmentContent.pipelineRefDynamicArray, &dynamicAttachmentPipelineRef, pAttachment->attachmentContent.dynamicAttachmentContent.pipelineRefDynamicArray.count);
+                    
                 }
 
                 VkDescriptorSetLayoutBinding vkDescriptorSetLayoutBinding = {
@@ -1771,6 +1745,9 @@ void createPipeline(GraphicsContext *pGraphicsContext, uint32_t stageCount, cons
 void destroyPipeline(GraphicsContext *pGraphicsContext, RenderPass *pRenderPass, uint32_t subpassIndex, Pipeline *pPipeline)
 {
     VkDevice vkDevice = pGraphicsContext->vkDevice;
+
+    
+
     for (uint32_t i = 0; i < pPipeline->pMaterialDynamicArray.count; i++)
     {
         Material *pMaterial;
@@ -1789,7 +1766,6 @@ void destroyPipeline(GraphicsContext *pGraphicsContext, RenderPass *pRenderPass,
         vkDestroyDescriptorSetLayout(vkDevice, *pVkDescriptorSetLayout, NULL);
     }
     tickernelDestroyDynamicArray(pPipeline->vkDescriptorSetLayoutDynamicArray);
-    tickernelDestroyDynamicArray(pPipeline->dynamicAttachmentBindingInfoDynamicArray);
     tickernelFree(pPipeline);
 }
 
@@ -2010,10 +1986,12 @@ void createDynamicAttachment(GraphicsContext *pGraphicsContext, VkFormat vkForma
     Attachment *pAttachment = tickernelMalloc(sizeof(Attachment));
 
     pAttachment->attachmentType = ATTACHMENT_TYPE_DYNAMIC;
-    pAttachment->attachmentContent.dynamicAttachmentContent.vkFormat = vkFormat;
-    pAttachment->attachmentContent.dynamicAttachmentContent.vkImageUsageFlags = vkImageUsageFlags;
-    pAttachment->attachmentContent.dynamicAttachmentContent.vkMemoryPropertyFlags = vkMemoryPropertyFlags;
-    pAttachment->attachmentContent.dynamicAttachmentContent.vkImageAspectFlags = vkImageAspectFlags;
+    DynamicAttachmentContent *pDynamicAttachmentContent = &pAttachment->attachmentContent.dynamicAttachmentContent;
+    pDynamicAttachmentContent->vkFormat = vkFormat;
+    pDynamicAttachmentContent->vkImageUsageFlags = vkImageUsageFlags;
+    pDynamicAttachmentContent->vkMemoryPropertyFlags = vkMemoryPropertyFlags;
+    pDynamicAttachmentContent->vkImageAspectFlags = vkImageAspectFlags;
+    tickernelCreateDynamicArray(&pDynamicAttachmentContent->pipelineRefDynamicArray, sizeof(DynamicAttachmentPipelineRef), 1);
 
     VkExtent3D vkExtent3D =
         {
@@ -2040,6 +2018,7 @@ void destroyDynamicAttachment(GraphicsContext *pGraphicsContext, Attachment *pAt
 {
     tickernelRemoveFromDynamicArray(&pGraphicsContext->pAttachmentDynamicArray, &pAttachment->attachmentContent.dynamicAttachmentContent.graphicsImage);
     destroyGraphicsImage(pGraphicsContext, pAttachment->attachmentContent.dynamicAttachmentContent.graphicsImage);
+    tickernelDestroyDynamicArray(pAttachment->attachmentContent.dynamicAttachmentContent.pipelineRefDynamicArray);
     tickernelFree(pAttachment);
 }
 
