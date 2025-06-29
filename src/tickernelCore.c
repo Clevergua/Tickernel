@@ -150,10 +150,11 @@ void tickernelGetFromDynamicArray(TickernelDynamicArray *pDynamicArray, uint32_t
     if (index < pDynamicArray->count)
     {
         *output = (char *)pDynamicArray->array + index * pDynamicArray->dataSize;
+        printf("Get from dynamic array at index %u: %p\n", index, *output);
     }
     else
     {
         tickernelError("Index %u is out of bounds for count %u\n", index, pDynamicArray->count);
-        *output = NULL; // Set output to NULL if index is out of bounds
     }
 }
+

@@ -118,13 +118,13 @@ typedef struct
 
 typedef struct PipelineStruct
 {
-    VkPipeline vkPipeline; // vkPipeline
-    VkPipelineLayout vkPipelineLayout; // for recording command buffers
-    TickernelDynamicArray vkDescriptorSetLayoutDynamicArray; // for creating descriptor sets
-    TickernelDynamicArray vkDescriptorPoolSizeDynamicArray; // for creating descriptor pools
 
+    VkPipelineLayout vkPipelineLayout;                       // for recording command buffers
+    TickernelDynamicArray vkDescriptorSetLayoutDynamicArray; // for creating descriptor sets
+    TickernelDynamicArray vkDescriptorPoolSizeDynamicArray;  // for creating descriptor pools
     TickernelDynamicArray pDynamicAttachmentRefDynamicArray; // for dynamic attachments
-    TickernelDynamicArray pMaterialDynamicArray; // materials
+    VkPipeline vkPipeline;                                   // vkPipeline
+    TickernelDynamicArray pMaterialDynamicArray;             // materials
 } Pipeline;
 
 typedef struct

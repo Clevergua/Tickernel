@@ -36,3 +36,10 @@ void tickernelRemoveFromDynamicArray(TickernelDynamicArray *pDynamicArray, void 
 void tickernelRemoveAtIndexFromDynamicArray(TickernelDynamicArray *pDynamicArray, uint32_t index);
 void tickernelClearDynamicArray(TickernelDynamicArray *pDynamicArray);
 void tickernelGetFromDynamicArray(TickernelDynamicArray *pDynamicArray, uint32_t index, void **output);
+
+#define TICKERNEL_GET_FROM_DYNAMIC_ARRAY(pDynamicArray, index, type)    \
+    ({                                                                  \
+        void *__tmp;                                                    \
+        tickernelGetFromDynamicArray((pDynamicArray), (index), &__tmp); \
+        *(type *)(__tmp);                                               \
+    })
