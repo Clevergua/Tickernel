@@ -1472,7 +1472,6 @@ void createPipeline(GraphicsContext *pGraphicsContext, uint32_t stageCount, cons
     {
         tickernelCreateDynamicArray(&vkDescriptorSetLayoutBindingDynamicArrays[i], sizeof(VkDescriptorSetLayoutBinding), 1);
     }
-
     SpvReflectShaderModule *spvReflectShaderModules = tickernelMalloc(sizeof(SpvReflectShaderModule) * stageCount);
     VkDevice vkDevice = pGraphicsContext->vkDevice;
     VkResult result = VK_SUCCESS;
@@ -1491,13 +1490,51 @@ void createPipeline(GraphicsContext *pGraphicsContext, uint32_t stageCount, cons
                 .stageFlags = (VkShaderStageFlags)spvReflectShaderModule.shader_stage,
                 .pImmutableSamplers = NULL,
             };
-            tickernelAddToDynamicArray(&vkDescriptorSetLayoutBindingDynamicArrays[spvReflectDescriptorBinding.set], &vkDescriptorSetLayoutBinding, vkDescriptorSetLayoutBindingDynamicArrays[spvReflectDescriptorBinding.set].count);
+            TickernelDynamicArray *pVkDescriptorSetLayoutBindingDynamicArray = &vkDescriptorSetLayoutBindingDynamicArrays[spvReflectDescriptorBinding.set];
+            uint32_t addedBindingIndex;
+            for (addedBindingIndex = 0; addedBindingIndex < pVkDescriptorSetLayoutBindingDynamicArray->count; addedBindingIndex++)
+            {
+                VkDescriptorSetLayoutBinding addedBinding = TICKERNEL_GET_FROM_DYNAMIC_ARRAY(pVkDescriptorSetLayoutBindingDynamicArray, addedBindingIndex, VkDescriptorSetLayoutBinding);
+                if (addedBinding.binding == vkDescriptorSetLayoutBinding.binding)
+                {
+                    if (addedBinding.descriptorType == vkDescriptorSetLayoutBinding.descriptorType &&
+                        addedBinding.stageFlags == vkDescriptorSetLayoutBinding.stageFlags &&
+                        addedBinding.descriptorCount == vkDescriptorSetLayoutBinding.descriptorCount)
+                    {
+                        // Binding already exists, skip adding
+                        break;
+                    }
+                    else
+                    {
+                        // Duplicate binding with different properties, log an error
+                        tickernelError("Duplicate descriptor binding found in shader: %s, set: %d, binding: %d, type: %d, stageFlags: %d, count: %d",
+                                       filePath,
+                                       spvReflectDescriptorBinding.set,
+                                       spvReflectDescriptorBinding.binding,
+                                       spvReflectDescriptorBinding.descriptor_type,
+                                       spvReflectShaderModule.shader_stage,
+                                       spvReflectDescriptorBinding.count);
+                    }
+                }
+                else
+                {
+                    // skip
+                }
+            }
+            if (addedBindingIndex < pVkDescriptorSetLayoutBindingDynamicArray->count)
+            {
+                // Binding already exists, skip adding
+                continue;
+            }
+            else
+            {
+                tickernelAddToDynamicArray(pVkDescriptorSetLayoutBindingDynamicArray, &vkDescriptorSetLayoutBinding, pVkDescriptorSetLayoutBindingDynamicArray->count);
+            }
         }
 
         DestroySpvReflectShaderModule(&spvReflectShaderModules[stageIndex]);
     }
     tickernelFree(spvReflectShaderModules);
-
     for (uint32_t i = 0; i < maxVkDescriptorSetLayoutCount; i++)
     {
         tickernelDestroyDynamicArray(vkDescriptorSetLayoutBindingDynamicArrays[i]);
