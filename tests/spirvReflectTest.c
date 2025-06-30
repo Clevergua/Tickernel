@@ -56,10 +56,10 @@ int main()
     VkResult result = VK_SUCCESS;
     uint32_t stageCount = 4; // Example stage count
     const char *shaderPaths[] = {
-        "/Users/forgemastergua/Documents/GitHub/Tickernel/assets/shaders/opaqueGeometry.vert.spv",
-        "/Users/forgemastergua/Documents/GitHub/Tickernel/assets/shaders/opaqueGeometry.frag.spv",
-        "/Users/forgemastergua/Documents/GitHub/Tickernel/assets/shaders/opaqueLighting.vert.spv",
-        "/Users/forgemastergua/Documents/GitHub/Tickernel/assets/shaders/opaqueLighting.frag.spv",
+        "/Users/hema/Documents/GitHub/Tickernel/assets/shaders/opaqueGeometry.vert.spv",
+        "/Users/hema/Documents/GitHub/Tickernel/assets/shaders/opaqueGeometry.frag.spv",
+        "/Users/hema/Documents/GitHub/Tickernel/assets/shaders/opaqueLighting.vert.spv",
+        "/Users/hema/Documents/GitHub/Tickernel/assets/shaders/opaqueLighting.frag.spv",
     };
     SpvReflectShaderModule spvReflectShaderModules[stageCount];
     for (uint32_t i = 0; i < stageCount; i++)
