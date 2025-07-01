@@ -1555,6 +1555,20 @@ void createPipeline(GraphicsContext *pGraphicsContext, uint32_t stageCount, cons
                     };
                     tickernelAddToDynamicArray(&vkDescriptorPoolSizeDynamicArray, &vkDescriptorPoolSize, vkDescriptorPoolSizeDynamicArray.count);
                 }
+
+
+                Attachment *pAttachment = pRenderPass->pAttachments[spvReflectDescriptorBinding.input_attachment_index];
+                if (SPV_REFLECT_DESCRIPTOR_TYPE_INPUT_ATTACHMENT == spvReflectDescriptorBinding.descriptor_type && pAttachment->attachmentType == ATTACHMENT_TYPE_DYNAMIC)
+                {
+                    DynamicAttachmentPipelineRef dynamicAttachmentPipelineRef = {
+                        .set = spvReflectDescriptorBinding.set,
+                        .binding = spvReflectDescriptorBinding.binding,
+                        .pPipeline = pPipeline,
+                    };
+                    DynamicAttachmentContent *pDynamicAttachmentContent = &pAttachment->attachmentContent.dynamicAttachmentContent;
+                    tickernelAddToDynamicArray(&pAttachment->attachmentContent.dynamicAttachmentContent.pipelineRefDynamicArray, &dynamicAttachmentPipelineRef, pAttachment->attachmentContent.dynamicAttachmentContent.pipelineRefDynamicArray.count);
+                    tickernelAddToDynamicArray(&pPipeline->pDynamicAttachmentRefDynamicArray, pAttachment, pPipeline->pDynamicAttachmentRefDynamicArray.count);
+                }
             }
         }
         DestroySpvReflectShaderModule(&spvReflectShaderModules[stageIndex]);
