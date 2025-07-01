@@ -55,7 +55,8 @@ int main()
 
     // 从数组中获取结构体（返回值类型是FieldLayout，而非指针）
     FieldLayout retrievedLayout = TICKERNEL_GET_FROM_DYNAMIC_ARRAY(&layoutArray, 0, FieldLayout);
-
+    FieldLayout *pRetrievedLayout;
+    tickernelGetFromDynamicArray(&layoutArray, 0, (void **)&pRetrievedLayout);
     // 使用获取的结构体（直接访问，无需指针解引用）
     printf("Field: %s\n", retrievedLayout.name);          // 输出: position
     printf("Size: %u bytes\n", retrievedLayout.size);     // 输出: 12

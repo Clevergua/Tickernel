@@ -113,7 +113,7 @@ typedef struct
     uint32_t vkDescriptorSetsCount;
     VkDescriptorSet *vkDescriptorSets;
     VkDescriptorPool vkDescriptorPool;
-    TickernelDynamicArray pMeshDynamicArray;
+    TickernelDynamicArray meshPtrDynamicArray;
 } Material;
 
 typedef struct PipelineStruct
@@ -122,14 +122,14 @@ typedef struct PipelineStruct
     uint32_t vkDescriptorSetLayoutCount;                     // for creating descriptor sets
     VkDescriptorSetLayout *vkDescriptorSetLayouts;           // for creating descriptor sets
     TickernelDynamicArray vkDescriptorPoolSizeDynamicArray;  // for creating descriptor pools
-    TickernelDynamicArray pDynamicAttachmentRefDynamicArray; // for dynamic attachments
+    TickernelDynamicArray dynamicAttachmentPtrRefDynamicArray; // for dynamic attachments
     VkPipeline vkPipeline;                                   // vkPipeline
-    TickernelDynamicArray pMaterialDynamicArray;             // materials
+    TickernelDynamicArray materialPtrDynamicArray;             // materials
 } Pipeline;
 
 typedef struct
 {
-    TickernelDynamicArray pPipelineDynamicArray;
+    TickernelDynamicArray pipelinePtrDynamicArray;
     uint32_t inputAttachmentCount;
     VkAttachmentReference *inputAttachmentReferences;
 } Subpass;
@@ -190,8 +190,8 @@ typedef struct
     VkSemaphore renderFinishedSemaphore;
     VkFence renderFinishedFence;
 
-    TickernelDynamicArray pRenderPassDynamicArray;
-    TickernelDynamicArray pAttachmentDynamicArray;
+    TickernelDynamicArray renderPassPtrDynamicArray;
+    TickernelDynamicArray attachmentPtrDynamicArray;
 } GraphicsContext;
 
 void createGraphicsContext(int targetSwapchainImageCount, VkPresentModeKHR targetPresentMode, VkInstance vkInstance, VkSurfaceKHR vkSurface, uint32_t swapchainWidth, uint32_t swapchainHeight, GraphicsContext *pGraphicsContext);
