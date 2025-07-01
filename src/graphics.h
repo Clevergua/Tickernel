@@ -118,9 +118,9 @@ typedef struct
 
 typedef struct PipelineStruct
 {
-
     VkPipelineLayout vkPipelineLayout;                       // for recording command buffers
-    TickernelDynamicArray vkDescriptorSetLayoutDynamicArray; // for creating descriptor sets
+    uint32_t vkDescriptorSetLayoutCount;                     // for creating descriptor sets
+    VkDescriptorSetLayout *vkDescriptorSetLayouts;           // for creating descriptor sets
     TickernelDynamicArray vkDescriptorPoolSizeDynamicArray;  // for creating descriptor pools
     TickernelDynamicArray pDynamicAttachmentRefDynamicArray; // for dynamic attachments
     VkPipeline vkPipeline;                                   // vkPipeline

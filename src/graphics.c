@@ -1450,10 +1450,10 @@ void createPipeline(GraphicsContext *pGraphicsContext, uint32_t stageCount, cons
 {
     *ppPipeline = tickernelMalloc(sizeof(Pipeline));
     // vkPipelineLayout
-    VkPipelineLayout vkPipelineLayout;
-    // vkDescriptorSetLayoutDynamicArray
-    TickernelDynamicArray vkDescriptorSetLayoutDynamicArray;
-    tickernelCreateDynamicArray(&vkDescriptorSetLayoutDynamicArray, sizeof(VkDescriptorSetLayout), 1);
+    VkPipelineLayout vkPipelineLayout = VK_NULL_HANDLE;
+    // vkDescriptorSetLayouts
+    uint32_t vkDescriptorSetLayoutCount = 0;
+    VkDescriptorSetLayout *vkDescriptorSetLayouts = NULL;
     // vkDescriptorPoolSizeDynamicArray
     TickernelDynamicArray vkDescriptorPoolSizeDynamicArray;
     tickernelCreateDynamicArray(&vkDescriptorPoolSizeDynamicArray, sizeof(VkDescriptorPoolSize), 1);
@@ -1461,7 +1461,7 @@ void createPipeline(GraphicsContext *pGraphicsContext, uint32_t stageCount, cons
     TickernelDynamicArray pDynamicAttachmentRefDynamicArray;
     tickernelCreateDynamicArray(&pDynamicAttachmentRefDynamicArray, sizeof(Attachment *), 1);
     // vkPipeline
-    VkPipeline vkPipeline;
+    VkPipeline vkPipeline = VK_NULL_HANDLE;
     // pMaterialDynamicArray
     TickernelDynamicArray pMaterialDynamicArray;
     tickernelCreateDynamicArray(&pMaterialDynamicArray, sizeof(Material *), 1);
@@ -1528,12 +1528,26 @@ void createPipeline(GraphicsContext *pGraphicsContext, uint32_t stageCount, cons
             }
             else
             {
+                vkDescriptorSetLayoutCount = spvReflectDescriptorBinding.set + 1 > vkDescriptorSetLayoutCount ? spvReflectDescriptorBinding.set + 1 : vkDescriptorSetLayoutCount;
                 tickernelAddToDynamicArray(pVkDescriptorSetLayoutBindingDynamicArray, &vkDescriptorSetLayoutBinding, pVkDescriptorSetLayoutBindingDynamicArray->count);
             }
         }
-
         DestroySpvReflectShaderModule(&spvReflectShaderModules[stageIndex]);
     }
+    vkDescriptorSetLayouts = tickernelMalloc(sizeof(VkDescriptorSetLayout) * vkDescriptorSetLayoutCount);
+    for (uint32_t set = 0; set < vkDescriptorSetLayoutCount; set++)
+    {
+        TickernelDynamicArray *pVkDescriptorSetLayoutBindingDynamicArray = &vkDescriptorSetLayoutBindingDynamicArrays[set];
+        VkDescriptorSetLayoutCreateInfo vkDescriptorSetLayoutCreateInfo = {
+            .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+            .pNext = NULL,
+            .flags = 0,
+            .bindingCount = pVkDescriptorSetLayoutBindingDynamicArray->count,
+            .pBindings = pVkDescriptorSetLayoutBindingDynamicArray->array,
+        };
+        vkCreateDescriptorSetLayout(vkDevice, &vkDescriptorSetLayoutCreateInfo, NULL, &vkDescriptorSetLayouts[set]);
+    }
+
     tickernelFree(spvReflectShaderModules);
     for (uint32_t i = 0; i < maxVkDescriptorSetLayoutCount; i++)
     {
@@ -1544,8 +1558,8 @@ void createPipeline(GraphicsContext *pGraphicsContext, uint32_t stageCount, cons
     VkPipelineLayoutCreateInfo vkPipelineLayoutCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
         .pNext = NULL,
-        .setLayoutCount = vkDescriptorSetLayoutDynamicArray.count,
-        .pSetLayouts = vkDescriptorSetLayoutDynamicArray.array,
+        .setLayoutCount = vkDescriptorSetLayoutCount,
+        .pSetLayouts = vkDescriptorSetLayouts,
         .pushConstantRangeCount = 0,
         .pPushConstantRanges = NULL,
     };
@@ -1575,27 +1589,35 @@ void createPipeline(GraphicsContext *pGraphicsContext, uint32_t stageCount, cons
     // };
     // result = vkCreateGraphicsPipelines(vkDevice, NULL, 1, &vkGraphicsPipelineCreateInfo, NULL, &pPipeline->vkPipeline);
 
-    // Pipeline pipeline = {
-    //     .vkPipelineLayout = vkPipelineLayout,
-    //     .vkDescriptorSetLayoutDynamicArray = vkDescriptorSetLayoutDynamicArray,
-    //     .vkDescriptorPoolSizeDynamicArray = vkDescriptorPoolSizeDynamicArray,
-    //     .pDynamicAttachmentRefDynamicArray = pDynamicAttachmentRefDynamicArray,
-    //     .vkPipeline = vkPipeline,
-    //     .pMaterialDynamicArray = pMaterialDynamicArray,
-    // };
-    // **ppPipeline = pipeline;
+    Pipeline pipeline = {
+        .vkPipelineLayout = vkPipelineLayout,
+        .vkDescriptorSetLayoutCount = vkDescriptorSetLayoutCount,
+        .vkDescriptorSetLayouts = vkDescriptorSetLayouts,
+        .vkDescriptorPoolSizeDynamicArray = vkDescriptorPoolSizeDynamicArray,
+        .pDynamicAttachmentRefDynamicArray = pDynamicAttachmentRefDynamicArray,
+        .vkPipeline = vkPipeline,
+        .pMaterialDynamicArray = pMaterialDynamicArray,
+    };
+    **ppPipeline = pipeline;
 }
 void destroyPipeline(GraphicsContext *pGraphicsContext, RenderPass *pRenderPass, uint32_t subpassIndex, Pipeline *pPipeline)
 {
-    for (uint32_t i = pPipeline->pMaterialDynamicArray.count - 1; i > -1; i--)
+    // for (int32_t i = pPipeline->pMaterialDynamicArray.count - 1; i > -1; i--)
+    // {
+    //     Material *pMaterial = TICKERNEL_GET_FROM_DYNAMIC_ARRAY(&pPipeline->pMaterialDynamicArray, i, Material *);
+    //     // destroyMaterial(pGraphicsContext, pMaterial);
+    // }
+    // tickernelDestroyDynamicArray(pPipeline->pMaterialDynamicArray);
+
+    VkDevice vkDevice = pGraphicsContext->vkDevice;
+    vkDestroyPipelineLayout(vkDevice, pPipeline->vkPipelineLayout, NULL);
+    for (uint32_t set = 0; set < pPipeline->vkDescriptorSetLayoutCount; set++)
     {
-        Material *pMaterial = TICKERNEL_GET_FROM_DYNAMIC_ARRAY(&pPipeline->pMaterialDynamicArray, i, Material *);
-        // destroyMaterial(pGraphicsContext, pMaterial);
+        vkDestroyDescriptorSetLayout(vkDevice, pPipeline->vkDescriptorSetLayouts[set], NULL);
     }
-    tickernelDestroyDynamicArray(pPipeline->pMaterialDynamicArray);
+    tickernelFree(pPipeline->vkDescriptorSetLayouts);
     tickernelDestroyDynamicArray(pPipeline->pDynamicAttachmentRefDynamicArray);
     tickernelDestroyDynamicArray(pPipeline->vkDescriptorPoolSizeDynamicArray);
-    tickernelDestroyDynamicArray(pPipeline->vkDescriptorSetLayoutDynamicArray);
     tickernelFree(pPipeline);
 }
 

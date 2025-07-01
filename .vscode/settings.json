@@ -85,7 +85,16 @@
         "graphics.h": "c",
         "spirv.h": "c",
         "spirv_reflect.h": "c",
-        "type_traits": "c"
+        "type_traits": "c",
+        "atomic": "c",
+        "cstddef": "c",
+        "cstdio": "c",
+        "cstring": "c",
+        "ctime": "c",
+        "cwchar": "c",
+        "memory": "c",
+        "format": "c",
+        "utility": "c"
     },
     "cmake.sourceDirectory": "/Users/hema/Documents/GitHub/Tickernel"
 }
