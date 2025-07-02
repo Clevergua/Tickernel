@@ -1497,9 +1497,7 @@ void createPipeline(GraphicsContext *pGraphicsContext, uint32_t stageCount, cons
                 VkDescriptorSetLayoutBinding addedBinding = TICKERNEL_GET_FROM_DYNAMIC_ARRAY(pVkDescriptorSetLayoutBindingDynamicArray, addedBindingIndex, VkDescriptorSetLayoutBinding);
                 if (addedBinding.binding == vkDescriptorSetLayoutBinding.binding)
                 {
-                    if (addedBinding.descriptorType == vkDescriptorSetLayoutBinding.descriptorType &&
-                        addedBinding.stageFlags == vkDescriptorSetLayoutBinding.stageFlags &&
-                        addedBinding.descriptorCount == vkDescriptorSetLayoutBinding.descriptorCount)
+                    if (addedBinding.descriptorType == vkDescriptorSetLayoutBinding.descriptorType)
                     {
                         // Binding already exists, skip adding
                         break;
@@ -1556,18 +1554,17 @@ void createPipeline(GraphicsContext *pGraphicsContext, uint32_t stageCount, cons
                     tickernelAddToDynamicArray(&vkDescriptorPoolSizeDynamicArray, &vkDescriptorPoolSize, vkDescriptorPoolSizeDynamicArray.count);
                 }
 
-
                 Attachment *pAttachment = pRenderPass->pAttachments[spvReflectDescriptorBinding.input_attachment_index];
                 if (SPV_REFLECT_DESCRIPTOR_TYPE_INPUT_ATTACHMENT == spvReflectDescriptorBinding.descriptor_type && pAttachment->attachmentType == ATTACHMENT_TYPE_DYNAMIC)
                 {
                     DynamicAttachmentPipelineRef dynamicAttachmentPipelineRef = {
                         .set = spvReflectDescriptorBinding.set,
                         .binding = spvReflectDescriptorBinding.binding,
-                        .pPipeline = pPipeline,
+                        .pPipeline = *ppPipeline,
                     };
                     DynamicAttachmentContent *pDynamicAttachmentContent = &pAttachment->attachmentContent.dynamicAttachmentContent;
                     tickernelAddToDynamicArray(&pAttachment->attachmentContent.dynamicAttachmentContent.pipelineRefDynamicArray, &dynamicAttachmentPipelineRef, pAttachment->attachmentContent.dynamicAttachmentContent.pipelineRefDynamicArray.count);
-                    tickernelAddToDynamicArray(&pPipeline->pDynamicAttachmentRefDynamicArray, pAttachment, pPipeline->pDynamicAttachmentRefDynamicArray.count);
+                    tickernelAddToDynamicArray(&dynamicAttachmentPtrRefDynamicArray, &pAttachment, dynamicAttachmentPtrRefDynamicArray.count);
                 }
             }
         }
@@ -1840,7 +1837,7 @@ void createRenderPass(GraphicsContext *pGraphicsContext, uint32_t attachmentCoun
         }
     }
 
-    tickernelAddToDynamicArray(&pGraphicsContext->renderPassPtrDynamicArray, pRenderPass, renderPassIndex);
+    tickernelAddToDynamicArray(&pGraphicsContext->renderPassPtrDynamicArray, &pRenderPass, renderPassIndex);
     *ppRenderPass = pRenderPass;
 }
 void destroyRenderPass(GraphicsContext *pGraphicsContext, RenderPass *pRenderPass)
@@ -1900,7 +1897,7 @@ void createDynamicAttachment(GraphicsContext *pGraphicsContext, VkFormat vkForma
         &pAttachment->attachmentContent.dynamicAttachmentContent.graphicsImage);
 
     pAttachment->attachmentContent.dynamicAttachmentContent.scaler = scaler;
-    tickernelAddToDynamicArray(&pGraphicsContext->attachmentPtrDynamicArray, &pAttachment->attachmentContent.dynamicAttachmentContent.graphicsImage, pGraphicsContext->attachmentPtrDynamicArray.count);
+    tickernelAddToDynamicArray(&pGraphicsContext->attachmentPtrDynamicArray, &pAttachment, pGraphicsContext->attachmentPtrDynamicArray.count);
 
     *ppAttachment = pAttachment;
 }
