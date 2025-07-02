@@ -1494,29 +1494,24 @@ void createPipeline(GraphicsContext *pGraphicsContext, uint32_t stageCount, cons
             uint32_t addedBindingIndex;
             for (addedBindingIndex = 0; addedBindingIndex < pVkDescriptorSetLayoutBindingDynamicArray->count; addedBindingIndex++)
             {
-                VkDescriptorSetLayoutBinding addedBinding = TICKERNEL_GET_FROM_DYNAMIC_ARRAY(pVkDescriptorSetLayoutBindingDynamicArray, addedBindingIndex, VkDescriptorSetLayoutBinding);
-                if (addedBinding.binding == vkDescriptorSetLayoutBinding.binding)
+                VkDescriptorSetLayoutBinding *pAddedBinding;
+                tickernelGetFromDynamicArray(pVkDescriptorSetLayoutBindingDynamicArray, addedBindingIndex, &pAddedBinding);
+                if (pAddedBinding->binding == vkDescriptorSetLayoutBinding.binding)
                 {
-                    if (addedBinding.descriptorType == vkDescriptorSetLayoutBinding.descriptorType)
+                    if (pAddedBinding->descriptorType == vkDescriptorSetLayoutBinding.descriptorType)
                     {
-                        // Binding already exists, skip adding
+                        pAddedBinding->stageFlags |= vkDescriptorSetLayoutBinding.stageFlags;
+                        pAddedBinding->descriptorCount = vkDescriptorSetLayoutBinding.descriptorCount > pAddedBinding->descriptorCount ? vkDescriptorSetLayoutBinding.descriptorCount : pAddedBinding->descriptorCount;
                         break;
                     }
                     else
                     {
-                        // Duplicate binding with different properties, log an error
-                        tickernelError("Duplicate descriptor binding found in shader: %s, set: %d, binding: %d, type: %d, stageFlags: %d, count: %d",
-                                       filePath,
-                                       spvReflectDescriptorBinding.set,
-                                       spvReflectDescriptorBinding.binding,
-                                       spvReflectDescriptorBinding.descriptor_type,
-                                       spvReflectShaderModule.shader_stage,
-                                       spvReflectDescriptorBinding.count);
+                        tickernelError("Incompatible descriptor binding");
                     }
                 }
                 else
                 {
-                    // skip
+                    // Skip
                 }
             }
             if (addedBindingIndex < pVkDescriptorSetLayoutBindingDynamicArray->count)
