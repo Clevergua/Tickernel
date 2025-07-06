@@ -1495,7 +1495,7 @@ void createPipeline(GraphicsContext *pGraphicsContext, uint32_t stageCount, cons
             for (addedBindingIndex = 0; addedBindingIndex < pVkDescriptorSetLayoutBindingDynamicArray->count; addedBindingIndex++)
             {
                 VkDescriptorSetLayoutBinding *pAddedBinding;
-                tickernelGetFromDynamicArray(pVkDescriptorSetLayoutBindingDynamicArray, addedBindingIndex, &pAddedBinding);
+                tickernelGetFromDynamicArray(pVkDescriptorSetLayoutBindingDynamicArray, addedBindingIndex, (void **)&pAddedBinding);
                 if (pAddedBinding->binding == vkDescriptorSetLayoutBinding.binding)
                 {
                     if (pAddedBinding->descriptorType == vkDescriptorSetLayoutBinding.descriptorType)

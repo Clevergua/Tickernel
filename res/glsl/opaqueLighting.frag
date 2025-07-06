@@ -1,43 +1,6 @@
 #version 450
-precision highp float;
-
-layout(set = 1, input_attachment_index = 0, binding = 0) uniform subpassInput i_depth;
-layout(set = 1, input_attachment_index = 1, binding = 1) uniform subpassInput i_albedo;
-layout(set = 1, input_attachment_index = 2, binding = 2) uniform subpassInput i_normal;
-layout(binding = 3) uniform GlobalUniform {
-    mat4 view;
-    mat4 proj;
-    mat4 inv_view_proj;
-    float pointSizeFactor;
-    float time;
-    int frameCount;
-    float near;
-    float far;
-    float fov;
-    int width;
-    int height;
-} globalUniform;
-layout(set = 1, binding = 3) uniform PPP {
-    float pointSizeFactor;
-    float time;
-    float fov;
-    int width;
-    int height;
-} QQQQQ;
-struct DirectionalLight {
-    vec4 color;
-    vec3 direction;
-};
-struct PointLight {
-    vec4 color;
-    vec3 position;
-    float range;
-};
-layout(binding = 4) uniform LightsUniform {
-    DirectionalLight directionalLight;
-    int pointLightCount;
-    PointLight pointLights[256];
-} lightsUniform;
+#include "global.glsl"
+#include "lightingSubpass.frag.glsl"
 
 layout(location = 0) in vec2 in_uv;
 layout(location = 0) out vec4 o_color;

@@ -44,12 +44,13 @@ int main()
     TickernelDynamicArray layoutArray;
     tickernelCreateDynamicArray(&layoutArray, sizeof(FieldLayout), 4);
 
-    // 创建并初始化结构体（栈上或堆上均可）
+    // 创建并初始化结构体
     FieldLayout layout = {
         .name = "position",
-        .size = 12, // 3 floats
-        .offset = 213};
-
+        .size = 12,
+        .offset = 213,
+    };
+    
     // 直接存储结构体（而非指针）
     tickernelAddToDynamicArray(&layoutArray, &layout, 0); // 存储结构体的副本
 
