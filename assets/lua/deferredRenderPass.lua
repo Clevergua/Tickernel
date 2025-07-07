@@ -58,6 +58,7 @@ function deferredRenderPass.createRenderPass(pAttachments)
     };
 
     local geometrySubpassDescription = {
+        name = "geometrySubpass",
         pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
         inputAttachmentCount = 0,
         pInputAttachments = {},
@@ -73,6 +74,7 @@ function deferredRenderPass.createRenderPass(pAttachments)
     }
 
     local ligthtingSubpassDescription = {
+        name = "ligthtingSubpass",
         pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
         inputAttachmentCount = 3,
         pInputAttachments = {
@@ -91,6 +93,7 @@ function deferredRenderPass.createRenderPass(pAttachments)
     }
 
     local postProcessSubpassDescription = {
+        name = "postProcessSubpass",
         pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
         inputAttachmentCount = 1,
         pInputAttachments = {

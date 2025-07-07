@@ -110,8 +110,7 @@ typedef struct
 
 typedef struct
 {
-    uint32_t vkDescriptorSetsCount;
-    VkDescriptorSet *vkDescriptorSets;
+    VkDescriptorSet vkDescriptorSet;
     VkDescriptorPool vkDescriptorPool;
     TickernelDynamicArray meshPtrDynamicArray;
 } Material;
@@ -132,6 +131,8 @@ typedef struct
     TickernelDynamicArray pipelinePtrDynamicArray;
     uint32_t inputAttachmentCount;
     VkAttachmentReference *inputAttachmentReferences;
+    VkDescriptorSet vkDescriptorSet;
+    VkDescriptorPool vkDescriptorPool;
 } Subpass;
 
 typedef struct

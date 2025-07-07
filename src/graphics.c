@@ -662,7 +662,7 @@ static void recordCommandBuffer(GraphicsContext *pGraphicsContext)
                 for (uint32_t modelIndex = 0; modelIndex < pPipeline->materialPtrDynamicArray.count; modelIndex++)
                 {
                     Material *pMaterial = TICKERNEL_GET_FROM_DYNAMIC_ARRAY(&pPipeline->materialPtrDynamicArray, modelIndex, Material *);
-                    vkCmdBindDescriptorSets(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pPipeline->vkPipelineLayout, 0, pMaterial->vkDescriptorSetsCount, pMaterial->vkDescriptorSets, 0, NULL);
+                    vkCmdBindDescriptorSets(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pPipeline->vkPipelineLayout, 0, 1, &pMaterial->vkDescriptorSet, 0, NULL);
                     for (uint32_t meshIndex = 0; meshIndex < pMaterial->meshPtrDynamicArray.count; meshIndex++)
                     {
                         Mesh *pMesh = TICKERNEL_GET_FROM_DYNAMIC_ARRAY(&pMaterial->meshPtrDynamicArray, meshIndex, Mesh *);
@@ -707,7 +707,7 @@ static void recordCommandBuffer(GraphicsContext *pGraphicsContext)
                         }
                         else
                         {
-                            vkCmdBindDescriptorSets(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pPipeline->vkPipelineLayout, 0, pMaterial->vkDescriptorSetsCount, pMaterial->vkDescriptorSets, 0, NULL);
+                            vkCmdBindDescriptorSets(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pPipeline->vkPipelineLayout, 0, 1, &pMaterial->vkDescriptorSet, 0, NULL);
                             vkCmdDraw(vkCommandBuffer, 3, 1, 0, 0);
                         }
                     }
@@ -1131,7 +1131,7 @@ static void resizeDynamicAttachment(GraphicsContext *pGraphicsContext, Attachmen
             VkWriteDescriptorSet writeDescriptorSet = {
                 .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
                 .pNext = NULL,
-                .dstSet = pMaterial->vkDescriptorSets[set],
+                .dstSet = pMaterial->vkDescriptorSet,
                 .dstBinding = binding,
                 .dstArrayElement = 0,
                 .descriptorCount = 1,
@@ -1480,6 +1480,7 @@ void createPipeline(GraphicsContext *pGraphicsContext, uint32_t stageCount, cons
         const char *filePath = shaderPaths[stageIndex];
         CreateSpvReflectShaderModule(filePath, &spvReflectShaderModules[stageIndex]);
         SpvReflectShaderModule spvReflectShaderModule = spvReflectShaderModules[stageIndex];
+        
         for (uint32_t descriptorBindingIndex = 0; descriptorBindingIndex < spvReflectShaderModule.descriptor_binding_count; descriptorBindingIndex++)
         {
             SpvReflectDescriptorBinding spvReflectDescriptorBinding = spvReflectShaderModule.descriptor_bindings[descriptorBindingIndex];
