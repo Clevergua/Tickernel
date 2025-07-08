@@ -6,7 +6,9 @@
 #include "cglm.h"
 #include "tickernelCore.h"
 #include "spirv_reflect.h"
-
+#define TICKERNEL_MATERIAL_DESCRIPTOR_SET 0
+#define TICKERNEL_SUBPASS_DESCRIPTOR_SET 1
+#define TICKERNEL_GLOBAL_DESCRIPTOR_SET 2
 typedef struct
 {
     VkBuffer vkBuffer;
@@ -118,10 +120,8 @@ typedef struct
 typedef struct PipelineStruct
 {
     VkPipelineLayout vkPipelineLayout;                         // for recording command buffers
-    uint32_t vkDescriptorSetLayoutCount;                       // for creating descriptor sets
-    VkDescriptorSetLayout *vkDescriptorSetLayouts;             // for creating descriptor sets
+    VkDescriptorSetLayout vkDescriptorSetLayout;               // for creating descriptor sets
     TickernelDynamicArray vkDescriptorPoolSizeDynamicArray;    // for creating descriptor pools
-    TickernelDynamicArray dynamicAttachmentPtrRefDynamicArray; // for dynamic attachments
     VkPipeline vkPipeline;                                     // vkPipeline
     TickernelDynamicArray materialPtrDynamicArray;             // materials
 } Pipeline;
