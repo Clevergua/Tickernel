@@ -126,11 +126,10 @@ typedef struct PipelineStruct
 
 typedef struct
 {
-    TickernelDynamicArray pipelinePtrDynamicArray;
+    TickernelDynamicArray pipelinePtrDynamicArray;          // pipelines
     uint32_t inputAttachmentReferenceCount;                 // for recreate descriptor set
     VkAttachmentReference *inputAttachmentReferences;       // for recreate descriptor set
     VkDescriptorSetLayout vkDescriptorSetLayout;            // for creating descriptor set
-    TickernelDynamicArray vkDescriptorPoolSizeDynamicArray; // for creating descriptor pool
     VkDescriptorPool vkDescriptorPool;                      // for creating descriptor set
     VkDescriptorSet vkDescriptorSet;                        // subpass descriptor set
 } Subpass;

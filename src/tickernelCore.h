@@ -36,9 +36,6 @@ void tickernelRemoveFromDynamicArray(TickernelDynamicArray *pDynamicArray, void 
 void tickernelRemoveAtIndexFromDynamicArray(TickernelDynamicArray *pDynamicArray, uint32_t index);
 void tickernelClearDynamicArray(TickernelDynamicArray *pDynamicArray);
 void tickernelGetFromDynamicArray(TickernelDynamicArray *pDynamicArray, uint32_t index, void **output);
-typedef bool (*TickernelCompareFunction)(const void *, const void *, size_t size);
-bool tickernelContainsDynamicArray(TickernelDynamicArray *pDynamicArray, void *pInput, TickernelCompareFunction compareFunction);
-
 #define TICKERNEL_GET_FROM_DYNAMIC_ARRAY(pDynamicArray, index, type)    \
     ({                                                                  \
         void *__tmp;                                                    \

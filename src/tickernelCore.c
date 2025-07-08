@@ -157,21 +157,3 @@ void tickernelGetFromDynamicArray(TickernelDynamicArray *pDynamicArray, uint32_t
         tickernelError("Index %u is out of bounds for count %u\n", index, pDynamicArray->count);
     }
 }
-
-bool tickernelContainsDynamicArray(TickernelDynamicArray *pDynamicArray, const void *pInput, TickernelCompareFunction compareFunction)
-{
-    for (uint32_t i = 0; i < pDynamicArray->count; i++)
-    {
-        void *item = (char *)pDynamicArray->array + i * pDynamicArray->dataSize;
-        if (compareFunction(item, pInput, pDynamicArray->dataSize))
-        {
-            return true;
-        }
-    }
-    return false;
-}
-
-bool tickernelCompareMemory(const void *a, const void *b, size_t size)
-{
-    return (memcmp(a, b, size) == 0);
-}

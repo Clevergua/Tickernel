@@ -1,5 +1,5 @@
 #version 450
-#include "postProcessSubpass.frag.glsl"
+#include "postProcess.subpass.frag.glsl"
 
 layout(location = 0) in vec2 in_uv;
 layout(location = 0) out vec4 o_color;
