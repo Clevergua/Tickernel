@@ -58,7 +58,6 @@ function deferredRenderPass.createRenderPass(pAttachments)
     };
 
     local geometrySubpassDescription = {
-        name = "geometrySubpass",
         pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
         inputAttachmentCount = 0,
         pInputAttachments = {},
@@ -74,7 +73,6 @@ function deferredRenderPass.createRenderPass(pAttachments)
     }
 
     local ligthtingSubpassDescription = {
-        name = "ligthtingSubpass",
         pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
         inputAttachmentCount = 3,
         pInputAttachments = {
@@ -93,7 +91,6 @@ function deferredRenderPass.createRenderPass(pAttachments)
     }
 
     local postProcessSubpassDescription = {
-        name = "postProcessSubpass",
         pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
         inputAttachmentCount = 1,
         pInputAttachments = {
@@ -113,6 +110,16 @@ function deferredRenderPass.createRenderPass(pAttachments)
         geometrySubpassDescription,
         ligthtingSubpassDescription,
         postProcessSubpassDescription,
+    }
+
+    local spvPathArrays = {
+        {},
+        {
+            "assets/shaders/lighting.subpass.frag.spv"
+        },
+        {
+            "assets/shaders/postProcess.subpass.frag.spv"
+        },
     }
 
     local vkSubpassDependencies = {
@@ -154,14 +161,13 @@ function deferredRenderPass.createRenderPass(pAttachments)
         }
     }
 
-    return engine.createRenderPass(vkAttachmentDescriptions, pAttachments, vkSubpassDescriptions, vkSubpassDependencies,
+    return engine.createRenderPass(vkAttachmentDescriptions, pAttachments, vkSubpassDescriptions, spvPathArrays,
+        vkSubpassDependencies,
         0)
 end
-
 
 function deferredRenderPass.destroyRenderPass(pRenderPass)
     engine.destroyRenderPass(pRenderPass)
 end
-
 
 return deferredRenderPass

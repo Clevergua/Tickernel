@@ -5,12 +5,12 @@ geometryPipeline.createPipeline = function(pRenderPass, subpassIndex, pipelineIn
     local stages = {
         {
             stage = VK_SHADER_STAGE_VERTEX_BIT,
-            shaderPath = "assets/shaders/geometry.vert",
+            shaderPath = "assets/shaders/geometry.vert.spv", -- TODO modify path
             pName = "main",
         },
         {
             stage = VK_SHADER_STAGE_FRAGMENT_BIT,
-            shaderPath = "assets/shaders/geometry.frag",
+            shaderPath = "assets/shaders/geometry.frag.spv",-- TODO modify path
             pName = "main",
         }
     }

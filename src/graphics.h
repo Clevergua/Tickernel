@@ -6,9 +6,15 @@
 #include "cglm.h"
 #include "tickernelCore.h"
 #include "spirv_reflect.h"
-#define TICKERNEL_MATERIAL_DESCRIPTOR_SET 0
-#define TICKERNEL_SUBPASS_DESCRIPTOR_SET 1
-#define TICKERNEL_GLOBAL_DESCRIPTOR_SET 2
+
+typedef enum
+{
+    TICKERNEL_MATERIAL_DESCRIPTOR_SET,
+    TICKERNEL_SUBPASS_DESCRIPTOR_SET,
+    TICKERNEL_GLOBAL_DESCRIPTOR_SET,
+    TICKERNEL_MAX_DESCRIPTOR_SET,
+} TickernelDescriptorSet;
+
 typedef struct
 {
     VkBuffer vkBuffer;
@@ -80,21 +86,13 @@ typedef struct
 
 typedef struct
 {
-    VkImageLayout vkImageLayout;
-    uint32_t set;
-    uint32_t binding;
-    struct PipelineStruct *pPipeline;
-} DynamicAttachmentPipelineRef;
-
-typedef struct
-{
     GraphicsImage graphicsImage;
     VkFormat vkFormat;
     float32_t scaler;
     VkImageUsageFlags vkImageUsageFlags;
     VkMemoryPropertyFlags vkMemoryPropertyFlags;
     VkImageAspectFlags vkImageAspectFlags;
-    TickernelDynamicArray pipelineRefDynamicArray;
+    TickernelDynamicArray subpassPtrDynamicArray;
 } DynamicAttachmentContent;
 
 typedef union
@@ -119,20 +117,22 @@ typedef struct
 
 typedef struct PipelineStruct
 {
-    VkPipelineLayout vkPipelineLayout;                         // for recording command buffers
-    VkDescriptorSetLayout vkDescriptorSetLayout;               // for creating descriptor sets
-    TickernelDynamicArray vkDescriptorPoolSizeDynamicArray;    // for creating descriptor pools
-    VkPipeline vkPipeline;                                     // vkPipeline
-    TickernelDynamicArray materialPtrDynamicArray;             // materials
+    VkPipelineLayout vkPipelineLayout;                      // for recording command buffers
+    VkDescriptorSetLayout vkDescriptorSetLayout;            // for creating descriptor set
+    TickernelDynamicArray vkDescriptorPoolSizeDynamicArray; // for creating descriptor pool
+    VkPipeline vkPipeline;                                  // vkPipeline
+    TickernelDynamicArray materialPtrDynamicArray;          // materials
 } Pipeline;
 
 typedef struct
 {
     TickernelDynamicArray pipelinePtrDynamicArray;
-    uint32_t inputAttachmentCount;
-    VkAttachmentReference *inputAttachmentReferences;
-    VkDescriptorSet vkDescriptorSet;
-    VkDescriptorPool vkDescriptorPool;
+    uint32_t inputAttachmentReferenceCount;                 // for recreate descriptor set
+    VkAttachmentReference *inputAttachmentReferences;       // for recreate descriptor set
+    VkDescriptorSetLayout vkDescriptorSetLayout;            // for creating descriptor set
+    TickernelDynamicArray vkDescriptorPoolSizeDynamicArray; // for creating descriptor pool
+    VkDescriptorPool vkDescriptorPool;                      // for creating descriptor set
+    VkDescriptorSet vkDescriptorSet;                        // subpass descriptor set
 } Subpass;
 
 typedef struct
@@ -193,13 +193,18 @@ typedef struct
 
     TickernelDynamicArray renderPassPtrDynamicArray;
     TickernelDynamicArray attachmentPtrDynamicArray;
+    // global VkDescriptorSet
+    VkDescriptorSetLayout vkDescriptorSetLayout;
+    TickernelDynamicArray vkDescriptorPoolSizeDynamicArray;
+    VkDescriptorPool vkDescriptorPool;
+    VkDescriptorSet vkDescriptorSet;
 } GraphicsContext;
 
 void createGraphicsContext(int targetSwapchainImageCount, VkPresentModeKHR targetPresentMode, VkInstance vkInstance, VkSurfaceKHR vkSurface, uint32_t swapchainWidth, uint32_t swapchainHeight, GraphicsContext *pGraphicsContext);
 void updateGraphicsContext(GraphicsContext *pGraphicsContext, uint32_t swapchainWidth, uint32_t swapchainHeight);
 void destroyGraphicsContext(GraphicsContext *pGraphicsContext);
 
-void createRenderPass(GraphicsContext *pGraphicsContext, uint32_t attachmentCount, VkAttachmentDescription *vkAttachmentDescriptions, Attachment **pAttachments, uint32_t subpassCount, VkSubpassDescription *vkSubpassDescriptions, uint32_t vkSubpassDependencyCount, VkSubpassDependency *vkSubpassDependencies, uint32_t renderPassIndex, RenderPass **ppRenderPass);
+void createRenderPass(GraphicsContext *pGraphicsContext, uint32_t attachmentCount, VkAttachmentDescription *vkAttachmentDescriptions, Attachment **pAttachments, uint32_t subpassCount, VkSubpassDescription *vkSubpassDescriptions, TickernelDynamicArray *spvPathDynamicArrays, uint32_t vkSubpassDependencyCount, VkSubpassDependency *vkSubpassDependencies, uint32_t renderPassIndex, RenderPass **ppRenderPass);
 void destroyRenderPass(GraphicsContext *pGraphicsContext, RenderPass *pRenderPass);
 
 void findSupportedFormat(GraphicsContext *pGraphicsContext, VkFormat *candidates, uint32_t candidatesCount, VkFormatFeatureFlags features, VkImageTiling tiling, VkFormat *pVkFormat);
