@@ -1,6 +1,6 @@
-#include "tickernelCore.h"
+#include "tknCore.h"
 
-static void tickernelInternalError(const char *prefix, const char *format, va_list args)
+static void tknInternalError(const char *prefix, const char *format, va_list args)
 {
     if (prefix)
     {
@@ -31,65 +31,65 @@ static void tickernelInternalError(const char *prefix, const char *format, va_li
     abort();
 }
 
-void tickernelError(const char *format, ...)
+void tknError(const char *format, ...)
 {
     va_list args;
     va_start(args, format);
-    tickernelInternalError("ERROR", format, args);
+    tknInternalError("ERROR", format, args);
     va_end(args);
 }
 
-void tickernelAssert(bool condition, const char *format, ...)
+void tknAssert(bool condition, const char *format, ...)
 {
     if (!condition)
     {
         va_list args;
         va_start(args, format);
-        tickernelInternalError("ASSERTION FAILED", format, args);
+        tknInternalError("ASSERTION FAILED", format, args);
         va_end(args);
     }
 }
 
-void tickernelSleep(uint32_t milliseconds)
+void tknSleep(uint32_t milliseconds)
 {
     usleep(milliseconds * 1000);
 }
 
-void *tickernelMalloc(size_t size)
+void tknMalloc(size_t size, void **output)
 {
-    return malloc(size);
+    *output = malloc(size);
 }
 
-void tickernelFree(void *block)
+void tknFree(void *block)
 {
     free(block);
 }
 
-void tickernelCreateDynamicArray(TickernelDynamicArray *pDynamicArray, size_t dataSize, uint32_t maxCount)
+void tknCreateDynamicArray(size_t dataSize, uint32_t maxCount, TknDynamicArray *pDynamicArray)
 {
     pDynamicArray->maxCount = maxCount;
     pDynamicArray->count = 0;
     pDynamicArray->dataSize = dataSize;
-    pDynamicArray->array = tickernelMalloc(dataSize * maxCount);
+    tknMalloc(dataSize * maxCount, &pDynamicArray->array);
     memset(pDynamicArray->array, 0, dataSize * maxCount);
 }
-void tickernelDestroyDynamicArray(TickernelDynamicArray dynamicArray)
+void tknDestroyDynamicArray(TknDynamicArray dynamicArray)
 {
-    tickernelFree(dynamicArray.array);
+    tknFree(dynamicArray.array);
     dynamicArray.array = NULL;
     dynamicArray.count = 0;
     dynamicArray.maxCount = 0;
 }
-
-void tickernelAddToDynamicArray(TickernelDynamicArray *pDynamicArray, void *pInput, uint32_t index)
+void tknAddToDynamicArray(TknDynamicArray *pDynamicArray, void *pInput, uint32_t index)
 {
-    tickernelAssert(index <= pDynamicArray->count, "Index %u is out of bounds for count %u\n", index, pDynamicArray->count);
+    tknAssert(index <= pDynamicArray->count, "Index %u is out of bounds for count %u\n", index, pDynamicArray->count);
     if (pDynamicArray->count >= pDynamicArray->maxCount)
     {
         pDynamicArray->maxCount *= 2;
-        void *newArray = tickernelMalloc(pDynamicArray->dataSize * pDynamicArray->maxCount);
+        void *newArray;
+        tknMalloc(pDynamicArray->dataSize * pDynamicArray->maxCount, &newArray);
         memcpy(newArray, pDynamicArray->array, pDynamicArray->dataSize * pDynamicArray->count);
-        tickernelFree(pDynamicArray->array);
+        tknFree(pDynamicArray->array);
         pDynamicArray->array = newArray;
     }
     void *targetAddress = (char *)pDynamicArray->array + index * pDynamicArray->dataSize;
@@ -103,8 +103,7 @@ void tickernelAddToDynamicArray(TickernelDynamicArray *pDynamicArray, void *pInp
     memcpy(targetAddress, pInput, pDynamicArray->dataSize);
     pDynamicArray->count++;
 }
-
-void tickernelRemoveFromDynamicArray(TickernelDynamicArray *pDynamicArray, void *pData)
+void tknRemoveFromDynamicArray(TknDynamicArray *pDynamicArray, void *pData)
 {
     for (uint32_t i = 0; i < pDynamicArray->count; i++)
     {
@@ -122,12 +121,11 @@ void tickernelRemoveFromDynamicArray(TickernelDynamicArray *pDynamicArray, void 
             return;
         }
     }
-    tickernelError("Data not found!\n");
+    tknError("Data not found!\n");
 }
-
-void tickernelRemoveAtIndexFromDynamicArray(TickernelDynamicArray *pDynamicArray, uint32_t index)
+void tknRemoveAtIndexFromDynamicArray(TknDynamicArray *pDynamicArray, uint32_t index)
 {
-    tickernelAssert(index < pDynamicArray->count, "Index %u is out of bounds for count %u\n", index, pDynamicArray->count);
+    tknAssert(index < pDynamicArray->count, "Index %u is out of bounds for count %u\n", index, pDynamicArray->count);
     void *target = (char *)pDynamicArray->array + index * pDynamicArray->dataSize;
     if (index < pDynamicArray->count - 1)
     {
@@ -138,14 +136,12 @@ void tickernelRemoveAtIndexFromDynamicArray(TickernelDynamicArray *pDynamicArray
     }
     pDynamicArray->count--;
 }
-
-void tickernelClearDynamicArray(TickernelDynamicArray *pDynamicArray)
+void tknClearDynamicArray(TknDynamicArray *pDynamicArray)
 {
     pDynamicArray->count = 0;
     memset(pDynamicArray->array, 0, pDynamicArray->dataSize * pDynamicArray->maxCount);
 }
-
-void tickernelGetFromDynamicArray(TickernelDynamicArray *pDynamicArray, uint32_t index, void **output)
+void tknGetFromDynamicArray(TknDynamicArray *pDynamicArray, uint32_t index, void **output)
 {
     if (index < pDynamicArray->count)
     {
@@ -154,6 +150,6 @@ void tickernelGetFromDynamicArray(TickernelDynamicArray *pDynamicArray, uint32_t
     }
     else
     {
-        tickernelError("Index %u is out of bounds for count %u\n", index, pDynamicArray->count);
+        tknError("Index %u is out of bounds for count %u\n", index, pDynamicArray->count);
     }
 }
