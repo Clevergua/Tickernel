@@ -1896,22 +1896,23 @@ void createRenderPass(GraphicsContext *pGraphicsContext, uint32_t attachmentCoun
                             {
                                 VkAttachmentReference vkAttachmentReference = inputAttachmentReferences[pSpvReflectDescriptorBinding->input_attachment_index];
                                 Attachment *pAttachment = pRenderPass->pAttachments[vkAttachmentReference.attachment];
+                                VkImageView vkImageView;
                                 if (pAttachment->attachmentType == ATTACHMENT_TYPE_DYNAMIC)
                                 {
-                                    
+                                    vkImageView = pAttachment->attachmentContent.dynamicAttachmentContent.graphicsImage.vkImageView;
                                 }
                                 else if (pAttachment->attachmentType == ATTACHMENT_TYPE_FIXED)
                                 {
-                                    
+                                    vkImageView = pAttachment->attachmentContent.fixedAttachmentContent.graphicsImage.vkImageView;
                                 }
                                 else
                                 {
-                                    
+                                    tickernelError("Unsupported attachment type: %d\n", pAttachment->attachmentType);
                                 }
 
                                 VkDescriptorImageInfo vkDescriptorImageInfo = {
                                     .sampler = VK_NULL_HANDLE,
-                                    .imageView =->imageView,
+                                    .imageView = vkImageView,
                                     .imageLayout = vkAttachmentReference.layout,
                                 };
                                 VkWriteDescriptorSet vkWriteDescriptorSet = {
