@@ -11,7 +11,16 @@ flowchart TD
 ```
 
 
-代码风格设计原则:
-1. 函数名称采用驼峰命名法.
-2. 为了兼容多返回值函数,因此所有函数的返回值均为void.参数中前面的为输入,后面的为输出.
-3. 所有针对对象操作的函数输入均为create(T *) update(T *) destroy(T)
+# Code Style Design Principles
+
+## Function Naming
+Function names use camelCase.
+
+## Return Value and Parameters
+To be compatible with functions that return multiple values, all functions have a return type of void. Among the parameters, the ones at the front are inputs, and the ones at the back are outputs.
+
+## Object Operation Functions and Special Cases
+All functions that operate on objects follow the forms of `create(T *)`, `update(T *)`, and `destroy(T)`, and other functions should be consistent with these as much as possible. However, the `malloc` function uses a method signature with a return value, consistent with the system's `malloc`.
+
+## # Naming Conventions for For Loop Indices
+In multi-level nesting, using i, j, k as indices may cause confusion. Therefore, the index of a for loop must be declared with a meaningful name (e.g., deviceIndex) to avoid confusion.

@@ -1,11 +1,11 @@
 #include "tknEngine.h"
 
-void createTknEngine(uint32_t targetSwapchainImageCount, VkPresentModeKHR targetPresentMode, VkInstance vkInstance, VkSurfaceKHR vkSurface, VkExtent2D swapchainExtent, TknEngine **ppTknEngine)
+void createTknEngine(uint32_t targetSwapchainImageCount, VkSurfaceFormatKHR targetVkSurfaceFormat, VkPresentModeKHR targetVkPresentMode, VkInstance vkInstance, VkSurfaceKHR vkSurface, VkExtent2D swapchainExtent, TknEngine **ppTknEngine)
 {
     GraphicsContext graphicsContext;
-    createGraphicsContext(targetSwapchainImageCount, targetPresentMode, vkInstance, vkSurface, swapchainExtent, &graphicsContext);
+    createGraphicsContext(targetSwapchainImageCount, targetVkSurfaceFormat, targetVkPresentMode, vkInstance, vkSurface, swapchainExtent, &graphicsContext);
 
-    tknMalloc(sizeof(TknEngine), (void **)ppTknEngine);
+    *ppTknEngine = tknMalloc(sizeof(TknEngine));
     **ppTknEngine = (TknEngine){
         .frameCount = 0,
         .graphicsContext = graphicsContext,

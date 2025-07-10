@@ -11,7 +11,7 @@ static void hasAllRequiredExtensions(GraphicsContext *pGraphicsContext, VkPhysic
     char *requiredExtensionNames[] = {
         VK_KHR_SWAPCHAIN_EXTENSION_NAME,
     };
-    uint32_t requiredExtensionCount = TICKERNEL_ARRAY_COUNT(requiredExtensionNames);
+    uint32_t requiredExtensionCount = TKN_ARRAY_COUNT(requiredExtensionNames);
 
     uint32_t extensionCount = 0;
     result = vkEnumerateDeviceExtensionProperties(vkPhysicalDevice, NULL, &extensionCount, NULL);
@@ -263,7 +263,7 @@ static void createLogicalDevice(GraphicsContext *pGraphicsContext)
         "VK_KHR_portability_subset",
         //        "VK_EXT_debug_utils"
     };
-    uint32_t extensionCount = TICKERNEL_ARRAY_COUNT(extensionNames);
+    uint32_t extensionCount = TKN_ARRAY_COUNT(extensionNames);
     VkDeviceCreateInfo vkDeviceCreateInfo =
         {
             .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
@@ -445,7 +445,7 @@ static void createSwapchain(GraphicsContext *pGraphicsContext, uint32_t swapchai
 
         uint32_t queueFamilyIndices[] = {graphicsQueueFamilyIndex, presentQueueFamilyIndex};
         pQueueFamilyIndices = queueFamilyIndices;
-        queueFamilyIndexCount = TICKERNEL_ARRAY_COUNT(queueFamilyIndices);
+        queueFamilyIndexCount = TKN_ARRAY_COUNT(queueFamilyIndices);
     }
     else
     {
@@ -562,7 +562,6 @@ static void createCommandPools(GraphicsContext *pGraphicsContext)
     VkResult result = vkCreateCommandPool(pGraphicsContext->vkDevice, &vkCommandPoolCreateInfo, NULL, &pGraphicsContext->graphicsVkCommandPool);
     tryThrowVulkanError(result);
 }
-
 static void destroyCommandPools(GraphicsContext *pGraphicsContext)
 {
     vkDestroyCommandPool(pGraphicsContext->vkDevice, pGraphicsContext->graphicsVkCommandPool, NULL);

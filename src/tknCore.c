@@ -55,14 +55,14 @@ void tknSleep(uint32_t milliseconds)
     usleep(milliseconds * 1000);
 }
 
-void tknMalloc(size_t size, void **output)
+void *tknMalloc(size_t size)
 {
-    *output = malloc(size);
+    return malloc(size);
 }
 
-void tknFree(void *block)
+void tknFree(void *ptr)
 {
-    free(block);
+    free(ptr);
 }
 
 void tknCreateDynamicArray(size_t dataSize, uint32_t maxCount, TknDynamicArray *pDynamicArray)
@@ -70,7 +70,7 @@ void tknCreateDynamicArray(size_t dataSize, uint32_t maxCount, TknDynamicArray *
     pDynamicArray->maxCount = maxCount;
     pDynamicArray->count = 0;
     pDynamicArray->dataSize = dataSize;
-    tknMalloc(dataSize * maxCount, &pDynamicArray->array);
+    pDynamicArray->array = tknMalloc(dataSize * maxCount);
     memset(pDynamicArray->array, 0, dataSize * maxCount);
 }
 void tknDestroyDynamicArray(TknDynamicArray dynamicArray)
@@ -87,7 +87,7 @@ void tknAddToDynamicArray(TknDynamicArray *pDynamicArray, void *pInput, uint32_t
     {
         pDynamicArray->maxCount *= 2;
         void *newArray;
-        tknMalloc(pDynamicArray->dataSize * pDynamicArray->maxCount, &newArray);
+        newArray = tknMalloc(pDynamicArray->dataSize * pDynamicArray->maxCount);
         memcpy(newArray, pDynamicArray->array, pDynamicArray->dataSize * pDynamicArray->count);
         tknFree(pDynamicArray->array);
         pDynamicArray->array = newArray;

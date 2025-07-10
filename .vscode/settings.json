@@ -95,7 +95,10 @@
         "memory": "c",
         "format": "c",
         "utility": "c",
-        "*.ref": "c"
+        "*.ref": "c",
+        "graphicscore.h": "c",
+        "tkncore.h": "c",
+        "tknengine.h": "c"
     },
-    "cmake.sourceDirectory": "/Users/forgemastergua/Documents/GitHub/Tickernel"
+    "cmake.sourceDirectory": "/Users/hema/Documents/GitHub/Tickernel"
 }

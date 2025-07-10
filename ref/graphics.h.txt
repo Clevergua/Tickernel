@@ -122,12 +122,12 @@ typedef struct PipelineStruct
 
 typedef struct
 {
-    TickernelDynamicArray pipelinePtrDynamicArray;          // pipelines
-    uint32_t inputAttachmentReferenceCount;                 // for recreate descriptor set
-    VkAttachmentReference *inputAttachmentReferences;       // for recreate descriptor set
-    VkDescriptorSetLayout vkDescriptorSetLayout;            // for creating descriptor set
-    VkDescriptorPool vkDescriptorPool;                      // for creating descriptor set
-    VkDescriptorSet vkDescriptorSet;                        // subpass descriptor set
+    TickernelDynamicArray pipelinePtrDynamicArray;    // pipelines
+    uint32_t inputAttachmentReferenceCount;           // for recreate descriptor set
+    VkAttachmentReference *inputAttachmentReferences; // for recreate descriptor set
+    VkDescriptorSetLayout vkDescriptorSetLayout;      // for creating descriptor set
+    VkDescriptorPool vkDescriptorPool;                // for creating descriptor set
+    VkDescriptorSet vkDescriptorSet;                  // subpass descriptor set
 } Subpass;
 
 typedef struct
@@ -156,7 +156,6 @@ typedef struct
 
 typedef struct
 {
-    VkPhysicalDeviceProperties vkPhysicalDeviceProperties;
     int targetSwapchainImageCount;
     VkPresentModeKHR targetPresentMode;
     VkInstance vkInstance;
@@ -166,6 +165,7 @@ typedef struct
     uint32_t swapchainWidth;
     VkPhysicalDevice vkPhysicalDevice;
     uint32_t queueFamilyPropertyCount;
+    VkPhysicalDeviceProperties vkPhysicalDeviceProperties;
     uint32_t graphicsQueueFamilyIndex;
     uint32_t presentQueueFamilyIndex;
     VkDevice vkDevice;

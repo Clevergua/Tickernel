@@ -13,7 +13,9 @@
 #include <unistd.h>
 #include <execinfo.h>
 
-#define TICKERNEL_ARRAY_COUNT(array) (NULL == array) ? 0 : (sizeof(array) / sizeof(array[0]))
+#define TKN_ARRAY_COUNT(array) (NULL == array) ? 0 : (sizeof(array) / sizeof(array[0]))
+#define TKN_CLAMP(x, min, max) \
+    ((x) < (min) ? (min) : ((x) > (max) ? (max) : (x)))
 
 typedef struct
 {
@@ -26,8 +28,8 @@ typedef struct
 void tknError(char const *const _Format, ...);
 void tknAssert(bool condition, char const *const _Format, ...);
 void tknSleep(uint32_t milliseconds);
-void tknMalloc(size_t size, void **output);
-void tknFree(void *block);
+void *tknMalloc(size_t size);
+void tknFree(void *ptr);
 
 void tknCreateDynamicArray(size_t dataSize, uint32_t maxCount, TknDynamicArray *pDynamicArray);
 void tknDestroyDynamicArray(TknDynamicArray dynamicArray);
