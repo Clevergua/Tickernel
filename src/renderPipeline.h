@@ -28,11 +28,23 @@ typedef struct
     VkImage *swapchainImages;
     VkImageView *swapchainImageViews;
     uint32_t swapchainIndex;
-    
+
     VkSemaphore imageAvailableSemaphore;
     VkSemaphore renderFinishedSemaphore;
     VkFence renderFinishedFence;
 
     VkCommandPool graphicsVkCommandPool;
     VkCommandBuffer *graphicsVkCommandBuffers;
+
+    TknDynamicArray renderPassPtrDynamicArray;
 } GraphicsContext;
+
+typedef struct
+{
+    VkRenderPass vkRenderPass;
+    uint32_t vkFramebufferCount;
+    VkFramebuffer *vkFramebuffers;
+} RenderPass;
+
+void createRenderPass(GraphicsContext *pGraphicsContext, uint32_t attachmentCount, VkAttachmentDescription *vkAttachmentDescriptions, Attachment **pAttachments, uint32_t subpassCount, VkSubpassDescription *vkSubpassDescriptions, TknDynamicArray *spvPathDynamicArrays, uint32_t vkSubpassDependencyCount, VkSubpassDependency *vkSubpassDependencies, uint32_t renderPassIndex, RenderPass **ppRenderPass);
+void destroyRenderPass(GraphicsContext *pGraphicsContext, RenderPass *pRenderPass);
