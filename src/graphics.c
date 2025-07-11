@@ -537,7 +537,7 @@ void teardownRenderPipeline(GraphicsContext *pGraphicsContext)
     {
         RenderPass *pRenderPass;
         tknGetFromDynamicArray(&pGraphicsContext->renderPassPtrDynamicArray, pRenderPassIndex, (void **)&pRenderPass);
-        destroyRenderPass(pRenderPass);
+        destroyRenderPass(pGraphicsContext, pRenderPass);
     }
     tknDestroyDynamicArray(pGraphicsContext->renderPassPtrDynamicArray);
 }
@@ -561,7 +561,7 @@ static void recordCommandBuffer(GraphicsContext *pGraphicsContext)
     //             .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
     //             .pNext = NULL,
     //             .renderPass = pRenderPass->vkRenderPass,
-    //             .framebuffer = pRenderPass->vkFramebuffers[swapchainIndex],
+    //             .framebuffer = pRenderPass->vkFramebuffers[swapchainIndex % pRenderPass->vkFramebufferCount],
     //             .renderArea = renderArea,
     //             .clearValueCount = clearValueCount,
     //             .pClearValues = clearValues,
@@ -713,16 +713,22 @@ void updateGraphicsContext(GraphicsContext *pGraphicsContext, VkExtent2D swapcha
         pGraphicsContext->swapchainExtent = swapchainExtent;
 
         recreateSwapchain(pGraphicsContext);
-
-        // TODO Resize dynamic attachments
-        // for (uint32_t i = 0; i < pGraphicsContext->attachmentPtrDynamicArray.count; i++)
-        // {
-        //     Attachment *pAttachment = TICKERNEL_GET_FROM_DYNAMIC_ARRAY(&pGraphicsContext->attachmentPtrDynamicArray, i, Attachment *);
-        //     if (pAttachment->attachmentType != ATTACHMENT_TYPE_DYNAMIC)
-        //     {
-        //         resizeDynamicAttachment(pGraphicsContext, pAttachment);
-        //     }
-        // }
+        // TODO Recreate others dynamic attachments
+        for (uint32_t attachmentPtrIndex = 0; attachmentPtrIndex < pGraphicsContext->dynamicAttachmentPtrDynamicArray.count; attachmentPtrIndex++)
+        {
+            Attachment *pAttachment;
+            tknGetFromDynamicArray(&pGraphicsContext->dynamicAttachmentPtrDynamicArray, attachmentPtrIndex, (void **)&pAttachment);
+            // Destroy the old attachment
+            (pGraphicsContext, pAttachment);
+        }
+        // TODO Recreate framebuffers
+        for (uint32_t renderPassIndex = 0; renderPassIndex < pGraphicsContext->renderPassPtrDynamicArray.count; renderPassIndex++)
+        {
+            RenderPass *pRenderPass;
+            tknGetFromDynamicArray(&pGraphicsContext->renderPassPtrDynamicArray, renderPassIndex, (void **)&pRenderPass);
+            
+        }
+        // TODO Recreate subpass descriptor sets for input attachments
     }
     else
     {

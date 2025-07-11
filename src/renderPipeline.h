@@ -36,6 +36,7 @@ typedef struct
     VkCommandPool graphicsVkCommandPool;
     VkCommandBuffer *graphicsVkCommandBuffers;
 
+    TknDynamicArray dynamicAttachmentPtrDynamicArray;
     TknDynamicArray renderPassPtrDynamicArray;
 } GraphicsContext;
 
@@ -43,8 +44,57 @@ typedef struct
 {
     VkRenderPass vkRenderPass;
     uint32_t vkFramebufferCount;
-    VkFramebuffer *vkFramebuffers;
+    VkFramebuffer *vkFramebuffers; // if using swapchain one for each swapchain image.
 } RenderPass;
+
+typedef struct
+{
+    VkImage vkImage;
+    VkImageView vkImageView;
+    VkDeviceMemory vkDeviceMemory;
+    VkFormat vkFormat;
+    uint32_t width;
+    uint32_t height;
+} FixedAttachmentContent;
+
+typedef struct
+{
+    VkImage vkImage;
+    VkImageView vkImageView;
+    VkDeviceMemory vkDeviceMemory;
+    VkFormat vkFormat;
+    float32_t scaler;
+    VkImageUsageFlags vkImageUsageFlags;
+    VkMemoryPropertyFlags vkMemoryPropertyFlags;
+    VkImageAspectFlags vkImageAspectFlags;
+} DynamicAttachmentContent;
+
+typedef struct
+{
+    VkImage vkImage;
+    VkImageView vkImageView;
+    VkFormat vkFormat;
+} SwapchainAttachmentContent;
+
+typedef union
+{
+    FixedAttachmentContent fixedAttachmentContent;
+    DynamicAttachmentContent dynamicAttachmentContent;
+    SwapchainAttachmentContent swapchainAttachmentContent;
+} AttachmentContent;
+
+typedef enum
+{
+    ATTACHMENT_TYPE_DYNAMIC,
+    ATTACHMENT_TYPE_FIXED,
+    ATTACHMENT_TYPE_SWAPCHAIN,
+} AttachmentType;
+
+typedef struct
+{
+    AttachmentType attachmentType;
+    AttachmentContent attachmentContent;
+} Attachment;
 
 void createRenderPass(GraphicsContext *pGraphicsContext, uint32_t attachmentCount, VkAttachmentDescription *vkAttachmentDescriptions, Attachment **pAttachments, uint32_t subpassCount, VkSubpassDescription *vkSubpassDescriptions, TknDynamicArray *spvPathDynamicArrays, uint32_t vkSubpassDependencyCount, VkSubpassDependency *vkSubpassDependencies, uint32_t renderPassIndex, RenderPass **ppRenderPass);
 void destroyRenderPass(GraphicsContext *pGraphicsContext, RenderPass *pRenderPass);
