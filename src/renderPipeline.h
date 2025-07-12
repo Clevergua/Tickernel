@@ -7,9 +7,20 @@
 
 typedef struct
 {
+    TknDynamicArray pipelinePtrDynamicArray;          // pipelines
+    uint32_t inputAttachmentReferenceCount;           // for recreate descriptor set
+    VkAttachmentReference *inputAttachmentReferences; // for recreate descriptor set
+    VkDescriptorSetLayout vkDescriptorSetLayout;      // for creating descriptor set
+    VkDescriptorPool vkDescriptorPool;                // for creating descriptor set
+    VkDescriptorSet vkDescriptorSet;                  // subpass descriptor set
+} Subpass;
+
+typedef struct
+{
     VkRenderPass vkRenderPass;
     uint32_t vkFramebufferCount;
-    VkFramebuffer *vkFramebuffers; // if using swapchain one for each swapchain image.
+    VkFramebuffer *vkFramebuffers;                    // if using swapchain one for each swapchain image.
+    TknDynamicArray subpassDynamicArray;              // subpasses
 } RenderPass;
 
 typedef struct
@@ -79,7 +90,7 @@ typedef struct
     VkExtent2D swapchainExtent;
     VkSwapchainKHR vkSwapchain;
     uint32_t swapchainImageCount;
-    Attachment *swapchainAttachments;
+    Attachment **swapchainAttachmentPtrs;
     VkImage *swapchainImages;
     VkImageView *swapchainImageViews;
     uint32_t swapchainIndex;
@@ -94,6 +105,15 @@ typedef struct
     TknDynamicArray dynamicAttachmentPtrDynamicArray;
     TknDynamicArray renderPassPtrDynamicArray;
 } GraphicsContext;
+
+void createDynamicAttachment(GraphicsContext *pGraphicsContext, VkFormat vkFormat, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags, float scaler, Attachment **ppAttachment);
+void destroyDynamicAttachment(GraphicsContext *pGraphicsContext, Attachment *pAttachment);
+void resizeDynamicAttachment(GraphicsContext *pGraphicsContext, Attachment *pAttachment);
+
+void createFixedAttachment(GraphicsContext *pGraphicsContext, VkFormat vkFormat, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags, uint32_t width, uint32_t height, Attachment **ppAttachment);
+void destroyFixedAttachment(GraphicsContext *pGraphicsContext, Attachment *pAttachment);
+
+void getSwapchainAttachments(GraphicsContext *pGraphicsContext, uint32_t *pSwapchainAttachmentCount, Attachment ***pAttachments);
 
 void createRenderPass(GraphicsContext *pGraphicsContext, uint32_t attachmentCount, VkAttachmentDescription *vkAttachmentDescriptions, Attachment **pAttachments, uint32_t subpassCount, VkSubpassDescription *vkSubpassDescriptions, TknDynamicArray *spvPathDynamicArrays, uint32_t vkSubpassDependencyCount, VkSubpassDependency *vkSubpassDependencies, uint32_t renderPassIndex, RenderPass **ppRenderPass);
 void destroyRenderPass(GraphicsContext *pGraphicsContext, RenderPass *pRenderPass);

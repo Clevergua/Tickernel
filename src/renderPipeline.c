@@ -173,25 +173,258 @@ void destroyFixedAttachment(GraphicsContext *pGraphicsContext, Attachment *pAtta
     tknFree(pAttachment);
 }
 
-void getSwapchainAttachment(GraphicsContext *pGraphicsContext, uint32_t swapchainIndex, Attachment **ppAttachment)
+void getSwapchainAttachments(GraphicsContext *pGraphicsContext, uint32_t *pSwapchainAttachmentCount, Attachment ***pAttachments)
 {
-    Attachment *pAttachment = tknMalloc(sizeof(Attachment));
-    SwapchainAttachmentContent swapchainAttachmentContent = {
-        .swapchainIndex = swapchainIndex,
-    };
-    *pAttachment = (Attachment){
-        .attachmentType = ATTACHMENT_TYPE_SWAPCHAIN,
-        .attachmentContent.swapchainAttachmentContent = swapchainAttachmentContent,
-    };
-    *ppAttachment = pAttachment;
+    *pSwapchainAttachmentCount = pGraphicsContext->swapchainImageCount;
+    *pAttachments = pGraphicsContext->swapchainAttachmentPtrs;
 }
 
-// void createRenderPass(GraphicsContext *pGraphicsContext, uint32_t attachmentCount, VkAttachmentDescription *vkAttachmentDescriptions, Attachment **pAttachments, uint32_t subpassCount, VkSubpassDescription *vkSubpassDescriptions, TknDynamicArray *spvPathDynamicArrays, uint32_t vkSubpassDependencyCount, VkSubpassDependency *vkSubpassDependencies, uint32_t renderPassIndex, RenderPass **ppRenderPass)
-// {
+void createRenderPass(GraphicsContext *pGraphicsContext, uint32_t attachmentCount, VkAttachmentDescription *vkAttachmentDescriptions, Attachment **pAttachments, uint32_t subpassCount, VkSubpassDescription *vkSubpassDescriptions, TknDynamicArray *spvPathDynamicArrays, uint32_t vkSubpassDependencyCount, VkSubpassDependency *vkSubpassDependencies, uint32_t renderPassIndex, RenderPass **ppRenderPass)
+{
+    RenderPass *pRenderPass = tickernelMalloc(sizeof(RenderPass));
+    VkDevice vkDevice = pGraphicsContext->vkDevice;
+    bool useSwapchain = false;
+    pRenderPass->pAttachmentCount = attachmentCount;
+    pRenderPass->pAttachments = tickernelMalloc(sizeof(Attachment *) * attachmentCount);
+    for (uint32_t i = 0; i < attachmentCount; i++)
+    {
+        pRenderPass->pAttachments[i] = pAttachments[i];
+        Attachment *pAttachment = pAttachments[i];
+        if (ATTACHMENT_TYPE_SWAPCHAIN == pAttachment->attachmentType)
+        {
+            useSwapchain = true;
+            vkAttachmentDescriptions[i].format = pGraphicsContext->surfaceFormat.format;
+        }
+        else if (ATTACHMENT_TYPE_DYNAMIC == pAttachment->attachmentType)
+        {
+            vkAttachmentDescriptions[i].format = pAttachment->attachmentContent.dynamicAttachmentContent.vkFormat;
+        }
+        else
+        {
+            vkAttachmentDescriptions[i].format = pAttachment->attachmentContent.fixedAttachmentContent.vkFormat;
+        }
+    }
 
-// }
+    VkRenderPassCreateInfo vkRenderPassCreateInfo = {
+        .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
+        .pNext = NULL,
+        .flags = 0,
+        .attachmentCount = attachmentCount,
+        .pAttachments = vkAttachmentDescriptions,
+        .subpassCount = subpassCount,
+        .pSubpasses = vkSubpassDescriptions,
+        .dependencyCount = vkSubpassDependencyCount,
+        .pDependencies = vkSubpassDependencies,
+    };
+    VkResult result = vkCreateRenderPass(vkDevice, &vkRenderPassCreateInfo, NULL, &pRenderPass->vkRenderPass);
+    tryThrowVulkanError(result);
 
-// void destroyRenderPass(GraphicsContext *pGraphicsContext, RenderPass *pRenderPass)
-// {
+    if (useSwapchain)
+    {
+        pRenderPass->vkFramebufferCount = pGraphicsContext->swapchainImageCount;
+        pRenderPass->vkFramebuffers = tickernelMalloc(sizeof(VkFramebuffer) * pRenderPass->vkFramebufferCount);
+        for (uint32_t i = 0; i < pRenderPass->vkFramebufferCount; i++)
+        {
+            createFramebuffer(pGraphicsContext, pRenderPass->vkFramebufferCount, pAttachments, pRenderPass, &pRenderPass->vkFramebuffers[i]);
+        }
+    }
+    else
+    {
+        pRenderPass->vkFramebufferCount = 1;
+        pRenderPass->vkFramebuffers = tickernelMalloc(sizeof(VkFramebuffer));
+        createFramebuffer(pGraphicsContext, pRenderPass->vkFramebufferCount, pAttachments, pRenderPass, &pRenderPass->vkFramebuffers[0]);
+    }
 
-// }
+    pRenderPass->subpassCount = subpassCount;
+    pRenderPass->subpasses = tickernelMalloc(sizeof(Subpass) * pRenderPass->subpassCount);
+    for (uint32_t subpassIndex = 0; subpassIndex < pRenderPass->subpassCount; subpassIndex++)
+    {
+        // pipelines
+        TickernelDynamicArray pipelinePtrDynamicArray;
+        tickernelCreateDynamicArray(&pipelinePtrDynamicArray, sizeof(Pipeline *), 4);
+        // for recreate descriptor set
+        uint32_t inputAttachmentReferenceCount = vkSubpassDescriptions[subpassIndex].inputAttachmentCount;
+        // for recreate descriptor set
+        VkAttachmentReference *inputAttachmentReferences = tickernelMalloc(sizeof(VkAttachmentReference) * vkSubpassDescriptions[subpassIndex].inputAttachmentCount);
+        memcpy(inputAttachmentReferences, vkSubpassDescriptions[subpassIndex].pInputAttachments, sizeof(VkAttachmentReference) * vkSubpassDescriptions[subpassIndex].inputAttachmentCount);
+        // for creating descriptor set
+        VkDescriptorSetLayout vkDescriptorSetLayout;
+        // for creating descriptor pool
+        VkDescriptorPool vkDescriptorPool;
+        // subpass descriptor set
+        VkDescriptorSet vkDescriptorSet;
+        TickernelDynamicArray pathDynamicArray = spvPathDynamicArrays[subpassIndex];
+
+        TickernelDynamicArray vkDescriptorPoolSizeDynamicArray;
+        tickernelCreateDynamicArray(&vkDescriptorPoolSizeDynamicArray, sizeof(VkDescriptorPoolSize), 4);
+        TickernelDynamicArray vkDescriptorSetLayoutBindingDynamicArray;
+        tickernelCreateDynamicArray(&vkDescriptorSetLayoutBindingDynamicArray, sizeof(VkDescriptorSetLayoutBinding), 4);
+        TickernelDynamicArray vkWriteDescriptorSetDynamicArray;
+        tickernelCreateDynamicArray(&vkWriteDescriptorSetDynamicArray, sizeof(VkWriteDescriptorSet), 1);
+        for (uint32_t pathIndex = 0; pathIndex < pathDynamicArray.count; pathIndex++)
+        {
+            const char *path = TICKERNEL_GET_FROM_DYNAMIC_ARRAY(&pathDynamicArray, pathIndex, const char *);
+            SpvReflectShaderModule spvReflectShaderModule;
+            createSpvReflectShaderModule(path, &spvReflectShaderModule);
+            for (uint32_t setIndex = 0; setIndex < spvReflectShaderModule.descriptor_set_count; setIndex++)
+            {
+                SpvReflectDescriptorSet spvReflectDescriptorSet = spvReflectShaderModule.descriptor_sets[setIndex];
+                // TODO check other descriptor sets.
+                if (TICKERNEL_SUBPASS_DESCRIPTOR_SET == spvReflectDescriptorSet.set)
+                {
+                    for (uint32_t bindingIndex = 0; bindingIndex < spvReflectDescriptorSet.binding_count; bindingIndex++)
+                    {
+                        SpvReflectDescriptorBinding *pSpvReflectDescriptorBinding = spvReflectDescriptorSet.bindings[bindingIndex];
+                        VkDescriptorSetLayoutBinding vkDescriptorSetLayoutBinding = {
+                            .binding = pSpvReflectDescriptorBinding->binding,
+                            .descriptorType = (VkDescriptorType)pSpvReflectDescriptorBinding->descriptor_type,
+                            .descriptorCount = pSpvReflectDescriptorBinding->count,
+                            .stageFlags = (VkShaderStageFlags)spvReflectShaderModule.shader_stage,
+                            .pImmutableSamplers = NULL,
+                        };
+                        uint32_t addedIndex;
+                        for (addedIndex = 0; addedIndex < vkDescriptorSetLayoutBindingDynamicArray.count; addedIndex++)
+                        {
+                            VkDescriptorSetLayoutBinding *pAddedBinding = NULL;
+                            tickernelGetFromDynamicArray(&vkDescriptorSetLayoutBindingDynamicArray, addedIndex, (void **)&pAddedBinding);
+                            if (pAddedBinding->binding == vkDescriptorSetLayoutBinding.binding)
+                            {
+                                tickernelAssert(pAddedBinding->descriptorType == vkDescriptorSetLayoutBinding.descriptorType, "Incompatible descriptor binding");
+                                pAddedBinding->stageFlags |= vkDescriptorSetLayoutBinding.stageFlags;
+                                pAddedBinding->descriptorCount = vkDescriptorSetLayoutBinding.descriptorCount > pAddedBinding->descriptorCount ? vkDescriptorSetLayoutBinding.descriptorCount : pAddedBinding->descriptorCount;
+                                break;
+                            }
+                        }
+                        if (addedIndex < vkDescriptorSetLayoutBindingDynamicArray.count)
+                        {
+                            // Binding already exists, skip adding
+                            continue;
+                        }
+                        else
+                        {
+                            tickernelAddToDynamicArray(&vkDescriptorSetLayoutBindingDynamicArray, &vkDescriptorSetLayoutBinding, vkDescriptorSetLayoutBindingDynamicArray.count);
+                            // Fill vkDescriptorPoolSizeDynamicArray
+                            uint32_t poolSizeIndex;
+                            for (poolSizeIndex = 0; poolSizeIndex < vkDescriptorPoolSizeDynamicArray.count; poolSizeIndex++)
+                            {
+                                VkDescriptorPoolSize *pVkDescriptorPoolSize = NULL;
+                                tickernelGetFromDynamicArray(&vkDescriptorPoolSizeDynamicArray, poolSizeIndex, (void **)&pVkDescriptorPoolSize);
+                                if (pVkDescriptorPoolSize->type == vkDescriptorSetLayoutBinding.descriptorType)
+                                {
+                                    pVkDescriptorPoolSize->descriptorCount += vkDescriptorSetLayoutBinding.descriptorCount;
+                                    break;
+                                }
+                                else
+                                {
+                                    // Skip
+                                }
+                            }
+                            if (poolSizeIndex < vkDescriptorPoolSizeDynamicArray.count)
+                            {
+                                // Pool size already exists, skip adding
+                            }
+                            else
+                            {
+                                VkDescriptorPoolSize vkDescriptorPoolSize = {
+                                    .type = vkDescriptorSetLayoutBinding.descriptorType,
+                                    .descriptorCount = vkDescriptorSetLayoutBinding.descriptorCount,
+                                };
+                                tickernelAddToDynamicArray(&vkDescriptorPoolSizeDynamicArray, &vkDescriptorPoolSize, vkDescriptorPoolSizeDynamicArray.count);
+                            }
+
+                            if (vkDescriptorSetLayoutBinding.descriptorType == VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT)
+                            {
+                                VkAttachmentReference vkAttachmentReference = inputAttachmentReferences[pSpvReflectDescriptorBinding->input_attachment_index];
+                                Attachment *pAttachment = pRenderPass->pAttachments[vkAttachmentReference.attachment];
+                                VkImageView vkImageView;
+                                if (pAttachment->attachmentType == ATTACHMENT_TYPE_DYNAMIC)
+                                {
+                                    vkImageView = pAttachment->attachmentContent.dynamicAttachmentContent.graphicsImage.vkImageView;
+                                }
+                                else if (pAttachment->attachmentType == ATTACHMENT_TYPE_FIXED)
+                                {
+                                    vkImageView = pAttachment->attachmentContent.fixedAttachmentContent.graphicsImage.vkImageView;
+                                }
+                                else
+                                {
+                                    tickernelError("Unsupported attachment type: %d\n", pAttachment->attachmentType);
+                                }
+
+                                VkDescriptorImageInfo vkDescriptorImageInfo = {
+                                    .sampler = VK_NULL_HANDLE,
+                                    .imageView = vkImageView,
+                                    .imageLayout = vkAttachmentReference.layout,
+                                };
+                                VkWriteDescriptorSet vkWriteDescriptorSet = {
+                                    .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+                                    .pNext = NULL,
+                                    .dstSet = VK_NULL_HANDLE,
+                                    .dstBinding = vkDescriptorSetLayoutBinding.binding,
+                                    .dstArrayElement = 0,
+                                    .descriptorCount = 1,
+                                    .descriptorType = vkDescriptorSetLayoutBinding.descriptorType,
+                                    .pImageInfo = &vkDescriptorImageInfo,
+                                    .pBufferInfo = NULL,
+                                    .pTexelBufferView = NULL,
+                                };
+                                tickernelAddToDynamicArray(&vkWriteDescriptorSetDynamicArray, &vkWriteDescriptorSet, vkWriteDescriptorSetDynamicArray.count);
+                            }
+                        }
+                    }
+                    // Skip other sets.
+                    break;
+                }
+                else
+                {
+                    // Skip
+                }
+            }
+            destroySpvReflectShaderModule(&spvReflectShaderModule);
+        }
+        VkDescriptorSetLayoutCreateInfo vkDescriptorSetLayoutCreateInfo = {
+            .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+            .bindingCount = vkDescriptorSetLayoutBindingDynamicArray.count,
+            .pBindings = vkDescriptorSetLayoutBindingDynamicArray.array,
+        };
+        result = vkCreateDescriptorSetLayout(vkDevice, &vkDescriptorSetLayoutCreateInfo, NULL, &vkDescriptorSetLayout);
+        tryThrowVulkanError(result);
+        VkDescriptorPoolCreateInfo vkDescriptorPoolCreateInfo = {
+            .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+            .poolSizeCount = vkDescriptorPoolSizeDynamicArray.count,
+            .pPoolSizes = vkDescriptorPoolSizeDynamicArray.array,
+            .maxSets = 1,
+        };
+        result = vkCreateDescriptorPool(vkDevice, &vkDescriptorPoolCreateInfo, NULL, &vkDescriptorPool);
+        tryThrowVulkanError(result);
+
+        VkDescriptorSetAllocateInfo vkDescriptorSetAllocateInfo = {
+            .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+            .descriptorPool = vkDescriptorPool,
+            .descriptorSetCount = 1,
+            .pSetLayouts = &vkDescriptorSetLayout,
+        };
+        result = vkAllocateDescriptorSets(vkDevice, &vkDescriptorSetAllocateInfo, &vkDescriptorSet);
+        tryThrowVulkanError(result);
+
+        vkUpdateDescriptorSets(vkDevice, vkWriteDescriptorSetDynamicArray.count, vkWriteDescriptorSetDynamicArray.array, 0, NULL);
+
+        Subpass subpass = {
+            .pipelinePtrDynamicArray = pipelinePtrDynamicArray,
+            .inputAttachmentReferenceCount = inputAttachmentReferenceCount,
+            .inputAttachmentReferences = inputAttachmentReferences,
+            .vkDescriptorSetLayout = vkDescriptorSetLayout,
+            .vkDescriptorPool = vkDescriptorPool,
+            .vkDescriptorSet = vkDescriptorSet,
+        };
+        tickernelDestroyDynamicArray(vkDescriptorSetLayoutBindingDynamicArray);
+        tickernelDestroyDynamicArray(vkDescriptorPoolSizeDynamicArray);
+        pRenderPass->subpasses[subpassIndex] = subpass;
+    }
+
+    tickernelAddToDynamicArray(&pGraphicsContext->renderPassPtrDynamicArray, &pRenderPass, renderPassIndex);
+    *ppRenderPass = pRenderPass;
+}
+
+void destroyRenderPass(GraphicsContext *pGraphicsContext, RenderPass *pRenderPass)
+{
+}

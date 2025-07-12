@@ -372,11 +372,12 @@ static void createSwapchain(GraphicsContext *pGraphicsContext, VkExtent2D target
     ASSERT_VK_SUCCESS(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(vkPhysicalDevice, vkSurface, &vkSurfaceCapabilities));
 
     pGraphicsContext->swapchainImageCount = TKN_CLAMP(targetSwapchainImageCount, vkSurfaceCapabilities.minImageCount, vkSurfaceCapabilities.maxImageCount);
-    pGraphicsContext->swapchainAttachments = tknMalloc(pGraphicsContext->swapchainImageCount * sizeof(Attachment));
+    pGraphicsContext->swapchainAttachmentPtrs = tknMalloc(pGraphicsContext->swapchainImageCount * sizeof(Attachment *));
     for (uint32_t i = 0; i < pGraphicsContext->swapchainImageCount; i++)
     {
-        pGraphicsContext->swapchainAttachments[i].attachmentType = ATTACHMENT_TYPE_SWAPCHAIN;
-        pGraphicsContext->swapchainAttachments[i].attachmentContent.swapchainAttachmentContent.swapchainIndex = i;
+        pGraphicsContext->swapchainAttachmentPtrs[i] = tknMalloc(sizeof(Attachment));
+        pGraphicsContext->swapchainAttachmentPtrs[i]->attachmentType = ATTACHMENT_TYPE_SWAPCHAIN;
+        pGraphicsContext->swapchainAttachmentPtrs[i]->attachmentContent.swapchainAttachmentContent.swapchainIndex = i;
     }
 
     VkExtent2D swapchainExtent;
@@ -464,7 +465,11 @@ static void destroySwapchain(GraphicsContext *pGraphicsContext)
     tknFree(pGraphicsContext->swapchainImageViews);
     tknFree(pGraphicsContext->swapchainImages);
     vkDestroySwapchainKHR(vkDevice, pGraphicsContext->vkSwapchain, NULL);
-    tknFree(pGraphicsContext->swapchainAttachments);
+    for (uint32_t i = 0; i < pGraphicsContext->swapchainImageCount; i++)
+    {
+        tknFree(pGraphicsContext->swapchainAttachmentPtrs[i]);
+    }
+    tknFree(pGraphicsContext->swapchainAttachmentPtrs);
 }
 static void recreateSwapchain(GraphicsContext *pGraphicsContext)
 {
@@ -718,13 +723,12 @@ void updateGraphicsContext(GraphicsContext *pGraphicsContext, VkExtent2D swapcha
                swapchainExtent.height);
         pGraphicsContext->swapchainExtent = swapchainExtent;
         recreateSwapchain(pGraphicsContext);
-        
-        // TODO Recreate others dynamic attachments
+
         for (uint32_t attachmentPtrIndex = 0; attachmentPtrIndex < pGraphicsContext->dynamicAttachmentPtrDynamicArray.count; attachmentPtrIndex++)
         {
             Attachment *pAttachment;
             tknGetFromDynamicArray(&pGraphicsContext->dynamicAttachmentPtrDynamicArray, attachmentPtrIndex, (void **)&pAttachment);
-            recreateAttachment(pGraphicsContext, pAttachment);
+            resizeDynamicAttachment(pGraphicsContext, pAttachment);
         }
         // TODO Recreate framebuffers
         for (uint32_t renderPassIndex = 0; renderPassIndex < pGraphicsContext->renderPassPtrDynamicArray.count; renderPassIndex++)
