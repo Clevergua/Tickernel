@@ -370,15 +370,7 @@ static void createSwapchain(GraphicsContext *pGraphicsContext, VkExtent2D target
     uint32_t supportSurfaceFormatCount;
     uint32_t supportPresentModeCount;
     ASSERT_VK_SUCCESS(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(vkPhysicalDevice, vkSurface, &vkSurfaceCapabilities));
-
     pGraphicsContext->swapchainImageCount = TKN_CLAMP(targetSwapchainImageCount, vkSurfaceCapabilities.minImageCount, vkSurfaceCapabilities.maxImageCount);
-    pGraphicsContext->swapchainAttachmentPtrs = tknMalloc(pGraphicsContext->swapchainImageCount * sizeof(Attachment *));
-    for (uint32_t i = 0; i < pGraphicsContext->swapchainImageCount; i++)
-    {
-        pGraphicsContext->swapchainAttachmentPtrs[i] = tknMalloc(sizeof(Attachment));
-        pGraphicsContext->swapchainAttachmentPtrs[i]->attachmentType = ATTACHMENT_TYPE_SWAPCHAIN;
-        pGraphicsContext->swapchainAttachmentPtrs[i]->attachmentContent.swapchainAttachmentContent.swapchainIndex = i;
-    }
 
     VkExtent2D swapchainExtent;
     swapchainExtent.width = TKN_CLAMP(targetSwapchainExtent.width, vkSurfaceCapabilities.minImageExtent.width, vkSurfaceCapabilities.maxImageExtent.width);
@@ -422,7 +414,8 @@ static void createSwapchain(GraphicsContext *pGraphicsContext, VkExtent2D target
             .clipped = VK_TRUE,
             .oldSwapchain = VK_NULL_HANDLE,
         };
-
+    pGraphicsContext->swapchainAttachmentPtr = tknMalloc(sizeof(Attachment));
+    pGraphicsContext->swapchainAttachmentPtr->attachmentType = ATTACHMENT_TYPE_SWAPCHAIN;
     ASSERT_VK_SUCCESS(vkCreateSwapchainKHR(vkDevice, &swapchainCreateInfo, NULL, &pGraphicsContext->vkSwapchain));
     pGraphicsContext->swapchainImages = tknMalloc(pGraphicsContext->swapchainImageCount * sizeof(VkImage));
     ASSERT_VK_SUCCESS(vkGetSwapchainImagesKHR(vkDevice, pGraphicsContext->vkSwapchain, &pGraphicsContext->swapchainImageCount, pGraphicsContext->swapchainImages));
@@ -465,11 +458,7 @@ static void destroySwapchain(GraphicsContext *pGraphicsContext)
     tknFree(pGraphicsContext->swapchainImageViews);
     tknFree(pGraphicsContext->swapchainImages);
     vkDestroySwapchainKHR(vkDevice, pGraphicsContext->vkSwapchain, NULL);
-    for (uint32_t i = 0; i < pGraphicsContext->swapchainImageCount; i++)
-    {
-        tknFree(pGraphicsContext->swapchainAttachmentPtrs[i]);
-    }
-    tknFree(pGraphicsContext->swapchainAttachmentPtrs);
+    tknFree(pGraphicsContext->swapchainAttachmentPtr);
 }
 static void recreateSwapchain(GraphicsContext *pGraphicsContext)
 {

@@ -12,3 +12,4 @@ layout(set = GLOBAL_DESCRIPTOR_SET, binding = 0) uniform GlobalUniform {
     int width;
     int height;
 } globalUniform;
+

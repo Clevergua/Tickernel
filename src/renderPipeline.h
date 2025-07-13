@@ -7,24 +7,6 @@
 
 typedef struct
 {
-    TknDynamicArray pipelinePtrDynamicArray;          // pipelines
-    uint32_t inputAttachmentReferenceCount;           // for recreate descriptor set
-    VkAttachmentReference *inputAttachmentReferences; // for recreate descriptor set
-    VkDescriptorSetLayout vkDescriptorSetLayout;      // for creating descriptor set
-    VkDescriptorPool vkDescriptorPool;                // for creating descriptor set
-    VkDescriptorSet vkDescriptorSet;                  // subpass descriptor set
-} Subpass;
-
-typedef struct
-{
-    VkRenderPass vkRenderPass;
-    uint32_t vkFramebufferCount;
-    VkFramebuffer *vkFramebuffers;                    // if using swapchain one for each swapchain image.
-    TknDynamicArray subpassDynamicArray;              // subpasses
-} RenderPass;
-
-typedef struct
-{
     VkImage vkImage;
     VkImageView vkImageView;
     VkDeviceMemory vkDeviceMemory;
@@ -47,7 +29,6 @@ typedef struct
 
 typedef struct
 {
-    uint32_t swapchainIndex;
 } SwapchainAttachmentContent;
 
 typedef union
@@ -70,6 +51,14 @@ typedef struct
     AttachmentContent attachmentContent;
 } Attachment;
 
+typedef enum
+{
+    TICKERNEL_MATERIAL_DESCRIPTOR_SET,
+    TICKERNEL_SUBPASS_DESCRIPTOR_SET,
+    TICKERNEL_GLOBAL_DESCRIPTOR_SET,
+    TICKERNEL_MAX_DESCRIPTOR_SET,
+} TickernelDescriptorSet;
+
 typedef struct
 {
     VkInstance vkInstance;
@@ -90,7 +79,7 @@ typedef struct
     VkExtent2D swapchainExtent;
     VkSwapchainKHR vkSwapchain;
     uint32_t swapchainImageCount;
-    Attachment **swapchainAttachmentPtrs;
+    Attachment *swapchainAttachmentPtr;
     VkImage *swapchainImages;
     VkImageView *swapchainImageViews;
     uint32_t swapchainIndex;
@@ -104,7 +93,38 @@ typedef struct
 
     TknDynamicArray dynamicAttachmentPtrDynamicArray;
     TknDynamicArray renderPassPtrDynamicArray;
+
 } GraphicsContext;
+
+typedef struct PipelineStruct
+{
+    VkPipelineLayout vkPipelineLayout;                // for recording command buffers
+    VkDescriptorSetLayout vkDescriptorSetLayout;      // for creating descriptor set
+    TknDynamicArray vkDescriptorPoolSizeDynamicArray; // for creating descriptor pool
+    VkPipeline vkPipeline;                            // vkPipeline
+    TknDynamicArray materialPtrDynamicArray;          // materials
+} Pipeline;
+
+typedef struct
+{
+    TknDynamicArray pipelinePtrDynamicArray;          // pipelines
+    uint32_t inputAttachmentReferenceCount;           // for recreate descriptor set
+    VkAttachmentReference *inputAttachmentReferences; // for recreate descriptor set
+    VkDescriptorSetLayout vkDescriptorSetLayout;      // for creating descriptor set
+    VkDescriptorPool vkDescriptorPool;                // for creating descriptor set
+    VkDescriptorSet vkDescriptorSet;                  // subpass descriptor set
+} Subpass;
+
+typedef struct
+{
+    VkRenderPass vkRenderPass;
+    uint32_t attachmentCount;
+    Attachment **attachmentPtrs;
+    uint32_t vkFramebufferCount;
+    VkFramebuffer *vkFramebuffers;
+    uint32_t subpassCount;
+    Subpass *subpasses;
+} RenderPass;
 
 void createDynamicAttachment(GraphicsContext *pGraphicsContext, VkFormat vkFormat, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags, float scaler, Attachment **ppAttachment);
 void destroyDynamicAttachment(GraphicsContext *pGraphicsContext, Attachment *pAttachment);
@@ -113,7 +133,7 @@ void resizeDynamicAttachment(GraphicsContext *pGraphicsContext, Attachment *pAtt
 void createFixedAttachment(GraphicsContext *pGraphicsContext, VkFormat vkFormat, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags, uint32_t width, uint32_t height, Attachment **ppAttachment);
 void destroyFixedAttachment(GraphicsContext *pGraphicsContext, Attachment *pAttachment);
 
-void getSwapchainAttachments(GraphicsContext *pGraphicsContext, uint32_t *pSwapchainAttachmentCount, Attachment ***pAttachments);
+void getSwapchainAttachment(GraphicsContext *pGraphicsContext, uint32_t *pSwapchainAttachmentCount, Attachment **pAttachments);
 
 void createRenderPass(GraphicsContext *pGraphicsContext, uint32_t attachmentCount, VkAttachmentDescription *vkAttachmentDescriptions, Attachment **pAttachments, uint32_t subpassCount, VkSubpassDescription *vkSubpassDescriptions, TknDynamicArray *spvPathDynamicArrays, uint32_t vkSubpassDependencyCount, VkSubpassDependency *vkSubpassDependencies, uint32_t renderPassIndex, RenderPass **ppRenderPass);
 void destroyRenderPass(GraphicsContext *pGraphicsContext, RenderPass *pRenderPass);
