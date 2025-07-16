@@ -479,7 +479,7 @@ void createSubpass(GraphicsContext *pGraphicsContext, uint32_t inputVkAttachment
                                 .dstSet = VK_NULL_HANDLE,
                                 .dstBinding = vkDescriptorSetLayoutBinding.binding,
                                 .dstArrayElement = 0,
-                                .descriptorCount = 1,
+                                .descriptorCount = vkDescriptorSetLayoutBinding.descriptorCount,
                                 .descriptorType = vkDescriptorSetLayoutBinding.descriptorType,
                                 .pImageInfo = &vkDescriptorImageInfo,
                                 .pBufferInfo = NULL,
