@@ -127,6 +127,97 @@ typedef struct
     Subpass *subpasses;
 } RenderPass;
 
+typedef struct
+{
+    VkSampler vkSampler;
+} Sampler;
+
+typedef struct
+{
+    VkImage vkImage;
+    VkImageView vkImageView;
+    VkDeviceMemory vkDeviceMemory;
+} Image;
+
+typedef struct
+{
+    VkBuffer vkBuffer;
+    VkDeviceMemory vkDeviceMemory;
+    void *mapped;
+} Buffer;
+
+// VK_DESCRIPTOR_TYPE_SAMPLER = 0,
+typedef struct
+{
+    Sampler *pSampler;
+} SamplerDescriptor;
+// VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER = 1,
+typedef struct
+{
+    Image *pImage;
+    Sampler *pSampler;
+} CombinedImageSamplerDescriptor;
+// VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE = 2,
+typedef struct
+{
+    Image *pImage;
+} SampledImageDescriptor;
+// VK_DESCRIPTOR_TYPE_STORAGE_IMAGE = 3,
+typedef struct
+{
+    Image *pImage;
+} StorageImageDescriptor;
+// VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER = 4,
+typedef struct
+{
+    Buffer *pBuffer;
+} UniformTexelBufferDescriptor;
+// VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER = 5,
+typedef struct
+{
+    Buffer *pBuffer;
+} StorageTexelBufferDescriptor;
+// VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER = 6,
+typedef struct
+{
+    Buffer *pBuffer;
+} UniformBufferDescriptor;
+// VK_DESCRIPTOR_TYPE_STORAGE_BUFFER = 7,
+typedef struct
+{
+    Buffer *pBuffer;
+} StorageBufferDescriptor;
+// VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC = 8,
+typedef struct
+{
+    Buffer *pBuffer;
+} UniformBufferDynamicDescriptor;
+// VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC = 9,
+typedef struct
+{
+    Buffer *pBuffer;
+} StorageBufferDynamicDescriptor;
+// VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT = 10,
+typedef struct
+{
+    Attachment *pAttachment;
+} InputAttachmentDescriptor;
+
+typedef union
+{
+    SamplerDescriptor samplerDescriptor;
+    CombinedImageSamplerDescriptor combinedImageSamplerDescriptor;
+    SampledImageDescriptor sampledImageDescriptor;
+    StorageImageDescriptor storageImageDescriptor;
+    UniformTexelBufferDescriptor uniformTexelBufferDescriptor;
+    StorageTexelBufferDescriptor storageTexelBufferDescriptor;
+    UniformBufferDescriptor uniformBufferDescriptor;
+    StorageBufferDescriptor storageBufferDescriptor;
+    UniformBufferDynamicDescriptor uniformBufferDynamicDescriptor;
+    StorageBufferDynamicDescriptor storageBufferDynamicDescriptor;
+    InputAttachmentDescriptor inputAttachmentDescriptor;
+} Descriptor;
+
 void createFramebuffers(GraphicsContext *pGraphicsContext, RenderPass *pRenderPass);
 void destroyFramebuffers(GraphicsContext *pGraphicsContext, RenderPass *pRenderPass);
 
