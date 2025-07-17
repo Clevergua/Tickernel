@@ -167,21 +167,18 @@ void destroyFramebuffers(GfxContext *pGfxContext, RenderPass *pRenderPass)
 
 void createSubpass(GfxContext *pGfxContext, uint32_t inputVkAttachmentReferenceCount, const VkAttachmentReference *inputVkAttachmentReferences, TknDynamicArray spvPathDynamicArray, Attachment **attachmentPtrs, Subpass *pSubpass)
 {
-    // pipelines
-    TknDynamicArray pipelinePtrDynamicArray;
-    tknCreateDynamicArray(sizeof(Pipeline *), 1, &pipelinePtrDynamicArray);
+    // for updating descriptor sets
+    TknDynamicArray descriptorBindingDynamicArray;
+    tknCreateDynamicArray(sizeof(DescriptorBinding), 1, &descriptorBindingDynamicArray);
     // for creating descriptor set
     VkDescriptorSetLayout vkDescriptorSetLayout;
     // for creating descriptor pool
     VkDescriptorPool vkDescriptorPool;
     // subpass descriptor set
     VkDescriptorSet vkDescriptorSet;
-    // for rewriting descriptor sets
-    TknDynamicArray vkWriteDescriptorSetDynamicArray;
-    tknCreateDynamicArray(sizeof(VkWriteDescriptorSet), 1, &vkWriteDescriptorSetDynamicArray);
-    // for rewriting descriptor sets
-    TknDynamicArray inputAttachmentIndexDynamicArray;
-    tknCreateDynamicArray(sizeof(uint32_t), 1, &inputAttachmentIndexDynamicArray);
+    // pipelines
+    TknDynamicArray pipelinePtrDynamicArray;
+    tknCreateDynamicArray(sizeof(Pipeline *), 1, &pipelinePtrDynamicArray);
 
     TknDynamicArray vkDescriptorPoolSizeDynamicArray;
     tknCreateDynamicArray(sizeof(VkDescriptorPoolSize), 1, &vkDescriptorPoolSizeDynamicArray);
@@ -347,11 +344,11 @@ void createSubpass(GfxContext *pGfxContext, uint32_t inputVkAttachmentReferenceC
     vkUpdateDescriptorSets(vkDevice, vkWriteDescriptorSetDynamicArray.count, vkWriteDescriptorSetDynamicArray.array, 0, NULL);
 
     Subpass subpass = {
-        .pipelinePtrDynamicArray = pipelinePtrDynamicArray,
-        .vkWriteDescriptorSetDynamicArray = vkWriteDescriptorSetDynamicArray,
+        .descriptorBindingDynamicArray = descriptorBindingDynamicArray,
         .vkDescriptorSetLayout = vkDescriptorSetLayout,
         .vkDescriptorPool = vkDescriptorPool,
         .vkDescriptorSet = vkDescriptorSet,
+        .pipelinePtrDynamicArray = pipelinePtrDynamicArray,
     };
     tknDestroyDynamicArray(vkDescriptorSetLayoutBindingDynamicArray);
     tknDestroyDynamicArray(vkDescriptorPoolSizeDynamicArray);

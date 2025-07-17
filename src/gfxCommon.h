@@ -162,12 +162,11 @@ typedef struct
 
 typedef struct
 {
-    TknDynamicArray pipelinePtrDynamicArray;          // pipelines
-    TknDynamicArray vkWriteDescriptorSetDynamicArray; // for rewriting descriptor sets
-    TknDynamicArray inputAttachmentIndexDynamicArray; // for rewriting descriptor sets
-    VkDescriptorSetLayout vkDescriptorSetLayout;      // for creating descriptor set & pipelines
-    VkDescriptorPool vkDescriptorPool;                // for creating descriptor set
-    VkDescriptorSet vkDescriptorSet;                  // subpass descriptor set
+    TknDynamicArray descriptorBindingDynamicArray; // for update descriptor sets
+    VkDescriptorSetLayout vkDescriptorSetLayout;   // for creating descriptor set & pipelines
+    VkDescriptorPool vkDescriptorPool;             // for creating descriptor set
+    VkDescriptorSet vkDescriptorSet;               // subpass descriptor set
+    TknDynamicArray pipelinePtrDynamicArray;       // pipelines
 } Subpass;
 
 typedef struct

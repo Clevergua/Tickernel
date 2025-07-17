@@ -13,3 +13,4 @@ void getSwapchainAttachmentPtr(GfxContext *pGfxContext, uint32_t *pSwapchainAtta
 void createImagePtr(GfxContext *pGfxContext, VkExtent3D vkExtent3D, VkFormat vkFormat, VkImageTiling vkImageTiling, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags, Image **ppImage);
 void destroyImagePtr(GfxContext *pGfxContext, Image *pImage);
 
+

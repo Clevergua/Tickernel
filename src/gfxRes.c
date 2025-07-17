@@ -91,19 +91,6 @@ static void destroyImage(VkDevice vkDevice, Image image)
     vkFreeMemory(vkDevice, image.vkDeviceMemory, NULL);
 }
 
-void createImagePtr(GfxContext *pGfxContext, VkExtent3D vkExtent3D, VkFormat vkFormat, VkImageTiling vkImageTiling, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags, Image **ppImage)
-{
-    Image image;
-    createImage(pGfxContext->vkDevice, pGfxContext->vkPhysicalDevice, vkExtent3D, vkFormat, VK_IMAGE_TILING_OPTIMAL, vkImageUsageFlags, vkMemoryPropertyFlags, vkImageAspectFlags, &image);
-    *ppImage = tknMalloc(sizeof(Image));
-    **ppImage = image;
-}
-void destroyImagePtr(GfxContext *pGfxContext, Image *pImage)
-{
-    destroyImage(pGfxContext->vkDevice, *pImage);
-    tknFree(pImage);
-}
-
 void createDynamicAttachmentPtr(GfxContext *pGfxContext, VkFormat vkFormat, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags, float scaler, Attachment **ppAttachment)
 {
     Attachment *pAttachment = tknMalloc(sizeof(Attachment));
@@ -185,4 +172,17 @@ void destroyFixedAttachmentPtr(GfxContext *pGfxContext, Attachment *pAttachment)
 void getSwapchainAttachments(GfxContext *pGfxContext, Attachment **pAttachments)
 {
     *pAttachments = pGfxContext->swapchainAttachmentPtr;
+}
+
+void createImagePtr(GfxContext *pGfxContext, VkExtent3D vkExtent3D, VkFormat vkFormat, VkImageTiling vkImageTiling, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags, Image **ppImage)
+{
+    Image image;
+    createImage(pGfxContext->vkDevice, pGfxContext->vkPhysicalDevice, vkExtent3D, vkFormat, VK_IMAGE_TILING_OPTIMAL, vkImageUsageFlags, vkMemoryPropertyFlags, vkImageAspectFlags, &image);
+    *ppImage = tknMalloc(sizeof(Image));
+    **ppImage = image;
+}
+void destroyImagePtr(GfxContext *pGfxContext, Image *pImage)
+{
+    destroyImage(pGfxContext->vkDevice, *pImage);
+    tknFree(pImage);
 }

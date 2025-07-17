@@ -1,8 +1,6 @@
 #pragma once
 #include "gfxRes.h"
 
-
-
 void createFramebuffers(GfxContext *pGfxContext, RenderPass *pRenderPass);
 void destroyFramebuffers(GfxContext *pGfxContext, RenderPass *pRenderPass);
 
