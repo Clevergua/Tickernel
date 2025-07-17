@@ -16,7 +16,7 @@ static void getMemoryType(VkPhysicalDevice vkPhysicalDevice, uint32_t typeFilter
     tknError("Failed to get suitable memory type!");
 }
 
-static void createImage(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkExtent3D vkExtent3D, VkFormat vkFormat, VkImageTiling vkImageTiling, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags, Image *pImage)
+ void createImage(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkExtent3D vkExtent3D, VkFormat vkFormat, VkImageTiling vkImageTiling, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags, Image *pImage)
 {
     VkImage vkImage;
     VkImageView vkImageView;
@@ -132,25 +132,25 @@ void createDynamicAttachmentPtr(GraphicsContext *pGraphicsContext, VkFormat vkFo
 }
 void destroyDynamicAttachmentPtr(GraphicsContext *pGraphicsContext, Attachment *pAttachment)
 {
+    tknAssert(pAttachment->attachmentType == ATTACHMENT_TYPE_DYNAMIC, "Attachment type mismatch!");
     DynamicAttachmentContent dynamicAttachmentContent = pAttachment->attachmentContent.dynamicAttachmentContent;
     destroyImage(pGraphicsContext->vkDevice, dynamicAttachmentContent.image);
     tknFree(pAttachment);
 }
 void resizeDynamicAttachmentPtr(GraphicsContext *pGraphicsContext, Attachment *pAttachment)
 {
+    tknAssert(pAttachment->attachmentType == ATTACHMENT_TYPE_DYNAMIC, "Attachment type mismatch!");
     DynamicAttachmentContent dynamicAttachmentContent = pAttachment->attachmentContent.dynamicAttachmentContent;
     destroyImage(pGraphicsContext->vkDevice, dynamicAttachmentContent.image);
-
-    // Create a new image and image view with the new scaler
     VkExtent3D vkExtent3D = {
-        .width = (uint32_t)(pGraphicsContext->swapchainExtent.width * pAttachment->attachmentContent.dynamicAttachmentContent.scaler),
-        .height = (uint32_t)(pGraphicsContext->swapchainExtent.height * pAttachment->attachmentContent.dynamicAttachmentContent.scaler),
+        .width = (uint32_t)(pGraphicsContext->swapchainExtent.width * dynamicAttachmentContent.scaler),
+        .height = (uint32_t)(pGraphicsContext->swapchainExtent.height * dynamicAttachmentContent.scaler),
         .depth = 1,
     };
     createImage(pGraphicsContext->vkDevice, pGraphicsContext->vkPhysicalDevice, vkExtent3D, dynamicAttachmentContent.vkFormat, VK_IMAGE_TILING_OPTIMAL, dynamicAttachmentContent.vkImageUsageFlags, dynamicAttachmentContent.vkMemoryPropertyFlags, dynamicAttachmentContent.vkImageAspectFlags, &dynamicAttachmentContent.image);
 }
 
-void createFixedAttachment(GraphicsContext *pGraphicsContext, VkFormat vkFormat, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags, uint32_t width, uint32_t height, Attachment **ppAttachment)
+void createFixedAttachmentPtr(GraphicsContext *pGraphicsContext, VkFormat vkFormat, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags, uint32_t width, uint32_t height, Attachment **ppAttachment)
 {
     Attachment *pAttachment = tknMalloc(sizeof(Attachment));
     FixedAttachmentContent fixedAttachmentContent = {
@@ -173,8 +173,9 @@ void createFixedAttachment(GraphicsContext *pGraphicsContext, VkFormat vkFormat,
     };
     *ppAttachment = pAttachment;
 }
-void destroyFixedAttachment(GraphicsContext *pGraphicsContext, Attachment *pAttachment)
+void destroyFixedAttachmentPtr(GraphicsContext *pGraphicsContext, Attachment *pAttachment)
 {
+    tknAssert(pAttachment->attachmentType == ATTACHMENT_TYPE_FIXED, "Attachment type mismatch!");
     VkDevice vkDevice = pGraphicsContext->vkDevice;
     FixedAttachmentContent fixedAttachmentContent = pAttachment->attachmentContent.fixedAttachmentContent;
     destroyImage(vkDevice, fixedAttachmentContent.image);

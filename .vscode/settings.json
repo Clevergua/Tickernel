@@ -99,7 +99,8 @@
         "graphicscore.h": "c",
         "tkncore.h": "c",
         "tknengine.h": "c",
-        "renderpipeline.h": "c"
+        "renderpipeline.h": "c",
+        "renderresources.h": "c"
     },
     "cmake.sourceDirectory": "/Users/hema/Documents/GitHub/Tickernel"
 }
