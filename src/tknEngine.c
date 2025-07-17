@@ -1,6 +1,6 @@
 #include "tknEngine.h"
 
-void createTknEngine(uint32_t targetSwapchainImageCount, VkSurfaceFormatKHR targetVkSurfaceFormat, VkPresentModeKHR targetVkPresentMode, VkInstance vkInstance, VkSurfaceKHR vkSurface, VkExtent2D swapchainExtent, TknEngine **ppTknEngine)
+void createTknEnginePtr(uint32_t targetSwapchainImageCount, VkSurfaceFormatKHR targetVkSurfaceFormat, VkPresentModeKHR targetVkPresentMode, VkInstance vkInstance, VkSurfaceKHR vkSurface, VkExtent2D swapchainExtent, TknEngine **ppTknEngine)
 {
     GfxContext gfxContext;
     createGfxContext(targetSwapchainImageCount, targetVkSurfaceFormat, targetVkPresentMode, vkInstance, vkSurface, swapchainExtent, &gfxContext);
@@ -12,7 +12,7 @@ void createTknEngine(uint32_t targetSwapchainImageCount, VkSurfaceFormatKHR targ
     };
 }
 
-void updateTknEngine(TknEngine *pTknEngine, VkExtent2D swapchainExtent)
+void updateTknEnginePtr(TknEngine *pTknEngine, VkExtent2D swapchainExtent)
 {
     pTknEngine->frameCount++;
     if (pTknEngine->frameCount == UINT32_MAX)
@@ -25,7 +25,7 @@ void updateTknEngine(TknEngine *pTknEngine, VkExtent2D swapchainExtent)
     }
 }
 
-void destroyTknEngine(TknEngine *pTknEngine)
+void destroyTknEnginePtr(TknEngine *pTknEngine)
 {
     destroyGfxContext(pTknEngine->gfxContext);
     tknFree(pTknEngine);

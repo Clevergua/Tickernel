@@ -7,6 +7,6 @@ typedef struct
     GfxContext gfxContext;
 } TknEngine;
 
-void createTknEngine(uint32_t targetSwapchainImageCount, VkSurfaceFormatKHR targetVkSurfaceFormat, VkPresentModeKHR targetVkPresentMode, VkInstance vkInstance, VkSurfaceKHR vkSurface, VkExtent2D swapchainExtent, TknEngine **ppTknEngine);
-void updateTknEngine(TknEngine *pTknEngine, VkExtent2D swapchainExtent);
-void destroyTknEngine(TknEngine *pTknEngine);
+void createTknEnginePtr(uint32_t targetSwapchainImageCount, VkSurfaceFormatKHR targetVkSurfaceFormat, VkPresentModeKHR targetVkPresentMode, VkInstance vkInstance, VkSurfaceKHR vkSurface, VkExtent2D swapchainExtent, TknEngine **ppTknEngine);
+void updateTknEnginePtr(TknEngine *pTknEngine, VkExtent2D swapchainExtent);
+void destroyTknEnginePtr(TknEngine *pTknEngine);
