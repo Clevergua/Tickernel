@@ -1,10 +1,10 @@
 #pragma once
-#include "graphics.h"
+#include "gfx.h"
 
 typedef struct
 {
     uint32_t frameCount;
-    GraphicsContext graphicsContext;
+    GfxContext gfxContext;
 } TknEngine;
 
 void createTknEngine(uint32_t targetSwapchainImageCount, VkSurfaceFormatKHR targetVkSurfaceFormat, VkPresentModeKHR targetVkPresentMode, VkInstance vkInstance, VkSurfaceKHR vkSurface, VkExtent2D swapchainExtent, TknEngine **ppTknEngine);

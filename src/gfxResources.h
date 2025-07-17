@@ -158,14 +158,14 @@ typedef struct
 
     VkPhysicalDevice vkPhysicalDevice;
     VkPhysicalDeviceProperties vkPhysicalDeviceProperties;
-    uint32_t graphicsQueueFamilyIndex;
+    uint32_t gfxQueueFamilyIndex;
     uint32_t presentQueueFamilyIndex;
 
     VkSurfaceFormatKHR surfaceFormat;
     VkPresentModeKHR presentMode;
 
     VkDevice vkDevice;
-    VkQueue vkGraphicsQueue;
+    VkQueue vkGfxQueue;
     VkQueue vkPresentQueue;
 
     VkExtent2D swapchainExtent;
@@ -180,21 +180,21 @@ typedef struct
     VkSemaphore renderFinishedSemaphore;
     VkFence renderFinishedFence;
 
-    VkCommandPool graphicsVkCommandPool;
-    VkCommandBuffer *graphicsVkCommandBuffers;
+    VkCommandPool gfxVkCommandPool;
+    VkCommandBuffer *gfxVkCommandBuffers;
 
     TknDynamicArray dynamicAttachmentPtrDynamicArray;
     TknDynamicArray renderPassPtrDynamicArray;
-} GraphicsContext;
+} GfxContext;
 
-void createDynamicAttachmentPtr(GraphicsContext *pGraphicsContext, VkFormat vkFormat, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags, float scaler, Attachment **ppAttachment);
-void destroyDynamicAttachmentPtr(GraphicsContext *pGraphicsContext, Attachment *pAttachment);
+void createDynamicAttachmentPtr(GfxContext *pGfxContext, VkFormat vkFormat, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags, float scaler, Attachment **ppAttachment);
+void destroyDynamicAttachmentPtr(GfxContext *pGfxContext, Attachment *pAttachment);
 
-void createFixedAttachmentPtr(GraphicsContext *pGraphicsContext, VkFormat vkFormat, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags, uint32_t width, uint32_t height, Attachment **ppAttachment);
-void destroyFixedAttachmentPtr(GraphicsContext *pGraphicsContext, Attachment *pAttachment);
+void createFixedAttachmentPtr(GfxContext *pGfxContext, VkFormat vkFormat, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags, uint32_t width, uint32_t height, Attachment **ppAttachment);
+void destroyFixedAttachmentPtr(GfxContext *pGfxContext, Attachment *pAttachment);
 
-void getSwapchainAttachmentPtr(GraphicsContext *pGraphicsContext, uint32_t *pSwapchainAttachmentCount, Attachment **pAttachments);
+void getSwapchainAttachmentPtr(GfxContext *pGfxContext, uint32_t *pSwapchainAttachmentCount, Attachment **pAttachments);
 
-void createImagePtr(GraphicsContext *pGraphicsContext, VkExtent3D vkExtent3D, VkFormat vkFormat, VkImageTiling vkImageTiling, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags, Image **ppImage);
-void destroyImagePtr(GraphicsContext *pGraphicsContext, Image *pImage);
+void createImagePtr(GfxContext *pGfxContext, VkExtent3D vkExtent3D, VkFormat vkFormat, VkImageTiling vkImageTiling, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags, Image **ppImage);
+void destroyImagePtr(GfxContext *pGfxContext, Image *pImage);
 

@@ -1,4 +1,4 @@
-#include "renderPipeline.h"
+#include "gfxPipeline.h"
 
 static void createSpvReflectShaderModule(const char *filePath, SpvReflectShaderModule *pSpvReflectShaderModule)
 {
@@ -35,9 +35,9 @@ static void destroySpvReflectShaderModule(SpvReflectShaderModule *pSpvReflectSha
     spvReflectDestroyShaderModule(pSpvReflectShaderModule);
 }
 
-void createFramebuffers(GraphicsContext *pGraphicsContext, RenderPass *pRenderPass)
+void createFramebuffers(GfxContext *pGfxContext, RenderPass *pRenderPass)
 {
-    VkDevice vkDevice = pGraphicsContext->vkDevice;
+    VkDevice vkDevice = pGfxContext->vkDevice;
     uint32_t width = UINT32_MAX;
     uint32_t height = UINT32_MAX;
     uint32_t attachmentCount = pRenderPass->attachmentCount;
@@ -49,12 +49,12 @@ void createFramebuffers(GraphicsContext *pGraphicsContext, RenderPass *pRenderPa
         {
             if (width == UINT32_MAX && height == UINT32_MAX)
             {
-                width = pGraphicsContext->swapchainExtent.width;
-                height = pGraphicsContext->swapchainExtent.height;
+                width = pGfxContext->swapchainExtent.width;
+                height = pGfxContext->swapchainExtent.height;
             }
             else
             {
-                tknAssert(width == pGraphicsContext->swapchainExtent.width && height == pGraphicsContext->swapchainExtent.height, "Swapchain attachment size mismatch!");
+                tknAssert(width == pGfxContext->swapchainExtent.width && height == pGfxContext->swapchainExtent.height, "Swapchain attachment size mismatch!");
             }
         }
         else if (ATTACHMENT_TYPE_DYNAMIC == pAttachment->attachmentType)
@@ -62,12 +62,12 @@ void createFramebuffers(GraphicsContext *pGraphicsContext, RenderPass *pRenderPa
             DynamicAttachmentContent dynamicAttachmentContent = pAttachment->attachmentContent.dynamicAttachmentContent;
             if (width == UINT32_MAX && height == UINT32_MAX)
             {
-                width = pGraphicsContext->swapchainExtent.width * dynamicAttachmentContent.scaler;
-                height = pGraphicsContext->swapchainExtent.height * dynamicAttachmentContent.scaler;
+                width = pGfxContext->swapchainExtent.width * dynamicAttachmentContent.scaler;
+                height = pGfxContext->swapchainExtent.height * dynamicAttachmentContent.scaler;
             }
             else
             {
-                tknAssert(width == pGraphicsContext->swapchainExtent.width * dynamicAttachmentContent.scaler && height == pGraphicsContext->swapchainExtent.height * dynamicAttachmentContent.scaler, "Dynamic attachment size mismatch!");
+                tknAssert(width == pGfxContext->swapchainExtent.width * dynamicAttachmentContent.scaler && height == pGfxContext->swapchainExtent.height * dynamicAttachmentContent.scaler, "Dynamic attachment size mismatch!");
             }
         }
         else
@@ -87,17 +87,17 @@ void createFramebuffers(GraphicsContext *pGraphicsContext, RenderPass *pRenderPa
 
     if (pRenderPass->useSwapchain)
     {
-        pRenderPass->vkFramebufferCount = pGraphicsContext->swapchainImageCount;
-        pRenderPass->vkFramebuffers = tknMalloc(sizeof(VkFramebuffer) * pGraphicsContext->swapchainImageCount);
+        pRenderPass->vkFramebufferCount = pGfxContext->swapchainImageCount;
+        pRenderPass->vkFramebuffers = tknMalloc(sizeof(VkFramebuffer) * pGfxContext->swapchainImageCount);
         VkImageView *attachmentVkImageViews = tknMalloc(sizeof(VkImageView) * attachmentCount);
-        for (uint32_t swapchainIndex = 0; swapchainIndex < pGraphicsContext->swapchainImageCount; swapchainIndex++)
+        for (uint32_t swapchainIndex = 0; swapchainIndex < pGfxContext->swapchainImageCount; swapchainIndex++)
         {
             for (uint32_t attachmentIndex = 0; attachmentIndex < attachmentCount; attachmentIndex++)
             {
                 Attachment *pAttachment = attachmentPtrs[attachmentIndex];
                 if (ATTACHMENT_TYPE_SWAPCHAIN == pAttachment->attachmentType)
                 {
-                    attachmentVkImageViews[attachmentIndex] = pGraphicsContext->swapchainImageViews[swapchainIndex];
+                    attachmentVkImageViews[attachmentIndex] = pGfxContext->swapchainImageViews[swapchainIndex];
                 }
                 else if (ATTACHMENT_TYPE_DYNAMIC == pAttachment->attachmentType)
                 {
@@ -155,9 +155,9 @@ void createFramebuffers(GraphicsContext *pGraphicsContext, RenderPass *pRenderPa
         tknFree(attachmentVkImageViews);
     }
 }
-void destroyFramebuffers(GraphicsContext *pGraphicsContext, RenderPass *pRenderPass)
+void destroyFramebuffers(GfxContext *pGfxContext, RenderPass *pRenderPass)
 {
-    VkDevice vkDevice = pGraphicsContext->vkDevice;
+    VkDevice vkDevice = pGfxContext->vkDevice;
     for (uint32_t i = 0; i < pRenderPass->vkFramebufferCount; i++)
     {
         vkDestroyFramebuffer(vkDevice, pRenderPass->vkFramebuffers[i], NULL);
@@ -165,7 +165,7 @@ void destroyFramebuffers(GraphicsContext *pGraphicsContext, RenderPass *pRenderP
     tknFree(pRenderPass->vkFramebuffers);
 }
 
-void createSubpass(GraphicsContext *pGraphicsContext, uint32_t inputVkAttachmentReferenceCount, const VkAttachmentReference *inputVkAttachmentReferences, TknDynamicArray spvPathDynamicArray, Attachment **attachmentPtrs, Subpass *pSubpass)
+void createSubpass(GfxContext *pGfxContext, uint32_t inputVkAttachmentReferenceCount, const VkAttachmentReference *inputVkAttachmentReferences, TknDynamicArray spvPathDynamicArray, Attachment **attachmentPtrs, Subpass *pSubpass)
 {
     // pipelines
     TknDynamicArray pipelinePtrDynamicArray;
@@ -323,7 +323,7 @@ void createSubpass(GraphicsContext *pGraphicsContext, uint32_t inputVkAttachment
         }
         destroySpvReflectShaderModule(&spvReflectShaderModule);
     }
-    VkDevice vkDevice = pGraphicsContext->vkDevice;
+    VkDevice vkDevice = pGfxContext->vkDevice;
     VkDescriptorSetLayoutCreateInfo vkDescriptorSetLayoutCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
         .bindingCount = vkDescriptorSetLayoutBindingDynamicArray.count,
@@ -356,15 +356,15 @@ void createSubpass(GraphicsContext *pGraphicsContext, uint32_t inputVkAttachment
     tknDestroyDynamicArray(vkDescriptorSetLayoutBindingDynamicArray);
     tknDestroyDynamicArray(vkDescriptorPoolSizeDynamicArray);
 }
-void destroySubpass(GraphicsContext *pGraphicsContext, Subpass *pSubpass)
+void destroySubpass(GfxContext *pGfxContext, Subpass *pSubpass)
 {
     for (uint32_t j = 0; j < pSubpass->pipelinePtrDynamicArray.count; j++)
     {
         Pipeline *pPipeline;
         tknGetFromDynamicArray(&pSubpass->pipelinePtrDynamicArray, j, (void **)&pPipeline);
-        // destroyPipeline(pGraphicsContext, pPipeline);
+        // destroyPipeline(pGfxContext, pPipeline);
     }
-    VkDevice vkDevice = pGraphicsContext->vkDevice;
+    VkDevice vkDevice = pGfxContext->vkDevice;
     ASSERT_VK_SUCCESS(vkFreeDescriptorSets(vkDevice, pSubpass->vkDescriptorPool, 1, &pSubpass->vkDescriptorSet));
     vkDestroyDescriptorPool(vkDevice, pSubpass->vkDescriptorPool, NULL);
     vkDestroyDescriptorSetLayout(vkDevice, pSubpass->vkDescriptorSetLayout, NULL);
@@ -373,7 +373,7 @@ void destroySubpass(GraphicsContext *pGraphicsContext, Subpass *pSubpass)
     tknDestroyDynamicArray(pSubpass->pipelinePtrDynamicArray);
 }
 
-void createRenderPassPtr(GraphicsContext *pGraphicsContext, uint32_t attachmentCount, VkAttachmentDescription *vkAttachmentDescriptions, Attachment **inputAttachmentPtrs, uint32_t subpassCount, VkSubpassDescription *vkSubpassDescriptions, TknDynamicArray *spvPathDynamicArrays, uint32_t vkSubpassDependencyCount, VkSubpassDependency *vkSubpassDependencies, uint32_t renderPassIndex, RenderPass **ppRenderPass)
+void createRenderPassPtr(GfxContext *pGfxContext, uint32_t attachmentCount, VkAttachmentDescription *vkAttachmentDescriptions, Attachment **inputAttachmentPtrs, uint32_t subpassCount, VkSubpassDescription *vkSubpassDescriptions, TknDynamicArray *spvPathDynamicArrays, uint32_t vkSubpassDependencyCount, VkSubpassDependency *vkSubpassDependencies, uint32_t renderPassIndex, RenderPass **ppRenderPass)
 {
     RenderPass *pRenderPass = tknMalloc(sizeof(RenderPass));
     Attachment **attachmentPtrs = tknMalloc(sizeof(Attachment *) * attachmentCount);
@@ -389,14 +389,14 @@ void createRenderPassPtr(GraphicsContext *pGraphicsContext, uint32_t attachmentC
         .subpasses = subpasses,
     };
     // Create vkRenderPass
-    VkDevice vkDevice = pGraphicsContext->vkDevice;
+    VkDevice vkDevice = pGfxContext->vkDevice;
     for (uint32_t i = 0; i < attachmentCount; i++)
     {
         Attachment *pAttachment = attachmentPtrs[i];
         pRenderPass->attachmentPtrs[i] = pAttachment;
         if (ATTACHMENT_TYPE_SWAPCHAIN == pAttachment->attachmentType)
         {
-            vkAttachmentDescriptions[i].format = pGraphicsContext->surfaceFormat.format;
+            vkAttachmentDescriptions[i].format = pGfxContext->surfaceFormat.format;
             pRenderPass->useSwapchain = true;
         }
         else if (ATTACHMENT_TYPE_DYNAMIC == pAttachment->attachmentType)
@@ -421,32 +421,32 @@ void createRenderPassPtr(GraphicsContext *pGraphicsContext, uint32_t attachmentC
     };
     ASSERT_VK_SUCCESS(vkCreateRenderPass(vkDevice, &vkRenderPassCreateInfo, NULL, &pRenderPass->vkRenderPass));
     // Create framebuffers and subpasses
-    createFramebuffers(pGraphicsContext, pRenderPass);
+    createFramebuffers(pGfxContext, pRenderPass);
     for (uint32_t subpassIndex = 0; subpassIndex < pRenderPass->subpassCount; subpassIndex++)
     {
-        createSubpass(pGraphicsContext, vkSubpassDescriptions[subpassIndex].inputAttachmentCount, vkSubpassDescriptions[subpassIndex].pInputAttachments, spvPathDynamicArrays[subpassIndex], attachmentPtrs, &pRenderPass->subpasses[subpassIndex]);
+        createSubpass(pGfxContext, vkSubpassDescriptions[subpassIndex].inputAttachmentCount, vkSubpassDescriptions[subpassIndex].pInputAttachments, spvPathDynamicArrays[subpassIndex], attachmentPtrs, &pRenderPass->subpasses[subpassIndex]);
     }
-    tknAddToDynamicArray(&pGraphicsContext->renderPassPtrDynamicArray, &pRenderPass, renderPassIndex);
+    tknAddToDynamicArray(&pGfxContext->renderPassPtrDynamicArray, &pRenderPass, renderPassIndex);
     *ppRenderPass = pRenderPass;
 }
 
-void destroyRenderPassPtr(GraphicsContext *pGraphicsContext, RenderPass *pRenderPass)
+void destroyRenderPassPtr(GfxContext *pGfxContext, RenderPass *pRenderPass)
 {
     VkResult result;
-    VkDevice vkDevice = pGraphicsContext->vkDevice;
-    tknRemoveFromDynamicArray(&pGraphicsContext->renderPassPtrDynamicArray, pRenderPass);
+    VkDevice vkDevice = pGfxContext->vkDevice;
+    tknRemoveFromDynamicArray(&pGfxContext->renderPassPtrDynamicArray, pRenderPass);
 
     for (uint32_t i = 0; i < pRenderPass->subpassCount; i++)
     {
         Subpass *pSubpass = &pRenderPass->subpasses[i];
-        destroySubpass(pGraphicsContext, pSubpass);
+        destroySubpass(pGfxContext, pSubpass);
     }
 
     tknFree(pRenderPass->subpasses);
 
-    destroyFramebuffers(pGraphicsContext, pRenderPass);
+    destroyFramebuffers(pGfxContext, pRenderPass);
 
-    vkDestroyRenderPass(pGraphicsContext->vkDevice, pRenderPass->vkRenderPass, NULL);
+    vkDestroyRenderPass(pGfxContext->vkDevice, pRenderPass->vkRenderPass, NULL);
     tknFree(pRenderPass->attachmentPtrs);
     tknFree(pRenderPass);
 }

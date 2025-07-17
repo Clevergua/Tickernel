@@ -1,5 +1,5 @@
 #pragma once
-#include "renderResources.h"
+#include "gfxResources.h"
 
 typedef struct PipelineStruct
 {
@@ -32,8 +32,8 @@ typedef struct
     Subpass *subpasses;
 } RenderPass;
 
-void createFramebuffers(GraphicsContext *pGraphicsContext, RenderPass *pRenderPass);
-void destroyFramebuffers(GraphicsContext *pGraphicsContext, RenderPass *pRenderPass);
+void createFramebuffers(GfxContext *pGfxContext, RenderPass *pRenderPass);
+void destroyFramebuffers(GfxContext *pGfxContext, RenderPass *pRenderPass);
 
-void createRenderPassPtr(GraphicsContext *pGraphicsContext, uint32_t attachmentCount, VkAttachmentDescription *vkAttachmentDescriptions, Attachment **inputAttachmentPtrs, uint32_t subpassCount, VkSubpassDescription *vkSubpassDescriptions, TknDynamicArray *spvPathDynamicArrays, uint32_t vkSubpassDependencyCount, VkSubpassDependency *vkSubpassDependencies, uint32_t renderPassIndex, RenderPass **ppRenderPass);
-void destroyRenderPassPtr(GraphicsContext *pGraphicsContext, RenderPass *pRenderPass);
+void createRenderPassPtr(GfxContext *pGfxContext, uint32_t attachmentCount, VkAttachmentDescription *vkAttachmentDescriptions, Attachment **inputAttachmentPtrs, uint32_t subpassCount, VkSubpassDescription *vkSubpassDescriptions, TknDynamicArray *spvPathDynamicArrays, uint32_t vkSubpassDependencyCount, VkSubpassDependency *vkSubpassDependencies, uint32_t renderPassIndex, RenderPass **ppRenderPass);
+void destroyRenderPassPtr(GfxContext *pGfxContext, RenderPass *pRenderPass);

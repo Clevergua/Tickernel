@@ -2,13 +2,13 @@
 
 void createTknEngine(uint32_t targetSwapchainImageCount, VkSurfaceFormatKHR targetVkSurfaceFormat, VkPresentModeKHR targetVkPresentMode, VkInstance vkInstance, VkSurfaceKHR vkSurface, VkExtent2D swapchainExtent, TknEngine **ppTknEngine)
 {
-    GraphicsContext graphicsContext;
-    createGraphicsContext(targetSwapchainImageCount, targetVkSurfaceFormat, targetVkPresentMode, vkInstance, vkSurface, swapchainExtent, &graphicsContext);
+    GfxContext gfxContext;
+    createGfxContext(targetSwapchainImageCount, targetVkSurfaceFormat, targetVkPresentMode, vkInstance, vkSurface, swapchainExtent, &gfxContext);
 
     *ppTknEngine = tknMalloc(sizeof(TknEngine));
     **ppTknEngine = (TknEngine){
         .frameCount = 0,
-        .graphicsContext = graphicsContext,
+        .gfxContext = gfxContext,
     };
 }
 
@@ -21,12 +21,12 @@ void updateTknEngine(TknEngine *pTknEngine, VkExtent2D swapchainExtent)
     }
     else
     {
-        updateGraphicsContext(&pTknEngine->graphicsContext, swapchainExtent);
+        updateGfxContext(&pTknEngine->gfxContext, swapchainExtent);
     }
 }
 
 void destroyTknEngine(TknEngine *pTknEngine)
 {
-    destroyGraphicsContext(pTknEngine->graphicsContext);
+    destroyGfxContext(pTknEngine->gfxContext);
     tknFree(pTknEngine);
 }
