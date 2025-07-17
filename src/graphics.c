@@ -537,7 +537,7 @@ void teardownRenderPipeline(GraphicsContext *pGraphicsContext)
     {
         RenderPass *pRenderPass;
         tknGetFromDynamicArray(&pGraphicsContext->renderPassPtrDynamicArray, pRenderPassIndex, (void **)&pRenderPass);
-        destroyRenderPass(pGraphicsContext, pRenderPass);
+        destroyRenderPassPtr(pGraphicsContext, pRenderPass);
     }
     tknDestroyDynamicArray(pGraphicsContext->renderPassPtrDynamicArray);
 }
@@ -730,7 +730,15 @@ void updateGraphicsContext(GraphicsContext *pGraphicsContext, VkExtent2D swapcha
         {
             Attachment *pAttachment;
             tknGetFromDynamicArray(&pGraphicsContext->dynamicAttachmentPtrDynamicArray, attachmentPtrIndex, (void **)&pAttachment);
-            resizeDynamicAttachment(pGraphicsContext, pAttachment);
+            DynamicAttachmentContent dynamicAttachmentContent = pAttachment->attachmentContent.dynamicAttachmentContent;
+            destroyImage(pGraphicsContext->vkDevice, dynamicAttachmentContent.image);
+            // Create a new image and image view with the new scaler
+            VkExtent3D vkExtent3D = {
+                .width = (uint32_t)(pGraphicsContext->swapchainExtent.width * pAttachment->attachmentContent.dynamicAttachmentContent.scaler),
+                .height = (uint32_t)(pGraphicsContext->swapchainExtent.height * pAttachment->attachmentContent.dynamicAttachmentContent.scaler),
+                .depth = 1,
+            };
+            createImage(pGraphicsContext->vkDevice, pGraphicsContext->vkPhysicalDevice, vkExtent3D, dynamicAttachmentContent.vkFormat, VK_IMAGE_TILING_OPTIMAL, dynamicAttachmentContent.vkImageUsageFlags, dynamicAttachmentContent.vkMemoryPropertyFlags, dynamicAttachmentContent.vkImageAspectFlags, &dynamicAttachmentContent.image);
         }
         for (uint32_t renderPassIndex = 0; renderPassIndex < pGraphicsContext->renderPassPtrDynamicArray.count; renderPassIndex++)
         {
@@ -747,7 +755,6 @@ void updateGraphicsContext(GraphicsContext *pGraphicsContext, VkExtent2D swapcha
             }
         }
         // TODO Recreate subpass descriptor sets for input attachments
-        
     }
     else
     {
