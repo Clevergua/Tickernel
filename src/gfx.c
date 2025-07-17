@@ -730,7 +730,7 @@ void updateGfxContext(GfxContext *pGfxContext, VkExtent2D swapchainExtent)
         {
             Attachment *pAttachment;
             tknGetFromDynamicArray(&pGfxContext->dynamicAttachmentPtrDynamicArray, attachmentPtrIndex, (void **)&pAttachment);
-            DynamicAttachmentContent dynamicAttachmentContent = pAttachment->attachmentContent.dynamicAttachmentContent;
+            resizeDynamicAttachmentPtr(pGfxContext, pAttachment);
         }
         for (uint32_t renderPassIndex = 0; renderPassIndex < pGfxContext->renderPassPtrDynamicArray.count; renderPassIndex++)
         {

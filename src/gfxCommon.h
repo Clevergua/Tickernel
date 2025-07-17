@@ -216,5 +216,4 @@ typedef struct
 
     TknDynamicArray dynamicAttachmentPtrDynamicArray;
     TknDynamicArray renderPassPtrDynamicArray;
-    RenderPass rp;
 } GfxContext;
