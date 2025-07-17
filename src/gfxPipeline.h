@@ -1,5 +1,5 @@
 #pragma once
-#include "gfxResources.h"
+#include "gfxRes.h"
 
 typedef struct PipelineStruct
 {

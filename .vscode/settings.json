@@ -101,7 +101,8 @@
         "tknengine.h": "c",
         "renderpipeline.h": "c",
         "renderresources.h": "c",
-        "gfxpipeline.h": "c"
+        "gfxpipeline.h": "c",
+        "gfxres.h": "c"
     },
     "cmake.sourceDirectory": "/Users/forgemastergua/Documents/GitHub/Tickernel"
 }
