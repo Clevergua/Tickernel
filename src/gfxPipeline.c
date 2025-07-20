@@ -169,8 +169,10 @@ void cleanupFramebuffers(GfxContext *pGfxContext, RenderPass *pRenderPass)
 
 Subpass createSubpass(GfxContext *pGfxContext, uint32_t inputVkAttachmentReferenceCount, const VkAttachmentReference *inputVkAttachmentReferences, TknDynamicArray spvPathDynamicArray, Attachment **attachmentPtrs)
 {
+
     // for updating descriptor sets
-    TknDynamicArray descriptorBindingDynamicArray = tknCreateDynamicArray(sizeof(DescriptorBinding), 1);
+    uint32_t descriptorBindingCount = 0;
+    DescriptorBinding *descriptorBindings = NULL;
     // for creating descriptor set
     VkDescriptorSetLayout vkDescriptorSetLayout;
     // for creating descriptor pool
@@ -181,7 +183,7 @@ Subpass createSubpass(GfxContext *pGfxContext, uint32_t inputVkAttachmentReferen
     TknDynamicArray pipelinePtrDynamicArray = tknCreateDynamicArray(sizeof(Pipeline *), 1);
 
     TknDynamicArray vkDescriptorPoolSizeDynamicArray = tknCreateDynamicArray(sizeof(VkDescriptorPoolSize), 1);
-    TknDynamicArray vkDescriptorSetLayoutBindingDynamicArray = tknCreateDynamicArray(sizeof(VkDescriptorSetLayoutBinding), 1);
+    VkDescriptorSetLayoutBinding *vkDescriptorSetLayoutBindings = NULL;
 
     for (uint32_t pathIndex = 0; pathIndex < spvPathDynamicArray.count; pathIndex++)
     {
@@ -195,6 +197,21 @@ Subpass createSubpass(GfxContext *pGfxContext, uint32_t inputVkAttachmentReferen
                 for (uint32_t bindingIndex = 0; bindingIndex < spvReflectDescriptorSet.binding_count; bindingIndex++)
                 {
                     SpvReflectDescriptorBinding *pSpvReflectDescriptorBinding = spvReflectDescriptorSet.bindings[bindingIndex];
+                    if (pSpvReflectDescriptorBinding->binding < descriptorBindingCount)
+                    {
+                        // Skip, already counted
+                    }
+                    else
+                    {
+                        descriptorBindingCount = pSpvReflectDescriptorBinding->binding + 1;
+                    }
+                }
+                descriptorBindings = tknMalloc(sizeof(DescriptorBinding) * descriptorBindingCount);
+
+                for (uint32_t bindingIndex = 0; bindingIndex < spvReflectDescriptorSet.binding_count; bindingIndex++)
+                {
+                    SpvReflectDescriptorBinding *pSpvReflectDescriptorBinding = spvReflectDescriptorSet.bindings[bindingIndex];
+
                     VkDescriptorSetLayoutBinding vkDescriptorSetLayoutBinding = {
                         .binding = pSpvReflectDescriptorBinding->binding,
                         .descriptorType = (VkDescriptorType)pSpvReflectDescriptorBinding->descriptor_type,

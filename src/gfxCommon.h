@@ -162,11 +162,12 @@ typedef struct
 
 typedef struct
 {
-    TknDynamicArray descriptorBindingDynamicArray; // for update descriptor sets
-    VkDescriptorSetLayout vkDescriptorSetLayout;   // for creating descriptor set & pipelines
-    VkDescriptorPool vkDescriptorPool;             // for creating descriptor set
-    VkDescriptorSet vkDescriptorSet;               // subpass descriptor set
-    TknDynamicArray pipelinePtrDynamicArray;       // pipelines
+    uint32_t descriptorBindingCount;             // for update descriptor sets
+    DescriptorBinding *descriptorBindings;       // for update descriptor sets
+    VkDescriptorSetLayout vkDescriptorSetLayout; // for creating descriptor set & pipelines
+    VkDescriptorPool vkDescriptorPool;           // for creating descriptor set
+    VkDescriptorSet vkDescriptorSet;             // subpass descriptor set
+    TknDynamicArray pipelinePtrDynamicArray;     // pipelines
 } Subpass;
 
 typedef struct
@@ -201,7 +202,7 @@ typedef struct
     VkExtent2D swapchainExtent;
     VkSwapchainKHR vkSwapchain;
     uint32_t swapchainImageCount;
-    Attachment *swapchainAttachmentPtr; 
+    Attachment *swapchainAttachmentPtr;
     VkImage *swapchainImages;
     VkImageView *swapchainImageViews;
     uint32_t swapchainIndex;
