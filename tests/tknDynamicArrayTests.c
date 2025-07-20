@@ -1,281 +1,276 @@
 #include "tknCore.h"
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
-// 定义一个测试用的结构体（验证复杂数据类型的处理）
+// 测试用结构体（验证复杂类型处理）
 typedef struct {
     int id;
-    char name[16];
-} TestStruct;
+    char name[32];
+    float score;
+} Student;
 
-// 初始化与销毁测试
-static void testDynamicArrayInitialization() {
-    printf("Running testDynamicArrayInitialization...\n");
-    
-    // 测试int类型数组初始化
-    TknDynamicArray intArray = tknCreateDynamicArray(sizeof(int), 5);
-    tknAssert(intArray.dataSize == sizeof(int), "int array dataSize mismatch");
-    tknAssert(intArray.maxCount == 5, "int array maxCount should be 5");
-    tknAssert(intArray.count == 0, "int array initial count should be 0");
-    tknAssert(intArray.array != NULL, "int array memory should be allocated");
-    
-    // 测试结构体类型数组初始化
-    TknDynamicArray structArray = tknCreateDynamicArray(sizeof(TestStruct), 3);
-    tknAssert(structArray.dataSize == sizeof(TestStruct), "struct array dataSize mismatch");
-    tknAssert(structArray.maxCount == 3, "struct array maxCount should be 3");
-    tknAssert(structArray.count == 0, "struct array initial count should be 0");
-    
-    // 销毁数组
-    tknDestroyDynamicArray(intArray);
-    tknDestroyDynamicArray(structArray);
-    
-    printf("testDynamicArrayInitialization passed.\n\n");
+// 辅助函数：创建测试用Student
+static Student createStudent(int id, const char* name, float score) {
+    Student s;
+    s.id = id;
+    strncpy(s.name, name, sizeof(s.name)-1);
+    s.name[sizeof(s.name)-1] = '\0'; // 确保字符串结束
+    s.score = score;
+    return s;
 }
 
-// 添加元素测试（包括扩容）
-static void testAddToDynamicArray() {
-    printf("Running testAddToDynamicArray...\n");
-    
-    // 测试int数组添加与扩容
-    TknDynamicArray intArray = tknCreateDynamicArray(sizeof(int), 2); // 初始maxCount=2
-    
-    // 添加第一个元素（索引0，末尾）
-    int val1 = 10;
-    tknAddToDynamicArray(&intArray, &val1, 0);
-    tknAssert(intArray.count == 1, "int array count should be 1 after first add");
-    tknAssert(intArray.maxCount == 2, "maxCount should remain 2 (not full)");
-    
-    // 添加第二个元素（索引1，末尾）
-    int val2 = 20;
-    tknAddToDynamicArray(&intArray, &val2, 1);
-    tknAssert(intArray.count == 2, "int array count should be 2 after second add");
-    tknAssert(intArray.maxCount == 2, "maxCount should still be 2 (now full)");
-    
-    // 添加第三个元素（触发扩容，maxCount翻倍为4）
-    int val3 = 30;
-    tknAddToDynamicArray(&intArray, &val3, 2);
-    tknAssert(intArray.count == 3, "int array count should be 3 after third add");
-    tknAssert(intArray.maxCount == 4, "maxCount should double to 4 after扩容");
-    
-    // 验证数据正确性（扩容后数据未丢失）
-    int* ptr;
-    tknGetFromDynamicArray(&intArray, 0, (void**)&ptr);
-    tknAssert(*ptr == 10, "int array[0] should be 10");
-    tknGetFromDynamicArray(&intArray, 1, (void**)&ptr);
-    tknAssert(*ptr == 20, "int array[1] should be 20");
-    tknGetFromDynamicArray(&intArray, 2, (void**)&ptr);
-    tknAssert(*ptr == 30, "int array[2] should be 30");
-    
-    // 测试结构体数组插入（中间位置）
-    TknDynamicArray structArray = tknCreateDynamicArray(sizeof(TestStruct), 2);
-    TestStruct s1 = {1, "Alice"};
-    TestStruct s2 = {2, "Bob"};
-    TestStruct s3 = {3, "Charlie"};
-    
-    tknAddToDynamicArray(&structArray, &s1, 0); // 添加到索引0（末尾）
-    tknAddToDynamicArray(&structArray, &s3, 1); // 添加到索引1（末尾）
-    tknAddToDynamicArray(&structArray, &s2, 1); // 插入到索引1（s1和s3之间）
-    
-    // 验证插入后顺序：s1 -> s2 -> s3
-    TestStruct* sPtr;
-    tknGetFromDynamicArray(&structArray, 0, (void**)&sPtr);
-    tknAssert(sPtr->id == 1 && strcmp(sPtr->name, "Alice") == 0, "struct[0] mismatch");
-    
-    tknGetFromDynamicArray(&structArray, 1, (void**)&sPtr);
-    tknAssert(sPtr->id == 2 && strcmp(sPtr->name, "Bob") == 0, "struct[1] mismatch");
-    
-    tknGetFromDynamicArray(&structArray, 2, (void**)&sPtr);
-    tknAssert(sPtr->id == 3 && strcmp(sPtr->name, "Charlie") == 0, "struct[2] mismatch");
-    
+// 1. 初始化与销毁测试
+static void testInitialization() {
+    printf("Running testInitialization...\n");
+
+    // 测试int类型数组
+    TknDynamicArray intArr = tknCreateDynamicArray(sizeof(int), 5);
+    tknAssert(intArr.dataSize == sizeof(int), "intArr dataSize mismatch");
+    tknAssert(intArr.maxCount == 5, "intArr maxCount should be 5");
+    tknAssert(intArr.count == 0, "intArr initial count should be 0");
+    tknAssert(intArr.array != NULL, "intArr should allocate memory");
+
+    // 测试结构体类型数组
+    TknDynamicArray studentArr = tknCreateDynamicArray(sizeof(Student), 3);
+    tknAssert(studentArr.dataSize == sizeof(Student), "studentArr dataSize mismatch");
+    tknAssert(studentArr.maxCount == 3, "studentArr maxCount should be 3");
+    tknAssert(studentArr.count == 0, "studentArr initial count should be 0");
+
     // 销毁数组
-    tknDestroyDynamicArray(intArray);
-    tknDestroyDynamicArray(structArray);
-    printf("testAddToDynamicArray passed.\n\n");
+    tknDestroyDynamicArray(intArr);
+    tknDestroyDynamicArray(studentArr);
+
+    printf("testInitialization passed.\n\n");
 }
 
-// 按索引移除元素测试
-static void testRemoveAtIndexFromDynamicArray() {
-    printf("Running testRemoveAtIndexFromDynamicArray...\n");
-    
-    TknDynamicArray intArray = tknCreateDynamicArray(sizeof(int), 5);
-    int vals[] = {10, 20, 30, 40, 50};
-    for (int i = 0; i < 5; i++) {
-        tknAddToDynamicArray(&intArray, &vals[i], i);
+// 2. 添加元素与扩容测试
+static void testAddAndResize() {
+    printf("Running testAddAndResize...\n");
+
+    // 测试int数组（初始容量2，触发扩容）
+    TknDynamicArray intArr = tknCreateDynamicArray(sizeof(int), 2);
+    int vals[] = {10, 20, 30, 40};
+
+    // 添加元素0（索引0）
+    tknAddToDynamicArray(&intArr, &vals[0], 0);
+    tknAssert(intArr.count == 1, "intArr count should be 1 after first add");
+    int* intPtr = (int*)tknGetFromDynamicArray(&intArr, 0);
+    tknAssert(intPtr != NULL && *intPtr == 10, "intArr[0] should be 10");
+
+    // 添加元素1（索引1，末尾）
+    tknAddToDynamicArray(&intArr, &vals[1], 1);
+    tknAssert(intArr.count == 2, "intArr count should be 2 after second add");
+    intPtr = (int*)tknGetFromDynamicArray(&intArr, 1);
+    tknAssert(intPtr != NULL && *intPtr == 20, "intArr[1] should be 20");
+
+    // 添加元素2（容量满，触发扩容至4）
+    tknAddToDynamicArray(&intArr, &vals[2], 2);
+    tknAssert(intArr.maxCount == 4, "intArr should resize to 4");
+    tknAssert(intArr.count == 3, "intArr count should be 3 after third add");
+    intPtr = (int*)tknGetFromDynamicArray(&intArr, 2);
+    tknAssert(intPtr != NULL && *intPtr == 30, "intArr[2] should be 30");
+
+    // 测试结构体数组（中间插入）
+    TknDynamicArray studentArr = tknCreateDynamicArray(sizeof(Student), 2);
+    Student s1 = createStudent(1, "Alice", 90.5f);
+    Student s2 = createStudent(2, "Bob", 85.0f);
+    Student s3 = createStudent(3, "Charlie", 95.5f);
+
+    tknAddToDynamicArray(&studentArr, &s1, 0); // [s1]
+    tknAddToDynamicArray(&studentArr, &s3, 1); // [s1, s3]
+    tknAddToDynamicArray(&studentArr, &s2, 1); // [s1, s2, s3]（扩容至4）
+
+    Student* stuPtr = (Student*)tknGetFromDynamicArray(&studentArr, 0);
+    tknAssert(stuPtr != NULL && stuPtr->id == 1, "studentArr[0] should be s1");
+
+    stuPtr = (Student*)tknGetFromDynamicArray(&studentArr, 1);
+    tknAssert(stuPtr != NULL && stuPtr->id == 2, "studentArr[1] should be s2");
+
+    stuPtr = (Student*)tknGetFromDynamicArray(&studentArr, 2);
+    tknAssert(stuPtr != NULL && stuPtr->id == 3, "studentArr[2] should be s3");
+
+    // 销毁数组
+    tknDestroyDynamicArray(intArr);
+    tknDestroyDynamicArray(studentArr);
+
+    printf("testAddAndResize passed.\n\n");
+}
+
+// 3. 按索引移除元素测试
+static void testRemoveAtIndex() {
+    printf("Running testRemoveAtIndex...\n");
+
+    TknDynamicArray strArr = tknCreateDynamicArray(sizeof(const char*), 5);
+    const char* strs[] = {"apple", "banana", "cherry", "date"};
+
+    // 初始化数组：[apple, banana, cherry, date]
+    for (int i = 0; i < 4; i++) {
+        tknAddToDynamicArray(&strArr, &strs[i], i);
     }
-    tknAssert(intArray.count == 5, "int array should have 5 elements before removal");
+    tknAssert(strArr.count == 4, "strArr should have 4 elements initially");
+
+    // 移除索引1（banana）
+    tknRemoveAtIndexFromDynamicArray(&strArr, 1);
+    tknAssert(strArr.count == 3, "strArr count should be 3 after removal");
     
-    // 移除中间元素（索引2，值30）
-    tknRemoveAtIndexFromDynamicArray(&intArray, 2);
-    tknAssert(intArray.count == 4, "count should be 4 after removal");
+    const char** strPtr = (const char**)tknGetFromDynamicArray(&strArr, 0);
+    tknAssert(strPtr != NULL && strcmp(*strPtr, "apple") == 0, "strArr[0] should be 'apple'");
     
-    // 验证移除后顺序：10,20,40,50
-    int* ptr;
-    tknGetFromDynamicArray(&intArray, 0, (void**)&ptr);
-    tknAssert(*ptr == 10, "index 0 should be 10 after removal");
+    strPtr = (const char**)tknGetFromDynamicArray(&strArr, 1);
+    tknAssert(strPtr != NULL && strcmp(*strPtr, "cherry") == 0, "strArr[1] should be 'cherry'");
+
+    // 移除索引2（date）
+    tknRemoveAtIndexFromDynamicArray(&strArr, 2);
+    tknAssert(strArr.count == 2, "strArr count should be 2 after second removal");
     
-    tknGetFromDynamicArray(&intArray, 1, (void**)&ptr);
-    tknAssert(*ptr == 20, "index 1 should be 20 after removal");
+    strPtr = (const char**)tknGetFromDynamicArray(&strArr, 1);
+    tknAssert(strPtr != NULL && strcmp(*strPtr, "cherry") == 0, "strArr[1] should remain 'cherry'");
+
+    // 移除索引0（apple）
+    tknRemoveAtIndexFromDynamicArray(&strArr, 0);
+    tknAssert(strArr.count == 1, "strArr count should be 1 after third removal");
     
-    tknGetFromDynamicArray(&intArray, 2, (void**)&ptr);
-    tknAssert(*ptr == 40, "index 2 should be 40 after removal");
-    
-    tknGetFromDynamicArray(&intArray, 3, (void**)&ptr);
-    tknAssert(*ptr == 50, "index 3 should be 50 after removal");
-    
-    // 移除第一个元素（索引0）
-    tknRemoveAtIndexFromDynamicArray(&intArray, 0);
-    tknAssert(intArray.count == 3, "count should be 3 after second removal");
-    
-    tknGetFromDynamicArray(&intArray, 0, (void**)&ptr);
-    tknAssert(*ptr == 20, "index 0 should be 20 after removing first element");
-    
-    // 移除最后一个元素（索引2）
-    tknRemoveAtIndexFromDynamicArray(&intArray, 2);
-    tknAssert(intArray.count == 2, "count should be 2 after third removal");
-    
-    tknGetFromDynamicArray(&intArray, 1, (void**)&ptr);
-    tknAssert(*ptr == 40, "index 1 should be 40 after removing last element");
-    
-    tknDestroyDynamicArray(intArray);
-    printf("testRemoveAtIndexFromDynamicArray passed.\n\n");
+    strPtr = (const char**)tknGetFromDynamicArray(&strArr, 0);
+    tknAssert(strPtr != NULL && strcmp(*strPtr, "cherry") == 0, "strArr[0] should be 'cherry'");
+
+    tknDestroyDynamicArray(strArr);
+    printf("testRemoveAtIndex passed.\n\n");
 }
 
-// 按值移除元素测试
-static void testRemoveFromDynamicArray() {
-    printf("Running testRemoveFromDynamicArray...\n");
-    
-    TknDynamicArray structArray = tknCreateDynamicArray(sizeof(TestStruct), 3);
-    TestStruct s1 = {1, "Alice"};
-    TestStruct s2 = {2, "Bob"};
-    TestStruct s3 = {3, "Charlie"};
-    
-    tknAddToDynamicArray(&structArray, &s1, 0);
-    tknAddToDynamicArray(&structArray, &s2, 1);
-    tknAddToDynamicArray(&structArray, &s3, 2);
-    tknAssert(structArray.count == 3, "struct array should have 3 elements before removal");
-    
+// 4. 按值移除元素测试
+static void testRemoveByValue() {
+    printf("Running testRemoveByValue...\n");
+
+    TknDynamicArray studentArr = tknCreateDynamicArray(sizeof(Student), 3);
+    Student s1 = createStudent(1, "Alice", 90.5f);
+    Student s2 = createStudent(2, "Bob", 85.0f);
+    Student s3 = createStudent(3, "Charlie", 95.5f);
+
+    tknAddToDynamicArray(&studentArr, &s1, 0);
+    tknAddToDynamicArray(&studentArr, &s2, 1);
+    tknAddToDynamicArray(&studentArr, &s3, 2);
+    tknAssert(studentArr.count == 3, "studentArr should have 3 elements initially");
+
     // 移除s2
-    tknRemoveFromDynamicArray(&structArray, &s2);
-    tknAssert(structArray.count == 2, "count should be 2 after removing s2");
+    tknRemoveFromDynamicArray(&studentArr, &s2);
+    tknAssert(studentArr.count == 2, "studentArr count should be 2 after removing s2");
     
-    // 验证剩余元素：s1, s3
-    TestStruct* sPtr;
-    tknGetFromDynamicArray(&structArray, 0, (void**)&sPtr);
-    tknAssert(sPtr->id == 1, "struct[0] should be s1 after removal");
+    Student* stuPtr = (Student*)tknGetFromDynamicArray(&studentArr, 0);
+    tknAssert(stuPtr != NULL && stuPtr->id == 1, "studentArr[0] should be s1");
     
-    tknGetFromDynamicArray(&structArray, 1, (void**)&sPtr);
-    tknAssert(sPtr->id == 3, "struct[1] should be s3 after removal");
-    
-    // 尝试移除不存在的元素（应该触发错误）
-    TestStruct s4 = {4, "Dave"};
-    // 注意：tknRemoveFromDynamicArray会调用tknError，这里注释掉避免测试终止
-    // tknRemoveFromDynamicArray(&structArray, &s4);
-    
-    tknDestroyDynamicArray(structArray);
-    printf("testRemoveFromDynamicArray passed.\n\n");
+    stuPtr = (Student*)tknGetFromDynamicArray(&studentArr, 1);
+    tknAssert(stuPtr != NULL && stuPtr->id == 3, "studentArr[1] should be s3");
+
+    // 尝试移除不存在的元素（应触发tknError）
+    Student s4 = createStudent(4, "Dave", 70.0f);
+    // 注意：取消注释会触发错误终止
+    // tknRemoveFromDynamicArray(&studentArr, &s4);
+
+    tknDestroyDynamicArray(studentArr);
+    printf("testRemoveByValue passed.\n\n");
 }
 
-// 获取元素与越界测试
-static void testGetFromDynamicArray() {
-    printf("Running testGetFromDynamicArray...\n");
-    
-    TknDynamicArray intArray = tknCreateDynamicArray(sizeof(int), 2);
-    int val1 = 100, val2 = 200;
-    tknAddToDynamicArray(&intArray, &val1, 0);
-    tknAddToDynamicArray(&intArray, &val2, 1);
-    
-    // 正常获取
-    int* ptr;
-    tknGetFromDynamicArray(&intArray, 0, (void**)&ptr);
-    tknAssert(*ptr == 100, "get index 0 should return 100");
-    
-    tknGetFromDynamicArray(&intArray, 1, (void**)&ptr);
-    tknAssert(*ptr == 200, "get index 1 should return 200");
-    
-    // 越界获取（应该触发错误）
-    // 注意：会调用tknError，这里注释掉避免测试终止
-    // tknGetFromDynamicArray(&intArray, 2, (void**)&ptr);
-    
-    tknDestroyDynamicArray(intArray);
-    printf("testGetFromDynamicArray passed.\n\n");
-}
+// 5. 获取元素与越界测试
+static void testGetElement() {
+    printf("Running testGetElement...\n");
 
-// 清空数组测试
-static void testClearDynamicArray() {
-    printf("Running testClearDynamicArray...\n");
-    
-    TknDynamicArray intArray = tknCreateDynamicArray(sizeof(int), 5);
+    TknDynamicArray intArr = tknCreateDynamicArray(sizeof(int), 3);
+    int vals[] = {100, 200, 300};
     for (int i = 0; i < 3; i++) {
-        int val = i * 10;
-        tknAddToDynamicArray(&intArray, &val, i);
+        tknAddToDynamicArray(&intArr, &vals[i], i);
     }
-    tknAssert(intArray.count == 3, "array should have 3 elements before clear");
+
+    // 正常获取
+    int* intPtr = (int*)tknGetFromDynamicArray(&intArr, 0);
+    tknAssert(intPtr != NULL && *intPtr == 100, "intArr[0] should be 100");
     
-    // 清空数组
-    tknClearDynamicArray(&intArray);
-    tknAssert(intArray.count == 0, "count should be 0 after clear");
-    tknAssert(intArray.maxCount == 5, "maxCount should remain unchanged after clear");
-    
-    // 清空后添加元素
-    int val = 100;
-    tknAddToDynamicArray(&intArray, &val, 0);
-    tknAssert(intArray.count == 1, "count should be 1 after adding to cleared array");
-    
-    int* ptr;
-    tknGetFromDynamicArray(&intArray, 0, (void**)&ptr);
-    tknAssert(*ptr == 100, "element should be correctly added after clear");
-    
-    tknDestroyDynamicArray(intArray);
-    printf("testClearDynamicArray passed.\n\n");
+    intPtr = (int*)tknGetFromDynamicArray(&intArr, 2);
+    tknAssert(intPtr != NULL && *intPtr == 300, "intArr[2] should be 300");
+
+    // 越界获取（索引3，count=3，应返回NULL）
+    intPtr = (int*)tknGetFromDynamicArray(&intArr, 3);
+    tknAssert(intPtr == NULL, "Getting index 3 should return NULL");
+
+    // 负数索引（通过断言拦截，因为uint32_t无负数，实际会是大正数）
+    // 注意：uint32_t index=-1会被转换为4294967295，必然越界
+    intPtr = (int*)tknGetFromDynamicArray(&intArr, (uint32_t)-1);
+    tknAssert(intPtr == NULL, "Negative index (as uint32_t) should return NULL");
+
+    tknDestroyDynamicArray(intArr);
+    printf("testGetElement passed.\n\n");
 }
 
-// 边界条件测试
-static void testDynamicArrayEdgeCases() {
-    printf("Running testDynamicArrayEdgeCases...\n");
+// 6. 清空数组测试
+static void testClearArray() {
+    printf("Running testClearArray...\n");
+
+    TknDynamicArray floatArr = tknCreateDynamicArray(sizeof(float), 4);
+    float floats[] = {1.1f, 2.2f, 3.3f};
+    for (int i = 0; i < 3; i++) {
+        tknAddToDynamicArray(&floatArr, &floats[i], i);
+    }
+    tknAssert(floatArr.count == 3, "floatArr should have 3 elements before clear");
+
+    // 清空数组
+    tknClearDynamicArray(&floatArr);
+    tknAssert(floatArr.count == 0, "floatArr count should be 0 after clear");
+    tknAssert(floatArr.maxCount == 4, "floatArr maxCount should remain 4 after clear");
+
+    // 清空后获取元素（应返回NULL）
+    float* floatPtr = (float*)tknGetFromDynamicArray(&floatArr, 0);
+    tknAssert(floatPtr == NULL, "Getting from cleared array should return NULL");
+
+    // 清空后添加元素
+    float newVal = 4.4f;
+    tknAddToDynamicArray(&floatArr, &newVal, 0);
+    tknAssert(floatArr.count == 1, "floatArr count should be 1 after adding to cleared array");
     
-    // 测试空数组操作
-    TknDynamicArray emptyArray = tknCreateDynamicArray(sizeof(float), 0); // maxCount=0
-    // 注意：添加元素到maxCount=0的数组会触发扩容（0*2=0？可能需要优化）
-    // 这里用maxCount=1测试
-    TknDynamicArray tinyArray = tknCreateDynamicArray(sizeof(float), 1);
-    float f = 3.14f;
-    tknAddToDynamicArray(&tinyArray, &f, 0); // 添加第一个元素
-    tknAssert(tinyArray.count == 1, "tiny array count should be 1");
+    floatPtr = (float*)tknGetFromDynamicArray(&floatArr, 0);
+    tknAssert(floatPtr != NULL && *floatPtr == 4.4f, "floatArr[0] should be 4.4f");
+
+    tknDestroyDynamicArray(floatArr);
+    printf("testClearArray passed.\n\n");
+}
+
+// 7. 边界条件测试（空数组、容量0等）
+static void testEdgeCases() {
+    printf("Running testEdgeCases...\n");
+
+    // 测试容量为0的数组（添加时会扩容）
+    TknDynamicArray emptyArr = tknCreateDynamicArray(sizeof(int), 0);
+    int val = 5;
+    tknAddToDynamicArray(&emptyArr, &val, 0); // 容量0*2=0？实际会分配内存（依赖实现）
+    tknAssert(emptyArr.count == 1, "emptyArr should have 1 element after add");
     
-    tknAddToDynamicArray(&tinyArray, &f, 1); // 扩容到2
-    tknAssert(tinyArray.maxCount == 2, "tiny array should resize to 2");
-    
-    // 测试插入到索引0（头部）
-    TknDynamicArray strArray = tknCreateDynamicArray(sizeof(const char*), 3);
-    const char* s1 = "hello";
-    const char* s2 = "world";
-    tknAddToDynamicArray(&strArray, &s1, 0); // [hello]
-    tknAddToDynamicArray(&strArray, &s2, 0); // [world, hello]
-    
-    const char** strPtr;
-    tknGetFromDynamicArray(&strArray, 0, (void**)&strPtr);
-    tknAssert(strcmp(*strPtr, "world") == 0, "index 0 should be 'world'");
-    
-    tknGetFromDynamicArray(&strArray, 1, (void**)&strPtr);
-    tknAssert(strcmp(*strPtr, "hello") == 0, "index 1 should be 'hello'");
-    
-    tknDestroyDynamicArray(emptyArray);
-    tknDestroyDynamicArray(tinyArray);
-    tknDestroyDynamicArray(strArray);
-    printf("testDynamicArrayEdgeCases passed.\n\n");
+    int* ptr = (int*)tknGetFromDynamicArray(&emptyArr, 0);
+    tknAssert(ptr != NULL && *ptr == 5, "emptyArr[0] should be 5");
+
+    // 测试头部插入（频繁移动元素）
+    TknDynamicArray queue = tknCreateDynamicArray(sizeof(int), 2);
+    for (int i = 0; i < 4; i++) {
+        tknAddToDynamicArray(&queue, &i, 0); // 每次插入到头部
+    }
+    // 预期顺序：3,2,1,0
+    tknAssert(*(int*)tknGetFromDynamicArray(&queue, 0) == 3, "queue[0] should be 3");
+    tknAssert(*(int*)tknGetFromDynamicArray(&queue, 3) == 0, "queue[3] should be 0");
+
+    tknDestroyDynamicArray(emptyArr);
+    tknDestroyDynamicArray(queue);
+    printf("testEdgeCases passed.\n\n");
 }
 
 int main() {
-    printf("=== Starting TknDynamicArray Tests ===\n\n");
-    
-    testDynamicArrayInitialization();
-    testAddToDynamicArray();
-    testRemoveAtIndexFromDynamicArray();
-    testRemoveFromDynamicArray();
-    testGetFromDynamicArray();
-    testClearDynamicArray();
-    testDynamicArrayEdgeCases();
-    
+    printf("=== Starting TknDynamicArray Tests (Updated) ===\n\n");
+
+    testInitialization();
+    testAddAndResize();
+    testRemoveAtIndex();
+    testRemoveByValue();
+    testGetElement();
+    testClearArray();
+    testEdgeCases();
+
     printf("=== All TknDynamicArray Tests Passed ===\n");
     return 0;
 }

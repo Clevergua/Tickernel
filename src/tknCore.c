@@ -143,16 +143,17 @@ void tknClearDynamicArray(TknDynamicArray *pDynamicArray)
     pDynamicArray->count = 0;
     memset(pDynamicArray->array, 0, pDynamicArray->dataSize * pDynamicArray->maxCount);
 }
-void tknGetFromDynamicArray(TknDynamicArray *pDynamicArray, uint32_t index, void **output)
+void *tknGetFromDynamicArray(TknDynamicArray *pDynamicArray, uint32_t index)
 {
     if (index < pDynamicArray->count)
     {
-        *output = (char *)pDynamicArray->array + index * pDynamicArray->dataSize;
-        printf("Get from dynamic array at index %u: %p\n", index, *output);
+        void *output = (char *)pDynamicArray->array + index * pDynamicArray->dataSize;
+        return output;
     }
     else
     {
-        tknError("Index %u is out of bounds for count %u\n", index, pDynamicArray->count);
+        printf("Index %u is out of bounds for count %u\n", index, pDynamicArray->count);
+        return NULL;
     }
 }
 

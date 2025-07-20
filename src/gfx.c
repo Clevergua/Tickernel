@@ -534,8 +534,7 @@ void teardownRenderPipeline(GfxContext *pGfxContext)
 {
     for (uint32_t pRenderPassIndex = 0; pRenderPassIndex < pGfxContext->renderPassPtrDynamicArray.count; pRenderPassIndex++)
     {
-        RenderPass *pRenderPass;
-        tknGetFromDynamicArray(&pGfxContext->renderPassPtrDynamicArray, pRenderPassIndex, (void **)&pRenderPass);
+        RenderPass *pRenderPass = tknGetFromDynamicArray(&pGfxContext->renderPassPtrDynamicArray, pRenderPassIndex);
         destroyRenderPassPtr(pGfxContext, pRenderPass);
     }
     tknDestroyDynamicArray(pGfxContext->renderPassPtrDynamicArray);
@@ -671,8 +670,7 @@ static void present(GfxContext *pGfxContext)
         repopulateSwapchain(pGfxContext);
         for (uint32_t renderPassIndex = 0; renderPassIndex < pGfxContext->renderPassPtrDynamicArray.count; renderPassIndex++)
         {
-            RenderPass *pRenderPass;
-            tknGetFromDynamicArray(&pGfxContext->renderPassPtrDynamicArray, renderPassIndex, (void **)&pRenderPass);
+            RenderPass *pRenderPass = tknGetFromDynamicArray(&pGfxContext->renderPassPtrDynamicArray, renderPassIndex);
             if (pRenderPass->useSwapchain)
             {
                 cleanupFramebuffers(pGfxContext, pRenderPass);
@@ -731,14 +729,12 @@ void updateGfxContext(GfxContext *pGfxContext, VkExtent2D swapchainExtent)
         repopulateSwapchain(pGfxContext);
         for (uint32_t attachmentPtrIndex = 0; attachmentPtrIndex < pGfxContext->dynamicAttachmentPtrDynamicArray.count; attachmentPtrIndex++)
         {
-            Attachment *pAttachment;
-            tknGetFromDynamicArray(&pGfxContext->dynamicAttachmentPtrDynamicArray, attachmentPtrIndex, (void **)&pAttachment);
+            Attachment *pAttachment = tknGetFromDynamicArray(&pGfxContext->dynamicAttachmentPtrDynamicArray, attachmentPtrIndex);
             resizeDynamicAttachmentPtr(pGfxContext, pAttachment);
         }
         for (uint32_t renderPassIndex = 0; renderPassIndex < pGfxContext->renderPassPtrDynamicArray.count; renderPassIndex++)
         {
-            RenderPass *pRenderPass;
-            tknGetFromDynamicArray(&pGfxContext->renderPassPtrDynamicArray, renderPassIndex, (void **)&pRenderPass);
+            RenderPass *pRenderPass = tknGetFromDynamicArray(&pGfxContext->renderPassPtrDynamicArray, renderPassIndex);
             if (pRenderPass->attachmentCount > 0 && pRenderPass->attachmentPtrs[0]->attachmentType == ATTACHMENT_TYPE_SWAPCHAIN || pRenderPass->attachmentPtrs[0]->attachmentType == ATTACHMENT_TYPE_DYNAMIC)
             {
                 cleanupFramebuffers(pGfxContext, pRenderPass);
@@ -762,8 +758,8 @@ void updateGfxContext(GfxContext *pGfxContext, VkExtent2D swapchainExtent)
                 repopulateSwapchain(pGfxContext);
                 for (uint32_t renderPassIndex = 0; renderPassIndex < pGfxContext->renderPassPtrDynamicArray.count; renderPassIndex++)
                 {
-                    RenderPass *pRenderPass;
-                    tknGetFromDynamicArray(&pGfxContext->renderPassPtrDynamicArray, renderPassIndex, (void **)&pRenderPass);
+                    RenderPass *pRenderPass = tknGetFromDynamicArray(&pGfxContext->renderPassPtrDynamicArray, renderPassIndex);
+
                     if (pRenderPass->useSwapchain)
                     {
                         cleanupFramebuffers(pGfxContext, pRenderPass);

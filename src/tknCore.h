@@ -50,7 +50,7 @@ void tknAddToDynamicArray(TknDynamicArray *pDynamicArray, void *pInput, uint32_t
 void tknRemoveFromDynamicArray(TknDynamicArray *pDynamicArray, void *pData);
 void tknRemoveAtIndexFromDynamicArray(TknDynamicArray *pDynamicArray, uint32_t index);
 void tknClearDynamicArray(TknDynamicArray *pDynamicArray);
-void tknGetFromDynamicArray(TknDynamicArray *pDynamicArray, uint32_t index, void **output);
+void *tknGetFromDynamicArray(TknDynamicArray *pDynamicArray, uint32_t index);
 
 TknHashSet tknCreateHashSet(size_t capacity);
 void tknDestroyHashSet(TknHashSet *pTknHashSet);

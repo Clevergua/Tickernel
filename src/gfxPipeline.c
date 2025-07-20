@@ -185,8 +185,7 @@ Subpass createSubpass(GfxContext *pGfxContext, uint32_t inputVkAttachmentReferen
 
     for (uint32_t pathIndex = 0; pathIndex < spvPathDynamicArray.count; pathIndex++)
     {
-        const char **pSpvPath;
-        tknGetFromDynamicArray(&spvPathDynamicArray, pathIndex, (void **)&pSpvPath);
+        const char **pSpvPath = tknGetFromDynamicArray(&spvPathDynamicArray, pathIndex);
         SpvReflectShaderModule spvReflectShaderModule = createSpvReflectShaderModule(*pSpvPath);
         for (uint32_t setIndex = 0; setIndex < spvReflectShaderModule.descriptor_set_count; setIndex++)
         {
@@ -206,8 +205,7 @@ Subpass createSubpass(GfxContext *pGfxContext, uint32_t inputVkAttachmentReferen
                     uint32_t addedIndex;
                     for (addedIndex = 0; addedIndex < vkDescriptorSetLayoutBindingDynamicArray.count; addedIndex++)
                     {
-                        VkDescriptorSetLayoutBinding *pAddedBinding = NULL;
-                        tknGetFromDynamicArray(&vkDescriptorSetLayoutBindingDynamicArray, addedIndex, (void **)&pAddedBinding);
+                        VkDescriptorSetLayoutBinding *pAddedBinding = tknGetFromDynamicArray(&vkDescriptorSetLayoutBindingDynamicArray, addedIndex);
                         if (pAddedBinding->binding == vkDescriptorSetLayoutBinding.binding)
                         {
                             tknAssert(pAddedBinding->descriptorType == vkDescriptorSetLayoutBinding.descriptorType, "Incompatible descriptor binding");
@@ -228,8 +226,8 @@ Subpass createSubpass(GfxContext *pGfxContext, uint32_t inputVkAttachmentReferen
                         uint32_t poolSizeIndex;
                         for (poolSizeIndex = 0; poolSizeIndex < vkDescriptorPoolSizeDynamicArray.count; poolSizeIndex++)
                         {
-                            VkDescriptorPoolSize *pVkDescriptorPoolSize = NULL;
-                            tknGetFromDynamicArray(&vkDescriptorPoolSizeDynamicArray, poolSizeIndex, (void **)&pVkDescriptorPoolSize);
+                            VkDescriptorPoolSize *pVkDescriptorPoolSize = tknGetFromDynamicArray(&vkDescriptorPoolSizeDynamicArray, poolSizeIndex);
+
                             if (pVkDescriptorPoolSize->type == vkDescriptorSetLayoutBinding.descriptorType)
                             {
                                 pVkDescriptorPoolSize->descriptorCount += vkDescriptorSetLayoutBinding.descriptorCount;
@@ -355,8 +353,7 @@ void destroySubpass(GfxContext *pGfxContext, Subpass *pSubpass)
 {
     for (uint32_t j = 0; j < pSubpass->pipelinePtrDynamicArray.count; j++)
     {
-        Pipeline *pPipeline;
-        tknGetFromDynamicArray(&pSubpass->pipelinePtrDynamicArray, j, (void **)&pPipeline);
+        Pipeline *pPipeline = tknGetFromDynamicArray(&pSubpass->pipelinePtrDynamicArray, j);
         // destroyPipeline(pGfxContext, pPipeline);
     }
     VkDevice vkDevice = pGfxContext->vkDevice;

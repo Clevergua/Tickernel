@@ -201,7 +201,7 @@ typedef struct
     VkExtent2D swapchainExtent;
     VkSwapchainKHR vkSwapchain;
     uint32_t swapchainImageCount;
-    Attachment *swapchainAttachmentPtr;
+    Attachment *swapchainAttachmentPtr; 
     VkImage *swapchainImages;
     VkImageView *swapchainImageViews;
     uint32_t swapchainIndex;

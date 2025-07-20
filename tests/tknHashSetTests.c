@@ -186,7 +186,6 @@ static void testEdgeCases() {
 
 int main() {
     printf("=== Starting TknHashSet Tests ===\n\n");
-    
     testInitializationAndDestruction();
     testAddElement();
     testContainsElement();
