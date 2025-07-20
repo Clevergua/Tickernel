@@ -25,16 +25,36 @@ typedef struct
     void *array;
 } TknDynamicArray;
 
+typedef struct TknListNode
+{
+    void *value;
+    struct TknListNode *nextNodePtr;
+} TknListNode;
+
+typedef struct
+{
+    uint32_t capacity;
+    uint32_t count;
+    TknListNode **nodePtrs;
+} TknHashSet;
+
 void tknError(char const *const _Format, ...);
 void tknAssert(bool condition, char const *const _Format, ...);
 void tknSleep(uint32_t milliseconds);
 void *tknMalloc(size_t size);
 void tknFree(void *ptr);
 
-void tknCreateDynamicArray(size_t dataSize, uint32_t maxCount, TknDynamicArray *pDynamicArray);
+TknDynamicArray tknCreateDynamicArray(size_t dataSize, uint32_t maxCount);
 void tknDestroyDynamicArray(TknDynamicArray dynamicArray);
 void tknAddToDynamicArray(TknDynamicArray *pDynamicArray, void *pInput, uint32_t index);
 void tknRemoveFromDynamicArray(TknDynamicArray *pDynamicArray, void *pData);
 void tknRemoveAtIndexFromDynamicArray(TknDynamicArray *pDynamicArray, uint32_t index);
 void tknClearDynamicArray(TknDynamicArray *pDynamicArray);
 void tknGetFromDynamicArray(TknDynamicArray *pDynamicArray, uint32_t index, void **output);
+
+TknHashSet tknCreateHashSet(size_t capacity);
+void tknDestroyHashSet(TknHashSet *pTknHashSet);
+bool tknAddToHashSet(TknHashSet *pTknHashSet, void *value);
+bool tknContainsInHashSet(TknHashSet *pTknHashSet, void *value);
+void tknRemoveFromHashSet(TknHashSet *pTknHashSet, void *value);
+void tknClearHashSet(TknHashSet *pTknHashSet);

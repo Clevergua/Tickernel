@@ -272,7 +272,7 @@ static void pickPhysicalDevice(GfxContext *pGfxContext, VkSurfaceFormatKHR targe
     }
 }
 
-static void createLogicalDevice(GfxContext *pGfxContext)
+static void populateLogicalDevice(GfxContext *pGfxContext)
 {
     VkPhysicalDevice vkPhysicalDevice = pGfxContext->vkPhysicalDevice;
     uint32_t gfxQueueFamilyIndex = pGfxContext->gfxQueueFamilyIndex;
@@ -351,12 +351,12 @@ static void createLogicalDevice(GfxContext *pGfxContext)
     vkGetDeviceQueue(pGfxContext->vkDevice, presentQueueFamilyIndex, 0, &pGfxContext->vkPresentQueue);
     tknFree(queueCreateInfos);
 }
-static void destroyLogicalDevice(GfxContext *pGfxContext)
+static void cleanupLogicalDevice(GfxContext *pGfxContext)
 {
     vkDestroyDevice(pGfxContext->vkDevice, NULL);
 }
 
-static void createSwapchain(GfxContext *pGfxContext, VkExtent2D targetSwapchainExtent, uint32_t targetSwapchainImageCount)
+static void populateSwapchain(GfxContext *pGfxContext, VkExtent2D targetSwapchainExtent, uint32_t targetSwapchainImageCount)
 {
     VkResult result = VK_SUCCESS;
 
@@ -448,7 +448,7 @@ static void createSwapchain(GfxContext *pGfxContext, VkExtent2D targetSwapchainE
         ASSERT_VK_SUCCESS(vkCreateImageView(vkDevice, &imageViewCreateInfo, NULL, &pGfxContext->swapchainImageViews[i]));
     }
 };
-static void destroySwapchain(GfxContext *pGfxContext)
+static void cleanupSwapchain(GfxContext *pGfxContext)
 {
     VkDevice vkDevice = pGfxContext->vkDevice;
     for (uint32_t i = 0; i < pGfxContext->swapchainImageCount; i++)
@@ -460,16 +460,16 @@ static void destroySwapchain(GfxContext *pGfxContext)
     vkDestroySwapchainKHR(vkDevice, pGfxContext->vkSwapchain, NULL);
     tknFree(pGfxContext->swapchainAttachmentPtr);
 }
-static void recreateSwapchain(GfxContext *pGfxContext)
+static void repopulateSwapchain(GfxContext *pGfxContext)
 {
     VkDevice vkDevice = pGfxContext->vkDevice;
     VkExtent2D swapchainExtent = pGfxContext->swapchainExtent;
     ASSERT_VK_SUCCESS(vkDeviceWaitIdle(vkDevice));
-    destroySwapchain(pGfxContext);
-    createSwapchain(pGfxContext, swapchainExtent, pGfxContext->swapchainImageCount);
+    cleanupSwapchain(pGfxContext);
+    populateSwapchain(pGfxContext, swapchainExtent, pGfxContext->swapchainImageCount);
 }
 
-static void createSignals(GfxContext *pGfxContext)
+static void populateSignals(GfxContext *pGfxContext)
 {
     VkSemaphoreCreateInfo semaphoreCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
@@ -486,7 +486,7 @@ static void createSignals(GfxContext *pGfxContext)
     ASSERT_VK_SUCCESS(vkCreateSemaphore(vkDevice, &semaphoreCreateInfo, NULL, &pGfxContext->renderFinishedSemaphore));
     ASSERT_VK_SUCCESS(vkCreateFence(vkDevice, &fenceCreateInfo, NULL, &pGfxContext->renderFinishedFence));
 }
-static void destroySignals(GfxContext *pGfxContext)
+static void cleanupSignals(GfxContext *pGfxContext)
 {
     VkDevice vkDevice = pGfxContext->vkDevice;
     vkDestroySemaphore(vkDevice, pGfxContext->imageAvailableSemaphore, NULL);
@@ -494,7 +494,7 @@ static void destroySignals(GfxContext *pGfxContext)
     vkDestroyFence(vkDevice, pGfxContext->renderFinishedFence, NULL);
 }
 
-static void createCommandPools(GfxContext *pGfxContext)
+static void populateCommandPools(GfxContext *pGfxContext)
 {
     VkCommandPoolCreateInfo vkCommandPoolCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
@@ -504,12 +504,11 @@ static void createCommandPools(GfxContext *pGfxContext)
     };
     ASSERT_VK_SUCCESS(vkCreateCommandPool(pGfxContext->vkDevice, &vkCommandPoolCreateInfo, NULL, &pGfxContext->gfxVkCommandPool));
 }
-
-static void destroyCommandPools(GfxContext *pGfxContext)
+static void cleanupCommandPools(GfxContext *pGfxContext)
 {
     vkDestroyCommandPool(pGfxContext->vkDevice, pGfxContext->gfxVkCommandPool, NULL);
 }
-static void createVkCommandBuffers(GfxContext *pGfxContext)
+static void populateVkCommandBuffers(GfxContext *pGfxContext)
 {
     pGfxContext->gfxVkCommandBuffers = tknMalloc(sizeof(VkCommandBuffer) * pGfxContext->swapchainImageCount);
     VkCommandBufferAllocateInfo vkCommandBufferAllocateInfo = {
@@ -521,7 +520,7 @@ static void createVkCommandBuffers(GfxContext *pGfxContext)
     };
     ASSERT_VK_SUCCESS(vkAllocateCommandBuffers(pGfxContext->vkDevice, &vkCommandBufferAllocateInfo, pGfxContext->gfxVkCommandBuffers));
 }
-static void destroyVkCommandBuffers(GfxContext *pGfxContext)
+static void cleanupVkCommandBuffers(GfxContext *pGfxContext)
 {
     vkFreeCommandBuffers(pGfxContext->vkDevice, pGfxContext->gfxVkCommandPool, pGfxContext->swapchainImageCount, pGfxContext->gfxVkCommandBuffers);
     tknFree(pGfxContext->gfxVkCommandBuffers);
@@ -529,7 +528,7 @@ static void destroyVkCommandBuffers(GfxContext *pGfxContext)
 
 void setupRenderPipeline(GfxContext *pGfxContext)
 {
-    tknCreateDynamicArray(sizeof(RenderPass *), 4, &pGfxContext->renderPassPtrDynamicArray);
+    pGfxContext->renderPassPtrDynamicArray = tknCreateDynamicArray(sizeof(RenderPass *), 4);
 }
 void teardownRenderPipeline(GfxContext *pGfxContext)
 {
@@ -669,15 +668,15 @@ static void present(GfxContext *pGfxContext)
     if (VK_ERROR_OUT_OF_DATE_KHR == result || VK_SUBOPTIMAL_KHR == result)
     {
         printf("Recreate swapchain because of the result: %d when presenting.\n", result);
-        recreateSwapchain(pGfxContext);
+        repopulateSwapchain(pGfxContext);
         for (uint32_t renderPassIndex = 0; renderPassIndex < pGfxContext->renderPassPtrDynamicArray.count; renderPassIndex++)
         {
             RenderPass *pRenderPass;
             tknGetFromDynamicArray(&pGfxContext->renderPassPtrDynamicArray, renderPassIndex, (void **)&pRenderPass);
             if (pRenderPass->useSwapchain)
             {
-                destroyFramebuffers(pGfxContext, pRenderPass);
-                createFramebuffers(pGfxContext, pRenderPass);
+                cleanupFramebuffers(pGfxContext, pRenderPass);
+                populateFramebuffers(pGfxContext, pRenderPass);
             }
             else
             {
@@ -691,25 +690,29 @@ static void present(GfxContext *pGfxContext)
     }
 }
 
-void createGfxContext(int targetSwapchainImageCount, VkSurfaceFormatKHR targetVkSurfaceFormat, VkPresentModeKHR targetVkPresentMode, VkInstance vkInstance, VkSurfaceKHR vkSurface, VkExtent2D swapchainExtent, GfxContext *pGfxContext)
+GfxContext createGfxContext(int targetSwapchainImageCount, VkSurfaceFormatKHR targetVkSurfaceFormat, VkPresentModeKHR targetVkPresentMode, VkInstance vkInstance, VkSurfaceKHR vkSurface, VkExtent2D swapchainExtent)
 {
-    initializeGfxContext(pGfxContext, vkInstance, vkSurface);
-    pickPhysicalDevice(pGfxContext, targetVkSurfaceFormat, targetVkPresentMode);
-    createLogicalDevice(pGfxContext);
-    createSwapchain(pGfxContext, swapchainExtent, targetSwapchainImageCount);
-    createSignals(pGfxContext);
-    createCommandPools(pGfxContext);
-    createVkCommandBuffers(pGfxContext);
-    setupRenderPipeline(pGfxContext);
+    GfxContext gfxContext;
+    initializeGfxContext(&gfxContext, vkInstance, vkSurface);
+    pickPhysicalDevice(&gfxContext, targetVkSurfaceFormat, targetVkPresentMode);
+    populateLogicalDevice(&gfxContext);
+    populateSwapchain(&gfxContext, swapchainExtent, targetSwapchainImageCount);
+
+    populateSignals(&gfxContext);
+    populateCommandPools(&gfxContext);
+    populateVkCommandBuffers(&gfxContext);
+    setupRenderPipeline(&gfxContext);
+    return gfxContext;
 }
+
 void destroyGfxContext(GfxContext gfxContext)
 {
     teardownRenderPipeline(&gfxContext);
-    destroyVkCommandBuffers(&gfxContext);
-    destroyCommandPools(&gfxContext);
-    destroySignals(&gfxContext);
-    destroySwapchain(&gfxContext);
-    destroyLogicalDevice(&gfxContext);
+    cleanupVkCommandBuffers(&gfxContext);
+    cleanupCommandPools(&gfxContext);
+    cleanupSignals(&gfxContext);
+    cleanupSwapchain(&gfxContext);
+    cleanupLogicalDevice(&gfxContext);
 }
 void updateGfxContext(GfxContext *pGfxContext, VkExtent2D swapchainExtent)
 {
@@ -725,7 +728,7 @@ void updateGfxContext(GfxContext *pGfxContext, VkExtent2D swapchainExtent)
                swapchainExtent.width,
                swapchainExtent.height);
         pGfxContext->swapchainExtent = swapchainExtent;
-        recreateSwapchain(pGfxContext);
+        repopulateSwapchain(pGfxContext);
         for (uint32_t attachmentPtrIndex = 0; attachmentPtrIndex < pGfxContext->dynamicAttachmentPtrDynamicArray.count; attachmentPtrIndex++)
         {
             Attachment *pAttachment;
@@ -738,8 +741,8 @@ void updateGfxContext(GfxContext *pGfxContext, VkExtent2D swapchainExtent)
             tknGetFromDynamicArray(&pGfxContext->renderPassPtrDynamicArray, renderPassIndex, (void **)&pRenderPass);
             if (pRenderPass->attachmentCount > 0 && pRenderPass->attachmentPtrs[0]->attachmentType == ATTACHMENT_TYPE_SWAPCHAIN || pRenderPass->attachmentPtrs[0]->attachmentType == ATTACHMENT_TYPE_DYNAMIC)
             {
-                destroyFramebuffers(pGfxContext, pRenderPass);
-                createFramebuffers(pGfxContext, pRenderPass);
+                cleanupFramebuffers(pGfxContext, pRenderPass);
+                populateFramebuffers(pGfxContext, pRenderPass);
             }
             else
             {
@@ -756,15 +759,15 @@ void updateGfxContext(GfxContext *pGfxContext, VkExtent2D swapchainExtent)
             if (VK_ERROR_OUT_OF_DATE_KHR == result)
             {
                 printf("Recreate swapchain because of result: %d\n", result);
-                recreateSwapchain(pGfxContext);
+                repopulateSwapchain(pGfxContext);
                 for (uint32_t renderPassIndex = 0; renderPassIndex < pGfxContext->renderPassPtrDynamicArray.count; renderPassIndex++)
                 {
                     RenderPass *pRenderPass;
                     tknGetFromDynamicArray(&pGfxContext->renderPassPtrDynamicArray, renderPassIndex, (void **)&pRenderPass);
                     if (pRenderPass->useSwapchain)
                     {
-                        destroyFramebuffers(pGfxContext, pRenderPass);
-                        createFramebuffers(pGfxContext, pRenderPass);
+                        cleanupFramebuffers(pGfxContext, pRenderPass);
+                        populateFramebuffers(pGfxContext, pRenderPass);
                     }
                     else
                     {

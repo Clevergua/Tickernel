@@ -16,7 +16,7 @@ static void getMemoryType(VkPhysicalDevice vkPhysicalDevice, uint32_t typeFilter
     tknError("Failed to get suitable memory type!");
 }
 
-static void createImage(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkExtent3D vkExtent3D, VkFormat vkFormat, VkImageTiling vkImageTiling, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags, Image *pImage)
+static Image createImage(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkExtent3D vkExtent3D, VkFormat vkFormat, VkImageTiling vkImageTiling, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags)
 {
     VkImage vkImage;
     VkImageView vkImageView;
@@ -78,11 +78,12 @@ static void createImage(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, Vk
     };
     ASSERT_VK_SUCCESS(vkCreateImageView(vkDevice, &imageViewCreateInfo, NULL, &vkImageView));
 
-    *pImage = (Image){
+    Image image = {
         .vkImage = vkImage,
         .vkDeviceMemory = vkDeviceMemory,
         .vkImageView = vkImageView,
     };
+    return image;
 }
 static void destroyImage(VkDevice vkDevice, Image image)
 {
@@ -91,7 +92,7 @@ static void destroyImage(VkDevice vkDevice, Image image)
     vkFreeMemory(vkDevice, image.vkDeviceMemory, NULL);
 }
 
-void createDynamicAttachmentPtr(GfxContext *pGfxContext, VkFormat vkFormat, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags, float scaler, Attachment **ppAttachment)
+Attachment *createDynamicAttachmentPtr(GfxContext *pGfxContext, VkFormat vkFormat, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags, float scaler)
 {
     Attachment *pAttachment = tknMalloc(sizeof(Attachment));
     VkExtent3D vkExtent3D = {
@@ -101,8 +102,8 @@ void createDynamicAttachmentPtr(GfxContext *pGfxContext, VkFormat vkFormat, VkIm
     };
     VkDevice vkDevice = pGfxContext->vkDevice;
     VkPhysicalDevice vkPhysicalDevice = pGfxContext->vkPhysicalDevice;
-    Image image;
-    createImage(vkDevice, vkPhysicalDevice, vkExtent3D, vkFormat, VK_IMAGE_TILING_OPTIMAL, vkImageUsageFlags, vkMemoryPropertyFlags, vkImageAspectFlags, &image);
+    Image image = createImage(vkDevice, vkPhysicalDevice, vkExtent3D, vkFormat, VK_IMAGE_TILING_OPTIMAL, vkImageUsageFlags, vkMemoryPropertyFlags, vkImageAspectFlags);
+
     DynamicAttachmentContent dynamicAttachmentContent = {
         .image = image,
         .vkFormat = vkFormat,
@@ -115,7 +116,7 @@ void createDynamicAttachmentPtr(GfxContext *pGfxContext, VkFormat vkFormat, VkIm
         .attachmentType = ATTACHMENT_TYPE_DYNAMIC,
         .attachmentContent.dynamicAttachmentContent = dynamicAttachmentContent,
     };
-    *ppAttachment = pAttachment;
+    return pAttachment;
 }
 void destroyDynamicAttachmentPtr(GfxContext *pGfxContext, Attachment *pAttachment)
 {
@@ -134,10 +135,10 @@ void resizeDynamicAttachmentPtr(GfxContext *pGfxContext, Attachment *pAttachment
         .height = (uint32_t)(pGfxContext->swapchainExtent.height * dynamicAttachmentContent.scaler),
         .depth = 1,
     };
-    createImage(pGfxContext->vkDevice, pGfxContext->vkPhysicalDevice, vkExtent3D, dynamicAttachmentContent.vkFormat, VK_IMAGE_TILING_OPTIMAL, dynamicAttachmentContent.vkImageUsageFlags, dynamicAttachmentContent.vkMemoryPropertyFlags, dynamicAttachmentContent.vkImageAspectFlags, &dynamicAttachmentContent.image);
+    dynamicAttachmentContent.image = createImage(pGfxContext->vkDevice, pGfxContext->vkPhysicalDevice, vkExtent3D, dynamicAttachmentContent.vkFormat, VK_IMAGE_TILING_OPTIMAL, dynamicAttachmentContent.vkImageUsageFlags, dynamicAttachmentContent.vkMemoryPropertyFlags, dynamicAttachmentContent.vkImageAspectFlags);
 }
 
-void createFixedAttachmentPtr(GfxContext *pGfxContext, VkFormat vkFormat, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags, uint32_t width, uint32_t height, Attachment **ppAttachment)
+Attachment *createFixedAttachmentPtr(GfxContext *pGfxContext, VkFormat vkFormat, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags, uint32_t width, uint32_t height)
 {
     Attachment *pAttachment = tknMalloc(sizeof(Attachment));
     FixedAttachmentContent fixedAttachmentContent = {
@@ -153,12 +154,12 @@ void createFixedAttachmentPtr(GfxContext *pGfxContext, VkFormat vkFormat, VkImag
     };
     VkDevice vkDevice = pGfxContext->vkDevice;
     VkPhysicalDevice vkPhysicalDevice = pGfxContext->vkPhysicalDevice;
-    createImage(vkDevice, vkPhysicalDevice, vkExtent3D, vkFormat, VK_IMAGE_TILING_OPTIMAL, vkImageUsageFlags, vkMemoryPropertyFlags, vkImageAspectFlags, &pAttachment->attachmentContent.fixedAttachmentContent.image);
+    pAttachment->attachmentContent.fixedAttachmentContent.image = createImage(vkDevice, vkPhysicalDevice, vkExtent3D, vkFormat, VK_IMAGE_TILING_OPTIMAL, vkImageUsageFlags, vkMemoryPropertyFlags, vkImageAspectFlags);
     *pAttachment = (Attachment){
         .attachmentType = ATTACHMENT_TYPE_FIXED,
         .attachmentContent.fixedAttachmentContent = fixedAttachmentContent,
     };
-    *ppAttachment = pAttachment;
+    return pAttachment;
 }
 void destroyFixedAttachmentPtr(GfxContext *pGfxContext, Attachment *pAttachment)
 {
@@ -169,17 +170,16 @@ void destroyFixedAttachmentPtr(GfxContext *pGfxContext, Attachment *pAttachment)
     tknFree(pAttachment);
 }
 
-void getSwapchainAttachments(GfxContext *pGfxContext, Attachment **pAttachments)
+Attachment *getSwapchainAttachments(GfxContext *pGfxContext)
 {
-    *pAttachments = pGfxContext->swapchainAttachmentPtr;
+    return pGfxContext->swapchainAttachmentPtr;
 }
 
-void createImagePtr(GfxContext *pGfxContext, VkExtent3D vkExtent3D, VkFormat vkFormat, VkImageTiling vkImageTiling, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags, Image **ppImage)
+Image *createImagePtr(GfxContext *pGfxContext, VkExtent3D vkExtent3D, VkFormat vkFormat, VkImageTiling vkImageTiling, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags)
 {
-    Image image;
-    createImage(pGfxContext->vkDevice, pGfxContext->vkPhysicalDevice, vkExtent3D, vkFormat, VK_IMAGE_TILING_OPTIMAL, vkImageUsageFlags, vkMemoryPropertyFlags, vkImageAspectFlags, &image);
-    *ppImage = tknMalloc(sizeof(Image));
-    **ppImage = image;
+    Image *pImage = tknMalloc(sizeof(Image));
+    *pImage=  createImage(pGfxContext->vkDevice, pGfxContext->vkPhysicalDevice, vkExtent3D, vkFormat, vkImageTiling, vkImageUsageFlags, vkMemoryPropertyFlags, vkImageAspectFlags);
+    return pImage;
 }
 void destroyImagePtr(GfxContext *pGfxContext, Image *pImage)
 {

@@ -1,15 +1,13 @@
 #include "tknEngine.h"
 
-void createTknEnginePtr(uint32_t targetSwapchainImageCount, VkSurfaceFormatKHR targetVkSurfaceFormat, VkPresentModeKHR targetVkPresentMode, VkInstance vkInstance, VkSurfaceKHR vkSurface, VkExtent2D swapchainExtent, TknEngine **ppTknEngine)
+TknEngine *createTknEnginePtr(uint32_t targetSwapchainImageCount, VkSurfaceFormatKHR targetVkSurfaceFormat, VkPresentModeKHR targetVkPresentMode, VkInstance vkInstance, VkSurfaceKHR vkSurface, VkExtent2D swapchainExtent)
 {
-    GfxContext gfxContext;
-    createGfxContext(targetSwapchainImageCount, targetVkSurfaceFormat, targetVkPresentMode, vkInstance, vkSurface, swapchainExtent, &gfxContext);
-
-    *ppTknEngine = tknMalloc(sizeof(TknEngine));
-    **ppTknEngine = (TknEngine){
+    TknEngine *pTknEngine = tknMalloc(sizeof(TknEngine));
+    *pTknEngine = (TknEngine){
         .frameCount = 0,
-        .gfxContext = gfxContext,
+        .gfxContext = createGfxContext(targetSwapchainImageCount, targetVkSurfaceFormat, targetVkPresentMode, vkInstance, vkSurface, swapchainExtent),
     };
+    return pTknEngine;
 }
 
 void updateTknEnginePtr(TknEngine *pTknEngine, VkExtent2D swapchainExtent)

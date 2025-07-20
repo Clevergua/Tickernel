@@ -102,7 +102,8 @@
         "renderpipeline.h": "c",
         "renderresources.h": "c",
         "gfxpipeline.h": "c",
-        "gfxres.h": "c"
+        "gfxres.h": "c",
+        "_types.h": "c"
     },
     "cmake.sourceDirectory": "/Users/forgemastergua/Documents/GitHub/Tickernel"
 }

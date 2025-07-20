@@ -65,13 +65,15 @@ void tknFree(void *ptr)
     free(ptr);
 }
 
-void tknCreateDynamicArray(size_t dataSize, uint32_t maxCount, TknDynamicArray *pDynamicArray)
+TknDynamicArray tknCreateDynamicArray(size_t dataSize, uint32_t maxCount)
 {
-    pDynamicArray->maxCount = maxCount;
-    pDynamicArray->count = 0;
-    pDynamicArray->dataSize = dataSize;
-    pDynamicArray->array = tknMalloc(dataSize * maxCount);
-    memset(pDynamicArray->array, 0, dataSize * maxCount);
+    TknDynamicArray tknDynamicArray = {
+        .maxCount = maxCount,
+        .count = 0,
+        .dataSize = dataSize,
+        .array = tknMalloc(dataSize * maxCount)};
+    memset(tknDynamicArray.array, 0, dataSize * maxCount);
+    return tknDynamicArray;
 }
 void tknDestroyDynamicArray(TknDynamicArray dynamicArray)
 {
@@ -152,4 +154,91 @@ void tknGetFromDynamicArray(TknDynamicArray *pDynamicArray, uint32_t index, void
     {
         tknError("Index %u is out of bounds for count %u\n", index, pDynamicArray->count);
     }
+}
+
+TknHashSet tknCreateHashSet(size_t capacity)
+{
+    TknHashSet tknHashSet = {
+        .capacity = capacity,
+        .count = 0,
+        .nodePtrs = tknMalloc(sizeof(TknListNode *) * capacity),
+    };
+    memset(tknHashSet.nodePtrs, 0, sizeof(TknListNode *) * capacity);
+    return tknHashSet;
+}
+void tknDestroyHashSet(TknHashSet *pTknHashSet)
+{
+    tknClearHashSet(pTknHashSet);
+    tknFree(pTknHashSet->nodePtrs);
+}
+bool tknAddToHashSet(TknHashSet *pTknHashSet, void *value)
+{
+    if (tknContainsInHashSet(pTknHashSet, value))
+    {
+        return false;
+    }
+    else
+    {
+        size_t index = (size_t)value % pTknHashSet->capacity;
+        TknListNode *newNode = tknMalloc(sizeof(TknListNode));
+        newNode->value = value;
+        newNode->nextNodePtr = pTknHashSet->nodePtrs[index];
+        pTknHashSet->nodePtrs[index] = newNode;
+        pTknHashSet->count++;
+        return true;
+    }
+}
+bool tknContainsInHashSet(TknHashSet *pTknHashSet, void *value)
+{
+    size_t index = (size_t)value % pTknHashSet->capacity;
+    TknListNode *node = pTknHashSet->nodePtrs[index];
+    while (node)
+    {
+        if (node->value == value)
+        {
+            return true;
+        }
+        node = node->nextNodePtr;
+    }
+    return false;
+}
+void tknRemoveFromHashSet(TknHashSet *pTknHashSet, void *value)
+{
+    size_t index = (size_t)value % pTknHashSet->capacity;
+    TknListNode *node = pTknHashSet->nodePtrs[index];
+    TknListNode *prevNode = NULL;
+    while (node)
+    {
+        if (node->value == value)
+        {
+            if (prevNode)
+            {
+                prevNode->nextNodePtr = node->nextNodePtr;
+            }
+            else
+            {
+                pTknHashSet->nodePtrs[index] = node->nextNodePtr;
+            }
+            tknFree(node);
+            pTknHashSet->count--;
+            return;
+        }
+        prevNode = node;
+        node = node->nextNodePtr;
+    }
+}
+void tknClearHashSet(TknHashSet *pTknHashSet)
+{
+    for (size_t i = 0; i < pTknHashSet->capacity; i++)
+    {
+        TknListNode *node = pTknHashSet->nodePtrs[i];
+        while (node)
+        {
+            TknListNode *nextNode = node->nextNodePtr;
+            tknFree(node);
+            node = nextNode;
+        }
+        pTknHashSet->nodePtrs[i] = NULL;
+    }
+    pTknHashSet->count = 0;
 }
