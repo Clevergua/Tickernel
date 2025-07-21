@@ -37,6 +37,61 @@ static void destroySpvReflectShaderModule(SpvReflectShaderModule *pSpvReflectSha
     spvReflectDestroyShaderModule(pSpvReflectShaderModule);
 }
 
+static DescriptorBinding getDefaultDescriptorBinding(VkDescriptorType descriptorType)
+{
+    DescriptorBinding descriptorBinding = {0};
+    if (VK_DESCRIPTOR_TYPE_SAMPLER == descriptorType)
+    {
+        descriptorBinding.samplerDescriptorBinding.pSampler = NULL;
+    }
+    else if (VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER == descriptorType)
+    {
+        descriptorBinding.combinedImageSamplerDescriptorBinding.pImage = NULL;
+        descriptorBinding.combinedImageSamplerDescriptorBinding.pSampler = NULL;
+    }
+    else if (VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE == descriptorType)
+    {
+        descriptorBinding.sampledImageDescriptorBinding.pImage = NULL;
+    }
+    else if (VK_DESCRIPTOR_TYPE_STORAGE_IMAGE == descriptorType)
+    {
+        descriptorBinding.storageImageDescriptorBinding.pImage = NULL;
+    }
+    else if (VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER == descriptorType)
+    {
+        descriptorBinding.uniformTexelBufferDescriptorBinding.pBuffer = NULL;
+    }
+    else if (VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER == descriptorType)
+    {
+        descriptorBinding.storageTexelBufferDescriptorBinding.pBuffer = NULL;
+    }
+    else if (VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER == descriptorType)
+    {
+        descriptorBinding.uniformBufferDescriptorBinding.pBuffer = NULL;
+    }
+    else if (VK_DESCRIPTOR_TYPE_STORAGE_BUFFER == descriptorType)
+    {
+        descriptorBinding.storageBufferDescriptorBinding.pBuffer = NULL;
+    }
+    else if (VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC == descriptorType)
+    {
+        descriptorBinding.uniformBufferDynamicDescriptorBinding.pBuffer = NULL;
+    }
+    else if (VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC == descriptorType)
+    {
+        descriptorBinding.storageBufferDynamicDescriptorBinding.pBuffer = NULL;
+    }
+    else if (VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT == descriptorType)
+    {
+        descriptorBinding.inputAttachmentDescriptorBinding.pAttachment = NULL;
+    }
+    else
+    {
+        tknError("Unsupported descriptor type: %d", descriptorType);
+    }
+    return descriptorBinding;
+}
+
 void populateFramebuffers(GfxContext *pGfxContext, RenderPass *pRenderPass)
 {
     VkDevice vkDevice = pGfxContext->vkDevice;
@@ -169,10 +224,10 @@ void cleanupFramebuffers(GfxContext *pGfxContext, RenderPass *pRenderPass)
 
 Subpass createSubpass(GfxContext *pGfxContext, uint32_t inputVkAttachmentReferenceCount, const VkAttachmentReference *inputVkAttachmentReferences, TknDynamicArray spvPathDynamicArray, Attachment **attachmentPtrs)
 {
-
     // for updating descriptor sets
     uint32_t descriptorBindingCount = 0;
     DescriptorBinding *descriptorBindings = NULL;
+    VkDescriptorSetLayoutBinding *vkDescriptorSetLayoutBindings = NULL;
     // for creating descriptor set
     VkDescriptorSetLayout vkDescriptorSetLayout;
     // for creating descriptor pool
@@ -181,10 +236,7 @@ Subpass createSubpass(GfxContext *pGfxContext, uint32_t inputVkAttachmentReferen
     VkDescriptorSet vkDescriptorSet;
     // pipelines
     TknDynamicArray pipelinePtrDynamicArray = tknCreateDynamicArray(sizeof(Pipeline *), 1);
-
     TknDynamicArray vkDescriptorPoolSizeDynamicArray = tknCreateDynamicArray(sizeof(VkDescriptorPoolSize), 1);
-    VkDescriptorSetLayoutBinding *vkDescriptorSetLayoutBindings = NULL;
-
     for (uint32_t pathIndex = 0; pathIndex < spvPathDynamicArray.count; pathIndex++)
     {
         const char **pSpvPath = tknGetFromDynamicArray(&spvPathDynamicArray, pathIndex);
@@ -207,44 +259,57 @@ Subpass createSubpass(GfxContext *pGfxContext, uint32_t inputVkAttachmentReferen
                     }
                 }
                 descriptorBindings = tknMalloc(sizeof(DescriptorBinding) * descriptorBindingCount);
-
+                vkDescriptorSetLayoutBindings = tknMalloc(sizeof(VkDescriptorSetLayoutBinding) * descriptorBindingCount);
+                for (uint32_t binding = 0; binding < descriptorBindingCount; binding++)
+                {
+                    descriptorBindings[binding] = (DescriptorBinding){0};
+                    vkDescriptorSetLayoutBindings[binding] = (VkDescriptorSetLayoutBinding){
+                        .binding = binding,
+                        .descriptorType = VK_DESCRIPTOR_TYPE_MAX_ENUM,
+                        .descriptorCount = 0,
+                        .stageFlags = 0,
+                        .pImmutableSamplers = NULL,
+                    };
+                }
                 for (uint32_t bindingIndex = 0; bindingIndex < spvReflectDescriptorSet.binding_count; bindingIndex++)
                 {
                     SpvReflectDescriptorBinding *pSpvReflectDescriptorBinding = spvReflectDescriptorSet.bindings[bindingIndex];
+                    uint32_t binding = pSpvReflectDescriptorBinding->binding;
+                    if (vkDescriptorSetLayoutBindings[binding].descriptorType == VK_DESCRIPTOR_TYPE_MAX_ENUM)
+                    {
+                        VkDescriptorSetLayoutBinding vkDescriptorSetLayoutBinding = {
+                            .binding = binding,
+                            .descriptorType = (VkDescriptorType)pSpvReflectDescriptorBinding->descriptor_type,
+                            .descriptorCount = pSpvReflectDescriptorBinding->count,
+                            .stageFlags = (VkShaderStageFlags)spvReflectShaderModule.shader_stage,
+                            .pImmutableSamplers = NULL,
+                        };
+                        vkDescriptorSetLayoutBindings[binding] = vkDescriptorSetLayoutBinding;
+                        descriptorBindings[binding] = getDefaultDescriptorBinding(vkDescriptorSetLayoutBinding.descriptorType);
 
-                    VkDescriptorSetLayoutBinding vkDescriptorSetLayoutBinding = {
-                        .binding = pSpvReflectDescriptorBinding->binding,
-                        .descriptorType = (VkDescriptorType)pSpvReflectDescriptorBinding->descriptor_type,
-                        .descriptorCount = pSpvReflectDescriptorBinding->count,
-                        .stageFlags = (VkShaderStageFlags)spvReflectShaderModule.shader_stage,
-                        .pImmutableSamplers = NULL,
-                    };
-                    uint32_t addedIndex;
-                    for (addedIndex = 0; addedIndex < vkDescriptorSetLayoutBindingDynamicArray.count; addedIndex++)
-                    {
-                        VkDescriptorSetLayoutBinding *pAddedBinding = tknGetFromDynamicArray(&vkDescriptorSetLayoutBindingDynamicArray, addedIndex);
-                        if (pAddedBinding->binding == vkDescriptorSetLayoutBinding.binding)
+                        if (VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT == vkDescriptorSetLayoutBinding.descriptorType)
                         {
-                            tknAssert(pAddedBinding->descriptorType == vkDescriptorSetLayoutBinding.descriptorType, "Incompatible descriptor binding");
-                            pAddedBinding->stageFlags |= vkDescriptorSetLayoutBinding.stageFlags;
-                            pAddedBinding->descriptorCount = vkDescriptorSetLayoutBinding.descriptorCount > pAddedBinding->descriptorCount ? vkDescriptorSetLayoutBinding.descriptorCount : pAddedBinding->descriptorCount;
-                            break;
+                            VkImageLayout vkImageLayout;
+                            uint32_t inputAttachmentReferenceIndex;
+                            for (inputAttachmentReferenceIndex = 0; inputAttachmentReferenceIndex < inputVkAttachmentReferenceCount; inputAttachmentReferenceIndex++)
+                            {
+                                VkAttachmentReference vkAttachmentReference = inputVkAttachmentReferences[inputAttachmentReferenceIndex];
+                                if (vkAttachmentReference.attachment == pSpvReflectDescriptorBinding->input_attachment_index)
+                                {
+                                    vkImageLayout = vkAttachmentReference.layout;
+                                    break;
+                                }
+                            }
+                            tknAssert(inputAttachmentReferenceIndex < inputVkAttachmentReferenceCount, "Input attachment reference not found for binding %d", pSpvReflectDescriptorBinding->input_attachment_index);
+                            VkAttachmentReference vkAttachmentReference = inputVkAttachmentReferences[pSpvReflectDescriptorBinding->input_attachment_index];
+                            Attachment *pAttachment = attachmentPtrs[pSpvReflectDescriptorBinding->input_attachment_index];
+                            descriptorBindings[binding].inputAttachmentDescriptorBinding.pAttachment = pAttachment;
                         }
-                    }
-                    if (addedIndex < vkDescriptorSetLayoutBindingDynamicArray.count)
-                    {
-                        // Binding already exists, skip adding
-                        continue;
-                    }
-                    else
-                    {
-                        tknAddToDynamicArray(&vkDescriptorSetLayoutBindingDynamicArray, &vkDescriptorSetLayoutBinding, vkDescriptorSetLayoutBindingDynamicArray.count);
-                        // Fill vkDescriptorPoolSizeDynamicArray
+
                         uint32_t poolSizeIndex;
                         for (poolSizeIndex = 0; poolSizeIndex < vkDescriptorPoolSizeDynamicArray.count; poolSizeIndex++)
                         {
                             VkDescriptorPoolSize *pVkDescriptorPoolSize = tknGetFromDynamicArray(&vkDescriptorPoolSizeDynamicArray, poolSizeIndex);
-
                             if (pVkDescriptorPoolSize->type == vkDescriptorSetLayoutBinding.descriptorType)
                             {
                                 pVkDescriptorPoolSize->descriptorCount += vkDescriptorSetLayoutBinding.descriptorCount;
@@ -267,58 +332,12 @@ Subpass createSubpass(GfxContext *pGfxContext, uint32_t inputVkAttachmentReferen
                             };
                             tknAddToDynamicArray(&vkDescriptorPoolSizeDynamicArray, &vkDescriptorPoolSize, vkDescriptorPoolSizeDynamicArray.count);
                         }
-
-                        // if (vkDescriptorSetLayoutBinding.descriptorType == VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT)
-                        // {
-                        //     VkImageLayout vkImageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-                        //     uint32_t inputAttachmentReferenceIndex;
-                        //     for (inputAttachmentReferenceIndex = 0; inputAttachmentReferenceIndex < inputVkAttachmentReferenceCount; inputAttachmentReferenceIndex++)
-                        //     {
-                        //         VkAttachmentReference vkAttachmentReference = inputVkAttachmentReferences[inputAttachmentReferenceIndex];
-                        //         if (vkAttachmentReference.attachment == pSpvReflectDescriptorBinding->input_attachment_index)
-                        //         {
-                        //             vkImageLayout = vkAttachmentReference.layout;
-                        //             break;
-                        //         }
-                        //     }
-                        //     tknAssert(inputAttachmentReferenceIndex < inputVkAttachmentReferenceCount, "Input attachment reference not found for binding %d", pSpvReflectDescriptorBinding->input_attachment_index);
-
-                        //     VkAttachmentReference vkAttachmentReference = inputVkAttachmentReferences[pSpvReflectDescriptorBinding->input_attachment_index];
-                        //     Attachment *pAttachment = attachmentPtrs[pSpvReflectDescriptorBinding->input_attachment_index];
-                        //     VkImageView vkImageView;
-                        //     if (pAttachment->attachmentType == ATTACHMENT_TYPE_DYNAMIC)
-                        //     {
-                        //         vkImageView = pAttachment->attachmentContent.dynamicAttachmentContent.image.vkImageView;
-                        //     }
-                        //     else if (pAttachment->attachmentType == ATTACHMENT_TYPE_FIXED)
-                        //     {
-                        //         vkImageView = pAttachment->attachmentContent.fixedAttachmentContent.image.vkImageView;
-                        //     }
-                        //     else
-                        //     {
-                        //         tknError("Unsupported attachment type: %d\n", pAttachment->attachmentType);
-                        //     }
-
-                        //     VkDescriptorImageInfo vkDescriptorImageInfo = {
-                        //         .sampler = VK_NULL_HANDLE,
-                        //         .imageView = vkImageView,
-                        //         .imageLayout = vkImageLayout,
-                        //     };
-                        //     VkWriteDescriptorSet vkWriteDescriptorSet = {
-                        //         .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-                        //         .pNext = NULL,
-                        //         .dstSet = VK_NULL_HANDLE,
-                        //         .dstBinding = vkDescriptorSetLayoutBinding.binding,
-                        //         .dstArrayElement = 0,
-                        //         .descriptorCount = vkDescriptorSetLayoutBinding.descriptorCount,
-                        //         .descriptorType = vkDescriptorSetLayoutBinding.descriptorType,
-                        //         .pImageInfo = &vkDescriptorImageInfo,
-                        //         .pBufferInfo = NULL,
-                        //         .pTexelBufferView = NULL,
-                        //     };
-                        //     tknAddToDynamicArray(&vkWriteDescriptorSetDynamicArray, &vkWriteDescriptorSet, vkWriteDescriptorSetDynamicArray.count);
-                        //     tknAddToDynamicArray(&inputAttachmentIndexDynamicArray, &pSpvReflectDescriptorBinding->input_attachment_index, inputAttachmentIndexDynamicArray.count);
-                        // }
+                    }
+                    else
+                    {
+                        tknAssert(vkDescriptorSetLayoutBindings[binding].descriptorType == (VkDescriptorType)pSpvReflectDescriptorBinding->descriptor_type, "Incompatible descriptor binding");
+                        vkDescriptorSetLayoutBindings[binding].stageFlags |= (VkShaderStageFlags)spvReflectShaderModule.shader_stage;
+                        vkDescriptorSetLayoutBindings[binding].descriptorCount = pSpvReflectDescriptorBinding->count > vkDescriptorSetLayoutBindings[binding].descriptorCount ? pSpvReflectDescriptorBinding->count : vkDescriptorSetLayoutBindings[binding].descriptorCount;
                     }
                 }
                 // Skip other sets.
@@ -327,7 +346,7 @@ Subpass createSubpass(GfxContext *pGfxContext, uint32_t inputVkAttachmentReferen
             else
             {
                 // Skip
-                printf("Error descriptor set %d in subpass shader module %s\n", spvReflectDescriptorSet.set, *pSpvPath);
+                printf("Warning: descriptor set %d in subpass shader module %s\n", spvReflectDescriptorSet.set, *pSpvPath);
             }
         }
         destroySpvReflectShaderModule(&spvReflectShaderModule);
@@ -335,8 +354,8 @@ Subpass createSubpass(GfxContext *pGfxContext, uint32_t inputVkAttachmentReferen
     VkDevice vkDevice = pGfxContext->vkDevice;
     VkDescriptorSetLayoutCreateInfo vkDescriptorSetLayoutCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
-        .bindingCount = vkDescriptorSetLayoutBindingDynamicArray.count,
-        .pBindings = vkDescriptorSetLayoutBindingDynamicArray.array,
+        .bindingCount = descriptorBindingCount,
+        .pBindings = vkDescriptorSetLayoutBindings,
     };
     ASSERT_VK_SUCCESS(vkCreateDescriptorSetLayout(vkDevice, &vkDescriptorSetLayoutCreateInfo, NULL, &vkDescriptorSetLayout));
     VkDescriptorPoolCreateInfo vkDescriptorPoolCreateInfo = {
@@ -353,16 +372,18 @@ Subpass createSubpass(GfxContext *pGfxContext, uint32_t inputVkAttachmentReferen
         .pSetLayouts = &vkDescriptorSetLayout,
     };
     ASSERT_VK_SUCCESS(vkAllocateDescriptorSets(vkDevice, &vkDescriptorSetAllocateInfo, &vkDescriptorSet));
-    // vkUpdateDescriptorSets(vkDevice, vkWriteDescriptorSetDynamicArray.count, vkWriteDescriptorSetDynamicArray.array, 0, NULL);
+    vkUpdateDescriptorSets(vkDevice, vkWriteDescriptorSetDynamicArray.count, vkWriteDescriptorSetDynamicArray.array, 0, NULL);
 
     Subpass subpass = {
-        .descriptorBindingDynamicArray = descriptorBindingDynamicArray,
+        .descriptorBindingCount = descriptorBindingCount,
+        .descriptorBindings = descriptorBindings,
+        .vkDescriptorSetLayoutBindings = vkDescriptorSetLayoutBindings,
         .vkDescriptorSetLayout = vkDescriptorSetLayout,
         .vkDescriptorPool = vkDescriptorPool,
         .vkDescriptorSet = vkDescriptorSet,
         .pipelinePtrDynamicArray = pipelinePtrDynamicArray,
     };
-    tknDestroyDynamicArray(vkDescriptorSetLayoutBindingDynamicArray);
+
     tknDestroyDynamicArray(vkDescriptorPoolSizeDynamicArray);
     return subpass;
 }
@@ -377,9 +398,9 @@ void destroySubpass(GfxContext *pGfxContext, Subpass *pSubpass)
     ASSERT_VK_SUCCESS(vkFreeDescriptorSets(vkDevice, pSubpass->vkDescriptorPool, 1, &pSubpass->vkDescriptorSet));
     vkDestroyDescriptorPool(vkDevice, pSubpass->vkDescriptorPool, NULL);
     vkDestroyDescriptorSetLayout(vkDevice, pSubpass->vkDescriptorSetLayout, NULL);
-    // tknDestroyDynamicArray(pSubpass->inputAttachmentIndexDynamicArray);
-    // tknDestroyDynamicArray(pSubpass->vkWriteDescriptorSetDynamicArray);
     tknDestroyDynamicArray(pSubpass->pipelinePtrDynamicArray);
+    tknFree(pSubpass->descriptorBindings);
+    tknFree(pSubpass->vkDescriptorSetLayoutBindings);
 }
 
 RenderPass *createRenderPassPtr(GfxContext *pGfxContext, uint32_t attachmentCount, VkAttachmentDescription *vkAttachmentDescriptions, Attachment **inputAttachmentPtrs, uint32_t subpassCount, VkSubpassDescription *vkSubpassDescriptions, TknDynamicArray *spvPathDynamicArrays, uint32_t vkSubpassDependencyCount, VkSubpassDependency *vkSubpassDependencies, uint32_t renderPassIndex)
