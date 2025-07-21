@@ -372,6 +372,7 @@ Subpass createSubpass(GfxContext *pGfxContext, uint32_t inputVkAttachmentReferen
         .pSetLayouts = &vkDescriptorSetLayout,
     };
     ASSERT_VK_SUCCESS(vkAllocateDescriptorSets(vkDevice, &vkDescriptorSetAllocateInfo, &vkDescriptorSet));
+
     vkUpdateDescriptorSets(vkDevice, vkWriteDescriptorSetDynamicArray.count, vkWriteDescriptorSetDynamicArray.array, 0, NULL);
 
     Subpass subpass = {
