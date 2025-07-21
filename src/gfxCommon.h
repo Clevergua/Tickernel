@@ -162,7 +162,12 @@ typedef struct
     VkDescriptorSetLayout vkDescriptorSetLayout;                 // for creating descriptor set & pipelines
     VkDescriptorPool vkDescriptorPool;                           // for creating descriptor set
     VkDescriptorSet vkDescriptorSet;                             // subpass descriptor set
-    TknDynamicArray pipelinePtrDynamicArray;                     // pipelines
+} DescriptorSet;
+
+typedef struct
+{
+    DescriptorSet subpassDescriptorSet;      // subpass descriptor set
+    TknDynamicArray pipelinePtrDynamicArray; // pipelines
 } Subpass;
 
 typedef struct
@@ -211,4 +216,6 @@ typedef struct
 
     TknDynamicArray dynamicAttachmentPtrDynamicArray;
     TknDynamicArray renderPassPtrDynamicArray;
+
+    DescriptorSet globalDescriptorSet;
 } GfxContext;
