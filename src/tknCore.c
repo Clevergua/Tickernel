@@ -180,6 +180,32 @@ bool tknAddToHashSet(TknHashSet *pTknHashSet, void *value)
     }
     else
     {
+        if (pTknHashSet->count * 10 >= pTknHashSet->capacity * 8)
+        {
+            // Resize the hash set
+            size_t newCapacity = pTknHashSet->capacity * 2;
+            TknListNode **newNodePtrs = tknMalloc(sizeof(TknListNode *) * newCapacity);
+            memset(newNodePtrs, 0, sizeof(TknListNode *) * newCapacity);
+            for (size_t i = 0; i < pTknHashSet->capacity; i++)
+            {
+                TknListNode *node = pTknHashSet->nodePtrs[i];
+                while (node)
+                {
+                    size_t newIndex = (size_t)node->value % newCapacity;
+                    TknListNode *nextNode = node->nextNodePtr;
+                    node->nextNodePtr = newNodePtrs[newIndex];
+                    newNodePtrs[newIndex] = node;
+                    node = nextNode;
+                }
+            }
+            tknFree(pTknHashSet->nodePtrs);
+            pTknHashSet->nodePtrs = newNodePtrs;
+            pTknHashSet->capacity = newCapacity;
+        }
+        else
+        {
+            // nothing
+        }
         size_t index = (size_t)value % pTknHashSet->capacity;
         TknListNode *newNode = tknMalloc(sizeof(TknListNode));
         newNode->value = value;

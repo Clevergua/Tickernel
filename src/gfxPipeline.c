@@ -255,7 +255,185 @@ static DescriptorSet createDescriptorSet(GfxContext *pGfxContext, uint32_t spvRe
 static void destroyDescriptorSet(GfxContext *pGfxContext, DescriptorSet descriptorSet)
 {
     VkDevice vkDevice = pGfxContext->vkDevice;
-    // TODO: 删除所有Set的引用
+    for (uint32_t binding = 0; binding < descriptorSet.descriptorBindingCount; binding++)
+    {
+        DescriptorBinding descriptorBinding = descriptorSet.descriptorBindings[binding];
+        VkDescriptorType descriptorType = descriptorSet.vkDescriptorSetLayoutBindings[binding].descriptorType;
+        if (VK_DESCRIPTOR_TYPE_SAMPLER == descriptorType)
+        {
+            if (descriptorBinding.samplerDescriptorBinding.pSampler != NULL)
+            {
+                Sampler *pSampler = descriptorBinding.samplerDescriptorBinding.pSampler;
+                tknRemoveFromHashSet(&pSampler->descriptorBindingHashSet, &descriptorSet.vkDescriptorSet);
+                descriptorBinding.samplerDescriptorBinding.pSampler = NULL;
+            }
+            else
+            {
+                // nothing
+            }
+        }
+        else if (VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER == descriptorType)
+        {
+
+            if (descriptorBinding.combinedImageSamplerDescriptorBinding.pImage != NULL)
+            {
+                Image *pImage = descriptorBinding.combinedImageSamplerDescriptorBinding.pImage;
+                tknRemoveFromHashSet(&pImage->descriptorBindingHashSet, &descriptorSet.vkDescriptorSet);
+                descriptorBinding.combinedImageSamplerDescriptorBinding.pImage = NULL;
+            }
+            else
+            {
+                // nothing
+            }
+
+            if (descriptorBinding.samplerDescriptorBinding.pSampler != NULL)
+            {
+                Sampler *pSampler = descriptorBinding.samplerDescriptorBinding.pSampler;
+                tknRemoveFromHashSet(&pSampler->descriptorBindingHashSet, &descriptorSet.vkDescriptorSet);
+                descriptorBinding.samplerDescriptorBinding.pSampler = NULL;
+            }
+            else
+            {
+                // nothing
+            }
+        }
+        else if (VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE == descriptorType)
+        {
+            if (descriptorBinding.sampledImageDescriptorBinding.pImage != NULL)
+            {
+                Image *pImage = descriptorBinding.sampledImageDescriptorBinding.pImage;
+                tknRemoveFromHashSet(&pImage->descriptorBindingHashSet, &descriptorSet.vkDescriptorSet);
+                descriptorBinding.sampledImageDescriptorBinding.pImage = NULL;
+            }
+            else
+            {
+                // nothing
+            }
+        }
+        else if (VK_DESCRIPTOR_TYPE_STORAGE_IMAGE == descriptorType)
+        {
+            if (descriptorBinding.storageImageDescriptorBinding.pImage != NULL)
+            {
+                Image *pImage = descriptorBinding.storageImageDescriptorBinding.pImage;
+                tknRemoveFromHashSet(&pImage->descriptorBindingHashSet, &descriptorSet.vkDescriptorSet);
+                descriptorBinding.storageImageDescriptorBinding.pImage = NULL;
+            }
+            else
+            {
+                // nothing
+            }
+        }
+        else if (VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER == descriptorType)
+        {
+            if (descriptorBinding.uniformTexelBufferDescriptorBinding.pBuffer != NULL)
+            {
+                Buffer *pBuffer = descriptorBinding.uniformTexelBufferDescriptorBinding.pBuffer;
+                tknRemoveFromHashSet(&pBuffer->descriptorBindingHashSet, &descriptorSet.vkDescriptorSet);
+                descriptorBinding.uniformTexelBufferDescriptorBinding.pBuffer = NULL;
+            }
+            else
+            {
+                // nothing
+            }
+        }
+        else if (VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER == descriptorType)
+        {
+            if (descriptorBinding.storageTexelBufferDescriptorBinding.pBuffer != NULL)
+            {
+                Buffer *pBuffer = descriptorBinding.storageTexelBufferDescriptorBinding.pBuffer;
+                tknRemoveFromHashSet(&pBuffer->descriptorBindingHashSet, &descriptorSet.vkDescriptorSet);
+                descriptorBinding.storageTexelBufferDescriptorBinding.pBuffer = NULL;
+            }
+            else
+            {
+                // nothing
+            }
+        }
+        else if (VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER == descriptorType)
+        {
+            if (descriptorBinding.uniformBufferDescriptorBinding.pBuffer != NULL)
+            {
+                Buffer *pBuffer = descriptorBinding.uniformBufferDescriptorBinding.pBuffer;
+                tknRemoveFromHashSet(&pBuffer->descriptorBindingHashSet, &descriptorSet.vkDescriptorSet);
+                descriptorBinding.uniformBufferDescriptorBinding.pBuffer = NULL;
+            }
+            else
+            {
+                // nothing
+            }
+        }
+        else if (VK_DESCRIPTOR_TYPE_STORAGE_BUFFER == descriptorType)
+        {
+            if (descriptorBinding.storageBufferDescriptorBinding.pBuffer != NULL)
+            {
+                Buffer *pBuffer = descriptorBinding.storageBufferDescriptorBinding.pBuffer;
+                tknRemoveFromHashSet(&pBuffer->descriptorBindingHashSet, &descriptorSet.vkDescriptorSet);
+                descriptorBinding.storageBufferDescriptorBinding.pBuffer = NULL;
+            }
+            else
+            {
+                // nothing
+            }
+        }
+        else if (VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC == descriptorType)
+        {
+            if (descriptorBinding.uniformBufferDynamicDescriptorBinding.pBuffer != NULL)
+            {
+                Buffer *pBuffer = descriptorBinding.uniformBufferDynamicDescriptorBinding.pBuffer;
+                tknRemoveFromHashSet(&pBuffer->descriptorBindingHashSet, &descriptorSet.vkDescriptorSet);
+                descriptorBinding.uniformBufferDynamicDescriptorBinding.pBuffer = NULL;
+            }
+            else
+            {
+                // nothing
+            }
+        }
+        else if (VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC == descriptorType)
+        {
+            if (descriptorBinding.storageBufferDynamicDescriptorBinding.pBuffer != NULL)
+            {
+                Buffer *pBuffer = descriptorBinding.storageBufferDynamicDescriptorBinding.pBuffer;
+                tknRemoveFromHashSet(&pBuffer->descriptorBindingHashSet, &descriptorSet.vkDescriptorSet);
+                descriptorBinding.storageBufferDynamicDescriptorBinding.pBuffer = NULL;
+            }
+            else
+            {
+                // nothing
+            }
+        }
+        else if (VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT == descriptorType)
+        {
+            if (descriptorBinding.inputAttachmentDescriptorBinding.pAttachment != NULL)
+            {
+                Attachment *pAttachment = descriptorBinding.inputAttachmentDescriptorBinding.pAttachment;
+                if (pAttachment->attachmentType == ATTACHMENT_TYPE_DYNAMIC)
+                {
+                    DynamicAttachmentContent dynamicAttachmentContent = pAttachment->attachmentContent.dynamicAttachmentContent;
+                    tknAssert(dynamicAttachmentContent.image.vkImageView != VK_NULL_HANDLE, "Dynamic attachment image view is null!");
+                    tknRemoveFromHashSet(&dynamicAttachmentContent.image.descriptorBindingHashSet, &descriptorSet.vkDescriptorSet);
+                }
+                else if (pAttachment->attachmentType == ATTACHMENT_TYPE_FIXED)
+                {
+                    FixedAttachmentContent fixedAttachmentContent = pAttachment->attachmentContent.fixedAttachmentContent;
+                    tknAssert(fixedAttachmentContent.image.vkImageView != VK_NULL_HANDLE, "Fixed attachment image view is null!");
+                    tknRemoveFromHashSet(&fixedAttachmentContent.image.descriptorBindingHashSet, &descriptorSet.vkDescriptorSet);
+                }
+                else
+                {
+                    // nothing
+                }
+                descriptorBinding.inputAttachmentDescriptorBinding.pAttachment = NULL;
+            }
+            else
+            {
+                // nothing
+            }
+        }
+        else
+        {
+            tknError("Unsupported descriptor type: %d", descriptorType);
+        }
+    }
     vkFreeDescriptorSets(vkDevice, descriptorSet.vkDescriptorPool, 1, &descriptorSet.vkDescriptorSet);
     vkDestroyDescriptorPool(vkDevice, descriptorSet.vkDescriptorPool, NULL);
     vkDestroyDescriptorSetLayout(vkDevice, descriptorSet.vkDescriptorSetLayout, NULL);
@@ -565,20 +743,22 @@ Subpass createSubpass(GfxContext *pGfxContext, uint32_t inputVkAttachmentReferen
     tknDestroyDynamicArray(vkDescriptorPoolSizeDynamicArray);
     return subpass;
 }
-void destroySubpass(GfxContext *pGfxContext, Subpass *pSubpass)
+void destroySubpass(GfxContext *pGfxContext, Subpass subpass)
 {
-    for (uint32_t j = 0; j < pSubpass->pipelinePtrDynamicArray.count; j++)
+    for (uint32_t j = 0; j < subpass.pipelinePtrDynamicArray.count; j++)
     {
-        Pipeline *pPipeline = tknGetFromDynamicArray(&pSubpass->pipelinePtrDynamicArray, j);
+        Pipeline *pPipeline = tknGetFromDynamicArray(&subpass.pipelinePtrDynamicArray, j);
         // destroyPipeline(pGfxContext, pPipeline);
     }
     VkDevice vkDevice = pGfxContext->vkDevice;
-    ASSERT_VK_SUCCESS(vkFreeDescriptorSets(vkDevice, pSubpass->vkDescriptorPool, 1, &pSubpass->vkDescriptorSet));
-    vkDestroyDescriptorPool(vkDevice, pSubpass->vkDescriptorPool, NULL);
-    vkDestroyDescriptorSetLayout(vkDevice, pSubpass->vkDescriptorSetLayout, NULL);
-    tknDestroyDynamicArray(pSubpass->pipelinePtrDynamicArray);
-    tknFree(pSubpass->descriptorBindings);
-    tknFree(pSubpass->vkDescriptorSetLayoutBindings);
+    destroyDescriptorSet(pGfxContext, subpass.subpassDescriptorSet);
+    tknDestroyDynamicArray(subpass.pipelinePtrDynamicArray);
+    // ASSERT_VK_SUCCESS(vkFreeDescriptorSets(vkDevice, pSubpass->vkDescriptorPool, 1, &pSubpass->vkDescriptorSet));
+    // vkDestroyDescriptorPool(vkDevice, pSubpass->vkDescriptorPool, NULL);
+    // vkDestroyDescriptorSetLayout(vkDevice, pSubpass->vkDescriptorSetLayout, NULL);
+    // tknDestroyDynamicArray(pSubpass->pipelinePtrDynamicArray);
+    // tknFree(pSubpass->descriptorBindings);
+    // tknFree(pSubpass->vkDescriptorSetLayoutBindings);
 }
 
 RenderPass *createRenderPassPtr(GfxContext *pGfxContext, uint32_t attachmentCount, VkAttachmentDescription *vkAttachmentDescriptions, Attachment **inputAttachmentPtrs, uint32_t subpassCount, VkSubpassDescription *vkSubpassDescriptions, TknDynamicArray *spvPathDynamicArrays, uint32_t vkSubpassDependencyCount, VkSubpassDependency *vkSubpassDependencies, uint32_t renderPassIndex)

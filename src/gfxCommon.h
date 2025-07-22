@@ -8,6 +8,7 @@
 typedef struct
 {
     VkSampler vkSampler;
+    TknHashSet descriptorBindingHashSet;
 } Sampler;
 
 typedef struct
@@ -15,6 +16,7 @@ typedef struct
     VkImage vkImage;
     VkDeviceMemory vkDeviceMemory;
     VkImageView vkImageView;
+    TknHashSet descriptorBindingHashSet;
 } Image;
 
 typedef struct
@@ -22,6 +24,7 @@ typedef struct
     VkBuffer vkBuffer;
     VkDeviceMemory vkDeviceMemory;
     void *mapped;
+    TknHashSet descriptorBindingHashSet;
 } Buffer;
 
 typedef struct
