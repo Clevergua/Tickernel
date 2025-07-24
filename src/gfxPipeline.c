@@ -525,6 +525,7 @@ Subpass createSubpass(GfxContext *pGfxContext, uint32_t inputVkAttachmentReferen
                             tknAssert(inputAttachmentReferenceIndex < inputVkAttachmentReferenceCount, "Input attachment reference not found for binding %d", pSpvReflectDescriptorBinding->input_attachment_index);
                             descriptorBindings[binding].inputAttachmentDescriptorBinding.vkImageLayout = vkImageLayout;
                             descriptorBindings[binding].inputAttachmentDescriptorBinding.pAttachment = attachmentPtrs[pSpvReflectDescriptorBinding->input_attachment_index];
+                            tknAssert(descriptorBindings[binding].inputAttachmentDescriptorBinding.pAttachment->attachmentType != ATTACHMENT_TYPE_SWAPCHAIN, "Input attachment cannot be a swapchain attachment");
                         }
 
                         uint32_t poolSizeIndex;
@@ -596,29 +597,6 @@ Subpass createSubpass(GfxContext *pGfxContext, uint32_t inputVkAttachmentReferen
 
     for (uint32_t descriptorBindingIndex = 0; descriptorBindingIndex < descriptorBindingCount; descriptorBindingIndex++)
     {
-        VkDescriptorSetLayoutBinding vkDescriptorSetLayoutBinding = vkDescriptorSetLayoutBindings[descriptorBindingIndex];
-        DescriptorBinding descriptorBinding = descriptorBindings[descriptorBindingIndex];
-        if (VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT == vkDescriptorSetLayoutBinding.descriptorType)
-        {
-            VkDescriptorImageInfo vkDescriptorImageInfo = {
-                .sampler = VK_NULL_HANDLE,
-                .imageView = descriptorBinding.inputAttachmentDescriptorBinding.pAttachment->attachmentContent.fixedAttachmentContent.image.vkImageView,
-                .imageLayout = descriptorBinding.inputAttachmentDescriptorBinding.vkImageLayout,
-            };
-            VkWriteDescriptorSet vkWriteDescriptorSet = {
-                .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-                .pNext = NULL,
-                .dstSet = vkDescriptorSet,
-                .dstBinding = vkDescriptorSetLayoutBinding.binding,
-                .dstArrayElement = 0,
-                .descriptorCount = vkDescriptorSetLayoutBinding.descriptorCount,
-                .descriptorType = vkDescriptorSetLayoutBinding.descriptorType,
-                .pImageInfo = &vkDescriptorImageInfo,
-                .pBufferInfo = NULL,
-                .pTexelBufferView = NULL,
-            };
-            vkUpdateDescriptorSets(vkDevice, 1, &vkWriteDescriptorSet, 0, NULL);
-        }
     }
 
     DescriptorSet subpassDescriptorSet = {
@@ -1005,77 +983,119 @@ void bindStorageBufferDynamic(GfxContext *pGfxContext, DescriptorSet *pDescripto
     }
 }
 
-// void bindInputAttachment(GfxContext *pGfxContext, DescriptorSet *pDescriptorSet, uint32_t binding, Attachment *pAttachment)
-// {
-//     tknAssert(binding < pDescriptorSet->descriptorBindingCount, "Binding index out of range");
-//     VkDescriptorSetLayoutBinding vkDescriptorSetLayoutBinding = pDescriptorSet->vkDescriptorSetLayoutBindings[binding];
-//     tknAssert(vkDescriptorSetLayoutBinding.descriptorType == VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, "Binding type mismatch, expected VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT");
-//     DescriptorBinding *pDescriptorBinding = &pDescriptorSet->descriptorBindings[binding];
-//     if (pDescriptorBinding->inputAttachmentDescriptorBinding.pAttachment == pAttachment)
-//     {
-//         printf("Warning: binding input attachment %p to descriptor set %p, binding %d, but it is already bound.\n", pAttachment, pDescriptorSet, binding);
-//     }
-//     else
-//     {
-//         // Note: Input attachments don't have hash sets like other resources, so we just update the binding
-//         Attachment *pBoundAttachment = pDescriptorBinding->inputAttachmentDescriptorBinding.pAttachment;
-//         if (pBoundAttachment != NULL)
-//         {
-//             if (pBoundAttachment->attachmentType == ATTACHMENT_TYPE_DYNAMIC)
-//             {
-//                 tknRemoveFromHashSet(&pBoundAttachment->attachmentContent.dynamicAttachmentContent.image.descriptorBindingPtrHashSet, pDescriptorBinding);
-//             }
-//             else if (pBoundAttachment->attachmentType == ATTACHMENT_TYPE_FIXED)
-//             {
-//                 tknRemoveFromHashSet(&pBoundAttachment->attachmentContent.fixedAttachmentContent.image.descriptorBindingPtrHashSet, pDescriptorBinding);
-//             }
-//             else
-//             {
-//                 // nothing
-//             }
-//         }
-//         else
-//         {
-//             // nothing
-//         }
+void bindInputAttachment(GfxContext *pGfxContext, DescriptorSet *pDescriptorSet, uint32_t binding)
+{
+    VkDevice vkDevice = pGfxContext->vkDevice;
+    VkDescriptorSetLayoutBinding vkDescriptorSetLayoutBinding = pDescriptorSet->vkDescriptorSetLayoutBindings[binding];
+    DescriptorBinding descriptorBinding = pDescriptorSet->descriptorBindings[binding];
+    if (VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT == vkDescriptorSetLayoutBinding.descriptorType)
+    {
+        Attachment *pAttachment = descriptorBinding.inputAttachmentDescriptorBinding.pAttachment;
+        VkImageView vkImageView;
+        if (ATTACHMENT_TYPE_DYNAMIC == pAttachment->attachmentType)
+        {
+            vkImageView = pAttachment->attachmentContent.dynamicAttachmentContent.image.vkImageView;
+        }
+        else if (ATTACHMENT_TYPE_FIXED == pAttachment->attachmentType)
+        {
+            vkImageView = pAttachment->attachmentContent.fixedAttachmentContent.image.vkImageView;
+        }
+        else
+        {
+            // ATTACHMENT_TYPE_SWAPCHAIN
+            tknError("Input attachment cannot be a swapchain attachment");
+        }
+        VkDescriptorImageInfo vkDescriptorImageInfo = {
+            .sampler = VK_NULL_HANDLE,
+            .imageView = vkImageView,
+            .imageLayout = descriptorBinding.inputAttachmentDescriptorBinding.vkImageLayout,
+        };
+        VkWriteDescriptorSet vkWriteDescriptorSet = {
+            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            .pNext = NULL,
+            .dstSet = pDescriptorSet->vkDescriptorSet,
+            .dstBinding = vkDescriptorSetLayoutBinding.binding,
+            .dstArrayElement = 0,
+            .descriptorCount = vkDescriptorSetLayoutBinding.descriptorCount,
+            .descriptorType = vkDescriptorSetLayoutBinding.descriptorType,
+            .pImageInfo = &vkDescriptorImageInfo,
+            .pBufferInfo = NULL,
+            .pTexelBufferView = NULL,
+        };
+        vkUpdateDescriptorSets(vkDevice, 1, &vkWriteDescriptorSet, 0, NULL);
+    }
+}
+void bindInputAttachment(GfxContext *pGfxContext, DescriptorSet *pDescriptorSet, uint32_t binding, Attachment *pAttachment)
+{
+    tknAssert(binding < pDescriptorSet->descriptorBindingCount, "Binding index out of range");
+    VkDescriptorSetLayoutBinding vkDescriptorSetLayoutBinding = pDescriptorSet->vkDescriptorSetLayoutBindings[binding];
+    tknAssert(vkDescriptorSetLayoutBinding.descriptorType == VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, "Binding type mismatch, expected VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT");
+    DescriptorBinding *pDescriptorBinding = &pDescriptorSet->descriptorBindings[binding];
+    if (pDescriptorBinding->inputAttachmentDescriptorBinding.pAttachment == pAttachment)
+    {
+        printf("Warning: binding input attachment %p to descriptor set %p, binding %d, but it is already bound.\n", pAttachment, pDescriptorSet, binding);
+    }
+    else
+    {
+        // Note: Input attachments don't have hash sets like other resources, so we just update the binding
+        Attachment *pBoundAttachment = pDescriptorBinding->inputAttachmentDescriptorBinding.pAttachment;
+        if (pBoundAttachment != NULL)
+        {
+            if (pBoundAttachment->attachmentType == ATTACHMENT_TYPE_DYNAMIC)
+            {
+                tknRemoveFromHashSet(&pBoundAttachment->attachmentContent.dynamicAttachmentContent.image.descriptorBindingPtrHashSet, pDescriptorBinding);
+            }
+            else if (pBoundAttachment->attachmentType == ATTACHMENT_TYPE_FIXED)
+            {
+                tknRemoveFromHashSet(&pBoundAttachment->attachmentContent.fixedAttachmentContent.image.descriptorBindingPtrHashSet, pDescriptorBinding);
+            }
+            else
+            {
+                tknError("Input attachment cannot be a swapchain attachment");
+            }
+        }
+        else
+        {
+            // nothing
+        }
 
-//         if (pAttachment != NULL)
-//         {
-//             if (pAttachment->attachmentType == ATTACHMENT_TYPE_DYNAMIC)
-//             {
-//                 tknAddToHashSet(&pAttachment->attachmentContent.dynamicAttachmentContent.image.descriptorBindingPtrHashSet, pDescriptorBinding);
-//             }
-//             else if (pAttachment->attachmentType == ATTACHMENT_TYPE_FIXED)
-//             {
-//                 tknAddToHashSet(&pAttachment->attachmentContent.fixedAttachmentContent.image.descriptorBindingPtrHashSet, pDescriptorBinding);
-//             }
-//             else
-//             {
-//                 // nothing
-//             }
-//             VkDescriptorImageInfo imageInfo = {
-//                 .sampler = VK_NULL_HANDLE,
-//                 .imageView = pAttachment->attachmentContent.fixedAttachmentContent.image.vkImageView,
-//                 .imageLayout = ,
-//             };
-//             VkWriteDescriptorSet vkWriteDescriptorSet = {
-//                 .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-//                 .pNext = NULL,
-//                 .dstSet = pDescriptorSet->vkDescriptorSet,
-//                 .dstBinding = binding,
-//                 .dstArrayElement = 0,
-//                 .descriptorCount = vkDescriptorSetLayoutBinding.descriptorCount,
-//                 .descriptorType = vkDescriptorSetLayoutBinding.descriptorType,
-//                 .pImageInfo = &imageInfo,
-//                 .pBufferInfo = NULL,
-//                 .pTexelBufferView = NULL,
-//             };
-//             vkUpdateDescriptorSets(pGfxContext->vkDevice, 1, &vkWriteDescriptorSet, 0, NULL);
-//         }
-//         else
-//         {
-//             // nothing
-//         }
-//         pDescriptorBinding->inputAttachmentDescriptorBinding.pAttachment = pAttachment;
-//     }
-// }
+        if (pAttachment != NULL)
+        {
+            if (pAttachment->attachmentType == ATTACHMENT_TYPE_DYNAMIC)
+            {
+                tknAddToHashSet(&pAttachment->attachmentContent.dynamicAttachmentContent.image.descriptorBindingPtrHashSet, pDescriptorBinding);
+            }
+            else if (pAttachment->attachmentType == ATTACHMENT_TYPE_FIXED)
+            {
+                tknAddToHashSet(&pAttachment->attachmentContent.fixedAttachmentContent.image.descriptorBindingPtrHashSet, pDescriptorBinding);
+            }
+            else
+            {
+                tknError("Input attachment cannot be a swapchain attachment");
+            }
+            VkDescriptorImageInfo imageInfo = {
+                .sampler = VK_NULL_HANDLE,
+                .imageView = pAttachment->attachmentContent.fixedAttachmentContent.image.vkImageView,
+                .imageLayout = pAttachment->attachmentContent.fixedAttachmentContent.image.vkImageLayout,
+            };
+            VkWriteDescriptorSet vkWriteDescriptorSet = {
+                .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+                .pNext = NULL,
+                .dstSet = pDescriptorSet->vkDescriptorSet,
+                .dstBinding = binding,
+                .dstArrayElement = 0,
+                .descriptorCount = vkDescriptorSetLayoutBinding.descriptorCount,
+                .descriptorType = vkDescriptorSetLayoutBinding.descriptorType,
+                .pImageInfo = &imageInfo,
+                .pBufferInfo = NULL,
+                .pTexelBufferView = NULL,
+            };
+            vkUpdateDescriptorSets(pGfxContext->vkDevice, 1, &vkWriteDescriptorSet, 0, NULL);
+        }
+        else
+        {
+            // nothing
+        }
+        pDescriptorBinding->inputAttachmentDescriptorBinding.pAttachment = pAttachment;
+    }
+}
