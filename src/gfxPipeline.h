@@ -17,4 +17,3 @@ void bindUniformBuffer(GfxContext *pGfxContext, DescriptorSet *pDescriptorSet, u
 void bindStorageBuffer(GfxContext *pGfxContext, DescriptorSet *pDescriptorSet, uint32_t binding, Buffer *pBuffer);
 void bindUniformBufferDynamic(GfxContext *pGfxContext, DescriptorSet *pDescriptorSet, uint32_t binding, Buffer *pBuffer);
 void bindStorageBufferDynamic(GfxContext *pGfxContext, DescriptorSet *pDescriptorSet, uint32_t binding, Buffer *pBuffer);
-void bindInputAttachment(GfxContext *pGfxContext, DescriptorSet *pDescriptorSet, uint32_t binding, Attachment *pAttachment);

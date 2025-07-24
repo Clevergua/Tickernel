@@ -251,7 +251,6 @@ static DescriptorSet createDescriptorSet(GfxContext *pGfxContext, uint32_t spvRe
     };
     return subpassDescriptorSet;
 }
-
 static void destroyDescriptorSet(GfxContext *pGfxContext, DescriptorSet descriptorSet)
 {
     VkDevice vkDevice = pGfxContext->vkDevice;
@@ -261,173 +260,47 @@ static void destroyDescriptorSet(GfxContext *pGfxContext, DescriptorSet descript
         VkDescriptorType descriptorType = descriptorSet.vkDescriptorSetLayoutBindings[binding].descriptorType;
         if (VK_DESCRIPTOR_TYPE_SAMPLER == descriptorType)
         {
-            if (descriptorBinding.samplerDescriptorBinding.pSampler != NULL)
-            {
-                Sampler *pSampler = descriptorBinding.samplerDescriptorBinding.pSampler;
-                tknRemoveFromHashSet(&pSampler->descriptorBindingHashSet, &descriptorSet.vkDescriptorSet);
-                descriptorBinding.samplerDescriptorBinding.pSampler = NULL;
-            }
-            else
-            {
-                // nothing
-            }
+            bindSampler(pGfxContext, &descriptorSet, binding, NULL);
         }
         else if (VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER == descriptorType)
         {
-
-            if (descriptorBinding.combinedImageSamplerDescriptorBinding.pImage != NULL)
-            {
-                Image *pImage = descriptorBinding.combinedImageSamplerDescriptorBinding.pImage;
-                tknRemoveFromHashSet(&pImage->descriptorBindingHashSet, &descriptorSet.vkDescriptorSet);
-                descriptorBinding.combinedImageSamplerDescriptorBinding.pImage = NULL;
-            }
-            else
-            {
-                // nothing
-            }
-
-            if (descriptorBinding.samplerDescriptorBinding.pSampler != NULL)
-            {
-                Sampler *pSampler = descriptorBinding.samplerDescriptorBinding.pSampler;
-                tknRemoveFromHashSet(&pSampler->descriptorBindingHashSet, &descriptorSet.vkDescriptorSet);
-                descriptorBinding.samplerDescriptorBinding.pSampler = NULL;
-            }
-            else
-            {
-                // nothing
-            }
+            bindCombinedImageSampler(pGfxContext, &descriptorSet, binding, NULL, NULL);
         }
         else if (VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE == descriptorType)
         {
-            if (descriptorBinding.sampledImageDescriptorBinding.pImage != NULL)
-            {
-                Image *pImage = descriptorBinding.sampledImageDescriptorBinding.pImage;
-                tknRemoveFromHashSet(&pImage->descriptorBindingHashSet, &descriptorSet.vkDescriptorSet);
-                descriptorBinding.sampledImageDescriptorBinding.pImage = NULL;
-            }
-            else
-            {
-                // nothing
-            }
+            bindSampledImage(pGfxContext, &descriptorSet, binding, NULL);
         }
         else if (VK_DESCRIPTOR_TYPE_STORAGE_IMAGE == descriptorType)
         {
-            if (descriptorBinding.storageImageDescriptorBinding.pImage != NULL)
-            {
-                Image *pImage = descriptorBinding.storageImageDescriptorBinding.pImage;
-                tknRemoveFromHashSet(&pImage->descriptorBindingHashSet, &descriptorSet.vkDescriptorSet);
-                descriptorBinding.storageImageDescriptorBinding.pImage = NULL;
-            }
-            else
-            {
-                // nothing
-            }
+            bindStorageImage(pGfxContext, &descriptorSet, binding, NULL);
         }
         else if (VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER == descriptorType)
         {
-            if (descriptorBinding.uniformTexelBufferDescriptorBinding.pBuffer != NULL)
-            {
-                Buffer *pBuffer = descriptorBinding.uniformTexelBufferDescriptorBinding.pBuffer;
-                tknRemoveFromHashSet(&pBuffer->descriptorBindingHashSet, &descriptorSet.vkDescriptorSet);
-                descriptorBinding.uniformTexelBufferDescriptorBinding.pBuffer = NULL;
-            }
-            else
-            {
-                // nothing
-            }
+            bindUniformTexelBuffer(pGfxContext, &descriptorSet, binding, NULL);
         }
         else if (VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER == descriptorType)
         {
-            if (descriptorBinding.storageTexelBufferDescriptorBinding.pBuffer != NULL)
-            {
-                Buffer *pBuffer = descriptorBinding.storageTexelBufferDescriptorBinding.pBuffer;
-                tknRemoveFromHashSet(&pBuffer->descriptorBindingHashSet, &descriptorSet.vkDescriptorSet);
-                descriptorBinding.storageTexelBufferDescriptorBinding.pBuffer = NULL;
-            }
-            else
-            {
-                // nothing
-            }
+            bindStorageTexelBuffer(pGfxContext, &descriptorSet, binding, NULL);
         }
         else if (VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER == descriptorType)
         {
-            if (descriptorBinding.uniformBufferDescriptorBinding.pBuffer != NULL)
-            {
-                Buffer *pBuffer = descriptorBinding.uniformBufferDescriptorBinding.pBuffer;
-                tknRemoveFromHashSet(&pBuffer->descriptorBindingHashSet, &descriptorSet.vkDescriptorSet);
-                descriptorBinding.uniformBufferDescriptorBinding.pBuffer = NULL;
-            }
-            else
-            {
-                // nothing
-            }
+            bindUniformBuffer(pGfxContext, &descriptorSet, binding, NULL);
         }
         else if (VK_DESCRIPTOR_TYPE_STORAGE_BUFFER == descriptorType)
         {
-            if (descriptorBinding.storageBufferDescriptorBinding.pBuffer != NULL)
-            {
-                Buffer *pBuffer = descriptorBinding.storageBufferDescriptorBinding.pBuffer;
-                tknRemoveFromHashSet(&pBuffer->descriptorBindingHashSet, &descriptorSet.vkDescriptorSet);
-                descriptorBinding.storageBufferDescriptorBinding.pBuffer = NULL;
-            }
-            else
-            {
-                // nothing
-            }
+            bindStorageBuffer(pGfxContext, &descriptorSet, binding, NULL);
         }
         else if (VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC == descriptorType)
         {
-            if (descriptorBinding.uniformBufferDynamicDescriptorBinding.pBuffer != NULL)
-            {
-                Buffer *pBuffer = descriptorBinding.uniformBufferDynamicDescriptorBinding.pBuffer;
-                tknRemoveFromHashSet(&pBuffer->descriptorBindingHashSet, &descriptorSet.vkDescriptorSet);
-                descriptorBinding.uniformBufferDynamicDescriptorBinding.pBuffer = NULL;
-            }
-            else
-            {
-                // nothing
-            }
+            bindUniformBufferDynamic(pGfxContext, &descriptorSet, binding, NULL);
         }
         else if (VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC == descriptorType)
         {
-            if (descriptorBinding.storageBufferDynamicDescriptorBinding.pBuffer != NULL)
-            {
-                Buffer *pBuffer = descriptorBinding.storageBufferDynamicDescriptorBinding.pBuffer;
-                tknRemoveFromHashSet(&pBuffer->descriptorBindingHashSet, &descriptorSet.vkDescriptorSet);
-                descriptorBinding.storageBufferDynamicDescriptorBinding.pBuffer = NULL;
-            }
-            else
-            {
-                // nothing
-            }
+            bindStorageBufferDynamic(pGfxContext, &descriptorSet, binding, NULL);
         }
         else if (VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT == descriptorType)
         {
-            if (descriptorBinding.inputAttachmentDescriptorBinding.pAttachment != NULL)
-            {
-                Attachment *pAttachment = descriptorBinding.inputAttachmentDescriptorBinding.pAttachment;
-                if (pAttachment->attachmentType == ATTACHMENT_TYPE_DYNAMIC)
-                {
-                    DynamicAttachmentContent dynamicAttachmentContent = pAttachment->attachmentContent.dynamicAttachmentContent;
-                    tknAssert(dynamicAttachmentContent.image.vkImageView != VK_NULL_HANDLE, "Dynamic attachment image view is null!");
-                    tknRemoveFromHashSet(&dynamicAttachmentContent.image.descriptorBindingHashSet, &descriptorSet.vkDescriptorSet);
-                }
-                else if (pAttachment->attachmentType == ATTACHMENT_TYPE_FIXED)
-                {
-                    FixedAttachmentContent fixedAttachmentContent = pAttachment->attachmentContent.fixedAttachmentContent;
-                    tknAssert(fixedAttachmentContent.image.vkImageView != VK_NULL_HANDLE, "Fixed attachment image view is null!");
-                    tknRemoveFromHashSet(&fixedAttachmentContent.image.descriptorBindingHashSet, &descriptorSet.vkDescriptorSet);
-                }
-                else
-                {
-                    // nothing
-                }
-                descriptorBinding.inputAttachmentDescriptorBinding.pAttachment = NULL;
-            }
-            else
-            {
-                // nothing
-            }
+            bindInputAttachment(pGfxContext, &descriptorSet, binding, NULL);
         }
         else
         {
@@ -650,9 +523,8 @@ Subpass createSubpass(GfxContext *pGfxContext, uint32_t inputVkAttachmentReferen
                                 }
                             }
                             tknAssert(inputAttachmentReferenceIndex < inputVkAttachmentReferenceCount, "Input attachment reference not found for binding %d", pSpvReflectDescriptorBinding->input_attachment_index);
-                            VkAttachmentReference vkAttachmentReference = inputVkAttachmentReferences[pSpvReflectDescriptorBinding->input_attachment_index];
-                            Attachment *pAttachment = attachmentPtrs[pSpvReflectDescriptorBinding->input_attachment_index];
-                            descriptorBindings[binding].inputAttachmentDescriptorBinding.pAttachment = pAttachment;
+                            descriptorBindings[binding].inputAttachmentDescriptorBinding.vkImageLayout = vkImageLayout;
+                            descriptorBindings[binding].inputAttachmentDescriptorBinding.pAttachment = attachmentPtrs[pSpvReflectDescriptorBinding->input_attachment_index];
                         }
 
                         uint32_t poolSizeIndex;
@@ -722,7 +594,32 @@ Subpass createSubpass(GfxContext *pGfxContext, uint32_t inputVkAttachmentReferen
     };
     ASSERT_VK_SUCCESS(vkAllocateDescriptorSets(vkDevice, &vkDescriptorSetAllocateInfo, &vkDescriptorSet));
 
-    // vkUpdateDescriptorSets(vkDevice, vkWriteDescriptorSetDynamicArray.count, vkWriteDescriptorSetDynamicArray.array, 0, NULL);
+    for (uint32_t descriptorBindingIndex = 0; descriptorBindingIndex < descriptorBindingCount; descriptorBindingIndex++)
+    {
+        VkDescriptorSetLayoutBinding vkDescriptorSetLayoutBinding = vkDescriptorSetLayoutBindings[descriptorBindingIndex];
+        DescriptorBinding descriptorBinding = descriptorBindings[descriptorBindingIndex];
+        if (VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT == vkDescriptorSetLayoutBinding.descriptorType)
+        {
+            VkDescriptorImageInfo vkDescriptorImageInfo = {
+                .sampler = VK_NULL_HANDLE,
+                .imageView = descriptorBinding.inputAttachmentDescriptorBinding.pAttachment->attachmentContent.fixedAttachmentContent.image.vkImageView,
+                .imageLayout = descriptorBinding.inputAttachmentDescriptorBinding.vkImageLayout,
+            };
+            VkWriteDescriptorSet vkWriteDescriptorSet = {
+                .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+                .pNext = NULL,
+                .dstSet = vkDescriptorSet,
+                .dstBinding = vkDescriptorSetLayoutBinding.binding,
+                .dstArrayElement = 0,
+                .descriptorCount = vkDescriptorSetLayoutBinding.descriptorCount,
+                .descriptorType = vkDescriptorSetLayoutBinding.descriptorType,
+                .pImageInfo = &vkDescriptorImageInfo,
+                .pBufferInfo = NULL,
+                .pTexelBufferView = NULL,
+            };
+            vkUpdateDescriptorSets(vkDevice, 1, &vkWriteDescriptorSet, 0, NULL);
+        }
+    }
 
     DescriptorSet subpassDescriptorSet = {
         .descriptorBindingCount = descriptorBindingCount,
@@ -732,9 +629,6 @@ Subpass createSubpass(GfxContext *pGfxContext, uint32_t inputVkAttachmentReferen
         .vkDescriptorPool = vkDescriptorPool,
         .vkDescriptorSet = vkDescriptorSet,
     };
-
-    // UpdateDescriptorSet(pGfxContext, &subpassDescriptorSet, descriptorBindingCount, descriptorBindings);
-
     Subpass subpass = {
         .subpassDescriptorSet = subpassDescriptorSet,
         .pipelinePtrDynamicArray = pipelinePtrDynamicArray,
@@ -817,7 +711,6 @@ RenderPass *createRenderPassPtr(GfxContext *pGfxContext, uint32_t attachmentCoun
     tknAddToDynamicArray(&pGfxContext->renderPassPtrDynamicArray, &pRenderPass, renderPassIndex);
     return pRenderPass;
 }
-
 void destroyRenderPassPtr(GfxContext *pGfxContext, RenderPass *pRenderPass)
 {
     VkResult result;
@@ -827,7 +720,7 @@ void destroyRenderPassPtr(GfxContext *pGfxContext, RenderPass *pRenderPass)
     for (uint32_t i = 0; i < pRenderPass->subpassCount; i++)
     {
         Subpass *pSubpass = &pRenderPass->subpasses[i];
-        destroySubpass(pGfxContext, pSubpass);
+        destroySubpass(pGfxContext, *pSubpass);
     }
 
     tknFree(pRenderPass->subpasses);
@@ -838,3 +731,351 @@ void destroyRenderPassPtr(GfxContext *pGfxContext, RenderPass *pRenderPass)
     tknFree(pRenderPass->attachmentPtrs);
     tknFree(pRenderPass);
 }
+
+void bindSampler(GfxContext *pGfxContext, DescriptorSet *pDescriptorSet, uint32_t binding, Sampler *pSampler)
+{
+    tknAssert(binding < pDescriptorSet->descriptorBindingCount, "Binding index out of range");
+    VkDescriptorSetLayoutBinding vkDescriptorSetLayoutBinding = pDescriptorSet->vkDescriptorSetLayoutBindings[binding];
+    tknAssert(vkDescriptorSetLayoutBinding.descriptorType == VK_DESCRIPTOR_TYPE_SAMPLER, "Binding type mismatch, expected VK_DESCRIPTOR_TYPE_SAMPLER");
+    DescriptorBinding *pDescriptorBinding = &pDescriptorSet->descriptorBindings[binding];
+    if (pDescriptorBinding->samplerDescriptorBinding.pSampler == pSampler)
+    {
+        printf("Warning: binding sampler %p to descriptor set %p, binding %d, but it is already bound.\n", pSampler, pDescriptorSet, binding);
+    }
+    else
+    {
+        if (pDescriptorBinding->samplerDescriptorBinding.pSampler != NULL)
+        {
+            tknRemoveFromHashSet(&pDescriptorBinding->samplerDescriptorBinding.pSampler->descriptorBindingPtrHashSet, pDescriptorBinding);
+        }
+        pDescriptorBinding->samplerDescriptorBinding.pSampler = pSampler;
+        if (pSampler != NULL)
+        {
+            tknAddToHashSet(&pSampler->descriptorBindingPtrHashSet, pDescriptorBinding);
+            VkWriteDescriptorSet vkWriteDescriptorSet = {
+                .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+                .pNext = NULL,
+                .dstSet = pDescriptorSet->vkDescriptorSet,
+                .dstBinding = binding,
+                .dstArrayElement = 0,
+                .descriptorCount = 1,
+                .descriptorType = vkDescriptorSetLayoutBinding.descriptorType,
+                .pImageInfo = NULL,
+                .pBufferInfo = NULL,
+                .pTexelBufferView = NULL,
+            };
+            VkDescriptorImageInfo vkDescriptorImageInfo = {
+                .sampler = pSampler->vkSampler,
+                .imageView = VK_NULL_HANDLE,
+                .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+            };
+            vkUpdateDescriptorSets(pGfxContext->vkDevice, 1, &vkWriteDescriptorSet, 0, NULL);
+        }
+    }
+}
+
+void bindCombinedImageSampler(GfxContext *pGfxContext, DescriptorSet *pDescriptorSet, uint32_t binding, Sampler *pSampler, Image *pImage)
+{
+    tknAssert(binding < pDescriptorSet->descriptorBindingCount, "Binding index out of range");
+    VkDescriptorSetLayoutBinding vkDescriptorSetLayoutBinding = pDescriptorSet->vkDescriptorSetLayoutBindings[binding];
+    tknAssert(vkDescriptorSetLayoutBinding.descriptorType == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, "Binding type mismatch, expected VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER");
+    DescriptorBinding *pDescriptorBinding = &pDescriptorSet->descriptorBindings[binding];
+    if (pDescriptorBinding->combinedImageSamplerDescriptorBinding.pSampler == pSampler &&
+        pDescriptorBinding->combinedImageSamplerDescriptorBinding.pImage == pImage)
+    {
+        printf("Warning: binding combined image sampler %p/%p to descriptor set %p, binding %d, but it is already bound.\n", pSampler, pImage, pDescriptorSet, binding);
+    }
+    else
+    {
+        // Remove old bindings from hash sets
+        if (pDescriptorBinding->combinedImageSamplerDescriptorBinding.pSampler != NULL)
+        {
+            tknRemoveFromHashSet(&pDescriptorBinding->combinedImageSamplerDescriptorBinding.pSampler->descriptorBindingPtrHashSet, pDescriptorBinding);
+        }
+        if (pDescriptorBinding->combinedImageSamplerDescriptorBinding.pImage != NULL)
+        {
+            tknRemoveFromHashSet(&pDescriptorBinding->combinedImageSamplerDescriptorBinding.pImage->descriptorBindingPtrHashSet, pDescriptorBinding);
+        }
+
+        // Set new bindings
+        pDescriptorBinding->combinedImageSamplerDescriptorBinding.pSampler = pSampler;
+        pDescriptorBinding->combinedImageSamplerDescriptorBinding.pImage = pImage;
+
+        // Add new bindings to hash sets
+        if (pSampler != NULL)
+        {
+            tknAddToHashSet(&pSampler->descriptorBindingPtrHashSet, pDescriptorBinding);
+        }
+        if (pImage != NULL)
+        {
+            tknAddToHashSet(&pImage->descriptorBindingPtrHashSet, pDescriptorBinding);
+        }
+    }
+}
+
+void bindSampledImage(GfxContext *pGfxContext, DescriptorSet *pDescriptorSet, uint32_t binding, Image *pImage)
+{
+    tknAssert(binding < pDescriptorSet->descriptorBindingCount, "Binding index out of range");
+    VkDescriptorSetLayoutBinding vkDescriptorSetLayoutBinding = pDescriptorSet->vkDescriptorSetLayoutBindings[binding];
+    tknAssert(vkDescriptorSetLayoutBinding.descriptorType == VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, "Binding type mismatch, expected VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE");
+    DescriptorBinding *pDescriptorBinding = &pDescriptorSet->descriptorBindings[binding];
+    if (pDescriptorBinding->sampledImageDescriptorBinding.pImage == pImage)
+    {
+        printf("Warning: binding sampled image %p to descriptor set %p, binding %d, but it is already bound.\n", pImage, pDescriptorSet, binding);
+    }
+    else
+    {
+        if (pDescriptorBinding->sampledImageDescriptorBinding.pImage != NULL)
+        {
+            tknRemoveFromHashSet(&pDescriptorBinding->sampledImageDescriptorBinding.pImage->descriptorBindingPtrHashSet, pDescriptorBinding);
+        }
+        pDescriptorBinding->sampledImageDescriptorBinding.pImage = pImage;
+        if (pImage != NULL)
+        {
+            tknAddToHashSet(&pImage->descriptorBindingPtrHashSet, pDescriptorBinding);
+        }
+    }
+}
+
+void bindStorageImage(GfxContext *pGfxContext, DescriptorSet *pDescriptorSet, uint32_t binding, Image *pImage)
+{
+    tknAssert(binding < pDescriptorSet->descriptorBindingCount, "Binding index out of range");
+    VkDescriptorSetLayoutBinding vkDescriptorSetLayoutBinding = pDescriptorSet->vkDescriptorSetLayoutBindings[binding];
+    tknAssert(vkDescriptorSetLayoutBinding.descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, "Binding type mismatch, expected VK_DESCRIPTOR_TYPE_STORAGE_IMAGE");
+    DescriptorBinding *pDescriptorBinding = &pDescriptorSet->descriptorBindings[binding];
+    if (pDescriptorBinding->storageImageDescriptorBinding.pImage == pImage)
+    {
+        printf("Warning: binding storage image %p to descriptor set %p, binding %d, but it is already bound.\n", pImage, pDescriptorSet, binding);
+    }
+    else
+    {
+        if (pDescriptorBinding->storageImageDescriptorBinding.pImage != NULL)
+        {
+            tknRemoveFromHashSet(&pDescriptorBinding->storageImageDescriptorBinding.pImage->descriptorBindingPtrHashSet, pDescriptorBinding);
+        }
+        pDescriptorBinding->storageImageDescriptorBinding.pImage = pImage;
+        if (pImage != NULL)
+        {
+            tknAddToHashSet(&pImage->descriptorBindingPtrHashSet, pDescriptorBinding);
+        }
+    }
+}
+
+void bindUniformTexelBuffer(GfxContext *pGfxContext, DescriptorSet *pDescriptorSet, uint32_t binding, Buffer *pBuffer)
+{
+    tknAssert(binding < pDescriptorSet->descriptorBindingCount, "Binding index out of range");
+    VkDescriptorSetLayoutBinding vkDescriptorSetLayoutBinding = pDescriptorSet->vkDescriptorSetLayoutBindings[binding];
+    tknAssert(vkDescriptorSetLayoutBinding.descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, "Binding type mismatch, expected VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER");
+    DescriptorBinding *pDescriptorBinding = &pDescriptorSet->descriptorBindings[binding];
+    if (pDescriptorBinding->uniformTexelBufferDescriptorBinding.pBuffer == pBuffer)
+    {
+        printf("Warning: binding uniform texel buffer %p to descriptor set %p, binding %d, but it is already bound.\n", pBuffer, pDescriptorSet, binding);
+    }
+    else
+    {
+        if (pDescriptorBinding->uniformTexelBufferDescriptorBinding.pBuffer != NULL)
+        {
+            tknRemoveFromHashSet(&pDescriptorBinding->uniformTexelBufferDescriptorBinding.pBuffer->descriptorBindingPtrHashSet, pDescriptorBinding);
+        }
+        pDescriptorBinding->uniformTexelBufferDescriptorBinding.pBuffer = pBuffer;
+        if (pBuffer != NULL)
+        {
+            tknAddToHashSet(&pBuffer->descriptorBindingPtrHashSet, pDescriptorBinding);
+        }
+    }
+}
+
+void bindStorageTexelBuffer(GfxContext *pGfxContext, DescriptorSet *pDescriptorSet, uint32_t binding, Buffer *pBuffer)
+{
+    tknAssert(binding < pDescriptorSet->descriptorBindingCount, "Binding index out of range");
+    VkDescriptorSetLayoutBinding vkDescriptorSetLayoutBinding = pDescriptorSet->vkDescriptorSetLayoutBindings[binding];
+    tknAssert(vkDescriptorSetLayoutBinding.descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, "Binding type mismatch, expected VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER");
+    DescriptorBinding *pDescriptorBinding = &pDescriptorSet->descriptorBindings[binding];
+    if (pDescriptorBinding->storageTexelBufferDescriptorBinding.pBuffer == pBuffer)
+    {
+        printf("Warning: binding storage texel buffer %p to descriptor set %p, binding %d, but it is already bound.\n", pBuffer, pDescriptorSet, binding);
+    }
+    else
+    {
+        if (pDescriptorBinding->storageTexelBufferDescriptorBinding.pBuffer != NULL)
+        {
+            tknRemoveFromHashSet(&pDescriptorBinding->storageTexelBufferDescriptorBinding.pBuffer->descriptorBindingPtrHashSet, pDescriptorBinding);
+        }
+        pDescriptorBinding->storageTexelBufferDescriptorBinding.pBuffer = pBuffer;
+        if (pBuffer != NULL)
+        {
+            tknAddToHashSet(&pBuffer->descriptorBindingPtrHashSet, pDescriptorBinding);
+        }
+    }
+}
+
+void bindUniformBuffer(GfxContext *pGfxContext, DescriptorSet *pDescriptorSet, uint32_t binding, Buffer *pBuffer)
+{
+    tknAssert(binding < pDescriptorSet->descriptorBindingCount, "Binding index out of range");
+    VkDescriptorSetLayoutBinding vkDescriptorSetLayoutBinding = pDescriptorSet->vkDescriptorSetLayoutBindings[binding];
+    tknAssert(vkDescriptorSetLayoutBinding.descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, "Binding type mismatch, expected VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER");
+    DescriptorBinding *pDescriptorBinding = &pDescriptorSet->descriptorBindings[binding];
+    if (pDescriptorBinding->uniformBufferDescriptorBinding.pBuffer == pBuffer)
+    {
+        printf("Warning: binding uniform buffer %p to descriptor set %p, binding %d, but it is already bound.\n", pBuffer, pDescriptorSet, binding);
+    }
+    else
+    {
+        if (pDescriptorBinding->uniformBufferDescriptorBinding.pBuffer != NULL)
+        {
+            tknRemoveFromHashSet(&pDescriptorBinding->uniformBufferDescriptorBinding.pBuffer->descriptorBindingPtrHashSet, pDescriptorBinding);
+        }
+        pDescriptorBinding->uniformBufferDescriptorBinding.pBuffer = pBuffer;
+        if (pBuffer != NULL)
+        {
+            tknAddToHashSet(&pBuffer->descriptorBindingPtrHashSet, pDescriptorBinding);
+        }
+    }
+}
+
+void bindStorageBuffer(GfxContext *pGfxContext, DescriptorSet *pDescriptorSet, uint32_t binding, Buffer *pBuffer)
+{
+    tknAssert(binding < pDescriptorSet->descriptorBindingCount, "Binding index out of range");
+    VkDescriptorSetLayoutBinding vkDescriptorSetLayoutBinding = pDescriptorSet->vkDescriptorSetLayoutBindings[binding];
+    tknAssert(vkDescriptorSetLayoutBinding.descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, "Binding type mismatch, expected VK_DESCRIPTOR_TYPE_STORAGE_BUFFER");
+    DescriptorBinding *pDescriptorBinding = &pDescriptorSet->descriptorBindings[binding];
+    if (pDescriptorBinding->storageBufferDescriptorBinding.pBuffer == pBuffer)
+    {
+        printf("Warning: binding storage buffer %p to descriptor set %p, binding %d, but it is already bound.\n", pBuffer, pDescriptorSet, binding);
+    }
+    else
+    {
+        if (pDescriptorBinding->storageBufferDescriptorBinding.pBuffer != NULL)
+        {
+            tknRemoveFromHashSet(&pDescriptorBinding->storageBufferDescriptorBinding.pBuffer->descriptorBindingPtrHashSet, pDescriptorBinding);
+        }
+        pDescriptorBinding->storageBufferDescriptorBinding.pBuffer = pBuffer;
+        if (pBuffer != NULL)
+        {
+            tknAddToHashSet(&pBuffer->descriptorBindingPtrHashSet, pDescriptorBinding);
+        }
+    }
+}
+
+void bindUniformBufferDynamic(GfxContext *pGfxContext, DescriptorSet *pDescriptorSet, uint32_t binding, Buffer *pBuffer)
+{
+    tknAssert(binding < pDescriptorSet->descriptorBindingCount, "Binding index out of range");
+    VkDescriptorSetLayoutBinding vkDescriptorSetLayoutBinding = pDescriptorSet->vkDescriptorSetLayoutBindings[binding];
+    tknAssert(vkDescriptorSetLayoutBinding.descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, "Binding type mismatch, expected VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC");
+    DescriptorBinding *pDescriptorBinding = &pDescriptorSet->descriptorBindings[binding];
+    if (pDescriptorBinding->uniformBufferDynamicDescriptorBinding.pBuffer == pBuffer)
+    {
+        printf("Warning: binding uniform buffer dynamic %p to descriptor set %p, binding %d, but it is already bound.\n", pBuffer, pDescriptorSet, binding);
+    }
+    else
+    {
+        if (pDescriptorBinding->uniformBufferDynamicDescriptorBinding.pBuffer != NULL)
+        {
+            tknRemoveFromHashSet(&pDescriptorBinding->uniformBufferDynamicDescriptorBinding.pBuffer->descriptorBindingPtrHashSet, pDescriptorBinding);
+        }
+        pDescriptorBinding->uniformBufferDynamicDescriptorBinding.pBuffer = pBuffer;
+        if (pBuffer != NULL)
+        {
+            tknAddToHashSet(&pBuffer->descriptorBindingPtrHashSet, pDescriptorBinding);
+        }
+    }
+}
+
+void bindStorageBufferDynamic(GfxContext *pGfxContext, DescriptorSet *pDescriptorSet, uint32_t binding, Buffer *pBuffer)
+{
+    tknAssert(binding < pDescriptorSet->descriptorBindingCount, "Binding index out of range");
+    VkDescriptorSetLayoutBinding vkDescriptorSetLayoutBinding = pDescriptorSet->vkDescriptorSetLayoutBindings[binding];
+    tknAssert(vkDescriptorSetLayoutBinding.descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, "Binding type mismatch, expected VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC");
+    DescriptorBinding *pDescriptorBinding = &pDescriptorSet->descriptorBindings[binding];
+    if (pDescriptorBinding->storageBufferDynamicDescriptorBinding.pBuffer == pBuffer)
+    {
+        printf("Warning: binding storage buffer dynamic %p to descriptor set %p, binding %d, but it is already bound.\n", pBuffer, pDescriptorSet, binding);
+    }
+    else
+    {
+        if (pDescriptorBinding->storageBufferDynamicDescriptorBinding.pBuffer != NULL)
+        {
+            tknRemoveFromHashSet(&pDescriptorBinding->storageBufferDynamicDescriptorBinding.pBuffer->descriptorBindingPtrHashSet, pDescriptorBinding);
+        }
+        pDescriptorBinding->storageBufferDynamicDescriptorBinding.pBuffer = pBuffer;
+        if (pBuffer != NULL)
+        {
+            tknAddToHashSet(&pBuffer->descriptorBindingPtrHashSet, pDescriptorBinding);
+        }
+    }
+}
+
+// void bindInputAttachment(GfxContext *pGfxContext, DescriptorSet *pDescriptorSet, uint32_t binding, Attachment *pAttachment)
+// {
+//     tknAssert(binding < pDescriptorSet->descriptorBindingCount, "Binding index out of range");
+//     VkDescriptorSetLayoutBinding vkDescriptorSetLayoutBinding = pDescriptorSet->vkDescriptorSetLayoutBindings[binding];
+//     tknAssert(vkDescriptorSetLayoutBinding.descriptorType == VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, "Binding type mismatch, expected VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT");
+//     DescriptorBinding *pDescriptorBinding = &pDescriptorSet->descriptorBindings[binding];
+//     if (pDescriptorBinding->inputAttachmentDescriptorBinding.pAttachment == pAttachment)
+//     {
+//         printf("Warning: binding input attachment %p to descriptor set %p, binding %d, but it is already bound.\n", pAttachment, pDescriptorSet, binding);
+//     }
+//     else
+//     {
+//         // Note: Input attachments don't have hash sets like other resources, so we just update the binding
+//         Attachment *pBoundAttachment = pDescriptorBinding->inputAttachmentDescriptorBinding.pAttachment;
+//         if (pBoundAttachment != NULL)
+//         {
+//             if (pBoundAttachment->attachmentType == ATTACHMENT_TYPE_DYNAMIC)
+//             {
+//                 tknRemoveFromHashSet(&pBoundAttachment->attachmentContent.dynamicAttachmentContent.image.descriptorBindingPtrHashSet, pDescriptorBinding);
+//             }
+//             else if (pBoundAttachment->attachmentType == ATTACHMENT_TYPE_FIXED)
+//             {
+//                 tknRemoveFromHashSet(&pBoundAttachment->attachmentContent.fixedAttachmentContent.image.descriptorBindingPtrHashSet, pDescriptorBinding);
+//             }
+//             else
+//             {
+//                 // nothing
+//             }
+//         }
+//         else
+//         {
+//             // nothing
+//         }
+
+//         if (pAttachment != NULL)
+//         {
+//             if (pAttachment->attachmentType == ATTACHMENT_TYPE_DYNAMIC)
+//             {
+//                 tknAddToHashSet(&pAttachment->attachmentContent.dynamicAttachmentContent.image.descriptorBindingPtrHashSet, pDescriptorBinding);
+//             }
+//             else if (pAttachment->attachmentType == ATTACHMENT_TYPE_FIXED)
+//             {
+//                 tknAddToHashSet(&pAttachment->attachmentContent.fixedAttachmentContent.image.descriptorBindingPtrHashSet, pDescriptorBinding);
+//             }
+//             else
+//             {
+//                 // nothing
+//             }
+//             VkDescriptorImageInfo imageInfo = {
+//                 .sampler = VK_NULL_HANDLE,
+//                 .imageView = pAttachment->attachmentContent.fixedAttachmentContent.image.vkImageView,
+//                 .imageLayout = ,
+//             };
+//             VkWriteDescriptorSet vkWriteDescriptorSet = {
+//                 .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+//                 .pNext = NULL,
+//                 .dstSet = pDescriptorSet->vkDescriptorSet,
+//                 .dstBinding = binding,
+//                 .dstArrayElement = 0,
+//                 .descriptorCount = vkDescriptorSetLayoutBinding.descriptorCount,
+//                 .descriptorType = vkDescriptorSetLayoutBinding.descriptorType,
+//                 .pImageInfo = &imageInfo,
+//                 .pBufferInfo = NULL,
+//                 .pTexelBufferView = NULL,
+//             };
+//             vkUpdateDescriptorSets(pGfxContext->vkDevice, 1, &vkWriteDescriptorSet, 0, NULL);
+//         }
+//         else
+//         {
+//             // nothing
+//         }
+//         pDescriptorBinding->inputAttachmentDescriptorBinding.pAttachment = pAttachment;
+//     }
+// }

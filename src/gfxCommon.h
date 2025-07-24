@@ -8,7 +8,7 @@
 typedef struct
 {
     VkSampler vkSampler;
-    TknHashSet descriptorBindingHashSet;
+    TknHashSet descriptorBindingPtrHashSet;
 } Sampler;
 
 typedef struct
@@ -16,7 +16,7 @@ typedef struct
     VkImage vkImage;
     VkDeviceMemory vkDeviceMemory;
     VkImageView vkImageView;
-    TknHashSet descriptorBindingHashSet;
+    TknHashSet descriptorBindingPtrHashSet;
 } Image;
 
 typedef struct
@@ -24,7 +24,7 @@ typedef struct
     VkBuffer vkBuffer;
     VkDeviceMemory vkDeviceMemory;
     void *mapped;
-    TknHashSet descriptorBindingHashSet;
+    TknHashSet descriptorBindingPtrHashSet;
 } Buffer;
 
 typedef struct
@@ -123,6 +123,7 @@ typedef struct
 typedef struct
 {
     Attachment *pAttachment;
+    VkImageLayout vkImageLayout;
 } InputAttachmentDescriptorBinding;
 
 typedef union
@@ -169,8 +170,9 @@ typedef struct
 
 typedef struct
 {
-    DescriptorSet subpassDescriptorSet;      // subpass descriptor set
-    TknDynamicArray pipelinePtrDynamicArray; // pipelines
+    DescriptorSet subpassDescriptorSet;                 // subpass descriptor set
+    TknDynamicArray pipelinePtrDynamicArray;            // pipelines
+    uint32_t subpassIndex;                              // subpass index in the render pass
 } Subpass;
 
 typedef struct
