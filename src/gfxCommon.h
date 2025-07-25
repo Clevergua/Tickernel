@@ -8,6 +8,7 @@
 typedef struct
 {
     VkSampler vkSampler;
+    VkSamplerCreateInfo vkSamplerCreateInfo;
     TknHashSet descriptorBindingPtrHashSet;
 } Sampler;
 
@@ -16,6 +17,12 @@ typedef struct
     VkImage vkImage;
     VkDeviceMemory vkDeviceMemory;
     VkImageView vkImageView;
+    VkExtent3D vkExtent3D;
+    VkFormat vkFormat;
+    VkImageTiling vkImageTiling;
+    VkImageUsageFlags vkImageUsageFlags;
+    VkMemoryPropertyFlags vkMemoryPropertyFlags;
+    VkImageAspectFlags vkImageAspectFlags;
     TknHashSet descriptorBindingPtrHashSet;
 } Image;
 
@@ -30,7 +37,6 @@ typedef struct
 typedef struct
 {
     Image image;
-    VkFormat vkFormat;
     uint32_t width;
     uint32_t height;
 } FixedAttachmentContent;
@@ -38,11 +44,7 @@ typedef struct
 typedef struct
 {
     Image image;
-    VkFormat vkFormat;
     float32_t scaler;
-    VkImageUsageFlags vkImageUsageFlags;
-    VkMemoryPropertyFlags vkMemoryPropertyFlags;
-    VkImageAspectFlags vkImageAspectFlags;
 } DynamicAttachmentContent;
 
 typedef struct
@@ -71,54 +73,57 @@ typedef struct
 
 typedef struct
 {
-    Sampler *pSampler;
+    Sampler *activeSamplerPtr;
+    Sampler *pendingSamplerPtr;
 } SamplerDescriptorBinding;
 
-typedef struct
-{
-    Image *pImage;
-    Sampler *pSampler;
-} CombinedImageSamplerDescriptorBinding;
+// typedef struct
+// {
+//     Image *currentImagePtr;
+//     Image *nextImagePtr;
+//     Sampler *currentSamplerPtr;
+//     Sampler *nextSamplerPtr;
+// } CombinedImageSamplerDescriptorBinding;
 
-typedef struct
-{
-    Image *pImage;
-} SampledImageDescriptorBinding;
+// typedef struct
+// {
+//     Image *pImage;
+// } SampledImageDescriptorBinding;
 
-typedef struct
-{
-    Image *pImage;
-} StorageImageDescriptorBinding;
+// typedef struct
+// {
+//     Image *pImage;
+// } StorageImageDescriptorBinding;
 
-typedef struct
-{
-    Buffer *pBuffer;
-} UniformTexelBufferDescriptorBinding;
+// typedef struct
+// {
+//     Buffer *pBuffer;
+// } UniformTexelBufferDescriptorBinding;
 
-typedef struct
-{
-    Buffer *pBuffer;
-} StorageTexelBufferDescriptorBinding;
+// typedef struct
+// {
+//     Buffer *pBuffer;
+// } StorageTexelBufferDescriptorBinding;
 
-typedef struct
-{
-    Buffer *pBuffer;
-} UniformBufferDescriptorBinding;
+// typedef struct
+// {
+//     Buffer *pBuffer;
+// } UniformBufferDescriptorBinding;
 
-typedef struct
-{
-    Buffer *pBuffer;
-} StorageBufferDescriptorBinding;
+// typedef struct
+// {
+//     Buffer *pBuffer;
+// } StorageBufferDescriptorBinding;
 
-typedef struct
-{
-    Buffer *pBuffer;
-} UniformBufferDynamicDescriptorBinding;
+// typedef struct
+// {
+//     Buffer *pBuffer;
+// } UniformBufferDynamicDescriptorBinding;
 
-typedef struct
-{
-    Buffer *pBuffer;
-} StorageBufferDynamicDescriptorBinding;
+// typedef struct
+// {
+//     Buffer *pBuffer;
+// } StorageBufferDynamicDescriptorBinding;
 
 typedef struct
 {
@@ -129,15 +134,15 @@ typedef struct
 typedef union
 {
     SamplerDescriptorBinding samplerDescriptorBinding;
-    CombinedImageSamplerDescriptorBinding combinedImageSamplerDescriptorBinding;
-    SampledImageDescriptorBinding sampledImageDescriptorBinding;
-    StorageImageDescriptorBinding storageImageDescriptorBinding;
-    UniformTexelBufferDescriptorBinding uniformTexelBufferDescriptorBinding;
-    StorageTexelBufferDescriptorBinding storageTexelBufferDescriptorBinding;
-    UniformBufferDescriptorBinding uniformBufferDescriptorBinding;
-    StorageBufferDescriptorBinding storageBufferDescriptorBinding;
-    UniformBufferDynamicDescriptorBinding uniformBufferDynamicDescriptorBinding;
-    StorageBufferDynamicDescriptorBinding storageBufferDynamicDescriptorBinding;
+    // CombinedImageSamplerDescriptorBinding combinedImageSamplerDescriptorBinding;
+    // SampledImageDescriptorBinding sampledImageDescriptorBinding;
+    // StorageImageDescriptorBinding storageImageDescriptorBinding;
+    // UniformTexelBufferDescriptorBinding uniformTexelBufferDescriptorBinding;
+    // StorageTexelBufferDescriptorBinding storageTexelBufferDescriptorBinding;
+    // UniformBufferDescriptorBinding uniformBufferDescriptorBinding;
+    // StorageBufferDescriptorBinding storageBufferDescriptorBinding;
+    // UniformBufferDynamicDescriptorBinding uniformBufferDynamicDescriptorBinding;
+    // StorageBufferDynamicDescriptorBinding storageBufferDynamicDescriptorBinding;
     InputAttachmentDescriptorBinding inputAttachmentDescriptorBinding;
 } DescriptorBinding;
 
@@ -170,9 +175,9 @@ typedef struct
 
 typedef struct
 {
-    DescriptorSet subpassDescriptorSet;                 // subpass descriptor set
-    TknDynamicArray pipelinePtrDynamicArray;            // pipelines
-    uint32_t subpassIndex;                              // subpass index in the render pass
+    DescriptorSet subpassDescriptorSet;      // subpass descriptor set
+    TknDynamicArray pipelinePtrDynamicArray; // pipelines
+    uint32_t subpassIndex;                   // subpass index in the render pass
 } Subpass;
 
 typedef struct

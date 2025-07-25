@@ -167,10 +167,10 @@ TknHashSet tknCreateHashSet(size_t capacity)
     memset(tknHashSet.nodePtrs, 0, sizeof(TknListNode *) * capacity);
     return tknHashSet;
 }
-void tknDestroyHashSet(TknHashSet *pTknHashSet)
+void tknDestroyHashSet(TknHashSet tknHashSet)
 {
-    tknClearHashSet(pTknHashSet);
-    tknFree(pTknHashSet->nodePtrs);
+    tknClearHashSet(&tknHashSet);
+    tknFree(tknHashSet.nodePtrs);
 }
 bool tknAddToHashSet(TknHashSet *pTknHashSet, void *value)
 {
