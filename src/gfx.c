@@ -611,7 +611,7 @@ static void present(GfxContext *pGfxContext, uint32_t swapchainIndex)
     }
 }
 
-GfxContext *createGfxContext(int targetSwapchainImageCount, VkSurfaceFormatKHR targetVkSurfaceFormat, VkPresentModeKHR targetVkPresentMode, VkInstance vkInstance, VkSurfaceKHR vkSurface, VkExtent2D swapchainExtent)
+GfxContext *createGfxContextPtr(int targetSwapchainImageCount, VkSurfaceFormatKHR targetVkSurfaceFormat, VkPresentModeKHR targetVkPresentMode, VkInstance vkInstance, VkSurfaceKHR vkSurface, VkExtent2D swapchainExtent)
 {
     GfxContext *pGfxContext = tknMalloc(sizeof(GfxContext));
     initializeGfxContext(pGfxContext, vkInstance, vkSurface);
@@ -640,8 +640,6 @@ void updateGfxContextPtr(GfxContext *pGfxContext, VkExtent2D swapchainExtent)
     pGfxContext->frameCount++;
     uint32_t swapchainIndex = pGfxContext->frameCount % pGfxContext->swapchainImageCount;
     VkDevice vkDevice = pGfxContext->vkDevice;
-    // Wait for gpu
-    ASSERT_VK_SUCCESS(vkWaitForFences(vkDevice, 1, &pGfxContext->renderFinishedFence, VK_TRUE, UINT64_MAX));
 
     for (uint32_t renderPassIndex = 0; renderPassIndex < pGfxContext->renderPassPtrDynamicArray.count; renderPassIndex++)
     {

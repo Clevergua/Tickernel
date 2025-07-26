@@ -2,7 +2,6 @@
 #import <MetalKit/MetalKit.h>
 #import <Metal/Metal.h>
 #import <vulkan/vulkan_macos.h>
-#import "tickernelEngine.h"
 
 static NSString * const AppName = @"Tickernel";
 

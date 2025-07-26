@@ -16,7 +16,7 @@ static void testInitializationAndDestruction() {
         tknAssert(set.nodePtrs[i] == NULL, "Bucket %zu should be NULL", i);
     }
     
-    tknDestroyHashSet(&set);
+    tknDestroyHashSet(set);
     printf("testInitializationAndDestruction passed.\n\n");
 }
 
@@ -43,7 +43,7 @@ static void testAddElement() {
     tknAssert(result == true, "Adding second element should succeed");
     tknAssert(set.count == 2, "Count should be 2 after adding two elements");
     
-    tknDestroyHashSet(&set);
+    tknDestroyHashSet(set);
     printf("testAddElement passed.\n\n");
 }
 
@@ -66,7 +66,7 @@ static void testContainsElement() {
     // 检查未添加的元素
     tknAssert(tknContainsInHashSet(&set, &value3) == false, "Set should not contain value3");
     
-    tknDestroyHashSet(&set);
+    tknDestroyHashSet(set);
     printf("testContainsElement passed.\n\n");
 }
 
@@ -94,7 +94,7 @@ static void testRemoveElement() {
     tknRemoveFromHashSet(&set, &value2);
     tknAssert(set.count == 0, "Count should be 0 after removing all elements");
     
-    tknDestroyHashSet(&set);
+    tknDestroyHashSet(set);
     printf("testRemoveElement passed.\n\n");
 }
 
@@ -118,7 +118,7 @@ static void testCapacityAndResize() {
     bool result = tknAddToHashSet(&set, &values[2]);
     tknAssert(result == true, "Adding element beyond capacity should still succeed (current implementation)");
     
-    tknDestroyHashSet(&set);
+    tknDestroyHashSet(set);
     printf("testCapacityAndResize passed.\n\n");
 }
 
@@ -147,7 +147,7 @@ static void testCollisionHandling() {
     tknAssert(tknContainsInHashSet(&set, &value1) == false, "Set should not contain removed value1");
     tknAssert(tknContainsInHashSet(&set, &value2) == true, "Set should still contain value2");
     
-    tknDestroyHashSet(&set);
+    tknDestroyHashSet(set);
     printf("testCollisionHandling passed.\n\n");
 }
 
@@ -180,7 +180,7 @@ static void testEdgeCases() {
         tknAssert(tknContainsInHashSet(&set, &values[i]) == false, "Cleared set should not contain value %d", i);
     }
     
-    tknDestroyHashSet(&set);
+    tknDestroyHashSet(set);
     printf("testEdgeCases passed.\n\n");
 }
 

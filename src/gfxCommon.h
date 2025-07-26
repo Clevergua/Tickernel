@@ -1,7 +1,7 @@
 #pragma once
-#include "cglm.h"
+#include "cglm/cglm.h"
 #include "tknCore.h"
-#include "spirv_reflect.h"
+#include "spirv_reflect/spirv_reflect.h"
 
 #define ASSERT_VK_SUCCESS(result) tknAssert((result) == VK_SUCCESS, "Vulkan error: %d", (result))
 

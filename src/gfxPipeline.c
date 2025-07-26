@@ -221,7 +221,7 @@ static void destroyDescriptorSet(GfxContext *pGfxContext, DescriptorSet descript
         VkDescriptorType descriptorType = descriptorSet.vkDescriptorSetLayoutBindings[binding].descriptorType;
         if (VK_DESCRIPTOR_TYPE_SAMPLER == descriptorType)
         {
-            bindSampler(pGfxContext, &descriptorSet, binding, NULL);
+            // bindSampler(pGfxContext, &descriptorSet, binding, NULL);
         }
         // TODO other types
         // else if (VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER == descriptorType)

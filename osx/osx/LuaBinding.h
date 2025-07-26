@@ -1,6 +1,5 @@
 #import <Foundation/Foundation.h>
 #import "AudioBinding.h"
-#import "tickernelLuaBinding.h"
 #import "lua.h"
 #import "lualib.h"
 #import "lauxlib.h"
