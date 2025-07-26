@@ -139,7 +139,7 @@ void resizeDynamicAttachmentPtr(GfxContext *pGfxContext, Attachment *pAttachment
         .height = (uint32_t)(pGfxContext->swapchainExtent.height * dynamicAttachmentContent.scaler),
         .depth = 1,
     };
-    dynamicAttachmentContent.image = createImage(pGfxContext->vkDevice, pGfxContext->vkPhysicalDevice, vkExtent3D, dynamicAttachmentContent.image.vkFormat, VK_IMAGE_TILING_OPTIMAL, dynamicAttachmentContent.vkImageUsageFlags, dynamicAttachmentContent.vkMemoryPropertyFlags, dynamicAttachmentContent.vkImageAspectFlags);
+    dynamicAttachmentContent.image = createImage(pGfxContext->vkDevice, pGfxContext->vkPhysicalDevice, vkExtent3D, dynamicAttachmentContent.image.vkFormat, VK_IMAGE_TILING_OPTIMAL, dynamicAttachmentContent.image.vkImageUsageFlags, dynamicAttachmentContent.image.vkMemoryPropertyFlags, dynamicAttachmentContent.image.vkImageAspectFlags);
 }
 
 Attachment *createFixedAttachmentPtr(GfxContext *pGfxContext, VkFormat vkFormat, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags, uint32_t width, uint32_t height)

@@ -2,6 +2,7 @@
 static void initializeGfxContext(GfxContext *pGfxContext, VkInstance vkInstance, VkSurfaceKHR vkSurface)
 {
     *pGfxContext = (GfxContext){
+        .frameCount = 0,
         .vkInstance = vkInstance,
         .vkSurface = vkSurface,
 
@@ -22,7 +23,6 @@ static void initializeGfxContext(GfxContext *pGfxContext, VkInstance vkInstance,
         .swapchainImageCount = 0,
         .swapchainImages = NULL,
         .swapchainImageViews = NULL,
-        .swapchainIndex = 0,
 
         .imageAvailableSemaphore = VK_NULL_HANDLE,
         .renderFinishedSemaphore = VK_NULL_HANDLE,
@@ -540,9 +540,9 @@ void teardownRenderPipeline(GfxContext *pGfxContext)
     tknDestroyDynamicArray(pGfxContext->renderPassPtrDynamicArray);
 }
 
-static void recordCommandBuffer(GfxContext *pGfxContext)
+static void recordCommandBuffer(GfxContext *pGfxContext,uint32_t swapchainIndex)
 {
-    VkCommandBuffer vkCommandBuffer = pGfxContext->gfxVkCommandBuffers[pGfxContext->swapchainIndex];
+    VkCommandBuffer vkCommandBuffer = pGfxContext->gfxVkCommandBuffers[swapchainIndex];
     VkCommandBufferBeginInfo vkCommandBufferBeginInfo =
         {
             .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
@@ -551,90 +551,13 @@ static void recordCommandBuffer(GfxContext *pGfxContext)
             .pInheritanceInfo = NULL,
         };
     ASSERT_VK_SUCCESS(vkBeginCommandBuffer(vkCommandBuffer, &vkCommandBufferBeginInfo));
-    // for (uint32_t pRenderPassIndex = 0; pRenderPassIndex < pGfxContext->renderPassPtrDynamicArray.count; pRenderPassIndex++)
-    // {
-    //     RenderPass *pRenderPass = TICKERNEL_GET_FROM_DYNAMIC_ARRAY(&pGfxContext->renderPassPtrDynamicArray, pRenderPassIndex, RenderPass *);
-    //     VkRenderPassBeginInfo renderPassBeginInfo =
-    //         {
-    //             .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
-    //             .pNext = NULL,
-    //             .renderPass = pRenderPass->vkRenderPass,
-    //             .framebuffer = pRenderPass->vkFramebuffers[swapchainIndex % pRenderPass->vkFramebufferCount],
-    //             .renderArea = renderArea,
-    //             .clearValueCount = clearValueCount,
-    //             .pClearValues = clearValues,
-    //         };
-    //     ASSERT_VK_SUCCESS(vkCmdBeginRenderPass(vkCommandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE));
-    //     for (uint32_t pSubpassIndex = 0; pSubpassIndex < pRenderPass->subpassCount; pSubpassIndex++)
-    //     {
-    //         Subpass *pSubpass = &pRenderPass->subpasses[pSubpassIndex];
-
-    //         for (uint32_t pPipelineIndex = 0; pPipelineIndex < pSubpass->pipelinePtrDynamicArray.count; pPipelineIndex++)
-    //         {
-    //             Pipeline *pPipeline = TICKERNEL_GET_FROM_DYNAMIC_ARRAY(&pSubpass->pipelinePtrDynamicArray, pPipelineIndex, Pipeline *);
-    //             vkCmdBindPipeline(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pPipeline->vkPipeline);
-    //             for (uint32_t modelIndex = 0; modelIndex < pPipeline->materialPtrDynamicArray.count; modelIndex++)
-    //             {
-    //                 Material *pMaterial = TICKERNEL_GET_FROM_DYNAMIC_ARRAY(&pPipeline->materialPtrDynamicArray, modelIndex, Material *);
-    //                 vkCmdBindDescriptorSets(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pPipeline->vkPipelineLayout, 0, 1, &pMaterial->vkDescriptorSet, 0, NULL);
-    //                 for (uint32_t meshIndex = 0; meshIndex < pMaterial->meshPtrDynamicArray.count; meshIndex++)
-    //                 {
-    //                     Mesh *pMesh = TICKERNEL_GET_FROM_DYNAMIC_ARRAY(&pMaterial->meshPtrDynamicArray, meshIndex, Mesh *);
-    //                     if (pMesh->vertexCount > 0)
-    //                     {
-    //                         if (pMesh->indexCount > 0)
-    //                         {
-    //                             if (pMesh->instanceCount > 0)
-    //                             {
-    //                                 VkBuffer vertexBuffers[] = {pMesh->vertexBuffer.vkBuffer, pMesh->instanceMappedBuffer.buffer.vkBuffer};
-    //                                 VkDeviceSize offsets[] = {0, 0};
-    //                                 vkCmdBindVertexBuffers(vkCommandBuffer, 0, 2, vertexBuffers, offsets);
-    //                                 vkCmdBindIndexBuffer(vkCommandBuffer, pMesh->indexBuffer.vkBuffer, 0, VK_INDEX_TYPE_UINT32);
-    //                                 vkCmdDrawIndexed(vkCommandBuffer, pMesh->indexCount, pMesh->instanceCount, 0, 0, 0);
-    //                             }
-    //                             else
-    //                             {
-    //                                 VkBuffer vertexBuffers[] = {pMesh->vertexBuffer.vkBuffer};
-    //                                 VkDeviceSize offsets[] = {0};
-    //                                 vkCmdBindVertexBuffers(vkCommandBuffer, 0, 1, vertexBuffers, offsets);
-    //                                 vkCmdBindIndexBuffer(vkCommandBuffer, pMesh->indexBuffer.vkBuffer, 0, VK_INDEX_TYPE_UINT32);
-    //                                 vkCmdDrawIndexed(vkCommandBuffer, pMesh->indexCount, 1, 0, 0, 0);
-    //                             }
-    //                         }
-    //                         else
-    //                         {
-    //                             if (pMesh->instanceCount > 0)
-    //                             {
-    //                                 VkBuffer vertexBuffers[] = {pMesh->vertexBuffer.vkBuffer, pMesh->instanceMappedBuffer.buffer.vkBuffer};
-    //                                 VkDeviceSize offsets[] = {0, 0};
-    //                                 vkCmdBindVertexBuffers(vkCommandBuffer, 0, 2, vertexBuffers, offsets);
-    //                                 vkCmdDraw(vkCommandBuffer, pMesh->vertexCount, pMesh->instanceCount, 0, 0);
-    //                             }
-    //                             else
-    //                             {
-    //                                 VkBuffer vertexBuffers[] = {pMesh->vertexBuffer.vkBuffer};
-    //                                 VkDeviceSize offsets[] = {0};
-    //                                 vkCmdBindVertexBuffers(vkCommandBuffer, 0, 1, vertexBuffers, offsets);
-    //                                 vkCmdDraw(vkCommandBuffer, pMesh->vertexCount, 1, 0, 0);
-    //                             }
-    //                         }
-    //                     }
-    //                     else
-    //                     {
-    //                         vkCmdBindDescriptorSets(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pPipeline->vkPipelineLayout, 0, 1, &pMaterial->vkDescriptorSet, 0, NULL);
-    //                         vkCmdDraw(vkCommandBuffer, 3, 1, 0, 0);
-    //                     }
-    //                 }
-    //             }
-    //         }
-    //     }
-    // }
-
+    // TODO: Record rendering commands here
     ASSERT_VK_SUCCESS(vkEndCommandBuffer(vkCommandBuffer));
 }
 
-static void submitCommandBuffer(GfxContext *pGfxContext)
+static void submitCommandBuffer(GfxContext *pGfxContext, uint32_t swapchainIndex)
 {
+
     // Submit workflow...
     VkSubmitInfo submitInfo = {
         .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
@@ -643,7 +566,7 @@ static void submitCommandBuffer(GfxContext *pGfxContext)
         .pWaitSemaphores = (VkSemaphore[]){pGfxContext->imageAvailableSemaphore},
         .pWaitDstStageMask = (VkPipelineStageFlags[]){VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT},
         .commandBufferCount = 1,
-        .pCommandBuffers = &pGfxContext->gfxVkCommandBuffers[pGfxContext->swapchainIndex],
+        .pCommandBuffers = &pGfxContext->gfxVkCommandBuffers[swapchainIndex],
         .signalSemaphoreCount = 1,
         .pSignalSemaphores = (VkSemaphore[]){pGfxContext->renderFinishedSemaphore},
     };
@@ -651,7 +574,7 @@ static void submitCommandBuffer(GfxContext *pGfxContext)
     ASSERT_VK_SUCCESS(vkQueueSubmit(pGfxContext->vkGfxQueue, 1, &submitInfo, pGfxContext->renderFinishedFence));
 }
 
-static void present(GfxContext *pGfxContext)
+static void present(GfxContext *pGfxContext, uint32_t swapchainIndex)
 {
     VkPresentInfoKHR presentInfo = {
         .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
@@ -660,7 +583,7 @@ static void present(GfxContext *pGfxContext)
         .pWaitSemaphores = (VkSemaphore[]){pGfxContext->renderFinishedSemaphore},
         .swapchainCount = 1,
         .pSwapchains = (VkSwapchainKHR[]){pGfxContext->vkSwapchain},
-        .pImageIndices = &pGfxContext->swapchainIndex,
+        .pImageIndices = &swapchainIndex,
         .pResults = NULL,
     };
     VkResult result = vkQueuePresentKHR(pGfxContext->vkPresentQueue, &presentInfo);
@@ -688,35 +611,42 @@ static void present(GfxContext *pGfxContext)
     }
 }
 
-GfxContext createGfxContext(int targetSwapchainImageCount, VkSurfaceFormatKHR targetVkSurfaceFormat, VkPresentModeKHR targetVkPresentMode, VkInstance vkInstance, VkSurfaceKHR vkSurface, VkExtent2D swapchainExtent)
+GfxContext *createGfxContext(int targetSwapchainImageCount, VkSurfaceFormatKHR targetVkSurfaceFormat, VkPresentModeKHR targetVkPresentMode, VkInstance vkInstance, VkSurfaceKHR vkSurface, VkExtent2D swapchainExtent)
 {
-    GfxContext gfxContext;
-    initializeGfxContext(&gfxContext, vkInstance, vkSurface);
-    pickPhysicalDevice(&gfxContext, targetVkSurfaceFormat, targetVkPresentMode);
-    populateLogicalDevice(&gfxContext);
-    populateSwapchain(&gfxContext, swapchainExtent, targetSwapchainImageCount);
+    GfxContext *pGfxContext = tknMalloc(sizeof(GfxContext));
+    initializeGfxContext(pGfxContext, vkInstance, vkSurface);
+    pickPhysicalDevice(pGfxContext, targetVkSurfaceFormat, targetVkPresentMode);
+    populateLogicalDevice(pGfxContext);
+    populateSwapchain(pGfxContext, swapchainExtent, targetSwapchainImageCount);
 
-    populateSignals(&gfxContext);
-    populateCommandPools(&gfxContext);
-    populateVkCommandBuffers(&gfxContext);
-    setupRenderPipeline(&gfxContext);
-    return gfxContext;
+    populateSignals(pGfxContext);
+    populateCommandPools(pGfxContext);
+    populateVkCommandBuffers(pGfxContext);
+    setupRenderPipeline(pGfxContext);
+    return pGfxContext;
 }
 
-void destroyGfxContext(GfxContext gfxContext)
+void destroyGfxContextPtr(GfxContext *pGfxContext)
 {
-    teardownRenderPipeline(&gfxContext);
-    cleanupVkCommandBuffers(&gfxContext);
-    cleanupCommandPools(&gfxContext);
-    cleanupSignals(&gfxContext);
-    cleanupSwapchain(&gfxContext);
-    cleanupLogicalDevice(&gfxContext);
+    teardownRenderPipeline(pGfxContext);
+    cleanupVkCommandBuffers(pGfxContext);
+    cleanupCommandPools(pGfxContext);
+    cleanupSignals(pGfxContext);
+    cleanupSwapchain(pGfxContext);
+    cleanupLogicalDevice(pGfxContext);
 }
-void updateGfxContext(GfxContext *pGfxContext, VkExtent2D swapchainExtent)
+void updateGfxContextPtr(GfxContext *pGfxContext, VkExtent2D swapchainExtent)
 {
+    pGfxContext->frameCount++;
+    uint32_t swapchainIndex = pGfxContext->frameCount % pGfxContext->swapchainImageCount;
     VkDevice vkDevice = pGfxContext->vkDevice;
     // Wait for gpu
     ASSERT_VK_SUCCESS(vkWaitForFences(vkDevice, 1, &pGfxContext->renderFinishedFence, VK_TRUE, UINT64_MAX));
+
+    for (uint32_t renderPassIndex = 0; renderPassIndex < pGfxContext->renderPassPtrDynamicArray.count; renderPassIndex++)
+    {
+        /* code */
+    }
 
     if (swapchainExtent.width != pGfxContext->swapchainExtent.width || swapchainExtent.height != pGfxContext->swapchainExtent.height)
     {
@@ -749,7 +679,7 @@ void updateGfxContext(GfxContext *pGfxContext, VkExtent2D swapchainExtent)
     }
     else
     {
-        VkResult result = vkAcquireNextImageKHR(vkDevice, pGfxContext->vkSwapchain, UINT64_MAX, pGfxContext->imageAvailableSemaphore, VK_NULL_HANDLE, &pGfxContext->swapchainIndex);
+        VkResult result = vkAcquireNextImageKHR(vkDevice, pGfxContext->vkSwapchain, UINT64_MAX, pGfxContext->imageAvailableSemaphore, VK_NULL_HANDLE, &swapchainIndex);
         if (result != VK_SUCCESS)
         {
             if (VK_ERROR_OUT_OF_DATE_KHR == result)
@@ -774,10 +704,9 @@ void updateGfxContext(GfxContext *pGfxContext, VkExtent2D swapchainExtent)
             else if (VK_SUBOPTIMAL_KHR == result)
             {
                 ASSERT_VK_SUCCESS(vkResetFences(vkDevice, 1, &pGfxContext->renderFinishedFence));
-                recordCommandBuffer(pGfxContext);
-                submitCommandBuffer(pGfxContext);
-                present(pGfxContext);
-                pGfxContext->swapchainIndex = (pGfxContext->swapchainIndex + 1) % pGfxContext->swapchainImageCount;
+                recordCommandBuffer(pGfxContext, swapchainIndex);
+                submitCommandBuffer(pGfxContext, swapchainIndex);
+                present(pGfxContext, swapchainIndex);
             }
             else
             {
@@ -787,10 +716,9 @@ void updateGfxContext(GfxContext *pGfxContext, VkExtent2D swapchainExtent)
         else
         {
             ASSERT_VK_SUCCESS(vkResetFences(vkDevice, 1, &pGfxContext->renderFinishedFence));
-            recordCommandBuffer(pGfxContext);
-            submitCommandBuffer(pGfxContext);
-            present(pGfxContext);
-            pGfxContext->swapchainIndex = (pGfxContext->swapchainIndex + 1) % pGfxContext->swapchainImageCount;
+            recordCommandBuffer(pGfxContext, swapchainIndex);
+            submitCommandBuffer(pGfxContext, swapchainIndex);
+            present(pGfxContext, swapchainIndex);
         }
     }
 }

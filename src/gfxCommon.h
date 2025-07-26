@@ -190,10 +190,12 @@ typedef struct
     VkFramebuffer *vkFramebuffers;
     uint32_t subpassCount;
     Subpass *subpasses;
+    bool isValid;
 } RenderPass;
 
 typedef struct
 {
+    uint32_t frameCount;
     VkInstance vkInstance;
     VkSurfaceKHR vkSurface;
 
@@ -215,7 +217,6 @@ typedef struct
     Attachment *swapchainAttachmentPtr;
     VkImage *swapchainImages;
     VkImageView *swapchainImageViews;
-    uint32_t swapchainIndex;
 
     VkSemaphore imageAvailableSemaphore;
     VkSemaphore renderFinishedSemaphore;
