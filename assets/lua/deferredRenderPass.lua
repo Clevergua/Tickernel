@@ -1,5 +1,5 @@
 local deferredRenderPass = {}
-local engine = require("engine")
+local tknEngine = require("tknEngine")
 local geometryPipeline = require("geometryPipeline")
 
 function deferredRenderPass.createRenderPass(pAttachments)
@@ -161,13 +161,13 @@ function deferredRenderPass.createRenderPass(pAttachments)
         }
     }
 
-    return engine.createRenderPass(vkAttachmentDescriptions, pAttachments, vkSubpassDescriptions, spvPathArrays,
+    return tknEngine.createRenderPass(vkAttachmentDescriptions, pAttachments, vkSubpassDescriptions, spvPathArrays,
         vkSubpassDependencies,
         0)
 end
 
 function deferredRenderPass.destroyRenderPass(pRenderPass)
-    engine.destroyRenderPass(pRenderPass)
+    tknEngine.destroyRenderPass(pRenderPass)
 end
 
 return deferredRenderPass

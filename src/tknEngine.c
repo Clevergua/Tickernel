@@ -1,10 +1,10 @@
 #include "tknEngine.h"
 
-TknEngine *createTknEnginePtr(int targetSwapchainImageCount, VkSurfaceFormatKHR targetVkSurfaceFormat, VkPresentModeKHR targetVkPresentMode, VkInstance vkInstance, VkSurfaceKHR vkSurface, VkExtent2D swapchainExtent)
+TknEngine *createTknEnginePtr(int targetSwapchainImageCount, VkSurfaceFormatKHR targetVkSurfaceFormat, VkPresentModeKHR targetVkPresentMode, VkInstance vkInstance, VkSurfaceKHR vkSurface, VkExtent2D swapchainExtent, const char *luaPath, uint32_t luaLibraryCount, LuaLibrary *luaLibraries)
 {
     TknEngine *pTknEngine = tknMalloc(sizeof(TknEngine));
     GfxContext *pGfxContext = createGfxContextPtr(targetSwapchainImageCount, targetVkSurfaceFormat, targetVkPresentMode, vkInstance, vkSurface, swapchainExtent);
-    LuaContext *pLuaContext = createLuaContextPtr();
+    LuaContext *pLuaContext = createLuaContextPtr(luaPath, luaLibraryCount, luaLibraries);
     TknEngine tknEngine = {
         .pGfxContext = pGfxContext,
         .pLuaContext = pLuaContext,

@@ -1,5 +1,5 @@
 local geometryPipeline = {}
-local engine = require("engine")
+local tknEngine = require("tknEngine")
 
 geometryPipeline.createPipeline = function(pRenderPass, subpassIndex, pipelineIndex, meshLayout)
     local stages = {
@@ -126,14 +126,14 @@ geometryPipeline.createPipeline = function(pRenderPass, subpassIndex, pipelineIn
         }
     }
 
-    local pPipeline = engine.createPipeline(stages, meshLayout, inputAssemblyState, viewportState,
+    local pPipeline = tknEngine.createPipeline(stages, meshLayout, inputAssemblyState, viewportState,
         rasterizationState, multisampleState, depthStencilState, colorBlendState, dynamicState,
         vkDescriptorSetLayoutCreateInfo, pRenderPass, subpassIndex, vkDescriptorPoolSizes, pipelineIndex)
     return pPipeline
 end
 
 geometryPipeline.destroyPipeline = function(pRenderPass, subpassIndex, pPipeline)
-    engine.destroyPipeline(pRenderPass, subpassIndex, pPipeline)
+    tknEngine.destroyPipeline(pRenderPass, subpassIndex, pPipeline)
 end
 
 

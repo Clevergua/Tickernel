@@ -26,7 +26,9 @@ file(GLOB_RECURSE SOURCE_FILES
 
 set(INCLUDE_DIRS
     ${Vulkan_INCLUDE_DIRS}
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/cglm
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/lua
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/spirv_reflect
     ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
