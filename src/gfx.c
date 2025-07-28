@@ -113,7 +113,6 @@ static void pickPhysicalDevice(GfxContext *pGfxContext, VkSurfaceFormatKHR targe
                 for (extensionIndex = 0; extensionIndex < extensionCount; extensionIndex++)
                 {
                     char *supportedExtensionName = extensionProperties[extensionIndex].extensionName;
-                    printf("Supported extension: %s %d\n", supportedExtensionName, 0 == strcmp(supportedExtensionName, requiredExtensionName));
                     if (0 == strcmp(supportedExtensionName, requiredExtensionName))
                     {
                         break;
