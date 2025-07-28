@@ -473,7 +473,7 @@ Subpass createSubpass(GfxContext *pGfxContext, uint32_t inputVkAttachmentReferen
 
                         if (VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT == vkDescriptorSetLayoutBinding.descriptorType)
                         {
-                            VkImageLayout vkImageLayout;
+                            VkImageLayout vkImageLayout = 0;
                             uint32_t inputAttachmentReferenceIndex;
                             for (inputAttachmentReferenceIndex = 0; inputAttachmentReferenceIndex < inputVkAttachmentReferenceCount; inputAttachmentReferenceIndex++)
                             {
@@ -653,7 +653,6 @@ RenderPass *createRenderPassPtr(GfxContext *pGfxContext, uint32_t attachmentCoun
 }
 void destroyRenderPassPtr(GfxContext *pGfxContext, RenderPass *pRenderPass)
 {
-    VkResult result;
     VkDevice vkDevice = pGfxContext->vkDevice;
     tknRemoveFromDynamicArray(&pGfxContext->renderPassPtrDynamicArray, pRenderPass);
 

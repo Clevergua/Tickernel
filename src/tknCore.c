@@ -157,7 +157,7 @@ void *tknGetFromDynamicArray(TknDynamicArray *pDynamicArray, uint32_t index)
     }
 }
 
-TknHashSet tknCreateHashSet(size_t capacity)
+TknHashSet tknCreateHashSet(uint32_t capacity)
 {
     TknHashSet tknHashSet = {
         .capacity = capacity,
@@ -183,7 +183,7 @@ bool tknAddToHashSet(TknHashSet *pTknHashSet, void *value)
         if (pTknHashSet->count * 10 >= pTknHashSet->capacity * 8)
         {
             // Resize the hash set
-            size_t newCapacity = pTknHashSet->capacity * 2;
+            uint32_t newCapacity = pTknHashSet->capacity * 2;
             TknListNode **newNodePtrs = tknMalloc(sizeof(TknListNode *) * newCapacity);
             memset(newNodePtrs, 0, sizeof(TknListNode *) * newCapacity);
             for (size_t i = 0; i < pTknHashSet->capacity; i++)

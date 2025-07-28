@@ -5,32 +5,32 @@ static void initializeGfxContext(GfxContext *pGfxContext, VkInstance vkInstance,
         .frameCount = 0,
         .vkInstance = vkInstance,
         .vkSurface = vkSurface,
-
+        
         .vkPhysicalDevice = VK_NULL_HANDLE,
         .vkPhysicalDeviceProperties = {},
         .gfxQueueFamilyIndex = UINT32_MAX,
         .presentQueueFamilyIndex = UINT32_MAX,
-
+        
         .surfaceFormat = {},
         .presentMode = VK_PRESENT_MODE_IMMEDIATE_KHR,
-
+        
         .vkDevice = VK_NULL_HANDLE,
         .vkGfxQueue = VK_NULL_HANDLE,
         .vkPresentQueue = VK_NULL_HANDLE,
-
+        
         .swapchainExtent = {},
         .vkSwapchain = VK_NULL_HANDLE,
         .swapchainImageCount = 0,
         .swapchainImages = NULL,
         .swapchainImageViews = NULL,
-
+        
         .imageAvailableSemaphore = VK_NULL_HANDLE,
         .renderFinishedSemaphore = VK_NULL_HANDLE,
         .renderFinishedFence = VK_NULL_HANDLE,
-
+        
         .gfxVkCommandPool = VK_NULL_HANDLE,
         .gfxVkCommandBuffers = NULL,
-
+        
         .renderPassPtrDynamicArray = {},
     };
 }
@@ -65,7 +65,7 @@ static void getGfxAndPresentQueueFamilyIndices(GfxContext *pGfxContext, VkPhysic
         {
             // continue;
         }
-
+        
         if (*pGfxQueueFamilyIndex != UINT32_MAX && *pPresentQueueFamilyIndex != UINT32_MAX)
         {
             break;
@@ -86,7 +86,7 @@ static void pickPhysicalDevice(GfxContext *pGfxContext, VkSurfaceFormatKHR targe
     {
         VkPhysicalDevice *devices = tknMalloc(deviceCount * sizeof(VkPhysicalDevice));
         ASSERT_VK_SUCCESS(vkEnumeratePhysicalDevices(pGfxContext->vkInstance, &deviceCount, devices));
-
+        
         uint32_t maxScore = 0;
         char *targetDeviceName = NULL;
         pGfxContext->vkPhysicalDevice = VK_NULL_HANDLE;
@@ -113,6 +113,7 @@ static void pickPhysicalDevice(GfxContext *pGfxContext, VkSurfaceFormatKHR targe
                 for (extensionIndex = 0; extensionIndex < extensionCount; extensionIndex++)
                 {
                     char *supportedExtensionName = extensionProperties[extensionIndex].extensionName;
+                    printf("Supported extension: %s %d\n", supportedExtensionName, 0 == strcmp(supportedExtensionName, requiredExtensionName));
                     if (0 == strcmp(supportedExtensionName, requiredExtensionName))
                     {
                         break;
@@ -136,14 +137,14 @@ static void pickPhysicalDevice(GfxContext *pGfxContext, VkSurfaceFormatKHR targe
             tknFree(extensionProperties);
             if (requiredExtensionIndex < requiredExtensionCount)
             {
-                // found all
+                // not found all required extensions
+                continue;
             }
             else
             {
-                // not found
-                continue;
+                // found all
             }
-
+            
             uint32_t gfxQueueFamilyIndex;
             uint32_t presentQueueFamilyIndex;
             getGfxAndPresentQueueFamilyIndices(pGfxContext, vkPhysicalDevice, &gfxQueueFamilyIndex, &presentQueueFamilyIndex);
@@ -152,7 +153,7 @@ static void pickPhysicalDevice(GfxContext *pGfxContext, VkSurfaceFormatKHR targe
                 // No gfx or present queue family index
                 continue;
             }
-
+            
             uint32_t surfaceFormatCount;
             ASSERT_VK_SUCCESS(vkGetPhysicalDeviceSurfaceFormatsKHR(vkPhysicalDevice, vkSurface, &surfaceFormatCount, NULL));
             VkSurfaceFormatKHR *supportedSurfaceFormats = tknMalloc(surfaceFormatCount * sizeof(VkSurfaceFormatKHR));
@@ -181,7 +182,7 @@ static void pickPhysicalDevice(GfxContext *pGfxContext, VkSurfaceFormatKHR targe
                 // not found
                 continue;
             }
-
+            
             uint32_t presentModeCount;
             ASSERT_VK_SUCCESS(vkGetPhysicalDeviceSurfacePresentModesKHR(vkPhysicalDevice, vkSurface, &presentModeCount, NULL));
             VkPresentModeKHR *supportedPresentModes = tknMalloc(presentModeCount * sizeof(VkPresentModeKHR));
@@ -210,7 +211,7 @@ static void pickPhysicalDevice(GfxContext *pGfxContext, VkSurfaceFormatKHR targe
                 // not found
                 continue;
             }
-
+            
             VkFormatProperties vkFormatProperties;
             vkGetPhysicalDeviceFormatProperties(vkPhysicalDevice, VK_FORMAT_ASTC_4x4_UNORM_BLOCK, &vkFormatProperties);
             if (!(vkFormatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT))
@@ -218,7 +219,7 @@ static void pickPhysicalDevice(GfxContext *pGfxContext, VkSurfaceFormatKHR targe
                 // ASTC format not supported
                 continue;
             }
-
+            
             if (deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
             {
                 score += 1000;
@@ -260,7 +261,7 @@ static void pickPhysicalDevice(GfxContext *pGfxContext, VkSurfaceFormatKHR targe
             }
         }
         tknFree(devices);
-
+        
         if (pGfxContext->vkPhysicalDevice != NULL)
         {
             printf("Selected target physical device named %s\n", targetDeviceName);
@@ -285,14 +286,14 @@ static void populateLogicalDevice(GfxContext *pGfxContext)
         queueCount = 1;
         queueCreateInfos = tknMalloc(sizeof(VkDeviceQueueCreateInfo) * queueCount);
         VkDeviceQueueCreateInfo gfxCreateInfo =
-            {
-                .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
-                .pNext = NULL,
-                .flags = 0,
-                .queueFamilyIndex = gfxQueueFamilyIndex,
-                .queueCount = 1,
-                .pQueuePriorities = &queuePriority,
-            };
+        {
+            .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+            .pNext = NULL,
+            .flags = 0,
+            .queueFamilyIndex = gfxQueueFamilyIndex,
+            .queueCount = 1,
+            .pQueuePriorities = &queuePriority,
+        };
         queueCreateInfos[0] = gfxCreateInfo;
     }
     else
@@ -300,14 +301,14 @@ static void populateLogicalDevice(GfxContext *pGfxContext)
         queueCount = 2;
         queueCreateInfos = tknMalloc(sizeof(VkDeviceQueueCreateInfo) * queueCount);
         VkDeviceQueueCreateInfo gfxCreateInfo =
-            {
-                .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
-                .pNext = NULL,
-                .flags = 0,
-                .queueFamilyIndex = gfxQueueFamilyIndex,
-                .queueCount = 1,
-                .pQueuePriorities = &queuePriority,
-            };
+        {
+            .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+            .pNext = NULL,
+            .flags = 0,
+            .queueFamilyIndex = gfxQueueFamilyIndex,
+            .queueCount = 1,
+            .pQueuePriorities = &queuePriority,
+        };
         VkDeviceQueueCreateInfo presentCreateInfo = {
             .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
             .pNext = NULL,
@@ -319,33 +320,33 @@ static void populateLogicalDevice(GfxContext *pGfxContext)
         queueCreateInfos[0] = gfxCreateInfo;
         queueCreateInfos[1] = presentCreateInfo;
     }
-
+    
     VkPhysicalDeviceFeatures deviceFeatures =
-        {
-            .fillModeNonSolid = VK_TRUE,
-            .sampleRateShading = VK_TRUE,
-        };
+    {
+        .fillModeNonSolid = VK_TRUE,
+        .sampleRateShading = VK_TRUE,
+    };
     char **enabledLayerNames = NULL;
     uint32_t enabledLayerCount = 0;
-
+    
     char *extensionNames[] = {
         VK_KHR_SWAPCHAIN_EXTENSION_NAME,
         "VK_KHR_portability_subset",
     };
     uint32_t extensionCount = TKN_ARRAY_COUNT(extensionNames);
     VkDeviceCreateInfo vkDeviceCreateInfo =
-        {
-            .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
-            .pNext = NULL,
-            .flags = 0,
-            .queueCreateInfoCount = queueCount,
-            .pQueueCreateInfos = queueCreateInfos,
-            .enabledLayerCount = enabledLayerCount,
-            .ppEnabledLayerNames = (const char *const *)enabledLayerNames,
-            .enabledExtensionCount = extensionCount,
-            .ppEnabledExtensionNames = (const char *const *)extensionNames,
-            .pEnabledFeatures = &deviceFeatures,
-        };
+    {
+        .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
+        .pNext = NULL,
+        .flags = 0,
+        .queueCreateInfoCount = queueCount,
+        .pQueueCreateInfos = queueCreateInfos,
+        .enabledLayerCount = enabledLayerCount,
+        .ppEnabledLayerNames = (const char *const *)enabledLayerNames,
+        .enabledExtensionCount = extensionCount,
+        .ppEnabledExtensionNames = (const char *const *)extensionNames,
+        .pEnabledFeatures = &deviceFeatures,
+    };
     ASSERT_VK_SUCCESS(vkCreateDevice(vkPhysicalDevice, &vkDeviceCreateInfo, NULL, &pGfxContext->vkDevice));
     vkGetDeviceQueue(pGfxContext->vkDevice, gfxQueueFamilyIndex, 0, &pGfxContext->vkGfxQueue);
     vkGetDeviceQueue(pGfxContext->vkDevice, presentQueueFamilyIndex, 0, &pGfxContext->vkPresentQueue);
@@ -358,24 +359,20 @@ static void cleanupLogicalDevice(GfxContext *pGfxContext)
 
 static void populateSwapchain(GfxContext *pGfxContext, VkExtent2D targetSwapchainExtent, uint32_t targetSwapchainImageCount)
 {
-    VkResult result = VK_SUCCESS;
-
     VkPhysicalDevice vkPhysicalDevice = pGfxContext->vkPhysicalDevice;
     VkSurfaceKHR vkSurface = pGfxContext->vkSurface;
     VkDevice vkDevice = pGfxContext->vkDevice;
     uint32_t gfxQueueFamilyIndex = pGfxContext->gfxQueueFamilyIndex;
     uint32_t presentQueueFamilyIndex = pGfxContext->presentQueueFamilyIndex;
-
+    
     VkSurfaceCapabilitiesKHR vkSurfaceCapabilities;
-    uint32_t supportSurfaceFormatCount;
-    uint32_t supportPresentModeCount;
     ASSERT_VK_SUCCESS(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(vkPhysicalDevice, vkSurface, &vkSurfaceCapabilities));
     pGfxContext->swapchainImageCount = TKN_CLAMP(targetSwapchainImageCount, vkSurfaceCapabilities.minImageCount, vkSurfaceCapabilities.maxImageCount);
-
+    
     VkExtent2D swapchainExtent;
     swapchainExtent.width = TKN_CLAMP(targetSwapchainExtent.width, vkSurfaceCapabilities.minImageExtent.width, vkSurfaceCapabilities.maxImageExtent.width);
     swapchainExtent.height = TKN_CLAMP(targetSwapchainExtent.height, vkSurfaceCapabilities.minImageExtent.height, vkSurfaceCapabilities.maxImageExtent.height);
-
+    
     VkSharingMode imageSharingMode;
     uint32_t queueFamilyIndexCount;
     uint32_t *pQueueFamilyIndices;
@@ -392,28 +389,28 @@ static void populateSwapchain(GfxContext *pGfxContext, VkExtent2D targetSwapchai
         queueFamilyIndexCount = 0;
         pQueueFamilyIndices = NULL;
     }
-
+    
     VkSwapchainCreateInfoKHR swapchainCreateInfo =
-        {
-            .sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
-            .pNext = NULL,
-            .flags = 0,
-            .surface = vkSurface,
-            .minImageCount = pGfxContext->swapchainImageCount,
-            .imageFormat = pGfxContext->surfaceFormat.format,
-            .imageColorSpace = pGfxContext->surfaceFormat.colorSpace,
-            .imageExtent = swapchainExtent,
-            .imageArrayLayers = 1,
-            .imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
-            .imageSharingMode = imageSharingMode,
-            .queueFamilyIndexCount = queueFamilyIndexCount,
-            .pQueueFamilyIndices = pQueueFamilyIndices,
-            .preTransform = vkSurfaceCapabilities.currentTransform,
-            .compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
-            .presentMode = pGfxContext->presentMode,
-            .clipped = VK_TRUE,
-            .oldSwapchain = VK_NULL_HANDLE,
-        };
+    {
+        .sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
+        .pNext = NULL,
+        .flags = 0,
+        .surface = vkSurface,
+        .minImageCount = pGfxContext->swapchainImageCount,
+        .imageFormat = pGfxContext->surfaceFormat.format,
+        .imageColorSpace = pGfxContext->surfaceFormat.colorSpace,
+        .imageExtent = swapchainExtent,
+        .imageArrayLayers = 1,
+        .imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+        .imageSharingMode = imageSharingMode,
+        .queueFamilyIndexCount = queueFamilyIndexCount,
+        .pQueueFamilyIndices = pQueueFamilyIndices,
+        .preTransform = vkSurfaceCapabilities.currentTransform,
+        .compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
+        .presentMode = pGfxContext->presentMode,
+        .clipped = VK_TRUE,
+        .oldSwapchain = VK_NULL_HANDLE,
+    };
     pGfxContext->swapchainAttachmentPtr = tknMalloc(sizeof(Attachment));
     pGfxContext->swapchainAttachmentPtr->attachmentType = ATTACHMENT_TYPE_SWAPCHAIN;
     ASSERT_VK_SUCCESS(vkCreateSwapchainKHR(vkDevice, &swapchainCreateInfo, NULL, &pGfxContext->vkSwapchain));
@@ -544,12 +541,12 @@ static void recordCommandBuffer(GfxContext *pGfxContext,uint32_t swapchainIndex)
 {
     VkCommandBuffer vkCommandBuffer = pGfxContext->gfxVkCommandBuffers[swapchainIndex];
     VkCommandBufferBeginInfo vkCommandBufferBeginInfo =
-        {
-            .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
-            .pNext = NULL,
-            .flags = 0,
-            .pInheritanceInfo = NULL,
-        };
+    {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+        .pNext = NULL,
+        .flags = 0,
+        .pInheritanceInfo = NULL,
+    };
     ASSERT_VK_SUCCESS(vkBeginCommandBuffer(vkCommandBuffer, &vkCommandBufferBeginInfo));
     // TODO: Record rendering commands here
     ASSERT_VK_SUCCESS(vkEndCommandBuffer(vkCommandBuffer));
@@ -557,7 +554,7 @@ static void recordCommandBuffer(GfxContext *pGfxContext,uint32_t swapchainIndex)
 
 static void submitCommandBuffer(GfxContext *pGfxContext, uint32_t swapchainIndex)
 {
-
+    
     // Submit workflow...
     VkSubmitInfo submitInfo = {
         .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
@@ -570,7 +567,7 @@ static void submitCommandBuffer(GfxContext *pGfxContext, uint32_t swapchainIndex
         .signalSemaphoreCount = 1,
         .pSignalSemaphores = (VkSemaphore[]){pGfxContext->renderFinishedSemaphore},
     };
-
+    
     ASSERT_VK_SUCCESS(vkQueueSubmit(pGfxContext->vkGfxQueue, 1, &submitInfo, pGfxContext->renderFinishedFence));
 }
 
@@ -618,7 +615,7 @@ GfxContext *createGfxContextPtr(int targetSwapchainImageCount, VkSurfaceFormatKH
     pickPhysicalDevice(pGfxContext, targetVkSurfaceFormat, targetVkPresentMode);
     populateLogicalDevice(pGfxContext);
     populateSwapchain(pGfxContext, swapchainExtent, targetSwapchainImageCount);
-
+    
     populateSignals(pGfxContext);
     populateCommandPools(pGfxContext);
     populateVkCommandBuffers(pGfxContext);
@@ -640,12 +637,12 @@ void updateGfxContextPtr(GfxContext *pGfxContext, VkExtent2D swapchainExtent)
     pGfxContext->frameCount++;
     uint32_t swapchainIndex = pGfxContext->frameCount % pGfxContext->swapchainImageCount;
     VkDevice vkDevice = pGfxContext->vkDevice;
-
+    
     for (uint32_t renderPassIndex = 0; renderPassIndex < pGfxContext->renderPassPtrDynamicArray.count; renderPassIndex++)
     {
         /* code */
     }
-
+    
     if (swapchainExtent.width != pGfxContext->swapchainExtent.width || swapchainExtent.height != pGfxContext->swapchainExtent.height)
     {
         printf("Recreate swapchain because of a size change: (%d, %d) to (%d, %d) \n",
@@ -663,7 +660,7 @@ void updateGfxContextPtr(GfxContext *pGfxContext, VkExtent2D swapchainExtent)
         for (uint32_t renderPassIndex = 0; renderPassIndex < pGfxContext->renderPassPtrDynamicArray.count; renderPassIndex++)
         {
             RenderPass *pRenderPass = tknGetFromDynamicArray(&pGfxContext->renderPassPtrDynamicArray, renderPassIndex);
-            if (pRenderPass->attachmentCount > 0 && pRenderPass->attachmentPtrs[0]->attachmentType == ATTACHMENT_TYPE_SWAPCHAIN || pRenderPass->attachmentPtrs[0]->attachmentType == ATTACHMENT_TYPE_DYNAMIC)
+            if (pRenderPass->attachmentCount > 0 && (pRenderPass->attachmentPtrs[0]->attachmentType == ATTACHMENT_TYPE_SWAPCHAIN || pRenderPass->attachmentPtrs[0]->attachmentType == ATTACHMENT_TYPE_DYNAMIC))
             {
                 cleanupFramebuffers(pGfxContext, pRenderPass);
                 populateFramebuffers(pGfxContext, pRenderPass);
@@ -687,7 +684,7 @@ void updateGfxContextPtr(GfxContext *pGfxContext, VkExtent2D swapchainExtent)
                 for (uint32_t renderPassIndex = 0; renderPassIndex < pGfxContext->renderPassPtrDynamicArray.count; renderPassIndex++)
                 {
                     RenderPass *pRenderPass = tknGetFromDynamicArray(&pGfxContext->renderPassPtrDynamicArray, renderPassIndex);
-
+                    
                     if (pRenderPass->useSwapchain)
                     {
                         cleanupFramebuffers(pGfxContext, pRenderPass);

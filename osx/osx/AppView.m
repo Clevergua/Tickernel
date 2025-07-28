@@ -8,28 +8,24 @@
     self.preferredFramesPerSecond = 60;
     self.keyCodeStates = calloc(KEY_CODE_MAX_ENUM, sizeof(BOOL));
     self.pEngineBinding = [[EngineBinding alloc] init];
-    self.pLuaBinding = [[LuaBinding alloc] init];
+
     NSString *resourcesPath = [[NSBundle mainBundle] resourcePath];
     
-    [self.pEngineBinding setupEngine:self.drawableSize.width height:self.drawableSize.height assetPath:resourcesPath pView:(__bridge void *)self];
-    [self.pLuaBinding setupLua:resourcesPath graphicContext:self.pEngineBinding.pTickernelEngine->pGraphicContext];
+    [self.pEngineBinding setupEngine:self.drawableSize.width height:self.drawableSize.height assetsPath:resourcesPath pView:(__bridge void *)self];
 }
 
 - (void)teardownView {
-    [self.pLuaBinding teardownLua];
     [self.pEngineBinding teardownEngine];
     free(self.keyCodeStates);
 }
 
 - (void)mtkView:(MTKView *)view drawableSizeWillChange:(CGSize)size {
-    [self.pLuaBinding updateLua:self.keyCodeStates keyCodesLength: KEY_CODE_MAX_ENUM];
     [self.pEngineBinding updateEngine:size.width height:size.height];
     [self resetKeyCodes];
 }
 
 - (void)drawInMTKView:(MTKView *)view {
     NSCAssert([NSThread isMainThread], @"Rendering must be on main thread!");
-    [self.pLuaBinding updateLua:self.keyCodeStates keyCodesLength: KEY_CODE_MAX_ENUM];
     [self.pEngineBinding updateEngine:view.drawableSize.width height:view.drawableSize.height];
     [self resetKeyCodes];
 }
