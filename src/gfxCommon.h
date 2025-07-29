@@ -3,7 +3,10 @@
 #include "tknCore.h"
 #include "spirv_reflect.h"
 
-#define ASSERT_VK_SUCCESS(result) tknAssert((result) == VK_SUCCESS, "Vulkan error: %d", (result))
+#define ASSERT_VK_SUCCESS(expression) do { \
+    VkResult vkResult = (expression); \
+    tknAssert(vkResult == VK_SUCCESS, "Vulkan error: %d", vkResult); \
+} while(0)
 
 typedef struct
 {
