@@ -28,7 +28,7 @@ void updateTknEnginePtr(TknEngine *pTknEngine, VkExtent2D swapchainExtent)
     GfxContext *pGfxContext = pTknEngine->pGfxContext;
     updateLuaGameplay(pLuaContext);
     // Wait for gpu
-    ASSERT_VK_SUCCESS(vkWaitForFences(pGfxContext->vkDevice, 1, &pGfxContext->renderFinishedFence, VK_TRUE, UINT64_MAX));
+    assertVkResult(vkWaitForFences(pGfxContext->vkDevice, 1, &pGfxContext->renderFinishedFence, VK_TRUE, UINT64_MAX));
     updateLuaGfx(pLuaContext, pGfxContext);
     updateGfxContextPtr(pGfxContext, swapchainExtent);
 }

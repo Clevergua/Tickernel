@@ -39,7 +39,7 @@ static Image createImage(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, V
         .pQueueFamilyIndices = 0,
         .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
     };
-    ASSERT_VK_SUCCESS(vkCreateImage(vkDevice, &imageCreateInfo, NULL, &vkImage));
+    assertVkResult(vkCreateImage(vkDevice, &imageCreateInfo, NULL, &vkImage));
     VkMemoryRequirements memoryRequirements;
     vkGetImageMemoryRequirements(vkDevice, vkImage, &memoryRequirements);
     uint32_t memoryTypeIndex;
@@ -50,8 +50,8 @@ static Image createImage(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, V
         .allocationSize = memoryRequirements.size,
         .memoryTypeIndex = memoryTypeIndex,
     };
-    ASSERT_VK_SUCCESS(vkAllocateMemory(vkDevice, &memoryAllocateInfo, NULL, &vkDeviceMemory));
-    ASSERT_VK_SUCCESS(vkBindImageMemory(vkDevice, vkImage, vkDeviceMemory, 0));
+    assertVkResult(vkAllocateMemory(vkDevice, &memoryAllocateInfo, NULL, &vkDeviceMemory));
+    assertVkResult(vkBindImageMemory(vkDevice, vkImage, vkDeviceMemory, 0));
 
     VkComponentMapping components = {
         .r = VK_COMPONENT_SWIZZLE_IDENTITY,
@@ -76,7 +76,7 @@ static Image createImage(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, V
         .components = components,
         .subresourceRange = subresourceRange,
     };
-    ASSERT_VK_SUCCESS(vkCreateImageView(vkDevice, &imageViewCreateInfo, NULL, &vkImageView));
+    assertVkResult(vkCreateImageView(vkDevice, &imageViewCreateInfo, NULL, &vkImageView));
 
     Image image = {
         .vkImage = vkImage,

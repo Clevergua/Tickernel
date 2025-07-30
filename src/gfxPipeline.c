@@ -184,14 +184,14 @@ static DescriptorSet createDescriptorSet(GfxContext *pGfxContext, uint32_t spvRe
         .bindingCount = descriptorBindingCount,
         .pBindings = vkDescriptorSetLayoutBindings,
     };
-    ASSERT_VK_SUCCESS(vkCreateDescriptorSetLayout(vkDevice, &vkDescriptorSetLayoutCreateInfo, NULL, &vkDescriptorSetLayout));
+    assertVkResult(vkCreateDescriptorSetLayout(vkDevice, &vkDescriptorSetLayoutCreateInfo, NULL, &vkDescriptorSetLayout));
     VkDescriptorPoolCreateInfo vkDescriptorPoolCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
         .poolSizeCount = vkDescriptorPoolSizeDynamicArray.count,
         .pPoolSizes = vkDescriptorPoolSizeDynamicArray.array,
         .maxSets = 1,
     };
-    ASSERT_VK_SUCCESS(vkCreateDescriptorPool(vkDevice, &vkDescriptorPoolCreateInfo, NULL, &vkDescriptorPool));
+    assertVkResult(vkCreateDescriptorPool(vkDevice, &vkDescriptorPoolCreateInfo, NULL, &vkDescriptorPool));
     tknDestroyDynamicArray(vkDescriptorPoolSizeDynamicArray);
 
     VkDescriptorSetAllocateInfo vkDescriptorSetAllocateInfo = {
@@ -200,7 +200,7 @@ static DescriptorSet createDescriptorSet(GfxContext *pGfxContext, uint32_t spvRe
         .descriptorSetCount = 1,
         .pSetLayouts = &vkDescriptorSetLayout,
     };
-    ASSERT_VK_SUCCESS(vkAllocateDescriptorSets(vkDevice, &vkDescriptorSetAllocateInfo, &vkDescriptorSet));
+    assertVkResult(vkAllocateDescriptorSets(vkDevice, &vkDescriptorSetAllocateInfo, &vkDescriptorSet));
 
     DescriptorSet subpassDescriptorSet = {
         .descriptorBindingCount = descriptorBindingCount,
@@ -360,7 +360,7 @@ void populateFramebuffers(GfxContext *pGfxContext, RenderPass *pRenderPass)
                 .height = height,
                 .layers = 1,
             };
-            ASSERT_VK_SUCCESS(vkCreateFramebuffer(vkDevice, &vkFramebufferCreateInfo, NULL, &pRenderPass->vkFramebuffers[swapchainIndex]));
+            assertVkResult(vkCreateFramebuffer(vkDevice, &vkFramebufferCreateInfo, NULL, &pRenderPass->vkFramebuffers[swapchainIndex]));
         }
         tknFree(attachmentVkImageViews);
     }
@@ -392,7 +392,7 @@ void populateFramebuffers(GfxContext *pGfxContext, RenderPass *pRenderPass)
             .height = height,
             .layers = 1,
         };
-        ASSERT_VK_SUCCESS(vkCreateFramebuffer(vkDevice, &vkFramebufferCreateInfo, NULL, &pRenderPass->vkFramebuffers[0]));
+        assertVkResult(vkCreateFramebuffer(vkDevice, &vkFramebufferCreateInfo, NULL, &pRenderPass->vkFramebuffers[0]));
         tknFree(attachmentVkImageViews);
     }
 }
@@ -541,21 +541,21 @@ Subpass createSubpass(GfxContext *pGfxContext, uint32_t inputVkAttachmentReferen
         .bindingCount = descriptorBindingCount,
         .pBindings = vkDescriptorSetLayoutBindings,
     };
-    ASSERT_VK_SUCCESS(vkCreateDescriptorSetLayout(vkDevice, &vkDescriptorSetLayoutCreateInfo, NULL, &vkDescriptorSetLayout));
+    assertVkResult(vkCreateDescriptorSetLayout(vkDevice, &vkDescriptorSetLayoutCreateInfo, NULL, &vkDescriptorSetLayout));
     VkDescriptorPoolCreateInfo vkDescriptorPoolCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
         .poolSizeCount = vkDescriptorPoolSizeDynamicArray.count,
         .pPoolSizes = vkDescriptorPoolSizeDynamicArray.array,
         .maxSets = 1,
     };
-    ASSERT_VK_SUCCESS(vkCreateDescriptorPool(vkDevice, &vkDescriptorPoolCreateInfo, NULL, &vkDescriptorPool));
+    assertVkResult(vkCreateDescriptorPool(vkDevice, &vkDescriptorPoolCreateInfo, NULL, &vkDescriptorPool));
     VkDescriptorSetAllocateInfo vkDescriptorSetAllocateInfo = {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
         .descriptorPool = vkDescriptorPool,
         .descriptorSetCount = 1,
         .pSetLayouts = &vkDescriptorSetLayout,
     };
-    ASSERT_VK_SUCCESS(vkAllocateDescriptorSets(vkDevice, &vkDescriptorSetAllocateInfo, &vkDescriptorSet));
+    assertVkResult(vkAllocateDescriptorSets(vkDevice, &vkDescriptorSetAllocateInfo, &vkDescriptorSet));
 
     for (uint32_t descriptorBindingIndex = 0; descriptorBindingIndex < descriptorBindingCount; descriptorBindingIndex++)
     {
@@ -587,7 +587,7 @@ void destroySubpass(GfxContext *pGfxContext, Subpass subpass)
     VkDevice vkDevice = pGfxContext->vkDevice;
     destroyDescriptorSet(pGfxContext, subpass.subpassDescriptorSet);
     tknDestroyDynamicArray(subpass.pipelinePtrDynamicArray);
-    // ASSERT_VK_SUCCESS(vkFreeDescriptorSets(vkDevice, pSubpass->vkDescriptorPool, 1, &pSubpass->vkDescriptorSet));
+    // assertVkResult(vkFreeDescriptorSets(vkDevice, pSubpass->vkDescriptorPool, 1, &pSubpass->vkDescriptorSet));
     // vkDestroyDescriptorPool(vkDevice, pSubpass->vkDescriptorPool, NULL);
     // vkDestroyDescriptorSetLayout(vkDevice, pSubpass->vkDescriptorSetLayout, NULL);
     // tknDestroyDynamicArray(pSubpass->pipelinePtrDynamicArray);
@@ -641,7 +641,7 @@ RenderPass *createRenderPassPtr(GfxContext *pGfxContext, uint32_t attachmentCoun
         .dependencyCount = vkSubpassDependencyCount,
         .pDependencies = vkSubpassDependencies,
     };
-    ASSERT_VK_SUCCESS(vkCreateRenderPass(vkDevice, &vkRenderPassCreateInfo, NULL, &pRenderPass->vkRenderPass));
+    assertVkResult(vkCreateRenderPass(vkDevice, &vkRenderPassCreateInfo, NULL, &pRenderPass->vkRenderPass));
     // Create framebuffers and subpasses
     populateFramebuffers(pGfxContext, pRenderPass);
     for (uint32_t subpassIndex = 0; subpassIndex < pRenderPass->subpassCount; subpassIndex++)
