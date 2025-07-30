@@ -108,5 +108,5 @@
         "gfxcommon.h": "c",
         "sstream": "c"
     },
-    "cmake.sourceDirectory": "/Users/hema/Documents/GitHub/Tickernel"
+    "cmake.sourceDirectory": "/Users/hema/Documents/GitHub/Tickernel/engine"
 }

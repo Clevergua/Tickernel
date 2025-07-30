@@ -703,3 +703,7 @@ void updateGfxContextPtr(GfxContext *pGfxContext, VkExtent2D swapchainExtent)
         }
     }
 }
+void waitGfxContextPtr(GfxContext *pGfxContext)
+{
+    assertVkResult(vkWaitForFences(pGfxContext->vkDevice, 1, &pGfxContext->renderFinishedFence, VK_TRUE, UINT64_MAX));
+}

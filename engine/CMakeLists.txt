@@ -12,36 +12,31 @@ message(STATUS "Configuring ${PROJECT_NAME} v${PROJECT_VERSION}")
 
 # Dependencies
 find_package(Vulkan REQUIRED)
-find_library(LUA_LIBRARY 
-    NAMES lua lua53 lua5.3
-    PATHS ${CMAKE_CURRENT_SOURCE_DIR}/lib/lua
-    REQUIRED
-)
 
 # Source and header files
 file(GLOB_RECURSE SOURCE_FILES 
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/*.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/*.c
+    ${CMAKE_SOURCE_DIR}/src/*.c
+    ${CMAKE_SOURCE_DIR}/include/*.c
 )
 
 set(INCLUDE_DIRS
     ${Vulkan_INCLUDE_DIRS}
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/cglm
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/lua
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/spirv_reflect
-    ${CMAKE_CURRENT_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}/include/cglm
+    ${CMAKE_SOURCE_DIR}/include/spirv_reflect
+    ${CMAKE_SOURCE_DIR}/src
 )
 
 # Libraries
 set(LINK_LIBRARIES
     ${Vulkan_LIBRARIES}
-    ${LUA_LIBRARY}
 )
 
 # Print configuration
 message(STATUS "Sources: ${SOURCE_FILES}")
 message(STATUS "Include directories: ${INCLUDE_DIRS}")
 message(STATUS "Link libraries: ${LINK_LIBRARIES}")
+
+set(CMAKE_OUTPUR)
 
 # Build shared library
 add_library(${PROJECT_NAME} SHARED ${SOURCE_FILES})
