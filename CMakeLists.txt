@@ -11,10 +11,8 @@ find_program(GLSLC glslc REQUIRED)
 set(SHADER_SOURCE_DIR ${CMAKE_SOURCE_DIR}/res/glsl)
 set(SHADER_OUTPUT_DIR ${CMAKE_BINARY_DIR}/assets/shaders)
 file(MAKE_DIRECTORY ${SHADER_OUTPUT_DIR})
-
 file(GLOB_RECURSE SHADER_FILES ${SHADER_SOURCE_DIR}/*.vert ${SHADER_SOURCE_DIR}/*.frag)
 set(SPIRV_BINARIES)
-
 foreach(SHADER ${SHADER_FILES})
     get_filename_component(SHADER_NAME ${SHADER} NAME)
     set(SPIRV ${SHADER_OUTPUT_DIR}/${SHADER_NAME}.spv)
@@ -26,10 +24,8 @@ foreach(SHADER ${SHADER_FILES})
         COMMENT "Compiling shader: ${SHADER_NAME}"
         VERBATIM
     )
-
     list(APPEND SPIRV_BINARIES ${SPIRV})
 endforeach()
-
 if(SHADER_FILES)
     add_custom_target(CompileShaders DEPENDS ${SPIRV_BINARIES})
     message(STATUS "Shader compilation target created")

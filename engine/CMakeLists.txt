@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.26)
-project(TickernelEngine VERSION 1.1 LANGUAGES C)
+project(TickernelGfx VERSION 1.1 LANGUAGES C)
 
 # Project configuration
 # Because of this use c99: https://stackoverflow.com/questions/40829032/how-to-install-c11-compiler-on-mac-os-with-optional-string-functions-included
@@ -8,7 +8,6 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 
 # Output configuration information
 message(STATUS "Configuring ${PROJECT_NAME} v${PROJECT_VERSION}")
-message(CMAKE_CURRENT_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
 # Dependencies
 find_package(Vulkan REQUIRED)
 
