@@ -2,8 +2,8 @@ cmake_minimum_required(VERSION 3.26)
 # /Users/forgemastergua/Documents/GitHub/Tickernel/CMakeLists.txt
 cmake_minimum_required(VERSION 3.26)
 
+add_subdirectory(gfx)
 add_subdirectory(lua)
-add_subdirectory(engine)
 
 ## Compile shaders
 message(CMAKE_BINARY_DIR "${CMAKE_BINARY_DIR}")
