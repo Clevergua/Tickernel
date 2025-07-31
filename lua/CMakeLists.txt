@@ -9,6 +9,9 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 # Output configuration information
 message(STATUS "Configuring ${PROJECT_NAME} v${PROJECT_VERSION}")
 
+# Add engine subdirectory to build it first
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../engine ${CMAKE_BINARY_DIR}/engine)
+
 # Dependencies
 find_library(LUA_LIBRARY 
     NAMES lua lua53 lua5.3
@@ -16,21 +19,25 @@ find_library(LUA_LIBRARY
     REQUIRED
 )
 
-# Source and header files
-file(GLOB_RECURSE SOURCE_FILES 
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/*.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/*.c
+# Source and header files - 只包含绑定相关的文件
+file(GLOB SOURCE_FILES 
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/tknLua.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/engineBinding.c
+    # 如果有其他绑定文件，在这里添加
 )
 
+# 排除 Lua 源码文件，使用系统或预编译的 Lua 库
+
 set(INCLUDE_DIRS
-    ${Vulkan_INCLUDE_DIRS}
     ${CMAKE_CURRENT_SOURCE_DIR}/include/lua
     ${CMAKE_CURRENT_SOURCE_DIR}/src
+    ${CMAKE_CURRENT_SOURCE_DIR}/../engine/src
 )
 
 # Libraries
 set(LINK_LIBRARIES
     ${LUA_LIBRARY}
+    Tickernel
 )
 
 # Print configuration
@@ -42,6 +49,9 @@ message(STATUS "Link libraries: ${LINK_LIBRARIES}")
 add_library(${PROJECT_NAME} SHARED ${SOURCE_FILES})
 target_include_directories(${PROJECT_NAME} PUBLIC ${INCLUDE_DIRS})
 target_link_libraries(${PROJECT_NAME} PUBLIC ${LINK_LIBRARIES})
+
+# Add explicit dependency on engine
+add_dependencies(${PROJECT_NAME} Tickernel)
 
 ## Copy DLLs
 file(GLOB_RECURSE DLL_FILES ${CMAKE_SOURCE_DIR}/lib/*.dylib ${CMAKE_SOURCE_DIR}/lib/*.dll)

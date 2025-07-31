@@ -6,27 +6,8 @@ static void tknInternalError(const char *prefix, const char *format, va_list arg
     {
         fprintf(stderr, "%s: ", prefix);
     }
-
     vfprintf(stderr, format, args);
     fprintf(stderr, "\n");
-
-    void *buffer[100];
-    int nptrs = backtrace(buffer, 100);
-    char **symbols = backtrace_symbols(buffer, nptrs);
-
-    if (symbols)
-    {
-        fprintf(stderr, "Backtrace:\n");
-        for (int i = 0; i < nptrs; i++)
-        {
-            fprintf(stderr, "  %s\n", symbols[i]);
-        }
-        free(symbols);
-    }
-    else
-    {
-        fprintf(stderr, "Failed to get backtrace symbols\n");
-    }
 
     abort();
 }
@@ -48,11 +29,6 @@ void tknAssert(bool condition, const char *format, ...)
         tknInternalError("ASSERTION FAILED", format, args);
         va_end(args);
     }
-}
-
-void tknSleep(uint32_t milliseconds)
-{
-    usleep(milliseconds * 1000);
 }
 
 void *tknMalloc(size_t size)
