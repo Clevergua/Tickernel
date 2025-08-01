@@ -1,4 +1,5 @@
 #pragma once
+#include <stdio.h>
 #include "cglm.h"
 #include "tknCore.h"
 #include "spirv_reflect.h"

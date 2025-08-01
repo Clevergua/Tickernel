@@ -1,9 +1,13 @@
 cmake_minimum_required(VERSION 3.26)
-# /Users/forgemastergua/Documents/GitHub/Tickernel/CMakeLists.txt
-cmake_minimum_required(VERSION 3.26)
+project(Tickernel LANGUAGES C)
 
+# Add subdirectories
 add_subdirectory(gfx)
 add_subdirectory(lua)
+
+# Create an umbrella target that depends on all sub-projects
+add_custom_target(${PROJECT_NAME} ALL)
+add_dependencies(${PROJECT_NAME} TickernelGfx TickernelLua)
 
 ## Compile shaders
 message(CMAKE_BINARY_DIR "${CMAKE_BINARY_DIR}")
@@ -28,6 +32,7 @@ foreach(SHADER ${SHADER_FILES})
 endforeach()
 if(SHADER_FILES)
     add_custom_target(CompileShaders DEPENDS ${SPIRV_BINARIES})
+    add_dependencies(${PROJECT_NAME} CompileShaders)
     message(STATUS "Shader compilation target created")
 else()
     message(STATUS "No shaders found to compile")
