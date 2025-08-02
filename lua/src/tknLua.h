@@ -3,7 +3,7 @@
 #include "lauxlib.h"
 #include "luaconf.h"
 #include "lualib.h"
-#include "gfx.h"
+#include "tickernel.h"
 typedef struct
 {
     lua_State *pLuaState;

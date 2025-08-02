@@ -107,7 +107,10 @@
         "gfx.h": "c",
         "gfxcommon.h": "c",
         "sstream": "c",
-        "llimits.h": "c"
+        "llimits.h": "c",
+        "tkngfx.h": "c",
+        "tknlua.h": "c",
+        "tickernel.h": "c"
     },
-    "cmake.sourceDirectory": "/Users/hema/Documents/GitHub/Tickernel"
+    "cmake.sourceDirectory": "/Users/forgemastergua/Documents/GitHub/Tickernel"
 }

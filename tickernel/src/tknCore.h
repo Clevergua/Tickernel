@@ -1,13 +1,14 @@
 #pragma once
+
 #include <stdio.h>
-#include <stdbool.h>
 #include <stdlib.h>
 #include <stdint.h>
-#include <vulkan/vulkan.h>
 #include <time.h>
 #include <stdarg.h>
 #include <string.h>
 #include <assert.h>
+
+#include "tickernel.h"
 
 #define TKN_ARRAY_COUNT(array) (NULL == array) ? 0 : (sizeof(array) / sizeof(array[0]))
 #define TKN_CLAMP(x, min, max) \
@@ -34,11 +35,7 @@ typedef struct
     TknListNode **nodePtrs;
 } TknHashSet;
 
-void tknError(char const *const _Format, ...);
-void tknAssert(bool condition, char const *const _Format, ...);
-void tknSleep(uint32_t milliseconds);
-void *tknMalloc(size_t size);
-void tknFree(void *ptr);
+
 
 TknDynamicArray tknCreateDynamicArray(size_t dataSize, uint32_t maxCount);
 void tknDestroyDynamicArray(TknDynamicArray dynamicArray);

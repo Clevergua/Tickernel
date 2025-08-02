@@ -1,5 +1,5 @@
 #include "gfxRes.h"
-
+#include "gfxCommon.h"
 static void getMemoryType(VkPhysicalDevice vkPhysicalDevice, uint32_t typeFilter, VkMemoryPropertyFlags memoryPropertyFlags, uint32_t *memoryTypeIndex)
 {
     *memoryTypeIndex = UINT32_MAX;

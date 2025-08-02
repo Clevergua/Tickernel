@@ -6,14 +6,14 @@
 
 void assertVkResult(VkResult vkResult);
 
-typedef struct
+struct Sampler
 {
     VkSampler vkSampler;
     VkSamplerCreateInfo vkSamplerCreateInfo;
     TknHashSet descriptorBindingPtrHashSet;
-} Sampler;
+};
 
-typedef struct
+struct Image
 {
     VkImage vkImage;
     VkDeviceMemory vkDeviceMemory;
@@ -25,7 +25,7 @@ typedef struct
     VkMemoryPropertyFlags vkMemoryPropertyFlags;
     VkImageAspectFlags vkImageAspectFlags;
     TknHashSet descriptorBindingPtrHashSet;
-} Image;
+};
 
 typedef struct
 {
@@ -66,11 +66,11 @@ typedef enum
     ATTACHMENT_TYPE_SWAPCHAIN,
 } AttachmentType;
 
-typedef struct
+struct Attachment
 {
     AttachmentType attachmentType;
     AttachmentContent attachmentContent;
-} Attachment;
+};
 
 typedef struct
 {
@@ -181,7 +181,7 @@ typedef struct
     uint32_t subpassIndex;                   // subpass index in the render pass
 } Subpass;
 
-typedef struct
+struct RenderPass
 {
     VkRenderPass vkRenderPass;
     uint32_t attachmentCount;
@@ -192,9 +192,9 @@ typedef struct
     uint32_t subpassCount;
     Subpass *subpasses;
     bool isValid;
-} RenderPass;
+};
 
-typedef struct
+struct GfxContext
 {
     uint32_t frameCount;
     VkInstance vkInstance;
@@ -230,4 +230,4 @@ typedef struct
     TknDynamicArray renderPassPtrDynamicArray;
 
     DescriptorSet globalDescriptorSet;
-} GfxContext;
+};

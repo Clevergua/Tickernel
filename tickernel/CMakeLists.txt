@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.26)
-project(TickernelGfx VERSION 1.1 LANGUAGES C)
+project(Tickernel VERSION 1.1 LANGUAGES C)
 
 # Project configuration
 # Because of this use c99: https://stackoverflow.com/questions/40829032/how-to-install-c11-compiler-on-mac-os-with-optional-string-functions-included
@@ -8,19 +8,19 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 
 # Output configuration information
 message(STATUS "Configuring ${PROJECT_NAME} v${PROJECT_VERSION}")
-# Dependencies
-find_package(Vulkan REQUIRED)
+
 
 # Source and header files
 file(GLOB_RECURSE SOURCE_FILES 
     ${CMAKE_CURRENT_SOURCE_DIR}/src/*.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/*.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/external/*.c
 )
 
 set(INCLUDE_DIRS
     ${Vulkan_INCLUDE_DIRS}
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/cglm
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/spirv_reflect
+    ${CMAKE_CURRENT_SOURCE_DIR}/external/cglm
+    ${CMAKE_CURRENT_SOURCE_DIR}/external/spirv_reflect
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
@@ -39,7 +39,7 @@ set(CMAKE_OUTPUR)
 # Build shared library
 add_library(${PROJECT_NAME} SHARED ${SOURCE_FILES})
 target_include_directories(${PROJECT_NAME} PUBLIC ${INCLUDE_DIRS})
-target_link_libraries(${PROJECT_NAME} PUBLIC ${LINK_LIBRARIES})
+# target_link_libraries(${PROJECT_NAME} PUBLIC ${LINK_LIBRARIES})
 
 # ## Copy DLLs
 # file(GLOB_RECURSE DLL_FILES ${CMAKE_CURRENT_SOURCE_DIR}/lib/*.dylib ${CMAKE_CURRENT_SOURCE_DIR}/lib/*.dll)

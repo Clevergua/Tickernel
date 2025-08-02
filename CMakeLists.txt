@@ -1,13 +1,16 @@
 cmake_minimum_required(VERSION 3.26)
-project(Tickernel LANGUAGES C)
+project(TickernelProject LANGUAGES C)
+
+# Dependencies
+find_package(Vulkan REQUIRED)
 
 # Add subdirectories
-add_subdirectory(gfx)
+add_subdirectory(tickernel)
 add_subdirectory(lua)
 
 # Create an umbrella target that depends on all sub-projects
 add_custom_target(${PROJECT_NAME} ALL)
-add_dependencies(${PROJECT_NAME} TickernelGfx TickernelLua)
+add_dependencies(${PROJECT_NAME} Tickernel TickernelLua)
 
 ## Compile shaders
 message(CMAKE_BINARY_DIR "${CMAKE_BINARY_DIR}")

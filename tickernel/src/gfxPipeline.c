@@ -1,4 +1,5 @@
 #include "gfxPipeline.h"
+#include "gfxCommon.h"
 
 static SpvReflectShaderModule createSpvReflectShaderModule(const char *filePath)
 {
@@ -45,7 +46,7 @@ static DescriptorBinding getDefaultDescriptorBinding(VkDescriptorType descriptor
         descriptorBinding.samplerDescriptorBinding.activeSamplerPtr = NULL;
         descriptorBinding.samplerDescriptorBinding.pendingSamplerPtr = NULL;
     }
-    //TODO other types
+    // TODO other types
     else
     {
         tknError("Unsupported descriptor type: %d", descriptorType);
@@ -406,7 +407,7 @@ void cleanupFramebuffers(GfxContext *pGfxContext, RenderPass *pRenderPass)
     tknFree(pRenderPass->vkFramebuffers);
 }
 
-Subpass createSubpass(GfxContext *pGfxContext, uint32_t inputVkAttachmentReferenceCount, const VkAttachmentReference *inputVkAttachmentReferences, TknDynamicArray spvPathDynamicArray, Attachment **attachmentPtrs)
+Subpass createSubpass(GfxContext *pGfxContext, uint32_t inputVkAttachmentReferenceCount, const VkAttachmentReference *inputVkAttachmentReferences, uint32_t spvPathCount, const char **spvPaths, Attachment **attachmentPtrs)
 {
     // for updating descriptor sets
     uint32_t descriptorBindingCount = 0;
@@ -421,10 +422,10 @@ Subpass createSubpass(GfxContext *pGfxContext, uint32_t inputVkAttachmentReferen
     // pipelines
     TknDynamicArray pipelinePtrDynamicArray = tknCreateDynamicArray(sizeof(Pipeline *), 1);
     TknDynamicArray vkDescriptorPoolSizeDynamicArray = tknCreateDynamicArray(sizeof(VkDescriptorPoolSize), 1);
-    for (uint32_t pathIndex = 0; pathIndex < spvPathDynamicArray.count; pathIndex++)
+    for (uint32_t pathIndex = 0; pathIndex < spvPathCount; pathIndex++)
     {
-        const char **pSpvPath = tknGetFromDynamicArray(&spvPathDynamicArray, pathIndex);
-        SpvReflectShaderModule spvReflectShaderModule = createSpvReflectShaderModule(*pSpvPath);
+        const char *spvPath = spvPaths[pathIndex];
+        SpvReflectShaderModule spvReflectShaderModule = createSpvReflectShaderModule(spvPath);
         for (uint32_t setIndex = 0; setIndex < spvReflectShaderModule.descriptor_set_count; setIndex++)
         {
             SpvReflectDescriptorSet spvReflectDescriptorSet = spvReflectShaderModule.descriptor_sets[setIndex];
@@ -530,7 +531,7 @@ Subpass createSubpass(GfxContext *pGfxContext, uint32_t inputVkAttachmentReferen
             else
             {
                 // Skip
-                printf("Warning: descriptor set %d in subpass shader module %s\n", spvReflectDescriptorSet.set, *pSpvPath);
+                printf("Warning: descriptor set %d in subpass shader module %s\n", spvReflectDescriptorSet.set, spvPath);
             }
         }
         destroySpvReflectShaderModule(&spvReflectShaderModule);
@@ -595,7 +596,7 @@ void destroySubpass(GfxContext *pGfxContext, Subpass subpass)
     // tknFree(pSubpass->vkDescriptorSetLayoutBindings);
 }
 
-RenderPass *createRenderPassPtr(GfxContext *pGfxContext, uint32_t attachmentCount, VkAttachmentDescription *vkAttachmentDescriptions, Attachment **inputAttachmentPtrs, uint32_t subpassCount, VkSubpassDescription *vkSubpassDescriptions, TknDynamicArray *spvPathDynamicArrays, uint32_t vkSubpassDependencyCount, VkSubpassDependency *vkSubpassDependencies, uint32_t renderPassIndex)
+RenderPass *createRenderPassPtr(GfxContext *pGfxContext, uint32_t attachmentCount, VkAttachmentDescription *vkAttachmentDescriptions, Attachment **inputAttachmentPtrs, uint32_t subpassCount, VkSubpassDescription *vkSubpassDescriptions, uint32_t spvPathCount, const char **spvPaths, uint32_t vkSubpassDependencyCount, VkSubpassDependency *vkSubpassDependencies, uint32_t renderPassIndex)
 {
     RenderPass *pRenderPass = tknMalloc(sizeof(RenderPass));
     Attachment **attachmentPtrs = tknMalloc(sizeof(Attachment *) * attachmentCount);
@@ -646,7 +647,7 @@ RenderPass *createRenderPassPtr(GfxContext *pGfxContext, uint32_t attachmentCoun
     populateFramebuffers(pGfxContext, pRenderPass);
     for (uint32_t subpassIndex = 0; subpassIndex < pRenderPass->subpassCount; subpassIndex++)
     {
-        pRenderPass->subpasses[subpassIndex] = createSubpass(pGfxContext, vkSubpassDescriptions[subpassIndex].inputAttachmentCount, vkSubpassDescriptions[subpassIndex].pInputAttachments, spvPathDynamicArrays[subpassIndex], attachmentPtrs);
+        pRenderPass->subpasses[subpassIndex] = createSubpass(pGfxContext, vkSubpassDescriptions[subpassIndex].inputAttachmentCount, vkSubpassDescriptions[subpassIndex].pInputAttachments, spvPathCount, spvPaths, attachmentPtrs);
     }
     tknAddToDynamicArray(&pGfxContext->renderPassPtrDynamicArray, &pRenderPass, renderPassIndex);
     return pRenderPass;
