@@ -110,7 +110,9 @@
         "llimits.h": "c",
         "tkngfx.h": "c",
         "tknlua.h": "c",
-        "tickernel.h": "c"
+        "tickernel.h": "c",
+        "tickernellua.h": "c",
+        "tkn.h": "c"
     },
     "cmake.sourceDirectory": "/Users/forgemastergua/Documents/GitHub/Tickernel"
 }

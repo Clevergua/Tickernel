@@ -1,10 +1,7 @@
 #pragma once
 #include "lauxlib.h"
-#include "tickernel.h"
-typedef struct
-{
-    lua_State *pLuaState;
-} LuaContext;
+#include "tkn.h"
+typedef struct TknContext TknContext;
 
 typedef struct
 {
@@ -13,7 +10,7 @@ typedef struct
     luaL_Reg *luaRegs;
 } LuaLibrary;
 
-LuaContext *createLuaContextPtr(const char *luaPath, uint32_t luaLibraryCount, LuaLibrary *luaLibraries);
-void destroyLuaContextPtr(LuaContext *pLuaContext);
-void updateLuaGameplay(LuaContext *pLuaContext);
-void updateLuaGfx(LuaContext *pLuaContext, GfxContext *pGfxContext);
+TknContext *createTknContextPtr(const char *luaPath, uint32_t luaLibraryCount, LuaLibrary *luaLibraries, int targetSwapchainImageCount, VkSurfaceFormatKHR targetVkSurfaceFormat, VkPresentModeKHR targetVkPresentMode, VkInstance vkInstance, VkSurfaceKHR vkSurface, VkExtent2D swapchainExtent);
+void destroyTknContextPtr(TknContext *pTknContext);
+void updateTknContextGameplay(TknContext *pTknContext);
+void updateTknContextGfx(TknContext *pTknContext, VkExtent2D swapchainExtent);

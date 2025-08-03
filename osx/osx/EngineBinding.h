@@ -2,7 +2,7 @@
 #import <MetalKit/MetalKit.h>
 #import <Metal/Metal.h>
 #import <vulkan/vulkan_macos.h>
-#import "tknEngine.h"
+#import "tknLua.h"
 static NSString * const AppName = @"Tickernel";
 
 typedef enum {
@@ -114,10 +114,10 @@ typedef enum {
 @interface EngineBinding : NSObject
 
 @property (nonatomic, assign) VkSurfaceKHR vkSurface;
-@property (nonatomic, assign) TknEngine* pTknEngine;
+@property (nonatomic, assign) TknContext* pTknContext;
 @property (nonatomic, assign) VkInstance vkInstance;
 
-- (void)setupEngine: (uint32_t)width height:(uint32_t)height assetsPath:(NSString*)assetsPath pView:(void*)pView;
+- (void)setupEngine: (uint32_t)width height:(uint32_t)height resourcePath:(NSString*)resourcePath pView:(void*)pView;
 - (void)teardownEngine;
 - (void)updateEngine: (uint32_t)width height:(uint32_t)height;
 

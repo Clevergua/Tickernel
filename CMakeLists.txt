@@ -5,7 +5,7 @@ project(TickernelProject LANGUAGES C)
 find_package(Vulkan REQUIRED)
 
 # Add subdirectories
-add_subdirectory(tickernel)
+add_subdirectory(tkn)
 add_subdirectory(lua)
 
 # Create an umbrella target that depends on all sub-projects

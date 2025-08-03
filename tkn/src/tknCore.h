@@ -8,7 +8,7 @@
 #include <string.h>
 #include <assert.h>
 
-#include "tickernel.h"
+#include "tkn.h"
 
 #define TKN_ARRAY_COUNT(array) (NULL == array) ? 0 : (sizeof(array) / sizeof(array[0]))
 #define TKN_CLAMP(x, min, max) \

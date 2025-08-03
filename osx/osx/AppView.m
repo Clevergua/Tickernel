@@ -9,9 +9,9 @@
     self.keyCodeStates = calloc(KEY_CODE_MAX_ENUM, sizeof(BOOL));
     self.pEngineBinding = [[EngineBinding alloc] init];
 
-    NSString *resourcesPath = [[NSBundle mainBundle] resourcePath];
+    NSString *resourcePath = [[NSBundle mainBundle] resourcePath];
     
-    [self.pEngineBinding setupEngine:self.drawableSize.width height:self.drawableSize.height assetsPath:resourcesPath pView:(__bridge void *)self];
+    [self.pEngineBinding setupEngine:self.drawableSize.width height:self.drawableSize.height resourcePath:resourcePath pView:(__bridge void *)self];
 }
 
 - (void)teardownView {

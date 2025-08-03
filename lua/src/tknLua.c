@@ -1,5 +1,13 @@
 #include "tknLua.h"
+#include "tkn.h"
 #include "lualib.h"
+
+struct TknContext
+{
+    lua_State *pLuaState;
+    GfxContext *pGfxContext;
+};
+
 static void bindEngineFunctions(lua_State *pLuaState)
 {
     luaL_Reg regs[] = {
@@ -9,16 +17,17 @@ static void bindEngineFunctions(lua_State *pLuaState)
     lua_setglobal(pLuaState, "gfx");
 }
 
-LuaContext *createLuaContextPtr(const char *luaPath, uint32_t luaLibraryCount, LuaLibrary *luaLibraries)
+TknContext *createTknContextPtr(const char *luaPath, uint32_t luaLibraryCount, LuaLibrary *luaLibraries, int targetSwapchainImageCount, VkSurfaceFormatKHR targetVkSurfaceFormat, VkPresentModeKHR targetVkPresentMode, VkInstance vkInstance, VkSurfaceKHR vkSurface, VkExtent2D swapchainExtent)
 {
-    LuaContext *pLuaContext = tknMalloc(sizeof(LuaContext));
+    TknContext *pTknContext = tknMalloc(sizeof(TknContext));
+    GfxContext *pGfxContext = createGfxContextPtr(targetSwapchainImageCount, targetVkSurfaceFormat, targetVkPresentMode, vkInstance, vkSurface, swapchainExtent);
 
     lua_State *pLuaState = luaL_newstate();
     luaL_openlibs(pLuaState);
 
     char packagePath[FILENAME_MAX];
     snprintf(packagePath, FILENAME_MAX, "%s/?.lua;", luaPath);
-    luaL_openlibs(pLuaContext->pLuaState);
+    luaL_openlibs(pTknContext->pLuaState);
     lua_getglobal(pLuaState, "package");
     lua_pushstring(pLuaState, packagePath);
     lua_setfield(pLuaState, -2, "path");
@@ -40,39 +49,45 @@ LuaContext *createLuaContextPtr(const char *luaPath, uint32_t luaLibraryCount, L
     luaL_execresult(pLuaState, lua_pcall(pLuaState, 0, 0, 0));
     lua_pop(pLuaState, 1);
 
-    LuaContext luaContext = {
+    TknContext TknContext = {
+        .pGfxContext = pGfxContext,
         .pLuaState = pLuaState,
     };
-    *pLuaContext = luaContext;
-    return pLuaContext;
+    *pTknContext = TknContext;
+    return pTknContext;
 }
 
-void destroyLuaContextPtr(LuaContext *pLuaContext)
+void destroyTknContextPtr(TknContext *pTknContext)
 {
-    lua_State *pLuaState = pLuaContext->pLuaState;
+    lua_State *pLuaState = pTknContext->pLuaState;
     lua_getglobal(pLuaState, "tknEngine");
-
     lua_getfield(pLuaState, -1, "stop");
     luaL_execresult(pLuaState, lua_pcall(pLuaState, 0, 0, 0));
     lua_pop(pLuaState, 1);
+    lua_close(pTknContext->pLuaState);
 
-    lua_close(pLuaContext->pLuaState);
-    tknFree(pLuaContext);
+    tknFree(pTknContext);
 }
 
-void updateLuaGameplay(LuaContext *pLuaContext)
+void updateTknContextGameplay(TknContext *pTknContext)
 {
-    lua_State *pLuaState = pLuaContext->pLuaState;
+    lua_State *pLuaState = pTknContext->pLuaState;
     lua_getfield(pLuaState, -1, "updateGameplay");
     luaL_execresult(pLuaState, lua_pcall(pLuaState, 0, 0, 0));
     lua_pop(pLuaState, 1);
 }
 
-void updateLuaGfx(LuaContext *pLuaContext, GfxContext *pGfxContext)
+void updateTknContextGfx(TknContext *pTknContext, VkExtent2D swapchainExtent)
 {
-    lua_State *pLuaState = pLuaContext->pLuaState;
+    lua_State *pLuaState = pTknContext->pLuaState;
+    GfxContext *pGfxContext = pTknContext->pGfxContext;
+
+    waitGfxContextPtr(pGfxContext);
+
     lua_getfield(pLuaState, -1, "updateGfx");
     lua_pushlightuserdata(pLuaState, pGfxContext);
     luaL_execresult(pLuaState, lua_pcall(pLuaState, 1, 0, 0));
     lua_pop(pLuaState, 1);
+
+    updateGfxContextPtr(pGfxContext, swapchainExtent);
 }
