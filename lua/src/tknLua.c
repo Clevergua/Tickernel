@@ -152,9 +152,9 @@ void destroyTknContextPtr(TknContext *pTknContext)
 void updateTknContext(TknContext *pTknContext, VkExtent2D swapchainExtent)
 {
     lua_State *pLuaState = pTknContext->pLuaState;
+    lua_getglobal(pLuaState, "tknEngine");
     lua_getfield(pLuaState, -1, "updateGameplay");
     assertLuaResult(pLuaState, lua_pcall(pLuaState, 0, 0, 0));
-    lua_pop(pLuaState, 1);
 
     GfxContext *pGfxContext = pTknContext->pGfxContext;
 
@@ -163,7 +163,7 @@ void updateTknContext(TknContext *pTknContext, VkExtent2D swapchainExtent)
     lua_getfield(pLuaState, -1, "updateGfx");
     lua_pushlightuserdata(pLuaState, pGfxContext);
     assertLuaResult(pLuaState, lua_pcall(pLuaState, 1, 0, 0));
-    lua_pop(pLuaState, 1);
-
+    
     updateGfxContextPtr(pGfxContext, swapchainExtent);
+    lua_pop(pLuaState, 1);
 }
