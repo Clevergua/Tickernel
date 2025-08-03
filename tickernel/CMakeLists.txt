@@ -11,17 +11,20 @@ message(STATUS "Configuring ${PROJECT_NAME} v${PROJECT_VERSION}")
 
 
 # Source and header files
-file(GLOB_RECURSE SOURCE_FILES 
+file(GLOB_RECURSE SOURCE_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/*.c
     ${CMAKE_CURRENT_SOURCE_DIR}/external/*.c
 )
 
-set(INCLUDE_DIRS
+set(PUBLIC_INCLUDE_DIRS
     ${Vulkan_INCLUDE_DIRS}
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+
+set(PRIVATE_INCLUDE_DIRS
     ${CMAKE_CURRENT_SOURCE_DIR}/external/cglm
     ${CMAKE_CURRENT_SOURCE_DIR}/external/spirv_reflect
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/src
+    # ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
 # Libraries
@@ -30,28 +33,16 @@ set(LINK_LIBRARIES
 )
 
 # Print configuration
-message(STATUS "Sources: ${SOURCE_FILES}")
-message(STATUS "Include directories: ${INCLUDE_DIRS}")
-message(STATUS "Link libraries: ${LINK_LIBRARIES}")
+message(Sources: ${SOURCE_FILES})
+message(Include directories: ${PRIVATE_INCLUDE_DIRS} ${PRIVATE_INCLUDE_DIRS})
+message(Link libraries: ${LINK_LIBRARIES})
 
-set(CMAKE_OUTPUR)
 
 # Build shared library
 add_library(${PROJECT_NAME} SHARED ${SOURCE_FILES})
-target_include_directories(${PROJECT_NAME} PUBLIC ${INCLUDE_DIRS})
-# target_link_libraries(${PROJECT_NAME} PUBLIC ${LINK_LIBRARIES})
-
-# ## Copy DLLs
-# file(GLOB_RECURSE DLL_FILES ${CMAKE_CURRENT_SOURCE_DIR}/lib/*.dylib ${CMAKE_CURRENT_SOURCE_DIR}/lib/*.dll)
-# if(DLL_FILES)
-#     add_custom_target(CopyDLL 
-#         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${DLL_FILES} ${CMAKE_BINARY_DIR}
-#         COMMENT "Copying DLLs to ${CMAKE_BINARY_DIR}"
-#     )
-#     add_dependencies(${PROJECT_NAME} CopyDLL)
-# else()
-#     message(STATUS "No DLL files found to copy")
-# endif()
+target_include_directories(${PROJECT_NAME} PRIVATE ${PRIVATE_INCLUDE_DIRS})
+target_include_directories(${PROJECT_NAME} PUBLIC ${PUBLIC_INCLUDE_DIRS})
+target_link_libraries(${PROJECT_NAME} PUBLIC ${LINK_LIBRARIES})
 
 # Testing
 enable_testing()

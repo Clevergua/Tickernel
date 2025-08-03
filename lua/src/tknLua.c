@@ -1,5 +1,5 @@
 #include "tknLua.h"
-
+#include "lualib.h"
 static void bindEngineFunctions(lua_State *pLuaState)
 {
     luaL_Reg regs[] = {

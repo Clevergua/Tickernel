@@ -1,8 +1,5 @@
 #pragma once
-#include "lua.h"
 #include "lauxlib.h"
-#include "luaconf.h"
-#include "lualib.h"
 #include "tickernel.h"
 typedef struct
 {

@@ -7,7 +7,9 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 file(GLOB SOURCE_FILES ${CMAKE_CURRENT_SOURCE_DIR}/src/*.c)
 add_library(${PROJECT_NAME} SHARED ${SOURCE_FILES})
 
-# Add graphics library include paths
-target_include_directories(${PROJECT_NAME} PUBLIC
-    ${CMAKE_SOURCE_DIR}/tickernel/include
+target_link_libraries(${PROJECT_NAME} PUBLIC Tickernel)
+
+set(PUBLIC_INCLUDE_DIRS
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
+target_include_directories(${PROJECT_NAME} PUBLIC ${PUBLIC_INCLUDE_DIRS})
