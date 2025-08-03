@@ -15,6 +15,7 @@
 		DEE96CFA2E3F8DFA003ED6AF /* libTickernelLua.dylib in Copy Files */ = {isa = PBXBuildFile; fileRef = DEE96CF82E3F8DFA003ED6AF /* libTickernelLua.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		DEE96CFC2E3F8E12003ED6AF /* libTickernel.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = DEE96CFB2E3F8E12003ED6AF /* libTickernel.dylib */; };
 		DEE96CFD2E3F8E12003ED6AF /* libTickernel.dylib in Copy Files */ = {isa = PBXBuildFile; fileRef = DEE96CFB2E3F8E12003ED6AF /* libTickernel.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		DEE96E052E3FC89D003ED6AF /* assets in Resources */ = {isa = PBXBuildFile; fileRef = DEE96E042E3FC89D003ED6AF /* assets */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -41,15 +42,10 @@
 		DEE96CF72E3F6143003ED6AF /* tkn */ = {isa = PBXFileReference; lastKnownFileType = folder; name = tkn; path = ../build/tkn; sourceTree = "<group>"; };
 		DEE96CF82E3F8DFA003ED6AF /* libTickernelLua.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libTickernelLua.dylib; path = ../build/lua/libTickernelLua.dylib; sourceTree = "<group>"; };
 		DEE96CFB2E3F8E12003ED6AF /* libTickernel.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libTickernel.dylib; path = ../build/tkn/libTickernel.dylib; sourceTree = "<group>"; };
+		DEE96E042E3FC89D003ED6AF /* assets */ = {isa = PBXFileReference; lastKnownFileType = folder; name = assets; path = ../assets; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		DE04DEF72D3BCB0B00DB240A /* assets */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			name = assets;
-			path = ../assets;
-			sourceTree = SOURCE_ROOT;
-		};
 		DE6CC0972D39397000D80E9A /* osx */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = osx;
@@ -75,7 +71,7 @@
 		DE6CC08C2D39397000D80E9A = {
 			isa = PBXGroup;
 			children = (
-				DE04DEF72D3BCB0B00DB240A /* assets */,
+				DEE96E042E3FC89D003ED6AF /* assets */,
 				DE6CC0972D39397000D80E9A /* osx */,
 				DE6CC3392D3950F500D80E9A /* Frameworks */,
 				DE6CC0962D39397000D80E9A /* Products */,
@@ -119,7 +115,6 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				DE04DEF72D3BCB0B00DB240A /* assets */,
 				DE6CC0972D39397000D80E9A /* osx */,
 			);
 			name = osx;
@@ -168,6 +163,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				DEE96E052E3FC89D003ED6AF /* assets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

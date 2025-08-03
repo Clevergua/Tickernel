@@ -228,7 +228,7 @@ debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
         audioLibrary,
     };
 
-    NSString *luaPath = [resourcePath stringByAppendingPathComponent:@"lua"];
+    NSString *luaPath = [resourcePath stringByAppendingPathComponent:@"assets/lua"];
 
     //    const char *luaPath, uint32_t luaLibraryCount, LuaLibrary
     //    *luaLibraries, int targetSwapchainImageCount, VkSurfaceFormatKHR
