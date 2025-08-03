@@ -228,14 +228,19 @@ debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
         audioLibrary,
     };
 
-    self.pTknContext = createTknContextPtr(const char *luaPath, <#uint32_t luaLibraryCount#>, <#LuaLibrary *luaLibraries#>, <#int targetSwapchainImageCount#>, <#VkSurfaceFormatKHR targetVkSurfaceFormat#>, <#VkPresentModeKHR targetVkPresentMode#>, <#VkInstance vkInstance#>, <#VkSurfaceKHR vkSurface#>, <#VkExtent2D swapchainExtent#>)(
-        2, vkSurfaceFormatKHR, VK_PRESENT_MODE_FIFO_KHR, _vkInstance,
-        _vkSurface, swapchainExtent, [resourcePath UTF8String],
-        sizeof(luaLibraries) / sizeof(luaLibraries[0]), luaLibraries);
+    NSString *luaPath = [resourcePath stringByAppendingPathComponent:@"lua"];
+
+    //    const char *luaPath, uint32_t luaLibraryCount, LuaLibrary
+    //    *luaLibraries, int targetSwapchainImageCount, VkSurfaceFormatKHR
+    //    targetVkSurfaceFormat, VkPresentModeKHR targetVkPresentMode,
+    //    VkInstance vkInstance, VkSurfaceKHR vkSurface, VkExtent2D
+    //    swapchainExtent);
+    // 正确的函数调用
+    self.pTknContext = createTknContextPtr([luaPath UTF8String], sizeof(luaLibraries) / sizeof(luaLibraries[0]), luaLibraries, 2, vkSurfaceFormatKHR,VK_PRESENT_MODE_FIFO_KHR,_vkInstance,_vkSurface,swapchainExtent);
 }
 
 - (void)teardownEngine {
-    destroyTknEnginePtr(self.pTknContext);
+    destroyTknContextPtr(self.pTknContext);
     [self destroyVkSurface];
     [self destroyVkInstance];
 }
@@ -246,7 +251,7 @@ debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
         width = width,
         height = height,
     };
-    updateTknEnginePtr(self.pTknContext, swapchainExtent);
+    updateTknContext(self.pTknContext, swapchainExtent);
 }
 
 @end

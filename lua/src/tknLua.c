@@ -21,13 +21,22 @@ TknContext *createTknContextPtr(const char *luaPath, uint32_t luaLibraryCount, L
 {
     TknContext *pTknContext = tknMalloc(sizeof(TknContext));
     GfxContext *pGfxContext = createGfxContextPtr(targetSwapchainImageCount, targetVkSurfaceFormat, targetVkPresentMode, vkInstance, vkSurface, swapchainExtent);
-
+    
     lua_State *pLuaState = luaL_newstate();
+    printf("DEBUG: luaL_newstate() returned %p\n", (void*)pLuaState);
+    
+    if (pLuaState == NULL) {
+        printf("ERROR: luaL_newstate() failed!\n");
+        return NULL;
+    }
+    
+    printf("DEBUG: About to call luaL_openlibs with %p\n", (void*)pLuaState);
     luaL_openlibs(pLuaState);
+    printf("DEBUG: luaL_openlibs completed\n");
+
 
     char packagePath[FILENAME_MAX];
-    snprintf(packagePath, FILENAME_MAX, "%s/?.lua;", luaPath);
-    luaL_openlibs(pTknContext->pLuaState);
+    snprintf(packagePath, FILENAME_MAX, "%s/?.lua", luaPath);
     lua_getglobal(pLuaState, "package");
     lua_pushstring(pLuaState, packagePath);
     lua_setfield(pLuaState, -2, "path");
@@ -69,17 +78,13 @@ void destroyTknContextPtr(TknContext *pTknContext)
     tknFree(pTknContext);
 }
 
-void updateTknContextGameplay(TknContext *pTknContext)
+void updateTknContext(TknContext *pTknContext, VkExtent2D swapchainExtent)
 {
     lua_State *pLuaState = pTknContext->pLuaState;
     lua_getfield(pLuaState, -1, "updateGameplay");
     luaL_execresult(pLuaState, lua_pcall(pLuaState, 0, 0, 0));
     lua_pop(pLuaState, 1);
-}
 
-void updateTknContextGfx(TknContext *pTknContext, VkExtent2D swapchainExtent)
-{
-    lua_State *pLuaState = pTknContext->pLuaState;
     GfxContext *pGfxContext = pTknContext->pGfxContext;
 
     waitGfxContextPtr(pGfxContext);
