@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.26)
-project(TickernelProject LANGUAGES C)
+project(TickernelEngine LANGUAGES C)
 
 # Dependencies
 find_package(Vulkan REQUIRED)

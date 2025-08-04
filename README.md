@@ -16,5 +16,11 @@ flowchart TD
 ## Function Naming
 Function names use camelCase.
 
-## # Naming Conventions for For Loop Indices
+## Naming Conventions for For Loop Indices
 In multi-level nesting, using i, j, k as indices may cause confusion. Therefore, the index of a for loop must be declared with a meaningful name (e.g., deviceIndex) to avoid confusion.
+
+## Minimal Conditional Checks in Non-Essential Code
+Unnecessary code will minimize conditional checks, as excessive checks can slow down runtime performance and increase code volume.
+
+# Directory Structure and Introduction
+
