@@ -174,7 +174,7 @@ void destroyFixedAttachmentPtr(GfxContext *pGfxContext, Attachment *pAttachment)
     tknFree(pAttachment);
 }
 
-Attachment *getSwapchainAttachments(GfxContext *pGfxContext)
+Attachment *getSwapchainAttachmentPtr(GfxContext *pGfxContext)
 {
     return pGfxContext->swapchainAttachmentPtr;
 }

@@ -229,13 +229,6 @@ debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
     };
 
     NSString *luaPath = [resourcePath stringByAppendingPathComponent:@"assets/lua"];
-
-    //    const char *luaPath, uint32_t luaLibraryCount, LuaLibrary
-    //    *luaLibraries, int targetSwapchainImageCount, VkSurfaceFormatKHR
-    //    targetVkSurfaceFormat, VkPresentModeKHR targetVkPresentMode,
-    //    VkInstance vkInstance, VkSurfaceKHR vkSurface, VkExtent2D
-    //    swapchainExtent);
-    // 正确的函数调用
     self.pTknContext = createTknContextPtr([luaPath UTF8String], sizeof(luaLibraries) / sizeof(luaLibraries[0]), luaLibraries, 2, vkSurfaceFormatKHR,VK_PRESENT_MODE_FIFO_KHR,_vkInstance,_vkSurface,swapchainExtent);
 }
 

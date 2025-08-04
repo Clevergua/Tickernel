@@ -1,14 +1,16 @@
+local srp = require("srp")
 local tknEngine = {
 
 }
 
 function tknEngine.start(pGfxContext)
     print("Lua start")
-    
+    srp.setUp(pGfxContext)
 end
 
-function tknEngine.stop()
+function tknEngine.stop(pGfxContext)
     print("Lua stop")
+    srp.tearDown(pGfxContext)
 end
 
 function tknEngine.updateGameplay()

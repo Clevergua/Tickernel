@@ -1,83 +1,83 @@
-local gfx = require("gfx")
-local deferredRenderPass = require("deferredRenderPass")
-local geometryPipeline = require("geometryPipeline")
+require("vulkan")
+local srp = {}
+local gfx = _G.gfx
+-- local deferredRenderPass = require("deferredRenderPass")
+-- local geometryPipeline = require("geometryPipeline")
 -- local lightingPipeline = require("lightingPipeline")
 -- local postProgressPipeline = require("postProgressPipeline")
-local graphic = {}
 
-
-function graphic.setUp()
-    local depthVkFormat = gfx.getSupportedFormat({
+function srp.setUp(pGfxContext)
+    local depthVkFormat = gfx.getSupportedFormat(pGfxContext, {
         VK_FORMAT_D32_SFLOAT,
         VK_FORMAT_D24_UNORM_S8_UINT,
         VK_FORMAT_D32_SFLOAT_S8_UINT,
     }, VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT)
-    graphic.pColorAttachment = gfx.createDynamicAttachment(VK_FORMAT_R8G8B8A8_UNORM,
+    srp.pColorAttachment = gfx.createDynamicAttachment(pGfxContext, VK_FORMAT_R8G8B8A8_UNORM,
         VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT |
         VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_IMAGE_ASPECT_COLOR_BIT, 1)
-    graphic.pDepthAttachment = gfx.createDynamicAttachment(depthVkFormat,
-        VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT |
-        VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_IMAGE_ASPECT_DEPTH_BIT, 1)
-    graphic.pAlbedoAttachment = gfx.createDynamicAttachment(VK_FORMAT_R8G8B8A8_UNORM,
-        VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT |
-        VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_IMAGE_ASPECT_COLOR_BIT, 1)
-    graphic.pNormalAttachment = gfx.createDynamicAttachment(VK_FORMAT_A2R10G10B10_UNORM_PACK32,
-        VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT |
-        VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_IMAGE_ASPECT_COLOR_BIT, 1)
-    graphic.pSwapchainAttachment = gfx.getSwapchainAttachment()
+    -- srp.pDepthAttachment = gfx.createDynamicAttachment(pGfxContext, depthVkFormat,
+    --     VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT |
+    --     VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_IMAGE_ASPECT_DEPTH_BIT, 1)
+    -- srp.pAlbedoAttachment = gfx.createDynamicAttachment(pGfxContext, VK_FORMAT_R8G8B8A8_UNORM,
+    --     VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT |
+    --     VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_IMAGE_ASPECT_COLOR_BIT, 1)
+    -- srp.pNormalAttachment = gfx.createDynamicAttachment(pGfxContext, VK_FORMAT_A2R10G10B10_UNORM_PACK32,
+    --     VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT |
+    --     VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_IMAGE_ASPECT_COLOR_BIT, 1)
+    -- srp.pSwapchainAttachment = gfx.getSwapchainAttachment(pGfxContext)
 
-    graphic.pDeferredRenderPass = deferredRenderPass.createRenderPass({
-        graphic.pColorAttachment,
-        graphic.pDepthAttachment,
-        graphic.pAlbedoAttachment,
-        graphic.pNormalAttachment,
-        graphic.pSwapchainAttachment
-    })
+    -- srp.pDeferredRenderPass = deferredRenderPass.createRenderPass({
+    --     srp.pColorAttachment,
+    --     srp.pDepthAttachment,
+    --     srp.pAlbedoAttachment,
+    --     srp.pNormalAttachment,
+    --     srp.pSwapchainAttachment
+    -- })
+    -- local meshLayout = {
+    --     vertexLayouts = {
+    --         {
+    --             name = "inputPosition",
+    --             size = 12,
+    --         },
+    --         {
+    --             name = "inputColor",
+    --             size = 16
+    --         },
+    --         {
+    --             name = "inputNormal",
+    --             size = 12,
+    --         }
+    --     },
+    --     instanceLayouts = {
+    --         {
+    --             name = "inputModel",
+    --             size = 64,
+    --         }
+    --     }
+    -- }
+    -- gfx.pGeometryPipeline = geometryPipeline.createPipeline(gfx.pDeferredRenderPass, 0, 0)
 
-    local meshLayout = {
-        vertexLayouts = {
-            {
-                name = "inputPosition",
-                size = 12,
-            },
-            {
-                name = "inputColor",
-                size = 16
-            },
-            {
-                name = "inputNormal",
-                size = 12,
-            }
-        },
-        instanceLayouts = {
-            {
-                name = "inputModel",
-                size = 64,
-            }
-        }
-    }
-    graphic.pGeometryPipeline = geometryPipeline.createPipeline(graphic.pDeferredRenderPass, 0, 0)
+    -- -- gfx.pLightingPipeline = lightingPipeline.createPipeline(gfx.pDeferredRenderPass, 1, 0)
+    -- -- gfx.pPostProgressPipeline = postProgressPipeline.createPipeline(gfx.pDeferredRenderPass, 2, 0)
 
-    -- graphic.pLightingPipeline = lightingPipeline.createPipeline(graphic.pDeferredRenderPass, 1, 0)
-    -- graphic.pPostProgressPipeline = postProgressPipeline.createPipeline(graphic.pDeferredRenderPass, 2, 0)
+    -- local resources = {
 
-    local resources = {
-
-    }
-    gfx.createMaterial(graphic.pGeometryPipeline, resources)
+    -- }
+    -- gfx.createMaterial(gfx.pGeometryPipeline, resources)
 end
 
-function graphic.tearDown()
-    -- postProgressPipeline.destroyPipeline(graphic.pDeferredRenderPass, 2, graphic.pPostProgressPipeline)
-    -- lightingPipeline.destroyPipeline(graphic.pDeferredRenderPass, 1, graphic.graphiclightingPipeline)
-    geometryPipeline.destroyPipeline(graphic.pDeferredRenderPass, 0, graphic.pGeometryPipeline)
+function srp.tearDown(pGfxContext)
+    -- postProgressPipeline.destroyPipeline(gfx.pDeferredRenderPass, 2, gfx.pPostProgressPipeline)
+    -- lightingPipeline.destroyPipeline(gfx.pDeferredRenderPass, 1, gfx.gfxlightingPipeline)
+    -- geometryPipeline.destroyPipeline(gfx.pDeferredRenderPass, 0, gfx.pGeometryPipeline)
 
-    deferredRenderPass.destroyRenderPass(graphic.pDeferredRenderPass)
+    -- deferredRenderPass.destroyRenderPass(gfx.pDeferredRenderPass)
 
-    gfx.destroyDynamicAttachment(graphic.pNormalAttachment)
-    gfx.destroyDynamicAttachment(graphic.pAlbedoAttachment)
-    gfx.destroyDynamicAttachment(graphic.pDepthAttachment)
-    gfx.destroyDynamicAttachment(graphic.pColorAttachment)
+
+    -- gfx.destroyDynamicAttachment(pGfxContext, srp.pNormalAttachment)
+    -- gfx.destroyDynamicAttachment(pGfxContext, srp.pAlbedoAttachment)
+    -- gfx.destroyDynamicAttachment(pGfxContext, srp.pDepthAttachment)
+    gfx.destroyDynamicAttachment(pGfxContext, srp.pColorAttachment)
 end
 
-return graphic
+return srp

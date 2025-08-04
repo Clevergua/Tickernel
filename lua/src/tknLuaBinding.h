@@ -6,5 +6,6 @@
 #include "lualib.h"
 
 void bindFunctions(lua_State *pLuaState);
+void printLuaStack(lua_State *pLuaState);
 
 #endif

@@ -7,60 +7,6 @@ struct TknContext
     GfxContext *pGfxContext;
 };
 
-static void printLuaStack(lua_State *pLuaState)
-{
-    int top = lua_gettop(pLuaState);
-    printf("=== Lua Stack ===\n");
-    printf("Stack size: %d\n", top);
-    if (top == 0)
-    {
-        printf("Stack is empty\n");
-    }
-    else
-    {
-        for (int i = 1; i <= top; i++)
-        {
-            int type = lua_type(pLuaState, i);
-            printf("[%d] (%s): ", i, lua_typename(pLuaState, type));
-
-            switch (type)
-            {
-            case LUA_TNIL:
-                printf("nil");
-                break;
-            case LUA_TBOOLEAN:
-                printf(lua_toboolean(pLuaState, i) ? "true" : "false");
-                break;
-            case LUA_TNUMBER:
-                printf("%g", lua_tonumber(pLuaState, i));
-                break;
-            case LUA_TSTRING:
-                printf("\"%s\"", lua_tostring(pLuaState, i));
-                break;
-            case LUA_TTABLE:
-                printf("table: %p", lua_topointer(pLuaState, i));
-                break;
-            case LUA_TFUNCTION:
-                printf("function: %p", lua_topointer(pLuaState, i));
-                break;
-            case LUA_TUSERDATA:
-                printf("userdata: %p", lua_topointer(pLuaState, i));
-                break;
-            case LUA_TLIGHTUSERDATA:
-                printf("lightuserdata: %p", lua_touserdata(pLuaState, i));
-                break;
-            case LUA_TTHREAD:
-                printf("thread: %p", lua_topointer(pLuaState, i));
-                break;
-            default:
-                printf("unknown");
-                break;
-            }
-            printf("\n");
-        }
-    }
-    printf("==================\n\n");
-}
 
 static void assertLuaResult(lua_State *pLuaState, int result)
 {
@@ -133,9 +79,14 @@ void destroyTknContextPtr(TknContext *pTknContext)
     lua_State *pLuaState = pTknContext->pLuaState;
     lua_getglobal(pLuaState, "tknEngine");
     lua_getfield(pLuaState, -1, "stop");
-    assertLuaResult(pLuaState, lua_pcall(pLuaState, 0, 0, 0));
+    lua_pushlightuserdata(pLuaState, pTknContext->pGfxContext);
+    assertLuaResult(pLuaState, lua_pcall(pLuaState, 1, 0, 0));
     lua_pop(pLuaState, 1);
     lua_close(pTknContext->pLuaState);
+    
+    GfxContext* pGfxContext = pTknContext->pGfxContext;
+    destroyGfxContextPtr(pGfxContext);
+
     tknFree(pTknContext);
 }
 

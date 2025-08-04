@@ -371,7 +371,7 @@ static void populateSwapchain(GfxContext *pGfxContext, VkExtent2D targetSwapchai
     VkExtent2D swapchainExtent;
     swapchainExtent.width = TKN_CLAMP(targetSwapchainExtent.width, vkSurfaceCapabilities.minImageExtent.width, vkSurfaceCapabilities.maxImageExtent.width);
     swapchainExtent.height = TKN_CLAMP(targetSwapchainExtent.height, vkSurfaceCapabilities.minImageExtent.height, vkSurfaceCapabilities.maxImageExtent.height);
-
+    
     VkSharingMode imageSharingMode = gfxQueueFamilyIndex != presentQueueFamilyIndex ? VK_SHARING_MODE_CONCURRENT : VK_SHARING_MODE_EXCLUSIVE;
     uint32_t queueFamilyIndexCount = gfxQueueFamilyIndex != presentQueueFamilyIndex ? 2 : 0;
     uint32_t pQueueFamilyIndices[] = {gfxQueueFamilyIndex, presentQueueFamilyIndex};
@@ -400,6 +400,7 @@ static void populateSwapchain(GfxContext *pGfxContext, VkExtent2D targetSwapchai
     pGfxContext->swapchainAttachmentPtr = tknMalloc(sizeof(Attachment));
     pGfxContext->swapchainAttachmentPtr->attachmentType = ATTACHMENT_TYPE_SWAPCHAIN;
     assertVkResult(vkCreateSwapchainKHR(vkDevice, &swapchainCreateInfo, NULL, &pGfxContext->vkSwapchain));
+    pGfxContext->swapchainExtent = swapchainExtent;
     pGfxContext->swapchainImages = tknMalloc(pGfxContext->swapchainImageCount * sizeof(VkImage));
     assertVkResult(vkGetSwapchainImagesKHR(vkDevice, pGfxContext->vkSwapchain, &pGfxContext->swapchainImageCount, pGfxContext->swapchainImages));
     pGfxContext->swapchainImageViews = tknMalloc(pGfxContext->swapchainImageCount * sizeof(VkImageView));
@@ -540,7 +541,6 @@ static void recordCommandBuffer(GfxContext *pGfxContext, uint32_t swapchainIndex
 
 static void submitCommandBuffer(GfxContext *pGfxContext, uint32_t swapchainIndex)
 {
-
     // Submit workflow...
     VkSubmitInfo submitInfo = {
         .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
@@ -617,6 +617,7 @@ void destroyGfxContextPtr(GfxContext *pGfxContext)
     cleanupSignals(pGfxContext);
     cleanupSwapchain(pGfxContext);
     cleanupLogicalDevice(pGfxContext);
+    tknFree(pGfxContext);
 }
 void updateGfxContextPtr(GfxContext *pGfxContext, VkExtent2D swapchainExtent)
 {

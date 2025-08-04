@@ -1,6 +1,5 @@
 local deferredRenderPass = {}
-local tknEngine = require("tknEngine")
-local geometryPipeline = require("geometryPipeline")
+-- local geometryPipeline = require("geometryPipeline")
 
 function deferredRenderPass.createRenderPass(pAttachments)
     local colorAttachmentDescription = {

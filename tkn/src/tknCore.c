@@ -31,13 +31,19 @@ void tknAssert(bool condition, const char *format, ...)
     }
 }
 
+static int allocTimes = 0;
+
 void *tknMalloc(size_t size)
 {
+    allocTimes++;
+    printf("DEBUG: tknMalloc called %d times\n", allocTimes);
     return malloc(size);
 }
 
 void tknFree(void *ptr)
 {
+    allocTimes--;
+    printf("DEBUG: tknFree called, remaining allocations: %d\n", allocTimes);
     free(ptr);
 }
 

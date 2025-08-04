@@ -20,8 +20,8 @@
 - (void)applicationWillTerminate:(NSNotification *)aNotification {
 }
 
-- (BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication *)sender {
-    return YES;
-}
+//- (BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication *)sender {
+//    return YES;
+//}
 
 @end
