@@ -2,8 +2,9 @@ local tknEngine = {
 
 }
 
-function tknEngine.start()
+function tknEngine.start(pGfxContext)
     print("Lua start")
+    
 end
 
 function tknEngine.stop()

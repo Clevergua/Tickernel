@@ -620,87 +620,94 @@ void destroyGfxContextPtr(GfxContext *pGfxContext)
 }
 void updateGfxContextPtr(GfxContext *pGfxContext, VkExtent2D swapchainExtent)
 {
-    pGfxContext->frameCount++;
-    uint32_t swapchainIndex = pGfxContext->frameCount % pGfxContext->swapchainImageCount;
-    VkDevice vkDevice = pGfxContext->vkDevice;
-
-    for (uint32_t renderPassIndex = 0; renderPassIndex < pGfxContext->renderPassPtrDynamicArray.count; renderPassIndex++)
+    if (pGfxContext->renderPassPtrDynamicArray.count > 0)
     {
-        /* code */
-    }
+        pGfxContext->frameCount++;
+        uint32_t swapchainIndex = pGfxContext->frameCount % pGfxContext->swapchainImageCount;
+        VkDevice vkDevice = pGfxContext->vkDevice;
 
-    if (swapchainExtent.width != pGfxContext->swapchainExtent.width || swapchainExtent.height != pGfxContext->swapchainExtent.height)
-    {
-        printf("Recreate swapchain because of a size change: (%d, %d) to (%d, %d) \n",
-               pGfxContext->swapchainExtent.width,
-               pGfxContext->swapchainExtent.height,
-               swapchainExtent.width,
-               swapchainExtent.height);
-        pGfxContext->swapchainExtent = swapchainExtent;
-        repopulateSwapchain(pGfxContext);
-        for (uint32_t attachmentPtrIndex = 0; attachmentPtrIndex < pGfxContext->dynamicAttachmentPtrDynamicArray.count; attachmentPtrIndex++)
-        {
-            Attachment *pAttachment = tknGetFromDynamicArray(&pGfxContext->dynamicAttachmentPtrDynamicArray, attachmentPtrIndex);
-            resizeDynamicAttachmentPtr(pGfxContext, pAttachment);
-        }
         for (uint32_t renderPassIndex = 0; renderPassIndex < pGfxContext->renderPassPtrDynamicArray.count; renderPassIndex++)
         {
-            RenderPass *pRenderPass = tknGetFromDynamicArray(&pGfxContext->renderPassPtrDynamicArray, renderPassIndex);
-            if (pRenderPass->attachmentCount > 0 && (pRenderPass->attachmentPtrs[0]->attachmentType == ATTACHMENT_TYPE_SWAPCHAIN || pRenderPass->attachmentPtrs[0]->attachmentType == ATTACHMENT_TYPE_DYNAMIC))
-            {
-                cleanupFramebuffers(pGfxContext, pRenderPass);
-                populateFramebuffers(pGfxContext, pRenderPass);
-            }
-            else
-            {
-                // Don't need to recreate framebuffers
-            }
+            /* code */
         }
-        // TODO Recreate subpass descriptor sets for input attachments
-    }
-    else
-    {
-        VkResult result = vkAcquireNextImageKHR(vkDevice, pGfxContext->vkSwapchain, UINT64_MAX, pGfxContext->imageAvailableSemaphore, VK_NULL_HANDLE, &swapchainIndex);
-        if (result != VK_SUCCESS)
-        {
-            if (VK_ERROR_OUT_OF_DATE_KHR == result)
-            {
-                printf("Recreate swapchain because of result: %d\n", result);
-                repopulateSwapchain(pGfxContext);
-                for (uint32_t renderPassIndex = 0; renderPassIndex < pGfxContext->renderPassPtrDynamicArray.count; renderPassIndex++)
-                {
-                    RenderPass *pRenderPass = tknGetFromDynamicArray(&pGfxContext->renderPassPtrDynamicArray, renderPassIndex);
 
-                    if (pRenderPass->useSwapchain)
-                    {
-                        cleanupFramebuffers(pGfxContext, pRenderPass);
-                        populateFramebuffers(pGfxContext, pRenderPass);
-                    }
-                    else
-                    {
-                        // Don't need to recreate framebuffers
-                    }
+        if (swapchainExtent.width != pGfxContext->swapchainExtent.width || swapchainExtent.height != pGfxContext->swapchainExtent.height)
+        {
+            printf("Recreate swapchain because of a size change: (%d, %d) to (%d, %d) \n",
+                   pGfxContext->swapchainExtent.width,
+                   pGfxContext->swapchainExtent.height,
+                   swapchainExtent.width,
+                   swapchainExtent.height);
+            pGfxContext->swapchainExtent = swapchainExtent;
+            repopulateSwapchain(pGfxContext);
+            for (uint32_t attachmentPtrIndex = 0; attachmentPtrIndex < pGfxContext->dynamicAttachmentPtrDynamicArray.count; attachmentPtrIndex++)
+            {
+                Attachment *pAttachment = tknGetFromDynamicArray(&pGfxContext->dynamicAttachmentPtrDynamicArray, attachmentPtrIndex);
+                resizeDynamicAttachmentPtr(pGfxContext, pAttachment);
+            }
+            for (uint32_t renderPassIndex = 0; renderPassIndex < pGfxContext->renderPassPtrDynamicArray.count; renderPassIndex++)
+            {
+                RenderPass *pRenderPass = tknGetFromDynamicArray(&pGfxContext->renderPassPtrDynamicArray, renderPassIndex);
+                if (pRenderPass->attachmentCount > 0 && (pRenderPass->attachmentPtrs[0]->attachmentType == ATTACHMENT_TYPE_SWAPCHAIN || pRenderPass->attachmentPtrs[0]->attachmentType == ATTACHMENT_TYPE_DYNAMIC))
+                {
+                    cleanupFramebuffers(pGfxContext, pRenderPass);
+                    populateFramebuffers(pGfxContext, pRenderPass);
+                }
+                else
+                {
+                    // Don't need to recreate framebuffers
                 }
             }
-            else if (VK_SUBOPTIMAL_KHR == result)
+            // TODO Recreate subpass descriptor sets for input attachments
+        }
+        else
+        {
+            VkResult result = vkAcquireNextImageKHR(vkDevice, pGfxContext->vkSwapchain, UINT64_MAX, pGfxContext->imageAvailableSemaphore, VK_NULL_HANDLE, &swapchainIndex);
+            if (result != VK_SUCCESS)
+            {
+                if (VK_ERROR_OUT_OF_DATE_KHR == result)
+                {
+                    printf("Recreate swapchain because of result: %d\n", result);
+                    repopulateSwapchain(pGfxContext);
+                    for (uint32_t renderPassIndex = 0; renderPassIndex < pGfxContext->renderPassPtrDynamicArray.count; renderPassIndex++)
+                    {
+                        RenderPass *pRenderPass = tknGetFromDynamicArray(&pGfxContext->renderPassPtrDynamicArray, renderPassIndex);
+
+                        if (pRenderPass->useSwapchain)
+                        {
+                            cleanupFramebuffers(pGfxContext, pRenderPass);
+                            populateFramebuffers(pGfxContext, pRenderPass);
+                        }
+                        else
+                        {
+                            // Don't need to recreate framebuffers
+                        }
+                    }
+                }
+                else if (VK_SUBOPTIMAL_KHR == result)
+                {
+                    assertVkResult(vkResetFences(vkDevice, 1, &pGfxContext->renderFinishedFence));
+                    recordCommandBuffer(pGfxContext, swapchainIndex);
+                    submitCommandBuffer(pGfxContext, swapchainIndex);
+                    present(pGfxContext, swapchainIndex);
+                }
+                else
+                {
+                    assertVkResult(result);
+                }
+            }
+            else
             {
                 assertVkResult(vkResetFences(vkDevice, 1, &pGfxContext->renderFinishedFence));
                 recordCommandBuffer(pGfxContext, swapchainIndex);
                 submitCommandBuffer(pGfxContext, swapchainIndex);
                 present(pGfxContext, swapchainIndex);
             }
-            else
-            {
-                assertVkResult(result);
-            }
         }
-        else
-        {
-            assertVkResult(vkResetFences(vkDevice, 1, &pGfxContext->renderFinishedFence));
-            recordCommandBuffer(pGfxContext, swapchainIndex);
-            submitCommandBuffer(pGfxContext, swapchainIndex);
-            present(pGfxContext, swapchainIndex);
-        }
+    }
+    else
+    {
+        printf("No render passes available, skipping updateGfxContextPtr.\n");
     }
 }
 void waitGfxContextPtr(GfxContext *pGfxContext)

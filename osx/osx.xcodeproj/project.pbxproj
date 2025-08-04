@@ -39,7 +39,6 @@
 		DE6CC0952D39397000D80E9A /* osx.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = osx.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		DE6CC33A2D3950F500D80E9A /* libvulkan.1.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libvulkan.1.dylib; path = ../../../../../../usr/local/lib/libvulkan.1.dylib; sourceTree = "<group>"; };
 		DE6CC33B2D3950F500D80E9A /* libvulkan.1.3.296.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libvulkan.1.3.296.dylib; path = ../../../../../../usr/local/lib/libvulkan.1.3.296.dylib; sourceTree = "<group>"; };
-		DEE96CF72E3F6143003ED6AF /* tkn */ = {isa = PBXFileReference; lastKnownFileType = folder; name = tkn; path = ../build/tkn; sourceTree = "<group>"; };
 		DEE96CF82E3F8DFA003ED6AF /* libTickernelLua.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libTickernelLua.dylib; path = ../build/lua/libTickernelLua.dylib; sourceTree = "<group>"; };
 		DEE96CFB2E3F8E12003ED6AF /* libTickernel.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libTickernel.dylib; path = ../build/tkn/libTickernel.dylib; sourceTree = "<group>"; };
 		DEE96E042E3FC89D003ED6AF /* assets */ = {isa = PBXFileReference; lastKnownFileType = folder; name = assets; path = ../assets; sourceTree = "<group>"; };
@@ -91,7 +90,6 @@
 			children = (
 				DEE96CFB2E3F8E12003ED6AF /* libTickernel.dylib */,
 				DEE96CF82E3F8DFA003ED6AF /* libTickernelLua.dylib */,
-				DEE96CF72E3F6143003ED6AF /* tkn */,
 				DE6CC33A2D3950F500D80E9A /* libvulkan.1.dylib */,
 				DE6CC33B2D3950F500D80E9A /* libvulkan.1.3.296.dylib */,
 			);

@@ -1,4 +1,4 @@
-local tknEngine = require("tknEngine")
+local gfx = require("gfx")
 local deferredRenderPass = require("deferredRenderPass")
 local geometryPipeline = require("geometryPipeline")
 -- local lightingPipeline = require("lightingPipeline")
@@ -7,24 +7,24 @@ local graphic = {}
 
 
 function graphic.setUp()
-    local depthVkFormat = tknEngine.findSupportedFormat({
+    local depthVkFormat = gfx.getSupportedFormat({
         VK_FORMAT_D32_SFLOAT,
-        VK_FORMAT_D32_SFLOAT_S8_UINT,
         VK_FORMAT_D24_UNORM_S8_UINT,
+        VK_FORMAT_D32_SFLOAT_S8_UINT,
     }, VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT)
-    graphic.pColorAttachment = tknEngine.createDynamicAttachment(VK_FORMAT_R8G8B8A8_UNORM,
+    graphic.pColorAttachment = gfx.createDynamicAttachment(VK_FORMAT_R8G8B8A8_UNORM,
         VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT |
         VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_IMAGE_ASPECT_COLOR_BIT, 1)
-    graphic.pDepthAttachment = tknEngine.createDynamicAttachment(depthVkFormat,
+    graphic.pDepthAttachment = gfx.createDynamicAttachment(depthVkFormat,
         VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT |
         VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_IMAGE_ASPECT_DEPTH_BIT, 1)
-    graphic.pAlbedoAttachment = tknEngine.createDynamicAttachment(VK_FORMAT_R8G8B8A8_UNORM,
+    graphic.pAlbedoAttachment = gfx.createDynamicAttachment(VK_FORMAT_R8G8B8A8_UNORM,
         VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT |
         VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_IMAGE_ASPECT_COLOR_BIT, 1)
-    graphic.pNormalAttachment = tknEngine.createDynamicAttachment(VK_FORMAT_A2R10G10B10_UNORM_PACK32,
+    graphic.pNormalAttachment = gfx.createDynamicAttachment(VK_FORMAT_A2R10G10B10_UNORM_PACK32,
         VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT |
         VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_IMAGE_ASPECT_COLOR_BIT, 1)
-    graphic.pSwapchainAttachment = tknEngine.getSwapchainAttachment()
+    graphic.pSwapchainAttachment = gfx.getSwapchainAttachment()
 
     graphic.pDeferredRenderPass = deferredRenderPass.createRenderPass({
         graphic.pColorAttachment,
@@ -60,11 +60,11 @@ function graphic.setUp()
 
     -- graphic.pLightingPipeline = lightingPipeline.createPipeline(graphic.pDeferredRenderPass, 1, 0)
     -- graphic.pPostProgressPipeline = postProgressPipeline.createPipeline(graphic.pDeferredRenderPass, 2, 0)
-    
+
     local resources = {
 
     }
-    tknEngine.createMaterial(graphic.pGeometryPipeline, resources)
+    gfx.createMaterial(graphic.pGeometryPipeline, resources)
 end
 
 function graphic.tearDown()
@@ -74,10 +74,10 @@ function graphic.tearDown()
 
     deferredRenderPass.destroyRenderPass(graphic.pDeferredRenderPass)
 
-    tknEngine.destroyDynamicAttachment(graphic.pNormalAttachment)
-    tknEngine.destroyDynamicAttachment(graphic.pAlbedoAttachment)
-    tknEngine.destroyDynamicAttachment(graphic.pDepthAttachment)
-    tknEngine.destroyDynamicAttachment(graphic.pColorAttachment)
+    gfx.destroyDynamicAttachment(graphic.pNormalAttachment)
+    gfx.destroyDynamicAttachment(graphic.pAlbedoAttachment)
+    gfx.destroyDynamicAttachment(graphic.pDepthAttachment)
+    gfx.destroyDynamicAttachment(graphic.pColorAttachment)
 end
 
 return graphic

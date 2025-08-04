@@ -8,6 +8,8 @@ typedef struct Attachment Attachment;
 typedef struct Image Image;
 typedef struct Sampler Sampler;
 
+VkFormat getSupportedFormat(GfxContext *pGfxContext, uint32_t candidateCount, VkFormat *candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
+
 GfxContext *createGfxContextPtr(int targetSwapchainImageCount, VkSurfaceFormatKHR targetVkSurfaceFormat, VkPresentModeKHR targetVkPresentMode, VkInstance vkInstance, VkSurfaceKHR vkSurface, VkExtent2D swapchainExtent);
 void waitGfxContextPtr(GfxContext *pGfxContext);
 void updateGfxContextPtr(GfxContext *pGfxContext, VkExtent2D swapchainExtent);

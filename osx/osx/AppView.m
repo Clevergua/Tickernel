@@ -5,7 +5,7 @@
 - (void)setupView {
     self.delegate = self;
     self.colorPixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
-    self.preferredFramesPerSecond = 60;
+    self.preferredFramesPerSecond = 1;
     self.keyCodeStates = calloc(KEY_CODE_MAX_ENUM, sizeof(BOOL));
     self.pEngineBinding = [[EngineBinding alloc] init];
 
