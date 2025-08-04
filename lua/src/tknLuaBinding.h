@@ -5,5 +5,6 @@
 #include "tkn.h"
 #include "lualib.h"
 
+void bindFunctions(lua_State *pLuaState);
 
 #endif

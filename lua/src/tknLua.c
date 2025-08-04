@@ -7,86 +7,11 @@ struct TknContext
     GfxContext *pGfxContext;
 };
 
-static void assertLuaType(lua_State *pLuaState, int index, int expectedType)
-{
-    if (lua_type(pLuaState, index) != expectedType) {
-        lua_error(pLuaState);
-    }
-}
-
-static void assertLuaArgCount(lua_State *pLuaState, int expected)
-{
-    int actual = lua_gettop(pLuaState);
-    if (actual != expected) {
-        char msg[128];
-        snprintf(msg, sizeof(msg), "Expected %d arguments, got %d", expected, actual);
-        lua_pushstring(pLuaState, msg);
-        lua_error(pLuaState);
-    }
-}
-
-static int luaGetSupportedFormat(lua_State *pLuaState)
-{
-    int argCount = lua_gettop(pLuaState);
-    assertLuaArgCount(pLuaState, 4);
-    assertLuaType(pLuaState, -4, LUA_TLIGHTUSERDATA);
-    assertLuaType(pLuaState, -3, LUA_TTABLE);
-    assertLuaType(pLuaState, -2, LUA_TNUMBER);
-    assertLuaType(pLuaState, -1, LUA_TNUMBER);
-    
-    GfxContext *pGfxContext = (GfxContext *)lua_touserdata(pLuaState, -4);
-    
-    lua_len(pLuaState, -3);
-    uint32_t candidateCount = (uint32_t)lua_tointeger(pLuaState, -1);
-    lua_pop(pLuaState, 1);
-    
-    if (candidateCount == 0) {
-        lua_pushstring(pLuaState, "Candidates table cannot be empty");
-        lua_error(pLuaState);
-        return 0;
-    }
-    
-    VkFormat *candidates = tknMalloc(sizeof(VkFormat) * candidateCount);
-    
-    for (uint32_t i = 0; i < candidateCount; i++) {
-        lua_rawgeti(pLuaState, -3, i + 1);
-        if (!lua_isinteger(pLuaState, -1)) {
-            tknFree(candidates);
-            lua_pushstring(pLuaState, "All candidates must be integers (VkFormat values)");
-            lua_error(pLuaState);
-            return 0;
-        }
-        candidates[i] = (VkFormat)lua_tointeger(pLuaState, -1);
-        lua_pop(pLuaState, 1);
-    }
-    
-    VkImageTiling tiling = (VkImageTiling)lua_tointeger(pLuaState, -2);
-    VkFormatFeatureFlags features = (VkFormatFeatureFlags)lua_tointeger(pLuaState, -1);
-    
-    VkFormat supportedFormat = getSupportedFormat(pGfxContext, candidateCount, candidates, tiling, features);
-    
-    tknFree(candidates);
-    
-    lua_pushinteger(pLuaState, (lua_Integer)supportedFormat);
-    return 1;
-}
-
-static void bindEngineFunctions(lua_State *pLuaState)
-{
-    luaL_Reg regs[] = {
-        {"getSupportedFormat", luaGetSupportedFormat},
-        {NULL, NULL},
-    };
-    luaL_newlib(pLuaState, regs);
-    lua_setglobal(pLuaState, "gfx");
-}
-
 static void printLuaStack(lua_State *pLuaState)
 {
     int top = lua_gettop(pLuaState);
     printf("=== Lua Stack ===\n");
     printf("Stack size: %d\n", top);
-
     if (top == 0)
     {
         printf("Stack is empty\n");
@@ -176,7 +101,7 @@ TknContext *createTknContextPtr(const char *luaPath, uint32_t luaLibraryCount, L
     lua_setfield(pLuaState, -2, "path");
     lua_pop(pLuaState, 1);
 
-    bindEngineFunctions(pLuaState);
+    bindFunctions(pLuaState);
     for (uint32_t luaLibraryIndex = 0; luaLibraryIndex < luaLibraryCount; luaLibraryIndex++)
     {
         LuaLibrary luaLibrary = luaLibraries[luaLibraryIndex];
@@ -211,7 +136,6 @@ void destroyTknContextPtr(TknContext *pTknContext)
     assertLuaResult(pLuaState, lua_pcall(pLuaState, 0, 0, 0));
     lua_pop(pLuaState, 1);
     lua_close(pTknContext->pLuaState);
-
     tknFree(pTknContext);
 }
 
