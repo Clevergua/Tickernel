@@ -1,7 +1,7 @@
 local deferredRenderPass = {}
 -- local geometryPipeline = require("geometryPipeline")
 
-function deferredRenderPass.createRenderPass(pAttachments)
+function deferredRenderPass.createRenderPassPtr(pGfxContext, pAttachments)
     local colorAttachmentDescription = {
         samples = VK_SAMPLE_COUNT_1_BIT,
         loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
@@ -160,13 +160,11 @@ function deferredRenderPass.createRenderPass(pAttachments)
         }
     }
 
-    return tknEngine.createRenderPass(vkAttachmentDescriptions, pAttachments, vkSubpassDescriptions, spvPathArrays,
-        vkSubpassDependencies,
-        0)
+    return gfx.createRenderPassPtr(pGfxContext, vkAttachmentDescriptions, pAttachments, vkSubpassDescriptions, spvPathArrays, vkSubpassDependencies, 0)
 end
 
 function deferredRenderPass.destroyRenderPass(pRenderPass)
-    tknEngine.destroyRenderPass(pRenderPass)
+    gfx.destroyRenderPass(pRenderPass)
 end
 
 return deferredRenderPass

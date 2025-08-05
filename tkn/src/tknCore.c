@@ -66,7 +66,7 @@ void tknDestroyDynamicArray(TknDynamicArray dynamicArray)
 }
 void tknAddToDynamicArray(TknDynamicArray *pDynamicArray, void *pInput, uint32_t index)
 {
-    tknAssert(index <= pDynamicArray->count, "Index %u is out of bounds for count %u\n", index, pDynamicArray->count);
+    tknAssert(index >= 0 && index <= pDynamicArray->count, "Index %u is out of bounds for count %u\n", index, pDynamicArray->count);
     if (pDynamicArray->count >= pDynamicArray->maxCount)
     {
         pDynamicArray->maxCount *= 2;

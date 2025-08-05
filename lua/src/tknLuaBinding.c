@@ -31,9 +31,7 @@ static int luaCreateDynamicAttachmentPtr(lua_State *pLuaState)
     VkMemoryPropertyFlags vkMemoryPropertyFlags = (VkMemoryPropertyFlags)lua_tointeger(pLuaState, -3);
     VkImageAspectFlags vkImageAspectFlags = (VkImageAspectFlags)lua_tointeger(pLuaState, -2);
     float scaler = (float)lua_tonumber(pLuaState, -1);
-
     Attachment *attachment = createDynamicAttachmentPtr(pGfxContext, vkFormat, vkImageUsageFlags, vkMemoryPropertyFlags, vkImageAspectFlags, scaler);
-
     lua_pushlightuserdata(pLuaState, attachment);
     return 1;
 }
@@ -48,9 +46,7 @@ static int luaCreateFixedAttachmentPtr(lua_State *pLuaState)
     VkImageAspectFlags vkImageAspectFlags = (VkImageAspectFlags)lua_tointeger(pLuaState, -3);
     uint32_t width = (uint32_t)lua_tointeger(pLuaState, -2);
     uint32_t height = (uint32_t)lua_tointeger(pLuaState, -1);
-
     Attachment *attachment = createFixedAttachmentPtr(pGfxContext, vkFormat, vkImageUsageFlags, vkMemoryPropertyFlags, vkImageAspectFlags, width, height);
-
     lua_pushlightuserdata(pLuaState, attachment);
     return 1;
 }
@@ -78,9 +74,7 @@ static int luaDestroyFixedAttachmentPtr(lua_State *pLuaState)
     printLuaStack(pLuaState);
     GfxContext *pGfxContext = (GfxContext *)lua_touserdata(pLuaState, -2);
     Attachment *pAttachment = (Attachment *)lua_touserdata(pLuaState, -1);
-
     destroyFixedAttachmentPtr(pGfxContext, pAttachment);
-
     return 0;
 }
 
@@ -88,11 +82,11 @@ void bindFunctions(lua_State *pLuaState)
 {
     luaL_Reg regs[] = {
         {"getSupportedFormat", luaGetSupportedFormat},
-        {"createDynamicAttachment", luaCreateDynamicAttachmentPtr},
-        {"createFixedAttachment", luaCreateFixedAttachmentPtr},
-        {"getSwapchainAttachment", luaGetSwapchainAttachmentPtr},
-        {"destroyDynamicAttachment", luaDestroyDynamicAttachmentPtr},
-        {"destroyFixedAttachment", luaDestroyFixedAttachmentPtr},
+        {"createDynamicAttachmentPtr", luaCreateDynamicAttachmentPtr},
+        {"createFixedAttachmentPtr", luaCreateFixedAttachmentPtr},
+        {"getSwapchainAttachmentPtr", luaGetSwapchainAttachmentPtr},
+        {"destroyDynamicAttachmentPtr", luaDestroyDynamicAttachmentPtr},
+        {"destroyFixedAttachmentPtr", luaDestroyFixedAttachmentPtr},
         {NULL, NULL},
     };
     luaL_newlib(pLuaState, regs);
@@ -114,7 +108,6 @@ void printLuaStack(lua_State *pLuaState)
         {
             int type = lua_type(pLuaState, i);
             printf("[%d] (%s): ", i, lua_typename(pLuaState, type));
-
             switch (type)
             {
             case LUA_TNIL:

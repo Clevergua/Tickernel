@@ -86,7 +86,6 @@ static void pickPhysicalDevice(GfxContext *pGfxContext, VkSurfaceFormatKHR targe
     {
         VkPhysicalDevice *devices = tknMalloc(deviceCount * sizeof(VkPhysicalDevice));
         assertVkResult(vkEnumeratePhysicalDevices(pGfxContext->vkInstance, &deviceCount, devices));
-
         uint32_t maxScore = 0;
         char *targetDeviceName = NULL;
         pGfxContext->vkPhysicalDevice = VK_NULL_HANDLE;
@@ -601,7 +600,6 @@ GfxContext *createGfxContextPtr(int targetSwapchainImageCount, VkSurfaceFormatKH
     pickPhysicalDevice(pGfxContext, targetVkSurfaceFormat, targetVkPresentMode);
     populateLogicalDevice(pGfxContext);
     populateSwapchain(pGfxContext, swapchainExtent, targetSwapchainImageCount);
-
     populateSignals(pGfxContext);
     populateCommandPools(pGfxContext);
     populateVkCommandBuffers(pGfxContext);
@@ -626,12 +624,10 @@ void updateGfxContextPtr(GfxContext *pGfxContext, VkExtent2D swapchainExtent)
         pGfxContext->frameCount++;
         uint32_t swapchainIndex = pGfxContext->frameCount % pGfxContext->swapchainImageCount;
         VkDevice vkDevice = pGfxContext->vkDevice;
-
         for (uint32_t renderPassIndex = 0; renderPassIndex < pGfxContext->renderPassPtrDynamicArray.count; renderPassIndex++)
         {
             /* code */
         }
-
         if (swapchainExtent.width != pGfxContext->swapchainExtent.width || swapchainExtent.height != pGfxContext->swapchainExtent.height)
         {
             printf("Recreate swapchain because of a size change: (%d, %d) to (%d, %d) \n",

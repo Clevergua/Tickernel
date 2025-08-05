@@ -18,13 +18,11 @@ void destroyGfxContextPtr(GfxContext *pGfxContext);
 RenderPass *createRenderPassPtr(GfxContext *pGfxContext, uint32_t attachmentCount, VkAttachmentDescription *vkAttachmentDescriptions, Attachment **inputAttachmentPtrs, uint32_t subpassCount, VkSubpassDescription *vkSubpassDescriptions, uint32_t spvPathCount, const char **spvPaths, uint32_t vkSubpassDependencyCount, VkSubpassDependency *vkSubpassDependencies, uint32_t renderPassIndex);
 void destroyRenderPassPtr(GfxContext *pGfxContext, RenderPass *pRenderPass);
 
-
 Attachment *createDynamicAttachmentPtr(GfxContext *pGfxContext, VkFormat vkFormat, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags, float scaler);
 void destroyDynamicAttachmentPtr(GfxContext *pGfxContext, Attachment *pAttachment);
 
 Attachment *createFixedAttachmentPtr(GfxContext *pGfxContext, VkFormat vkFormat, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags, uint32_t width, uint32_t height);
 void destroyFixedAttachmentPtr(GfxContext *pGfxContext, Attachment *pAttachment);
-void resizeDynamicAttachmentPtr(GfxContext *pGfxContext, Attachment *pAttachment);
 
 Attachment *getSwapchainAttachmentPtr(GfxContext *pGfxContext);
 

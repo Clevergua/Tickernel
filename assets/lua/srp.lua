@@ -1,7 +1,6 @@
 require("vulkan")
 local srp = {}
-local gfx = _G.gfx
--- local deferredRenderPass = require("deferredRenderPass")
+local deferredRenderPass = require("deferredRenderPass")
 -- local geometryPipeline = require("geometryPipeline")
 -- local lightingPipeline = require("lightingPipeline")
 -- local postProgressPipeline = require("postProgressPipeline")
@@ -12,27 +11,27 @@ function srp.setUp(pGfxContext)
         VK_FORMAT_D24_UNORM_S8_UINT,
         VK_FORMAT_D32_SFLOAT_S8_UINT,
     }, VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT)
-    srp.pColorAttachment = gfx.createDynamicAttachment(pGfxContext, VK_FORMAT_R8G8B8A8_UNORM,
+    srp.pColorAttachment = gfx.createDynamicAttachmentPtr(pGfxContext, VK_FORMAT_R8G8B8A8_UNORM,
         VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT |
         VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_IMAGE_ASPECT_COLOR_BIT, 1)
-    -- srp.pDepthAttachment = gfx.createDynamicAttachment(pGfxContext, depthVkFormat,
-    --     VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT |
-    --     VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_IMAGE_ASPECT_DEPTH_BIT, 1)
-    -- srp.pAlbedoAttachment = gfx.createDynamicAttachment(pGfxContext, VK_FORMAT_R8G8B8A8_UNORM,
-    --     VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT |
-    --     VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_IMAGE_ASPECT_COLOR_BIT, 1)
-    -- srp.pNormalAttachment = gfx.createDynamicAttachment(pGfxContext, VK_FORMAT_A2R10G10B10_UNORM_PACK32,
-    --     VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT |
-    --     VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_IMAGE_ASPECT_COLOR_BIT, 1)
-    -- srp.pSwapchainAttachment = gfx.getSwapchainAttachment(pGfxContext)
+    srp.pDepthAttachment = gfx.createDynamicAttachmentPtr(pGfxContext, depthVkFormat,
+        VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT |
+        VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_IMAGE_ASPECT_DEPTH_BIT, 1)
+    srp.pAlbedoAttachment = gfx.createDynamicAttachmentPtr(pGfxContext, VK_FORMAT_R8G8B8A8_UNORM,
+        VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT |
+        VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_IMAGE_ASPECT_COLOR_BIT, 1)
+    srp.pNormalAttachment = gfx.createDynamicAttachmentPtr(pGfxContext, VK_FORMAT_A2R10G10B10_UNORM_PACK32,
+        VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT |
+        VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_IMAGE_ASPECT_COLOR_BIT, 1)
+    srp.pSwapchainAttachment = gfx.getSwapchainAttachment(pGfxContext)
 
-    -- srp.pDeferredRenderPass = deferredRenderPass.createRenderPass({
-    --     srp.pColorAttachment,
-    --     srp.pDepthAttachment,
-    --     srp.pAlbedoAttachment,
-    --     srp.pNormalAttachment,
-    --     srp.pSwapchainAttachment
-    -- })
+    srp.pDeferredRenderPass = deferredRenderPass.createRenderPassPtr(pGfxContext, {
+        srp.pColorAttachment,
+        srp.pDepthAttachment,
+        srp.pAlbedoAttachment,
+        srp.pNormalAttachment,
+        srp.pSwapchainAttachment
+    })
     -- local meshLayout = {
     --     vertexLayouts = {
     --         {
@@ -70,14 +69,12 @@ function srp.tearDown(pGfxContext)
     -- postProgressPipeline.destroyPipeline(gfx.pDeferredRenderPass, 2, gfx.pPostProgressPipeline)
     -- lightingPipeline.destroyPipeline(gfx.pDeferredRenderPass, 1, gfx.gfxlightingPipeline)
     -- geometryPipeline.destroyPipeline(gfx.pDeferredRenderPass, 0, gfx.pGeometryPipeline)
+    deferredRenderPass.destroyRenderPass(gfx.pDeferredRenderPass)
 
-    -- deferredRenderPass.destroyRenderPass(gfx.pDeferredRenderPass)
-
-
-    -- gfx.destroyDynamicAttachment(pGfxContext, srp.pNormalAttachment)
-    -- gfx.destroyDynamicAttachment(pGfxContext, srp.pAlbedoAttachment)
-    -- gfx.destroyDynamicAttachment(pGfxContext, srp.pDepthAttachment)
-    gfx.destroyDynamicAttachment(pGfxContext, srp.pColorAttachment)
+    gfx.destroyDynamicAttachmentPtr(pGfxContext, srp.pNormalAttachment)
+    gfx.destroyDynamicAttachmentPtr(pGfxContext, srp.pAlbedoAttachment)
+    gfx.destroyDynamicAttachmentPtr(pGfxContext, srp.pDepthAttachment)
+    gfx.destroyDynamicAttachmentPtr(pGfxContext, srp.pColorAttachment)
 end
 
 return srp
