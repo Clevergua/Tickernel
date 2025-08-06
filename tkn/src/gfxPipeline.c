@@ -43,8 +43,9 @@ static DescriptorBinding getDefaultDescriptorBinding(VkDescriptorType descriptor
     DescriptorBinding descriptorBinding = {0};
     if (VK_DESCRIPTOR_TYPE_SAMPLER == descriptorType)
     {
-        descriptorBinding.samplerDescriptorBinding.activeSamplerPtr = NULL;
-        descriptorBinding.samplerDescriptorBinding.pendingSamplerPtr = NULL;
+        descriptorBinding.descriptorBindingContent.samplerDescriptorBinding.activeSamplerPtr = NULL;
+        descriptorBinding.descriptorBindingContent.samplerDescriptorBinding.pendingSamplerPtr = NULL;
+        descriptorBinding.vkDescriptorType = VK_DESCRIPTOR_TYPE_MAX_ENUM;
     }
     // TODO other types
     else
@@ -220,46 +221,6 @@ static void destroyDescriptorSet(GfxContext *pGfxContext, DescriptorSet descript
             // bindSampler(pGfxContext, &descriptorSet, binding, NULL);
         }
         // TODO other types
-        // else if (VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER == descriptorType)
-        // {
-        //     bindCombinedImageSampler(pGfxContext, &descriptorSet, binding, NULL, NULL);
-        // }
-        // else if (VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE == descriptorType)
-        // {
-        //     bindSampledImage(pGfxContext, &descriptorSet, binding, NULL);
-        // }
-        // else if (VK_DESCRIPTOR_TYPE_STORAGE_IMAGE == descriptorType)
-        // {
-        //     bindStorageImage(pGfxContext, &descriptorSet, binding, NULL);
-        // }
-        // else if (VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER == descriptorType)
-        // {
-        //     bindUniformTexelBuffer(pGfxContext, &descriptorSet, binding, NULL);
-        // }
-        // else if (VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER == descriptorType)
-        // {
-        //     bindStorageTexelBuffer(pGfxContext, &descriptorSet, binding, NULL);
-        // }
-        // else if (VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER == descriptorType)
-        // {
-        //     bindUniformBuffer(pGfxContext, &descriptorSet, binding, NULL);
-        // }
-        // else if (VK_DESCRIPTOR_TYPE_STORAGE_BUFFER == descriptorType)
-        // {
-        //     bindStorageBuffer(pGfxContext, &descriptorSet, binding, NULL);
-        // }
-        // else if (VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC == descriptorType)
-        // {
-        //     bindUniformBufferDynamic(pGfxContext, &descriptorSet, binding, NULL);
-        // }
-        // else if (VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC == descriptorType)
-        // {
-        //     bindStorageBufferDynamic(pGfxContext, &descriptorSet, binding, NULL);
-        // }
-        // else if (VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT == descriptorType)
-        // {
-        //     bindInputAttachment(pGfxContext, &descriptorSet, binding, NULL);
-        // }
         else
         {
             tknError("Unsupported descriptor type: %d", descriptorType);
@@ -270,6 +231,22 @@ static void destroyDescriptorSet(GfxContext *pGfxContext, DescriptorSet descript
     vkDestroyDescriptorSetLayout(vkDevice, descriptorSet.vkDescriptorSetLayout, NULL);
     tknFree(descriptorSet.vkDescriptorSetLayoutBindings);
     tknFree(descriptorSet.descriptorBindings);
+}
+static void updateDescriptorSet(GfxContext *pGfxContext, DescriptorSet *pDescriptorSet, uint32_t binding, const void *pData)
+{
+    VkDevice vkDevice = pGfxContext->vkDevice;
+    tknAssert(binding < pDescriptorSet->descriptorBindingCount, "Invalid descriptor binding index: %d", binding);
+    DescriptorBinding *pDescriptorBinding = &pDescriptorSet->descriptorBindings[binding];
+    VkDescriptorType descriptorType = pDescriptorSet->vkDescriptorSetLayoutBindings[binding].descriptorType;
+    if (VK_DESCRIPTOR_TYPE_SAMPLER == descriptorType)
+    {
+        // bindSampler(pGfxContext, pDescriptorSet, binding, pData);
+    }
+    // TODO other types
+    else
+    {
+        tknError("Unsupported descriptor type: %d", descriptorType);
+    }
 }
 
 void populateFramebuffers(GfxContext *pGfxContext, RenderPass *pRenderPass)

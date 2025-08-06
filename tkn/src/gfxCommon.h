@@ -145,7 +145,24 @@ typedef union
     // UniformBufferDynamicDescriptorBinding uniformBufferDynamicDescriptorBinding;
     // StorageBufferDynamicDescriptorBinding storageBufferDynamicDescriptorBinding;
     InputAttachmentDescriptorBinding inputAttachmentDescriptorBinding;
-} DescriptorBinding;
+} DescriptorBindingContent;
+
+struct DescriptorBinding
+{
+    VkDescriptorType vkDescriptorType;
+    DescriptorBindingContent descriptorBindingContent;
+    uint32_t binding;
+};
+
+typedef struct
+{
+    uint32_t descriptorBindingCount;                             // for update descriptor sets
+    DescriptorBindingContent *descriptorBindingContents;         // for update descriptor sets
+    VkDescriptorSetLayoutBinding *vkDescriptorSetLayoutBindings; // for creating descriptor set layout
+    VkDescriptorSetLayout vkDescriptorSetLayout;                 // for creating descriptor set & pipelines
+    VkDescriptorPool vkDescriptorPool;                           // for creating descriptor set
+    VkDescriptorSet vkDescriptorSet;                             // subpass descriptor set
+} DescriptorSet;
 
 typedef enum
 {
@@ -163,16 +180,6 @@ typedef struct
     VkPipeline vkPipeline;                            // vkPipeline
     TknDynamicArray materialPtrDynamicArray;          // materials
 } Pipeline;
-
-typedef struct
-{
-    uint32_t descriptorBindingCount;                             // for update descriptor sets
-    DescriptorBinding *descriptorBindings;                       // for update descriptor sets
-    VkDescriptorSetLayoutBinding *vkDescriptorSetLayoutBindings; // for creating descriptor set layout
-    VkDescriptorSetLayout vkDescriptorSetLayout;                 // for creating descriptor set & pipelines
-    VkDescriptorPool vkDescriptorPool;                           // for creating descriptor set
-    VkDescriptorSet vkDescriptorSet;                             // subpass descriptor set
-} DescriptorSet;
 
 typedef struct
 {
