@@ -74,77 +74,19 @@ struct Attachment
 
 typedef struct
 {
-    Sampler *activeSamplerPtr;
-    Sampler *pendingSamplerPtr;
-} SamplerDescriptorBinding;
-
-// typedef struct
-// {
-//     Image *currentImagePtr;
-//     Image *nextImagePtr;
-//     Sampler *currentSamplerPtr;
-//     Sampler *nextSamplerPtr;
-// } CombinedImageSamplerDescriptorBinding;
-
-// typedef struct
-// {
-//     Image *pImage;
-// } SampledImageDescriptorBinding;
-
-// typedef struct
-// {
-//     Image *pImage;
-// } StorageImageDescriptorBinding;
-
-// typedef struct
-// {
-//     Buffer *pBuffer;
-// } UniformTexelBufferDescriptorBinding;
-
-// typedef struct
-// {
-//     Buffer *pBuffer;
-// } StorageTexelBufferDescriptorBinding;
-
-// typedef struct
-// {
-//     Buffer *pBuffer;
-// } UniformBufferDescriptorBinding;
-
-// typedef struct
-// {
-//     Buffer *pBuffer;
-// } StorageBufferDescriptorBinding;
-
-// typedef struct
-// {
-//     Buffer *pBuffer;
-// } UniformBufferDynamicDescriptorBinding;
-
-// typedef struct
-// {
-//     Buffer *pBuffer;
-// } StorageBufferDynamicDescriptorBinding;
+    Sampler *pSampler;
+} SamplerDescriptorBindingContent;
 
 typedef struct
 {
     Attachment *pAttachment;
     VkImageLayout vkImageLayout;
-} InputAttachmentDescriptorBinding;
+} InputAttachmentDescriptorBindingContent;
 
 typedef union
 {
-    SamplerDescriptorBinding samplerDescriptorBinding;
-    // CombinedImageSamplerDescriptorBinding combinedImageSamplerDescriptorBinding;
-    // SampledImageDescriptorBinding sampledImageDescriptorBinding;
-    // StorageImageDescriptorBinding storageImageDescriptorBinding;
-    // UniformTexelBufferDescriptorBinding uniformTexelBufferDescriptorBinding;
-    // StorageTexelBufferDescriptorBinding storageTexelBufferDescriptorBinding;
-    // UniformBufferDescriptorBinding uniformBufferDescriptorBinding;
-    // StorageBufferDescriptorBinding storageBufferDescriptorBinding;
-    // UniformBufferDynamicDescriptorBinding uniformBufferDynamicDescriptorBinding;
-    // StorageBufferDynamicDescriptorBinding storageBufferDynamicDescriptorBinding;
-    InputAttachmentDescriptorBinding inputAttachmentDescriptorBinding;
+    SamplerDescriptorBindingContent samplerDescriptorBinding;
+    InputAttachmentDescriptorBindingContent inputAttachmentDescriptorBindingContent;
 } DescriptorBindingContent;
 
 struct DescriptorBinding
