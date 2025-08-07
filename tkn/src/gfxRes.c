@@ -15,7 +15,7 @@ static void getMemoryType(VkPhysicalDevice vkPhysicalDevice, uint32_t typeFilter
     }
     tknError("Failed to get suitable memory type!");
 }
-
+// TODO: 删除此接口只保留Ptr接口
 static Image createImage(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkExtent3D vkExtent3D, VkFormat vkFormat, VkImageTiling vkImageTiling, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags)
 {
     VkImage vkImage;
@@ -88,13 +88,13 @@ static Image createImage(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, V
         .vkImageUsageFlags = vkImageUsageFlags,
         .vkMemoryPropertyFlags = vkMemoryPropertyFlags,
         .vkImageAspectFlags = vkImageAspectFlags,
-        .descriptorBindingPtrHashSet = tknCreateHashSet(1),
+        .descriptorPtrHashSet = tknCreateHashSet(1),
     };
     return image;
 }
 static void destroyImage(VkDevice vkDevice, Image image)
 {
-    tknDestroyHashSet(image.descriptorBindingPtrHashSet);
+    tknDestroyHashSet(image.descriptorPtrHashSet);
     vkDestroyImageView(vkDevice, image.vkImageView, NULL);
     vkDestroyImage(vkDevice, image.vkImage, NULL);
     vkFreeMemory(vkDevice, image.vkDeviceMemory, NULL);
@@ -182,7 +182,7 @@ Attachment *getSwapchainAttachmentPtr(GfxContext *pGfxContext)
 Image *createImagePtr(GfxContext *pGfxContext, VkExtent3D vkExtent3D, VkFormat vkFormat, VkImageTiling vkImageTiling, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags)
 {
     Image *pImage = tknMalloc(sizeof(Image));
-    *pImage=  createImage(pGfxContext->vkDevice, pGfxContext->vkPhysicalDevice, vkExtent3D, vkFormat, vkImageTiling, vkImageUsageFlags, vkMemoryPropertyFlags, vkImageAspectFlags);
+    *pImage = createImage(pGfxContext->vkDevice, pGfxContext->vkPhysicalDevice, vkExtent3D, vkFormat, vkImageTiling, vkImageUsageFlags, vkMemoryPropertyFlags, vkImageAspectFlags);
     return pImage;
 }
 void destroyImagePtr(GfxContext *pGfxContext, Image *pImage)

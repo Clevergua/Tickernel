@@ -38,221 +38,6 @@ static void destroySpvReflectShaderModule(SpvReflectShaderModule *pSpvReflectSha
     spvReflectDestroyShaderModule(pSpvReflectShaderModule);
 }
 
-static DescriptorBindingContent getDefaultDescriptorBinding(VkDescriptorType descriptorType)
-{
-    DescriptorBindingContent descriptorBindingContent = {0};
-    if (VK_DESCRIPTOR_TYPE_SAMPLER == descriptorType)
-    {
-        descriptorBindingContent.samplerDescriptorBinding.pSampler = NULL;
-    }
-    // TODO other types
-    else
-    {
-        tknError("Unsupported descriptor type: %d", descriptorType);
-    }
-    return descriptorBindingContent;
-}
-
-static DescriptorSet createDescriptorSet(GfxContext *pGfxContext, uint32_t spvReflectShaderModuleCount, SpvReflectShaderModule *spvReflectShaderModules, uint32_t set)
-{
-    uint32_t descriptorBindingCount = 0;
-    DescriptorBindingContent *descriptorBindingContents = NULL;
-    VkDescriptorSetLayoutBinding *vkDescriptorSetLayoutBindings = VK_NULL_HANDLE;
-    VkDescriptorSetLayout vkDescriptorSetLayout = VK_NULL_HANDLE;
-    VkDescriptorPool vkDescriptorPool = VK_NULL_HANDLE;
-    VkDescriptorSet vkDescriptorSet = VK_NULL_HANDLE;
-    TknDynamicArray vkDescriptorPoolSizeDynamicArray = tknCreateDynamicArray(sizeof(VkDescriptorPoolSize), 1);
-    for (uint32_t moduleIndex = 0; moduleIndex < spvReflectShaderModuleCount; moduleIndex++)
-    {
-        SpvReflectShaderModule spvReflectShaderModule = spvReflectShaderModules[moduleIndex];
-        for (uint32_t setIndex = 0; setIndex < spvReflectShaderModule.descriptor_set_count; setIndex++)
-        {
-            SpvReflectDescriptorSet spvReflectDescriptorSet = spvReflectShaderModule.descriptor_sets[setIndex];
-            if (set == spvReflectDescriptorSet.set)
-            {
-                for (uint32_t bindingIndex = 0; bindingIndex < spvReflectDescriptorSet.binding_count; bindingIndex++)
-                {
-                    SpvReflectDescriptorBinding *pSpvReflectDescriptorBinding = spvReflectDescriptorSet.bindings[bindingIndex];
-                    if (pSpvReflectDescriptorBinding->binding < descriptorBindingCount)
-                    {
-                        // Skip, already counted
-                    }
-                    else
-                    {
-                        descriptorBindingCount = pSpvReflectDescriptorBinding->binding + 1;
-                    }
-                }
-                // Skip other sets.
-                break;
-            }
-            else
-            {
-                // Skip
-                printf("Warning: descriptor set %d\n", spvReflectDescriptorSet.set);
-            }
-        }
-    }
-    descriptorBindingContents = tknMalloc(sizeof(DescriptorBindingContent) * descriptorBindingCount);
-    vkDescriptorSetLayoutBindings = tknMalloc(sizeof(VkDescriptorSetLayoutBinding) * descriptorBindingCount);
-    for (uint32_t binding = 0; binding < descriptorBindingCount; binding++)
-    {
-        descriptorBindingContents[binding] = (DescriptorBindingContent){0};
-        vkDescriptorSetLayoutBindings[binding] = (VkDescriptorSetLayoutBinding){
-            .binding = binding,
-            .descriptorType = VK_DESCRIPTOR_TYPE_MAX_ENUM,
-            .descriptorCount = 0,
-            .stageFlags = 0,
-            .pImmutableSamplers = NULL,
-        };
-    }
-    for (uint32_t moduleIndex = 0; moduleIndex < spvReflectShaderModuleCount; moduleIndex++)
-    {
-        SpvReflectShaderModule spvReflectShaderModule = spvReflectShaderModules[moduleIndex];
-        for (uint32_t setIndex = 0; setIndex < spvReflectShaderModule.descriptor_set_count; setIndex++)
-        {
-            SpvReflectDescriptorSet spvReflectDescriptorSet = spvReflectShaderModule.descriptor_sets[setIndex];
-            if (set == spvReflectDescriptorSet.set)
-            {
-                for (uint32_t bindingIndex = 0; bindingIndex < spvReflectDescriptorSet.binding_count; bindingIndex++)
-                {
-                    SpvReflectDescriptorBinding *pSpvReflectDescriptorBinding = spvReflectDescriptorSet.bindings[bindingIndex];
-                    uint32_t binding = pSpvReflectDescriptorBinding->binding;
-                    if (vkDescriptorSetLayoutBindings[binding].descriptorType == VK_DESCRIPTOR_TYPE_MAX_ENUM)
-                    {
-                        VkDescriptorSetLayoutBinding vkDescriptorSetLayoutBinding = {
-                            .binding = binding,
-                            .descriptorType = (VkDescriptorType)pSpvReflectDescriptorBinding->descriptor_type,
-                            .descriptorCount = pSpvReflectDescriptorBinding->count,
-                            .stageFlags = (VkShaderStageFlags)spvReflectShaderModule.shader_stage,
-                            .pImmutableSamplers = NULL,
-                        };
-                        vkDescriptorSetLayoutBindings[binding] = vkDescriptorSetLayoutBinding;
-                        descriptorBindingContents[binding] = getDefaultDescriptorBinding(vkDescriptorSetLayoutBinding.descriptorType);
-
-                        uint32_t poolSizeIndex;
-                        for (poolSizeIndex = 0; poolSizeIndex < vkDescriptorPoolSizeDynamicArray.count; poolSizeIndex++)
-                        {
-                            VkDescriptorPoolSize *pVkDescriptorPoolSize = tknGetFromDynamicArray(&vkDescriptorPoolSizeDynamicArray, poolSizeIndex);
-                            if (pVkDescriptorPoolSize->type == vkDescriptorSetLayoutBinding.descriptorType)
-                            {
-                                pVkDescriptorPoolSize->descriptorCount += vkDescriptorSetLayoutBinding.descriptorCount;
-                                break;
-                            }
-                            else
-                            {
-                                // Skip
-                            }
-                        }
-                        if (poolSizeIndex < vkDescriptorPoolSizeDynamicArray.count)
-                        {
-                            // Pool size already exists, skip adding
-                        }
-                        else
-                        {
-                            VkDescriptorPoolSize vkDescriptorPoolSize = {
-                                .type = vkDescriptorSetLayoutBinding.descriptorType,
-                                .descriptorCount = vkDescriptorSetLayoutBinding.descriptorCount,
-                            };
-                            tknAddToDynamicArray(&vkDescriptorPoolSizeDynamicArray, &vkDescriptorPoolSize, vkDescriptorPoolSizeDynamicArray.count);
-                        }
-                    }
-                    else
-                    {
-                        tknAssert(vkDescriptorSetLayoutBindings[binding].descriptorType == (VkDescriptorType)pSpvReflectDescriptorBinding->descriptor_type, "Incompatible descriptor binding");
-                        vkDescriptorSetLayoutBindings[binding].stageFlags |= (VkShaderStageFlags)spvReflectShaderModule.shader_stage;
-                        vkDescriptorSetLayoutBindings[binding].descriptorCount = pSpvReflectDescriptorBinding->count > vkDescriptorSetLayoutBindings[binding].descriptorCount ? pSpvReflectDescriptorBinding->count : vkDescriptorSetLayoutBindings[binding].descriptorCount;
-                    }
-                }
-                // Skip other sets.
-                break;
-            }
-            else
-            {
-                // Skip
-                printf("Warning: descriptor set %d\n", spvReflectDescriptorSet.set);
-            }
-        }
-    }
-    VkDevice vkDevice = pGfxContext->vkDevice;
-    VkDescriptorSetLayoutCreateInfo vkDescriptorSetLayoutCreateInfo = {
-        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
-        .bindingCount = descriptorBindingCount,
-        .pBindings = vkDescriptorSetLayoutBindings,
-    };
-    assertVkResult(vkCreateDescriptorSetLayout(vkDevice, &vkDescriptorSetLayoutCreateInfo, NULL, &vkDescriptorSetLayout));
-    VkDescriptorPoolCreateInfo vkDescriptorPoolCreateInfo = {
-        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
-        .poolSizeCount = vkDescriptorPoolSizeDynamicArray.count,
-        .pPoolSizes = vkDescriptorPoolSizeDynamicArray.array,
-        .maxSets = 1,
-    };
-    assertVkResult(vkCreateDescriptorPool(vkDevice, &vkDescriptorPoolCreateInfo, NULL, &vkDescriptorPool));
-    tknDestroyDynamicArray(vkDescriptorPoolSizeDynamicArray);
-
-    VkDescriptorSetAllocateInfo vkDescriptorSetAllocateInfo = {
-        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-        .descriptorPool = vkDescriptorPool,
-        .descriptorSetCount = 1,
-        .pSetLayouts = &vkDescriptorSetLayout,
-    };
-    assertVkResult(vkAllocateDescriptorSets(vkDevice, &vkDescriptorSetAllocateInfo, &vkDescriptorSet));
-
-    DescriptorSet subpassDescriptorSet = {
-        .descriptorBindingCount = descriptorBindingCount,
-        .descriptorBindingContents = descriptorBindingContents,
-        .vkDescriptorSetLayoutBindings = vkDescriptorSetLayoutBindings,
-        .vkDescriptorSetLayout = vkDescriptorSetLayout,
-        .vkDescriptorPool = vkDescriptorPool,
-        .vkDescriptorSet = vkDescriptorSet,
-    };
-    return subpassDescriptorSet;
-}
-static void destroyDescriptorSet(GfxContext *pGfxContext, DescriptorSet descriptorSet)
-{
-    VkDevice vkDevice = pGfxContext->vkDevice;
-    for (uint32_t binding = 0; binding < descriptorSet.descriptorBindingCount; binding++)
-    {
-        DescriptorBindingContent descriptorBindingContent = descriptorSet.descriptorBindingContents[binding];
-        VkDescriptorType descriptorType = descriptorSet.vkDescriptorSetLayoutBindings[binding].descriptorType;
-        if (VK_DESCRIPTOR_TYPE_SAMPLER == descriptorType)
-        {
-            // bindSampler(pGfxContext, &descriptorSet, binding, NULL);
-        }
-        // TODO other types
-        else
-        {
-            tknError("Unsupported descriptor type: %d", descriptorType);
-        }
-    }
-    vkFreeDescriptorSets(vkDevice, descriptorSet.vkDescriptorPool, 1, &descriptorSet.vkDescriptorSet);
-    vkDestroyDescriptorPool(vkDevice, descriptorSet.vkDescriptorPool, NULL);
-    vkDestroyDescriptorSetLayout(vkDevice, descriptorSet.vkDescriptorSetLayout, NULL);
-    tknFree(descriptorSet.vkDescriptorSetLayoutBindings);
-    tknFree(descriptorSet.descriptorBindingContents);
-}
-static void updateDescriptorSet(GfxContext *pGfxContext, DescriptorSet *pDescriptorSet, uint32_t bindingCount, DescriptorBinding *bindings)
-{
-    VkDevice vkDevice = pGfxContext->vkDevice;
-    for (uint32_t bindingIndex = 0; bindingIndex < bindingCount; bindingIndex++)
-    {
-        DescriptorBinding descriptorBinding = bindings[bindingIndex];
-        uint32_t binding = descriptorBinding.binding;
-        tknAssert(binding < pDescriptorSet->descriptorBindingCount, "Invalid binding index");
-        VkDescriptorType descriptorType = pDescriptorSet->vkDescriptorSetLayoutBindings[binding].descriptorType;
-        tknAssert(descriptorType == descriptorBinding.vkDescriptorType, "Incompatible descriptor type");
-        if (VK_DESCRIPTOR_TYPE_SAMPLER == descriptorType)
-        {
-            SamplerDescriptorBindingContent samplerDescriptorBinding = descriptorBinding.descriptorBindingContent.samplerDescriptorBinding;
-            pDescriptorSet->descriptorBindingContents[binding].samplerDescriptorBinding.pSampler = samplerDescriptorBinding.pSampler;
-        }
-        // TODO other types
-        else
-        {
-            tknError("Unsupported descriptor type: %d", descriptorType);
-        }
-    }
-}
-
 void populateFramebuffers(GfxContext *pGfxContext, RenderPass *pRenderPass)
 {
     VkDevice vkDevice = pGfxContext->vkDevice;
@@ -392,7 +177,11 @@ Subpass createSubpass(GfxContext *pGfxContext, uint32_t inputVkAttachmentReferen
         const char *spvPath = spvPaths[pathIndex];
         spvReflectShaderModules[pathIndex] = createSpvReflectShaderModule(spvPath);
     }
-    DescriptorSet subpassDescriptorSet = createDescriptorSet(pGfxContext, spvPathCount, spvReflectShaderModules, TICKERNEL_SUBPASS_DESCRIPTOR_SET);
+    DescriptorSet *pSubpassDescriptorSet = createDescriptorSetPtr(pGfxContext, spvPathCount, spvReflectShaderModules, TICKERNEL_SUBPASS_DESCRIPTOR_SET);
+
+    // Collect all INPUT_ATTACHMENT descriptors for batch update
+    TknDynamicArray inputAttachmentBindings = tknCreateDynamicArray(sizeof(DescriptorBinding), 4);
+    
     for (uint32_t pathIndex = 0; pathIndex < spvPathCount; pathIndex++)
     {
         SpvReflectShaderModule spvReflectShaderModule = spvReflectShaderModules[pathIndex];
@@ -405,7 +194,12 @@ Subpass createSubpass(GfxContext *pGfxContext, uint32_t inputVkAttachmentReferen
                 uint32_t binding = pSpvReflectDescriptorBinding->binding;
                 if (pSpvReflectDescriptorBinding->descriptor_type == VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT)
                 {
-                    // TODO Update DescriptorSet
+                    DescriptorBinding descriptorBinding = {
+                        .binding = binding,
+                        .vkDescriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT,
+                        .descriptorContent.inputAttachmentDescriptorContent.pAttachment = attachmentPtrs[pSpvReflectDescriptorBinding->input_attachment_index],
+                    };
+                    tknAddToDynamicArray(&inputAttachmentBindings, &descriptorBinding, inputAttachmentBindings.count);
                 }
             }
             // Skip other sets.
@@ -418,10 +212,17 @@ Subpass createSubpass(GfxContext *pGfxContext, uint32_t inputVkAttachmentReferen
         }
         destroySpvReflectShaderModule(&spvReflectShaderModule);
     }
+    
+    // Batch update all INPUT_ATTACHMENT descriptors
+    if (inputAttachmentBindings.count > 0)
+    {
+        updateDescriptorSetPtr(pGfxContext, pSubpassDescriptorSet, inputAttachmentBindings.count, inputAttachmentBindings.array);
+    }
+    tknDestroyDynamicArray(inputAttachmentBindings);
     tknFree(spvReflectShaderModules);
 
     Subpass subpass = {
-        .subpassDescriptorSet = subpassDescriptorSet,
+        .pSubpassDescriptorSet = pSubpassDescriptorSet,
         .pipelinePtrDynamicArray = pipelinePtrDynamicArray,
     };
     return subpass;
@@ -434,13 +235,13 @@ void destroySubpass(GfxContext *pGfxContext, Subpass subpass)
         // destroyPipeline(pGfxContext, pPipeline);
     }
     VkDevice vkDevice = pGfxContext->vkDevice;
-    destroyDescriptorSet(pGfxContext, subpass.subpassDescriptorSet);
+    destroyDescriptorSetPtr(pGfxContext, subpass.pSubpassDescriptorSet);
     tknDestroyDynamicArray(subpass.pipelinePtrDynamicArray);
     // assertVkResult(vkFreeDescriptorSets(vkDevice, pSubpass->vkDescriptorPool, 1, &pSubpass->vkDescriptorSet));
     // vkDestroyDescriptorPool(vkDevice, pSubpass->vkDescriptorPool, NULL);
     // vkDestroyDescriptorSetLayout(vkDevice, pSubpass->vkDescriptorSetLayout, NULL);
     // tknDestroyDynamicArray(pSubpass->pipelinePtrDynamicArray);
-    // tknFree(pSubpass->descriptorBindingContents);
+    // tknFree(pSubpass->descriptors);
     // tknFree(pSubpass->vkDescriptorSetLayoutBindings);
 }
 

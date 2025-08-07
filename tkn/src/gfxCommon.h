@@ -4,13 +4,12 @@
 #include "tknCore.h"
 #include "spirv_reflect.h"
 
-void assertVkResult(VkResult vkResult);
 
 struct Sampler
 {
     VkSampler vkSampler;
     VkSamplerCreateInfo vkSamplerCreateInfo;
-    TknHashSet descriptorBindingPtrHashSet;
+    TknHashSet descriptorPtrHashSet;
 };
 
 struct Image
@@ -24,7 +23,7 @@ struct Image
     VkImageUsageFlags vkImageUsageFlags;
     VkMemoryPropertyFlags vkMemoryPropertyFlags;
     VkImageAspectFlags vkImageAspectFlags;
-    TknHashSet descriptorBindingPtrHashSet;
+    TknHashSet descriptorPtrHashSet;
 };
 
 typedef struct
@@ -32,7 +31,7 @@ typedef struct
     VkBuffer vkBuffer;
     VkDeviceMemory vkDeviceMemory;
     void *mapped;
-    TknHashSet descriptorBindingPtrHashSet;
+    TknHashSet descriptorPtrHashSet;
 } Buffer;
 
 typedef struct
@@ -75,35 +74,41 @@ struct Attachment
 typedef struct
 {
     Sampler *pSampler;
-} SamplerDescriptorBindingContent;
+} SamplerDescriptorContent;
 
 typedef struct
 {
     Attachment *pAttachment;
     VkImageLayout vkImageLayout;
-} InputAttachmentDescriptorBindingContent;
+} InputAttachmentDescriptorContent;
 
 typedef union
 {
-    SamplerDescriptorBindingContent samplerDescriptorBinding;
-    InputAttachmentDescriptorBindingContent inputAttachmentDescriptorBindingContent;
-} DescriptorBindingContent;
+    SamplerDescriptorContent samplerDescriptorContent;
+    InputAttachmentDescriptorContent inputAttachmentDescriptorContent;
+} DescriptorContent;
+
+typedef struct
+{
+    VkDescriptorType vkDescriptorType;
+    DescriptorContent descriptorContent;
+    struct DescriptorSet *pDescriptorSet;
+} Descriptor;
 
 struct DescriptorBinding
 {
     VkDescriptorType vkDescriptorType;
-    DescriptorBindingContent descriptorBindingContent;
+    DescriptorContent descriptorContent;
     uint32_t binding;
 };
 
-typedef struct
+typedef struct DescriptorSet
 {
-    uint32_t descriptorBindingCount;                             // for update descriptor sets
-    DescriptorBindingContent *descriptorBindingContents;         // for update descriptor sets
-    VkDescriptorSetLayoutBinding *vkDescriptorSetLayoutBindings; // for creating descriptor set layout
-    VkDescriptorSetLayout vkDescriptorSetLayout;                 // for creating descriptor set & pipelines
-    VkDescriptorPool vkDescriptorPool;                           // for creating descriptor set
-    VkDescriptorSet vkDescriptorSet;                             // subpass descriptor set
+    uint32_t descriptorCount;                    // for update descriptor sets
+    Descriptor *descriptors;                     // for update descriptor sets
+    VkDescriptorSetLayout vkDescriptorSetLayout; // for creating descriptor set & pipelines
+    VkDescriptorPool vkDescriptorPool;           // for creating descriptor
+    VkDescriptorSet vkDescriptorSet;             // subpass descriptor set
 } DescriptorSet;
 
 typedef enum
@@ -125,7 +130,7 @@ typedef struct
 
 typedef struct
 {
-    DescriptorSet subpassDescriptorSet;      // subpass descriptor set
+    DescriptorSet *pSubpassDescriptorSet;    // subpass descriptor set
     TknDynamicArray pipelinePtrDynamicArray; // pipelines
     uint32_t subpassIndex;                   // subpass index in the render pass
 } Subpass;
@@ -180,3 +185,9 @@ struct GfxContext
 
     DescriptorSet globalDescriptorSet;
 };
+
+
+void assertVkResult(VkResult vkResult);
+DescriptorSet *createDescriptorSetPtr(GfxContext *pGfxContext, uint32_t spvReflectShaderModuleCount, SpvReflectShaderModule *spvReflectShaderModules, uint32_t set);
+void destroyDescriptorSetPtr(GfxContext *pGfxContext, DescriptorSet *pDescriptorSet);
+void updateDescriptorSetPtr(GfxContext *pGfxContext, DescriptorSet *pDescriptorSet, uint32_t bindingCount, DescriptorBinding *bindings);
