@@ -92,6 +92,7 @@ typedef struct
     VkDescriptorType vkDescriptorType;
     DescriptorContent descriptorContent;
     struct DescriptorSet *pDescriptorSet;
+    uint32_t binding;
 } Descriptor;
 
 struct DescriptorBinding
@@ -186,6 +187,8 @@ struct GfxContext
 };
 
 void assertVkResult(VkResult vkResult);
+DescriptorBinding getNullDescriptorBinding(GfxContext *pGfxContext, VkDescriptorType vkDescriptorType, uint32_t binding);
+
 DescriptorSet *createDescriptorSetPtr(GfxContext *pGfxContext, uint32_t spvReflectShaderModuleCount, SpvReflectShaderModule *spvReflectShaderModules, uint32_t set);
 void destroyDescriptorSetPtr(GfxContext *pGfxContext, DescriptorSet *pDescriptorSet);
 void updateDescriptorSetPtr(GfxContext *pGfxContext, DescriptorSet *pDescriptorSet, uint32_t bindingCount, DescriptorBinding *bindings);

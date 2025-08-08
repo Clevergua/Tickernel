@@ -16,7 +16,6 @@ static void getMemoryType(VkPhysicalDevice vkPhysicalDevice, uint32_t typeFilter
     tknError("Failed to get suitable memory type!");
 }
 
-
 Attachment *createDynamicAttachmentPtr(GfxContext *pGfxContext, VkFormat vkFormat, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags, float scaler)
 {
     Attachment *pAttachment = tknMalloc(sizeof(Attachment));
@@ -26,7 +25,7 @@ Attachment *createDynamicAttachmentPtr(GfxContext *pGfxContext, VkFormat vkForma
         .depth = 1,
     };
 
-    Image* pImage = createImagePtr(pGfxContext, vkExtent3D, vkFormat, VK_IMAGE_TILING_OPTIMAL, vkImageUsageFlags, vkMemoryPropertyFlags, vkImageAspectFlags);
+    Image *pImage = createImagePtr(pGfxContext, vkExtent3D, vkFormat, VK_IMAGE_TILING_OPTIMAL, vkImageUsageFlags, vkMemoryPropertyFlags, vkImageAspectFlags);
 
     DynamicAttachmentContent dynamicAttachmentContent = {
         .pImage = pImage,
@@ -88,7 +87,6 @@ void destroyFixedAttachmentPtr(GfxContext *pGfxContext, Attachment *pAttachment)
     destroyImagePtr(pGfxContext, fixedAttachmentContent.pImage);
     tknFree(pAttachment);
 }
-
 Attachment *getSwapchainAttachmentPtr(GfxContext *pGfxContext)
 {
     return pGfxContext->swapchainAttachmentPtr;
@@ -178,8 +176,18 @@ Image *createImagePtr(GfxContext *pGfxContext, VkExtent3D vkExtent3D, VkFormat v
 }
 void destroyImagePtr(GfxContext *pGfxContext, Image *pImage)
 {
+    for (size_t i = 0; i < pImage->descriptorPtrHashSet.capacity; i++)
+    {
+        TknListNode *node = pImage->descriptorPtrHashSet.nodePtrs[i];
+        while (node)
+        {
+            Descriptor *pDescriptor = (Descriptor *)node->value;
+            DescriptorBinding descriptorBinding =  getNullDescriptorBinding(pGfxContext, pDescriptor->vkDescriptorType, pDescriptor->binding);
+            updateDescriptorSetPtr(pGfxContext, pDescriptor->pDescriptorSet, 1, &descriptorBinding);
+            node = node->nextNodePtr;
+        }
+    }
     VkDevice vkDevice = pGfxContext->vkDevice;
-
     tknDestroyHashSet(pImage->descriptorPtrHashSet);
     vkDestroyImageView(vkDevice, pImage->vkImageView, NULL);
     vkDestroyImage(vkDevice, pImage->vkImage, NULL);
