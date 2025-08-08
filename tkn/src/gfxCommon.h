@@ -89,27 +89,20 @@ typedef union
 
 typedef struct
 {
-    VkDescriptorType vkDescriptorType;
-    DescriptorContent descriptorContent;
-    struct DescriptorSet *pDescriptorSet;
-    uint32_t binding;
-} Descriptor;
-
-struct DescriptorBinding
-{
-    VkDescriptorType vkDescriptorType;
-    DescriptorContent descriptorContent;
-    uint32_t binding;
-};
-
-typedef struct DescriptorSet
-{
     uint32_t descriptorCount;                    // for update descriptor sets
-    Descriptor *descriptors;                     // for update descriptor sets
+    Descriptor *descriptors;       // for update descriptor sets
     VkDescriptorSetLayout vkDescriptorSetLayout; // for creating descriptor set & pipelines
     VkDescriptorPool vkDescriptorPool;           // for creating descriptor
     VkDescriptorSet vkDescriptorSet;             // subpass descriptor set
 } DescriptorSet;
+
+struct Descriptor
+{
+    VkDescriptorType vkDescriptorType;
+    DescriptorContent descriptorContent;
+    DescriptorSet *pDescriptorSet;
+    uint32_t binding;
+};
 
 typedef enum
 {
@@ -190,4 +183,4 @@ void assertVkResult(VkResult vkResult);
 DescriptorContent getNullDescriptorContent(VkDescriptorType vkDescriptorType);
 DescriptorSet *createDescriptorSetPtr(GfxContext *pGfxContext, uint32_t spvReflectShaderModuleCount, SpvReflectShaderModule *spvReflectShaderModules, uint32_t set);
 void destroyDescriptorSetPtr(GfxContext *pGfxContext, DescriptorSet *pDescriptorSet);
-void updateDescriptorSetPtr(GfxContext *pGfxContext, DescriptorSet *pDescriptorSet, uint32_t bindingCount, DescriptorBinding *bindings);
+void updateDescriptorSetPtr(GfxContext *pGfxContext, DescriptorSet *pDescriptorSet, uint32_t bindingCount, Descriptor *bindings);

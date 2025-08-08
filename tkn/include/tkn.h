@@ -7,7 +7,7 @@ typedef struct RenderPass RenderPass;
 typedef struct Attachment Attachment;
 typedef struct Image Image;
 typedef struct Sampler Sampler;
-typedef struct DescriptorBinding DescriptorBinding;
+typedef struct Descriptor Descriptor;
 
 VkFormat getSupportedFormat(GfxContext *pGfxContext, uint32_t candidateCount, VkFormat *candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
 

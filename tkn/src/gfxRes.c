@@ -46,14 +46,30 @@ void resizeDynamicAttachmentPtr(GfxContext *pGfxContext, Attachment *pAttachment
 {
     tknAssert(pAttachment->attachmentType == ATTACHMENT_TYPE_DYNAMIC, "Attachment type mismatch!");
     DynamicAttachmentContent dynamicAttachmentContent = pAttachment->attachmentContent.dynamicAttachmentContent;
-    destroyImagePtr(pGfxContext, dynamicAttachmentContent.pImage);
+
     VkExtent3D vkExtent3D = {
         .width = (uint32_t)(pGfxContext->swapchainExtent.width * dynamicAttachmentContent.scaler),
         .height = (uint32_t)(pGfxContext->swapchainExtent.height * dynamicAttachmentContent.scaler),
         .depth = 1,
     };
-    dynamicAttachmentContent.pImage = createImagePtr(pGfxContext, vkExtent3D, dynamicAttachmentContent.pImage->vkFormat, VK_IMAGE_TILING_OPTIMAL, dynamicAttachmentContent.pImage->vkImageUsageFlags, dynamicAttachmentContent.pImage->vkMemoryPropertyFlags, dynamicAttachmentContent.pImage->vkImageAspectFlags);
+    Image *pImage = dynamicAttachmentContent.pImage;
+    Image *pNewImage = createImagePtr(pGfxContext, vkExtent3D, pImage->vkFormat, VK_IMAGE_TILING_OPTIMAL, pImage->vkImageUsageFlags, pImage->vkMemoryPropertyFlags, pImage->vkImageAspectFlags);
+    for (uint32_t i = 0; i < pImage->descriptorPtrHashSet.capacity; i++)
+    {
+        TknListNode *node = pImage->descriptorPtrHashSet.nodePtrs[i];
+        while (node)
+        {
+            Descriptor *pDescriptor = (Descriptor *)node->value;
+            Descriptor descriptor = pDescriptor->descriptor;
+            updateDescriptorSetPtr(pGfxContext, pDescriptor->pDescriptorSet, 1, &descriptor);
+            node = node->nextNodePtr;
+        }
+    }
+
+    destroyImagePtr(pGfxContext, dynamicAttachmentContent.pImage);
+
     // TODO 引用关系被删除了需要加回来
+    dynamicAttachmentContent.pImage = pNewImage;
 }
 
 Attachment *createFixedAttachmentPtr(GfxContext *pGfxContext, VkFormat vkFormat, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags, uint32_t width, uint32_t height)
@@ -181,12 +197,8 @@ void destroyImagePtr(GfxContext *pGfxContext, Image *pImage)
         while (node)
         {
             Descriptor *pDescriptor = (Descriptor *)node->value;
-            DescriptorBinding descriptorBinding = (DescriptorBinding){
-                .vkDescriptorType = pDescriptor->vkDescriptorType,
-                .descriptorContent = getNullDescriptorContent(pDescriptor->vkDescriptorType),
-                .binding = pDescriptor->binding,
-            };
-            updateDescriptorSetPtr(pGfxContext, pDescriptor->pDescriptorSet, 1, &descriptorBinding);
+            pDescriptor->descriptorContent = getNullDescriptorContent(pDescriptor->vkDescriptorType);
+            updateDescriptorSetPtr(pGfxContext, pDescriptor->pDescriptorSet, 1, pDescriptor);
             node = node->nextNodePtr;
         }
     }

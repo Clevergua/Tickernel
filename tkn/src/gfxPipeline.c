@@ -50,7 +50,7 @@ static Subpass createSubpass(GfxContext *pGfxContext, uint32_t inputVkAttachment
     DescriptorSet *pSubpassDescriptorSet = createDescriptorSetPtr(pGfxContext, spvPathCount, spvReflectShaderModules, TICKERNEL_SUBPASS_DESCRIPTOR_SET);
 
     // Collect all INPUT_ATTACHMENT descriptors for batch update
-    TknDynamicArray inputAttachmentBindings = tknCreateDynamicArray(sizeof(DescriptorBinding), 4);
+    TknDynamicArray inputAttachmentBindings = tknCreateDynamicArray(sizeof(Descriptor), 4);
     
     for (uint32_t pathIndex = 0; pathIndex < spvPathCount; pathIndex++)
     {
@@ -64,12 +64,12 @@ static Subpass createSubpass(GfxContext *pGfxContext, uint32_t inputVkAttachment
                 uint32_t binding = pSpvReflectDescriptorBinding->binding;
                 if (VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT == (VkDescriptorType)pSpvReflectDescriptorBinding->descriptor_type)
                 {
-                    DescriptorBinding descriptorBinding = {
+                    Descriptor descriptor = {
                         .binding = binding,
                         .vkDescriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT,
                         .descriptorContent.inputAttachmentDescriptorContent.pAttachment = attachmentPtrs[pSpvReflectDescriptorBinding->input_attachment_index],
                     };
-                    tknAddToDynamicArray(&inputAttachmentBindings, &descriptorBinding, inputAttachmentBindings.count);
+                    tknAddToDynamicArray(&inputAttachmentBindings, &descriptor, inputAttachmentBindings.count);
                 }
             }
             // Skip other sets.
