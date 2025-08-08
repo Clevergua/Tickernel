@@ -182,7 +182,11 @@ void destroyImagePtr(GfxContext *pGfxContext, Image *pImage)
         while (node)
         {
             Descriptor *pDescriptor = (Descriptor *)node->value;
-            DescriptorBinding descriptorBinding =  getNullDescriptorBinding(pGfxContext, pDescriptor->vkDescriptorType, pDescriptor->binding);
+            DescriptorBinding descriptorBinding = (DescriptorBinding){
+                .vkDescriptorType = pDescriptor->vkDescriptorType,
+                .descriptorContent = getNullDescriptorContent(pDescriptor->vkDescriptorType),
+                .binding = pDescriptor->binding,
+            };
             updateDescriptorSetPtr(pGfxContext, pDescriptor->pDescriptorSet, 1, &descriptorBinding);
             node = node->nextNodePtr;
         }

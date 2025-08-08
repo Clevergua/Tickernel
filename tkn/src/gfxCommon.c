@@ -31,28 +31,22 @@ VkFormat getSupportedFormat(GfxContext *pGfxContext, uint32_t candidateCount, Vk
     return VK_FORMAT_MAX_ENUM;
 }
 
-DescriptorBinding getNullDescriptorBinding(GfxContext *pGfxContext, VkDescriptorType vkDescriptorType, uint32_t binding)
+DescriptorContent getNullDescriptorContent(VkDescriptorType vkDescriptorType)
 {
-    DescriptorBinding descriptorBinding = {
-        .vkDescriptorType = vkDescriptorType,
-        .descriptorContent = {0},
-        .binding = binding,
-    };
+    DescriptorContent descriptorContent = {0};
     if (VK_DESCRIPTOR_TYPE_SAMPLER == vkDescriptorType)
     {
-        descriptorBinding.descriptorContent.samplerDescriptorContent.pSampler = NULL;
-        return descriptorBinding;
+        descriptorContent.samplerDescriptorContent.pSampler = NULL;
     }
     else if (VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT == vkDescriptorType)
     {
-        descriptorBinding.descriptorContent.inputAttachmentDescriptorContent.pAttachment = NULL;
-        return descriptorBinding;
+        descriptorContent.inputAttachmentDescriptorContent.pAttachment = NULL;
     }
     else
     {
         tknError("Unsupported descriptor type: %d", vkDescriptorType);
     }
-    return descriptorBinding;
+    return descriptorContent;
 }
 
 DescriptorSet *createDescriptorSetPtr(GfxContext *pGfxContext, uint32_t spvReflectShaderModuleCount, SpvReflectShaderModule *spvReflectShaderModules, uint32_t set)
@@ -361,7 +355,11 @@ void destroyDescriptorSetPtr(GfxContext *pGfxContext, DescriptorSet *pDescriptor
     for (uint32_t binding = 0; binding < pDescriptorSet->descriptorCount; binding++)
     {
         VkDescriptorType descriptorType = pDescriptorSet->descriptors[binding].vkDescriptorType;
-        descriptorBindings[binding] = getNullDescriptorBinding(pGfxContext, descriptorType, binding);
+        descriptorBindings[binding] = (DescriptorBinding){
+            .vkDescriptorType = descriptorType,
+            .descriptorContent = getNullDescriptorContent(descriptorType),
+            .binding = binding,
+        };
     }
     updateDescriptorSetPtr(pGfxContext, pDescriptorSet, pDescriptorSet->descriptorCount, descriptorBindings);
     tknFree(descriptorBindings);
