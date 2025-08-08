@@ -4,7 +4,6 @@
 #include "tknCore.h"
 #include "spirv_reflect.h"
 
-
 struct Sampler
 {
     VkSampler vkSampler;
@@ -36,14 +35,14 @@ typedef struct
 
 typedef struct
 {
-    Image image;
+    Image *pImage;
     uint32_t width;
     uint32_t height;
 } FixedAttachmentContent;
 
 typedef struct
 {
-    Image image;
+    Image *pImage;
     float32_t scaler;
 } DynamicAttachmentContent;
 
@@ -185,7 +184,6 @@ struct GfxContext
 
     DescriptorSet globalDescriptorSet;
 };
-
 
 void assertVkResult(VkResult vkResult);
 DescriptorSet *createDescriptorSetPtr(GfxContext *pGfxContext, uint32_t spvReflectShaderModuleCount, SpvReflectShaderModule *spvReflectShaderModules, uint32_t set);

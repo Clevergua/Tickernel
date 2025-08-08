@@ -15,9 +15,91 @@ static void getMemoryType(VkPhysicalDevice vkPhysicalDevice, uint32_t typeFilter
     }
     tknError("Failed to get suitable memory type!");
 }
-// TODO: 删除此接口只保留Ptr接口
-static Image createImage(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, VkExtent3D vkExtent3D, VkFormat vkFormat, VkImageTiling vkImageTiling, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags)
+
+
+Attachment *createDynamicAttachmentPtr(GfxContext *pGfxContext, VkFormat vkFormat, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags, float scaler)
 {
+    Attachment *pAttachment = tknMalloc(sizeof(Attachment));
+    VkExtent3D vkExtent3D = {
+        .width = (uint32_t)(pGfxContext->swapchainExtent.width * scaler),
+        .height = (uint32_t)(pGfxContext->swapchainExtent.height * scaler),
+        .depth = 1,
+    };
+
+    Image* pImage = createImagePtr(pGfxContext, vkExtent3D, vkFormat, VK_IMAGE_TILING_OPTIMAL, vkImageUsageFlags, vkMemoryPropertyFlags, vkImageAspectFlags);
+
+    DynamicAttachmentContent dynamicAttachmentContent = {
+        .pImage = pImage,
+        .scaler = scaler,
+    };
+    *pAttachment = (Attachment){
+        .attachmentType = ATTACHMENT_TYPE_DYNAMIC,
+        .attachmentContent.dynamicAttachmentContent = dynamicAttachmentContent,
+    };
+    return pAttachment;
+}
+void destroyDynamicAttachmentPtr(GfxContext *pGfxContext, Attachment *pAttachment)
+{
+    tknAssert(pAttachment->attachmentType == ATTACHMENT_TYPE_DYNAMIC, "Attachment type mismatch!");
+    DynamicAttachmentContent dynamicAttachmentContent = pAttachment->attachmentContent.dynamicAttachmentContent;
+    destroyImagePtr(pGfxContext, dynamicAttachmentContent.pImage);
+    tknFree(pAttachment);
+}
+void resizeDynamicAttachmentPtr(GfxContext *pGfxContext, Attachment *pAttachment)
+{
+    tknAssert(pAttachment->attachmentType == ATTACHMENT_TYPE_DYNAMIC, "Attachment type mismatch!");
+    DynamicAttachmentContent dynamicAttachmentContent = pAttachment->attachmentContent.dynamicAttachmentContent;
+    destroyImagePtr(pGfxContext, dynamicAttachmentContent.pImage);
+    VkExtent3D vkExtent3D = {
+        .width = (uint32_t)(pGfxContext->swapchainExtent.width * dynamicAttachmentContent.scaler),
+        .height = (uint32_t)(pGfxContext->swapchainExtent.height * dynamicAttachmentContent.scaler),
+        .depth = 1,
+    };
+    dynamicAttachmentContent.pImage = createImagePtr(pGfxContext, vkExtent3D, dynamicAttachmentContent.pImage->vkFormat, VK_IMAGE_TILING_OPTIMAL, dynamicAttachmentContent.pImage->vkImageUsageFlags, dynamicAttachmentContent.pImage->vkMemoryPropertyFlags, dynamicAttachmentContent.pImage->vkImageAspectFlags);
+}
+
+Attachment *createFixedAttachmentPtr(GfxContext *pGfxContext, VkFormat vkFormat, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags, uint32_t width, uint32_t height)
+{
+    Attachment *pAttachment = tknMalloc(sizeof(Attachment));
+    FixedAttachmentContent fixedAttachmentContent = {
+        .pImage = NULL,
+        .width = width,
+        .height = height,
+    };
+    VkExtent3D vkExtent3D = {
+        .width = width,
+        .height = height,
+        .depth = 1,
+    };
+
+    pAttachment->attachmentContent.fixedAttachmentContent.pImage = createImagePtr(pGfxContext, vkExtent3D, vkFormat, VK_IMAGE_TILING_OPTIMAL, vkImageUsageFlags, vkMemoryPropertyFlags, vkImageAspectFlags);
+
+    *pAttachment = (Attachment){
+        .attachmentType = ATTACHMENT_TYPE_FIXED,
+        .attachmentContent.fixedAttachmentContent = fixedAttachmentContent,
+    };
+    return pAttachment;
+}
+void destroyFixedAttachmentPtr(GfxContext *pGfxContext, Attachment *pAttachment)
+{
+    tknAssert(pAttachment->attachmentType == ATTACHMENT_TYPE_FIXED, "Attachment type mismatch!");
+    VkDevice vkDevice = pGfxContext->vkDevice;
+    FixedAttachmentContent fixedAttachmentContent = pAttachment->attachmentContent.fixedAttachmentContent;
+    destroyImagePtr(pGfxContext, fixedAttachmentContent.pImage);
+    tknFree(pAttachment);
+}
+
+Attachment *getSwapchainAttachmentPtr(GfxContext *pGfxContext)
+{
+    return pGfxContext->swapchainAttachmentPtr;
+}
+
+Image *createImagePtr(GfxContext *pGfxContext, VkExtent3D vkExtent3D, VkFormat vkFormat, VkImageTiling vkImageTiling, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags)
+{
+    Image *pImage = tknMalloc(sizeof(Image));
+    VkDevice vkDevice = pGfxContext->vkDevice;
+    VkPhysicalDevice vkPhysicalDevice = pGfxContext->vkPhysicalDevice;
+
     VkImage vkImage;
     VkImageView vkImageView;
     VkDeviceMemory vkDeviceMemory;
@@ -90,103 +172,18 @@ static Image createImage(VkDevice vkDevice, VkPhysicalDevice vkPhysicalDevice, V
         .vkImageAspectFlags = vkImageAspectFlags,
         .descriptorPtrHashSet = tknCreateHashSet(1),
     };
-    return image;
-}
-static void destroyImage(VkDevice vkDevice, Image image)
-{
-    tknDestroyHashSet(image.descriptorPtrHashSet);
-    vkDestroyImageView(vkDevice, image.vkImageView, NULL);
-    vkDestroyImage(vkDevice, image.vkImage, NULL);
-    vkFreeMemory(vkDevice, image.vkDeviceMemory, NULL);
-}
+    *pImage = image;
 
-Attachment *createDynamicAttachmentPtr(GfxContext *pGfxContext, VkFormat vkFormat, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags, float scaler)
-{
-    Attachment *pAttachment = tknMalloc(sizeof(Attachment));
-    VkExtent3D vkExtent3D = {
-        .width = (uint32_t)(pGfxContext->swapchainExtent.width * scaler),
-        .height = (uint32_t)(pGfxContext->swapchainExtent.height * scaler),
-        .depth = 1,
-    };
-    VkDevice vkDevice = pGfxContext->vkDevice;
-    VkPhysicalDevice vkPhysicalDevice = pGfxContext->vkPhysicalDevice;
-    Image image = createImage(vkDevice, vkPhysicalDevice, vkExtent3D, vkFormat, VK_IMAGE_TILING_OPTIMAL, vkImageUsageFlags, vkMemoryPropertyFlags, vkImageAspectFlags);
-
-    DynamicAttachmentContent dynamicAttachmentContent = {
-        .image = image,
-        .scaler = scaler,
-    };
-    *pAttachment = (Attachment){
-        .attachmentType = ATTACHMENT_TYPE_DYNAMIC,
-        .attachmentContent.dynamicAttachmentContent = dynamicAttachmentContent,
-    };
-    return pAttachment;
-}
-void destroyDynamicAttachmentPtr(GfxContext *pGfxContext, Attachment *pAttachment)
-{
-    tknAssert(pAttachment->attachmentType == ATTACHMENT_TYPE_DYNAMIC, "Attachment type mismatch!");
-    DynamicAttachmentContent dynamicAttachmentContent = pAttachment->attachmentContent.dynamicAttachmentContent;
-    destroyImage(pGfxContext->vkDevice, dynamicAttachmentContent.image);
-    tknFree(pAttachment);
-}
-void resizeDynamicAttachmentPtr(GfxContext *pGfxContext, Attachment *pAttachment)
-{
-    tknAssert(pAttachment->attachmentType == ATTACHMENT_TYPE_DYNAMIC, "Attachment type mismatch!");
-    DynamicAttachmentContent dynamicAttachmentContent = pAttachment->attachmentContent.dynamicAttachmentContent;
-    destroyImage(pGfxContext->vkDevice, dynamicAttachmentContent.image);
-    VkExtent3D vkExtent3D = {
-        .width = (uint32_t)(pGfxContext->swapchainExtent.width * dynamicAttachmentContent.scaler),
-        .height = (uint32_t)(pGfxContext->swapchainExtent.height * dynamicAttachmentContent.scaler),
-        .depth = 1,
-    };
-    dynamicAttachmentContent.image = createImage(pGfxContext->vkDevice, pGfxContext->vkPhysicalDevice, vkExtent3D, dynamicAttachmentContent.image.vkFormat, VK_IMAGE_TILING_OPTIMAL, dynamicAttachmentContent.image.vkImageUsageFlags, dynamicAttachmentContent.image.vkMemoryPropertyFlags, dynamicAttachmentContent.image.vkImageAspectFlags);
-}
-
-Attachment *createFixedAttachmentPtr(GfxContext *pGfxContext, VkFormat vkFormat, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags, uint32_t width, uint32_t height)
-{
-    Attachment *pAttachment = tknMalloc(sizeof(Attachment));
-    FixedAttachmentContent fixedAttachmentContent = {
-        .image = {0},
-        .width = width,
-        .height = height,
-    };
-    VkExtent3D vkExtent3D = {
-        .width = width,
-        .height = height,
-        .depth = 1,
-    };
-    VkDevice vkDevice = pGfxContext->vkDevice;
-    VkPhysicalDevice vkPhysicalDevice = pGfxContext->vkPhysicalDevice;
-    pAttachment->attachmentContent.fixedAttachmentContent.image = createImage(vkDevice, vkPhysicalDevice, vkExtent3D, vkFormat, VK_IMAGE_TILING_OPTIMAL, vkImageUsageFlags, vkMemoryPropertyFlags, vkImageAspectFlags);
-
-    *pAttachment = (Attachment){
-        .attachmentType = ATTACHMENT_TYPE_FIXED,
-        .attachmentContent.fixedAttachmentContent = fixedAttachmentContent,
-    };
-    return pAttachment;
-}
-void destroyFixedAttachmentPtr(GfxContext *pGfxContext, Attachment *pAttachment)
-{
-    tknAssert(pAttachment->attachmentType == ATTACHMENT_TYPE_FIXED, "Attachment type mismatch!");
-    VkDevice vkDevice = pGfxContext->vkDevice;
-    FixedAttachmentContent fixedAttachmentContent = pAttachment->attachmentContent.fixedAttachmentContent;
-    destroyImage(vkDevice, fixedAttachmentContent.image);
-    tknFree(pAttachment);
-}
-
-Attachment *getSwapchainAttachmentPtr(GfxContext *pGfxContext)
-{
-    return pGfxContext->swapchainAttachmentPtr;
-}
-
-Image *createImagePtr(GfxContext *pGfxContext, VkExtent3D vkExtent3D, VkFormat vkFormat, VkImageTiling vkImageTiling, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags)
-{
-    Image *pImage = tknMalloc(sizeof(Image));
-    *pImage = createImage(pGfxContext->vkDevice, pGfxContext->vkPhysicalDevice, vkExtent3D, vkFormat, vkImageTiling, vkImageUsageFlags, vkMemoryPropertyFlags, vkImageAspectFlags);
     return pImage;
 }
 void destroyImagePtr(GfxContext *pGfxContext, Image *pImage)
 {
-    destroyImage(pGfxContext->vkDevice, *pImage);
+    VkDevice vkDevice = pGfxContext->vkDevice;
+
+    tknDestroyHashSet(pImage->descriptorPtrHashSet);
+    vkDestroyImageView(vkDevice, pImage->vkImageView, NULL);
+    vkDestroyImage(vkDevice, pImage->vkImage, NULL);
+    vkFreeMemory(vkDevice, pImage->vkDeviceMemory, NULL);
+
     tknFree(pImage);
 }

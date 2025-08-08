@@ -259,11 +259,11 @@ void updateDescriptorSetPtr(GfxContext *pGfxContext, DescriptorSet *pDescriptorS
                     // Remove reference from old attachment
                     if (pAttachment->attachmentType == ATTACHMENT_TYPE_DYNAMIC)
                     {
-                        tknRemoveFromHashSet(&pAttachment->attachmentContent.dynamicAttachmentContent.image.descriptorPtrHashSet, &pDescriptor);
+                        tknRemoveFromHashSet(&pAttachment->attachmentContent.dynamicAttachmentContent.pImage->descriptorPtrHashSet, &pDescriptor);
                     }
                     else if (pAttachment->attachmentType == ATTACHMENT_TYPE_FIXED)
                     {
-                        tknRemoveFromHashSet(&pAttachment->attachmentContent.fixedAttachmentContent.image.descriptorPtrHashSet, &pDescriptor);
+                        tknRemoveFromHashSet(&pAttachment->attachmentContent.fixedAttachmentContent.pImage->descriptorPtrHashSet, &pDescriptor);
                     }
                 }
                 if (newDescriptorContent.pAttachment != NULL)
@@ -271,11 +271,11 @@ void updateDescriptorSetPtr(GfxContext *pGfxContext, DescriptorSet *pDescriptorS
                     // Add reference to new attachment
                     if (newDescriptorContent.pAttachment->attachmentType == ATTACHMENT_TYPE_DYNAMIC)
                     {
-                        tknAddToHashSet(&newDescriptorContent.pAttachment->attachmentContent.dynamicAttachmentContent.image.descriptorPtrHashSet, &pDescriptor);
+                        tknAddToHashSet(&newDescriptorContent.pAttachment->attachmentContent.dynamicAttachmentContent.pImage->descriptorPtrHashSet, &pDescriptor);
                     }
                     else if (newDescriptorContent.pAttachment->attachmentType == ATTACHMENT_TYPE_FIXED)
                     {
-                        tknAddToHashSet(&newDescriptorContent.pAttachment->attachmentContent.fixedAttachmentContent.image.descriptorPtrHashSet, &pDescriptor);
+                        tknAddToHashSet(&newDescriptorContent.pAttachment->attachmentContent.fixedAttachmentContent.pImage->descriptorPtrHashSet, &pDescriptor);
                     }
                 }
                 pDescriptor->descriptorContent.inputAttachmentDescriptorContent = newDescriptorContent;
@@ -284,11 +284,11 @@ void updateDescriptorSetPtr(GfxContext *pGfxContext, DescriptorSet *pDescriptorS
                 {
                     if (newDescriptorContent.pAttachment->attachmentType == ATTACHMENT_TYPE_DYNAMIC)
                     {
-                        imageView = newDescriptorContent.pAttachment->attachmentContent.dynamicAttachmentContent.image.vkImageView;
+                        imageView = newDescriptorContent.pAttachment->attachmentContent.dynamicAttachmentContent.pImage->vkImageView;
                     }
                     else if (newDescriptorContent.pAttachment->attachmentType == ATTACHMENT_TYPE_FIXED)
                     {
-                        imageView = newDescriptorContent.pAttachment->attachmentContent.fixedAttachmentContent.image.vkImageView;
+                        imageView = newDescriptorContent.pAttachment->attachmentContent.fixedAttachmentContent.pImage->vkImageView;
                     }
                     // SWAPCHAIN type needs special handling - might be handled at render time
                 }

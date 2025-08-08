@@ -104,11 +104,11 @@ void populateFramebuffers(GfxContext *pGfxContext, RenderPass *pRenderPass)
                 }
                 else if (ATTACHMENT_TYPE_DYNAMIC == pAttachment->attachmentType)
                 {
-                    attachmentVkImageViews[attachmentIndex] = pAttachment->attachmentContent.dynamicAttachmentContent.image.vkImageView;
+                    attachmentVkImageViews[attachmentIndex] = pAttachment->attachmentContent.dynamicAttachmentContent.pImage->vkImageView;
                 }
                 else
                 {
-                    attachmentVkImageViews[attachmentIndex] = pAttachment->attachmentContent.fixedAttachmentContent.image.vkImageView;
+                    attachmentVkImageViews[attachmentIndex] = pAttachment->attachmentContent.fixedAttachmentContent.pImage->vkImageView;
                 }
             }
             VkFramebufferCreateInfo vkFramebufferCreateInfo = {
@@ -136,11 +136,11 @@ void populateFramebuffers(GfxContext *pGfxContext, RenderPass *pRenderPass)
             Attachment *pAttachment = attachmentPtrs[attachmentIndex];
             if (ATTACHMENT_TYPE_DYNAMIC == pAttachment->attachmentType)
             {
-                attachmentVkImageViews[attachmentIndex] = pAttachment->attachmentContent.dynamicAttachmentContent.image.vkImageView;
+                attachmentVkImageViews[attachmentIndex] = pAttachment->attachmentContent.dynamicAttachmentContent.pImage->vkImageView;
             }
             else
             {
-                attachmentVkImageViews[attachmentIndex] = pAttachment->attachmentContent.fixedAttachmentContent.image.vkImageView;
+                attachmentVkImageViews[attachmentIndex] = pAttachment->attachmentContent.fixedAttachmentContent.pImage->vkImageView;
             }
         }
         VkFramebufferCreateInfo vkFramebufferCreateInfo = {
@@ -273,11 +273,11 @@ RenderPass *createRenderPassPtr(GfxContext *pGfxContext, uint32_t attachmentCoun
         }
         else if (ATTACHMENT_TYPE_DYNAMIC == pAttachment->attachmentType)
         {
-            vkAttachmentDescriptions[i].format = pAttachment->attachmentContent.dynamicAttachmentContent.image.vkFormat;
+            vkAttachmentDescriptions[i].format = pAttachment->attachmentContent.dynamicAttachmentContent.pImage->vkFormat;
         }
         else
         {
-            vkAttachmentDescriptions[i].format = pAttachment->attachmentContent.fixedAttachmentContent.image.vkFormat;
+            vkAttachmentDescriptions[i].format = pAttachment->attachmentContent.fixedAttachmentContent.pImage->vkFormat;
         }
     }
     VkRenderPassCreateInfo vkRenderPassCreateInfo = {
