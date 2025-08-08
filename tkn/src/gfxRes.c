@@ -24,9 +24,7 @@ Attachment *createDynamicAttachmentPtr(GfxContext *pGfxContext, VkFormat vkForma
         .height = (uint32_t)(pGfxContext->swapchainExtent.height * scaler),
         .depth = 1,
     };
-
     Image *pImage = createImagePtr(pGfxContext, vkExtent3D, vkFormat, VK_IMAGE_TILING_OPTIMAL, vkImageUsageFlags, vkMemoryPropertyFlags, vkImageAspectFlags);
-
     DynamicAttachmentContent dynamicAttachmentContent = {
         .pImage = pImage,
         .scaler = scaler,
@@ -55,6 +53,7 @@ void resizeDynamicAttachmentPtr(GfxContext *pGfxContext, Attachment *pAttachment
         .depth = 1,
     };
     dynamicAttachmentContent.pImage = createImagePtr(pGfxContext, vkExtent3D, dynamicAttachmentContent.pImage->vkFormat, VK_IMAGE_TILING_OPTIMAL, dynamicAttachmentContent.pImage->vkImageUsageFlags, dynamicAttachmentContent.pImage->vkMemoryPropertyFlags, dynamicAttachmentContent.pImage->vkImageAspectFlags);
+    // TODO 引用关系被删除了需要加回来
 }
 
 Attachment *createFixedAttachmentPtr(GfxContext *pGfxContext, VkFormat vkFormat, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags, uint32_t width, uint32_t height)
@@ -176,7 +175,7 @@ Image *createImagePtr(GfxContext *pGfxContext, VkExtent3D vkExtent3D, VkFormat v
 }
 void destroyImagePtr(GfxContext *pGfxContext, Image *pImage)
 {
-    for (size_t i = 0; i < pImage->descriptorPtrHashSet.capacity; i++)
+    for (uint32_t i = 0; i < pImage->descriptorPtrHashSet.capacity; i++)
     {
         TknListNode *node = pImage->descriptorPtrHashSet.nodePtrs[i];
         while (node)
