@@ -32,6 +32,7 @@ static void initializeGfxContext(GfxContext *pGfxContext, VkInstance vkInstance,
         .gfxVkCommandBuffers = NULL,
 
         .renderPassPtrDynamicArray = {},
+        .globalDescriptorSet = {0},
     };
 }
 
@@ -604,11 +605,13 @@ GfxContext *createGfxContextPtr(int targetSwapchainImageCount, VkSurfaceFormatKH
     populateCommandPools(pGfxContext);
     populateVkCommandBuffers(pGfxContext);
     setupRenderPipeline(pGfxContext);
+    //TODO: createDescriptorSetPtr(pGfxContext, 
     return pGfxContext;
 }
 
 void destroyGfxContextPtr(GfxContext *pGfxContext)
 {
+    // TODO destroyDescriptorSetPtr
     teardownRenderPipeline(pGfxContext);
     cleanupVkCommandBuffers(pGfxContext);
     cleanupCommandPools(pGfxContext);

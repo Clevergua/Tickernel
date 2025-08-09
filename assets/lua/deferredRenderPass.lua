@@ -1,7 +1,7 @@
 local deferredRenderPass = {}
 -- local geometryPipeline = require("geometryPipeline")
 
-function deferredRenderPass.createRenderPassPtr(pGfxContext, pAttachments)
+function deferredRenderPass.createRenderPassPtr(pGfxContext, pAttachments, assetsPath)
     local colorAttachmentDescription = {
         samples = VK_SAMPLE_COUNT_1_BIT,
         loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
@@ -111,13 +111,15 @@ function deferredRenderPass.createRenderPassPtr(pGfxContext, pAttachments)
         postProcessSubpassDescription,
     }
 
-    local spvPathArrays = {
-        {},
+    local spvPathsArray = {
         {
-            "assets/shaders/lighting.subpass.frag.spv"
+
         },
         {
-            "assets/shaders/postProcess.subpass.frag.spv"
+            assetsPath .. "/shaders/lighting.subpass.frag.spv"
+        },
+        {
+            assetsPath .. "/shaders/postProcess.subpass.frag.spv"
         },
     }
 
@@ -160,7 +162,8 @@ function deferredRenderPass.createRenderPassPtr(pGfxContext, pAttachments)
         }
     }
 
-    return gfx.createRenderPassPtr(pGfxContext, vkAttachmentDescriptions, pAttachments, vkSubpassDescriptions, spvPathArrays, vkSubpassDependencies, 0)
+    return gfx.createRenderPassPtr(pGfxContext, vkAttachmentDescriptions, pAttachments, vkSubpassDescriptions,
+        spvPathsArray, vkSubpassDependencies, 0)
 end
 
 function deferredRenderPass.destroyRenderPass(pRenderPass)

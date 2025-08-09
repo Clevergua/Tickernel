@@ -227,9 +227,9 @@ debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
     LuaLibrary luaLibraries[] = {
         audioLibrary,
     };
-
-    NSString *luaPath = [resourcePath stringByAppendingPathComponent:@"assets/lua"];
-    self.pTknContext = createTknContextPtr([luaPath UTF8String], sizeof(luaLibraries) / sizeof(luaLibraries[0]), luaLibraries, 2, vkSurfaceFormatKHR,VK_PRESENT_MODE_FIFO_KHR,_vkInstance,_vkSurface,swapchainExtent);
+    
+    NSString *assetsPath = [resourcePath stringByAppendingPathComponent:@"assets"];
+    self.pTknContext = createTknContextPtr([assetsPath UTF8String], sizeof(luaLibraries) / sizeof(luaLibraries[0]), luaLibraries, 2, vkSurfaceFormatKHR,VK_PRESENT_MODE_FIFO_KHR,_vkInstance,_vkSurface,swapchainExtent);
 }
 
 - (void)teardownEngine {

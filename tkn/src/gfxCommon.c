@@ -51,7 +51,7 @@ DescriptorContent getNullDescriptorContent(VkDescriptorType vkDescriptorType)
 
 DescriptorSet *createDescriptorSetPtr(GfxContext *pGfxContext, uint32_t spvReflectShaderModuleCount, SpvReflectShaderModule *spvReflectShaderModules, uint32_t set)
 {
-    DescriptorSet *pSubpassDescriptorSet = tknMalloc(sizeof(DescriptorSet));
+    DescriptorSet *pDescriptorSet = tknMalloc(sizeof(DescriptorSet));
     uint32_t descriptorCount = 0;
     Descriptor *descriptors = NULL;
     VkDescriptorSetLayout vkDescriptorSetLayout = VK_NULL_HANDLE;
@@ -95,7 +95,7 @@ DescriptorSet *createDescriptorSetPtr(GfxContext *pGfxContext, uint32_t spvRefle
         descriptors[binding] = (Descriptor){
             .vkDescriptorType = VK_DESCRIPTOR_TYPE_MAX_ENUM, // Set later
             .descriptorContent = {0},                        // Set later
-            .pDescriptorSet = pSubpassDescriptorSet,
+            .pDescriptorSet = pDescriptorSet,
             .binding = binding,
         };
         vkDescriptorSetLayoutBindings[binding] = (VkDescriptorSetLayoutBinding){
@@ -131,7 +131,7 @@ DescriptorSet *createDescriptorSetPtr(GfxContext *pGfxContext, uint32_t spvRefle
                         descriptors[binding] = (Descriptor){
                             .vkDescriptorType = vkDescriptorSetLayoutBinding.descriptorType,
                             .descriptorContent = getNullDescriptorContent(vkDescriptorSetLayoutBinding.descriptorType),
-                            .pDescriptorSet = pSubpassDescriptorSet,
+                            .pDescriptorSet = pDescriptorSet,
                             .binding = binding};
 
                         uint32_t poolSizeIndex;
@@ -203,14 +203,14 @@ DescriptorSet *createDescriptorSetPtr(GfxContext *pGfxContext, uint32_t spvRefle
     };
     assertVkResult(vkAllocateDescriptorSets(vkDevice, &vkDescriptorSetAllocateInfo, &vkDescriptorSet));
 
-    *pSubpassDescriptorSet = (DescriptorSet){
+    *pDescriptorSet = (DescriptorSet){
         .descriptorCount = descriptorCount,
         .descriptors = descriptors,
         .vkDescriptorSetLayout = vkDescriptorSetLayout,
         .vkDescriptorPool = vkDescriptorPool,
         .vkDescriptorSet = vkDescriptorSet,
     };
-    return pSubpassDescriptorSet;
+    return pDescriptorSet;
 }
 void updateDescriptors(GfxContext *pGfxContext, uint32_t newDescriptorCount, Descriptor *newDescriptors)
 {

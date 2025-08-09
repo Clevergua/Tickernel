@@ -5,7 +5,7 @@ local deferredRenderPass = require("deferredRenderPass")
 -- local lightingPipeline = require("lightingPipeline")
 -- local postProgressPipeline = require("postProgressPipeline")
 
-function srp.setUp(pGfxContext)
+function srp.setUp(pGfxContext, assetsPath)
     local depthVkFormat = gfx.getSupportedFormat(pGfxContext, {
         VK_FORMAT_D32_SFLOAT,
         VK_FORMAT_D24_UNORM_S8_UINT,
@@ -15,7 +15,7 @@ function srp.setUp(pGfxContext)
         VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT |
         VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_IMAGE_ASPECT_COLOR_BIT, 1)
     srp.pDepthAttachment = gfx.createDynamicAttachmentPtr(pGfxContext, depthVkFormat,
-        VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT |
+        VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT |
         VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_IMAGE_ASPECT_DEPTH_BIT, 1)
     srp.pAlbedoAttachment = gfx.createDynamicAttachmentPtr(pGfxContext, VK_FORMAT_R8G8B8A8_UNORM,
         VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT |
@@ -31,7 +31,7 @@ function srp.setUp(pGfxContext)
         srp.pAlbedoAttachment,
         srp.pNormalAttachment,
         srp.pSwapchainAttachment
-    })
+    }, assetsPath)
     -- local meshLayout = {
     --     vertexLayouts = {
     --         {

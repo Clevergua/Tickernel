@@ -1,11 +1,12 @@
 local srp = require("srp")
 local tknEngine = {
-
+    assetsPath = nil,
 }
 
-function tknEngine.start(pGfxContext)
+function tknEngine.start(pGfxContext, assetsPath)
     print("Lua start")
-    srp.setUp(pGfxContext)
+    tknEngine.assetsPath = assetsPath
+    srp.setUp(pGfxContext, assetsPath)
 end
 
 function tknEngine.stop(pGfxContext)
@@ -17,7 +18,7 @@ function tknEngine.updateGameplay()
     print("Lua updateGameplay")
 end
 
-function tknEngine.updateGfx(gfxContext)
+function tknEngine.updateGfx(pGfxContext)
     print("Lua updateGfx")
 end
 

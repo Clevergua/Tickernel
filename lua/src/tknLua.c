@@ -7,7 +7,6 @@ struct TknContext
     GfxContext *pGfxContext;
 };
 
-
 static void assertLuaResult(lua_State *pLuaState, int result)
 {
     if (LUA_OK == result)
@@ -22,7 +21,7 @@ static void assertLuaResult(lua_State *pLuaState, int result)
     }
 }
 
-TknContext *createTknContextPtr(const char *luaPath, uint32_t luaLibraryCount, LuaLibrary *luaLibraries, int targetSwapchainImageCount, VkSurfaceFormatKHR targetVkSurfaceFormat, VkPresentModeKHR targetVkPresentMode, VkInstance vkInstance, VkSurfaceKHR vkSurface, VkExtent2D swapchainExtent)
+TknContext *createTknContextPtr(const char *assetsPath, uint32_t luaLibraryCount, LuaLibrary *luaLibraries, int targetSwapchainImageCount, VkSurfaceFormatKHR targetVkSurfaceFormat, VkPresentModeKHR targetVkPresentMode, VkInstance vkInstance, VkSurfaceKHR vkSurface, VkExtent2D swapchainExtent)
 {
     TknContext *pTknContext = tknMalloc(sizeof(TknContext));
     GfxContext *pGfxContext = createGfxContextPtr(targetSwapchainImageCount, targetVkSurfaceFormat, targetVkPresentMode, vkInstance, vkSurface, swapchainExtent);
@@ -41,7 +40,7 @@ TknContext *createTknContextPtr(const char *luaPath, uint32_t luaLibraryCount, L
     printf("DEBUG: luaL_openlibs completed\n");
 
     char packagePath[FILENAME_MAX];
-    snprintf(packagePath, FILENAME_MAX, "%s/?.lua", luaPath);
+    snprintf(packagePath, FILENAME_MAX, "%s/lua/?.lua", assetsPath);
     lua_getglobal(pLuaState, "package");
     lua_pushstring(pLuaState, packagePath);
     lua_setfield(pLuaState, -2, "path");
@@ -56,13 +55,14 @@ TknContext *createTknContextPtr(const char *luaPath, uint32_t luaLibraryCount, L
         lua_setglobal(pLuaState, luaLibrary.name);
     }
     char tknEngineLuaPath[FILENAME_MAX];
-    snprintf(tknEngineLuaPath, FILENAME_MAX, "%s/tknEngine.lua", luaPath);
+    snprintf(tknEngineLuaPath, FILENAME_MAX, "%s/lua/tknEngine.lua", assetsPath);
     int result = luaL_dofile(pLuaState, tknEngineLuaPath);
     assertLuaResult(pLuaState, result);
 
     lua_getfield(pLuaState, -1, "start");
     lua_pushlightuserdata(pLuaState, pGfxContext);
-    assertLuaResult(pLuaState, lua_pcall(pLuaState, 1, 0, 0));
+    lua_pushstring(pLuaState, assetsPath);
+    assertLuaResult(pLuaState, lua_pcall(pLuaState, 2, 0, 0));
     lua_pop(pLuaState, 1);
 
     TknContext TknContext = {
@@ -70,7 +70,6 @@ TknContext *createTknContextPtr(const char *luaPath, uint32_t luaLibraryCount, L
         .pLuaState = pLuaState,
     };
     *pTknContext = TknContext;
-    printLuaStack(pLuaState);
     return pTknContext;
 }
 
@@ -83,8 +82,8 @@ void destroyTknContextPtr(TknContext *pTknContext)
     assertLuaResult(pLuaState, lua_pcall(pLuaState, 1, 0, 0));
     lua_pop(pLuaState, 1);
     lua_close(pTknContext->pLuaState);
-    
-    GfxContext* pGfxContext = pTknContext->pGfxContext;
+
+    GfxContext *pGfxContext = pTknContext->pGfxContext;
     destroyGfxContextPtr(pGfxContext);
 
     tknFree(pTknContext);
