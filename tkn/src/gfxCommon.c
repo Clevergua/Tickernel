@@ -92,7 +92,12 @@ DescriptorSet *createDescriptorSetPtr(GfxContext *pGfxContext, uint32_t spvRefle
     VkDescriptorSetLayoutBinding *vkDescriptorSetLayoutBindings = tknMalloc(sizeof(VkDescriptorSetLayoutBinding) * descriptorCount);
     for (uint32_t binding = 0; binding < descriptorCount; binding++)
     {
-        descriptors[binding] = (Descriptor){0};
+        descriptors[binding] = (Descriptor){
+            .vkDescriptorType = VK_DESCRIPTOR_TYPE_MAX_ENUM, // Set later
+            .descriptorContent = {0},                        // Set later
+            .pDescriptorSet = pSubpassDescriptorSet,
+            .binding = binding,
+        };
         vkDescriptorSetLayoutBindings[binding] = (VkDescriptorSetLayoutBinding){
             .binding = binding,
             .descriptorType = VK_DESCRIPTOR_TYPE_MAX_ENUM,
@@ -124,11 +129,10 @@ DescriptorSet *createDescriptorSetPtr(GfxContext *pGfxContext, uint32_t spvRefle
                         };
                         vkDescriptorSetLayoutBindings[binding] = vkDescriptorSetLayoutBinding;
                         descriptors[binding] = (Descriptor){
-                                .vkDescriptorType = vkDescriptorSetLayoutBinding.descriptorType,
-                                .descriptorContent = getNullDescriptorContent(vkDescriptorSetLayoutBinding.descriptorType),
-                                .pDescriptorSet = pSubpassDescriptorSet,
-                                .binding = binding
-                        };
+                            .vkDescriptorType = vkDescriptorSetLayoutBinding.descriptorType,
+                            .descriptorContent = getNullDescriptorContent(vkDescriptorSetLayoutBinding.descriptorType),
+                            .pDescriptorSet = pSubpassDescriptorSet,
+                            .binding = binding};
 
                         uint32_t poolSizeIndex;
                         for (poolSizeIndex = 0; poolSizeIndex < vkDescriptorPoolSizeDynamicArray.count; poolSizeIndex++)
@@ -208,145 +212,200 @@ DescriptorSet *createDescriptorSetPtr(GfxContext *pGfxContext, uint32_t spvRefle
     };
     return pSubpassDescriptorSet;
 }
-void updateDescriptor(GfxContext *pGfxContext, uint32_t descriptorCount, Descriptor *descriptors)
+void updateDescriptors(GfxContext *pGfxContext, uint32_t newDescriptorCount, Descriptor *newDescriptors)
 {
-    VkDevice vkDevice = pGfxContext->vkDevice;
-    uint32_t vkWriteDescriptorSetCount = 0;
-    VkWriteDescriptorSet *vkWriteDescriptorSets = tknMalloc(sizeof(VkWriteDescriptorSet) * bindingCount);
-    VkDescriptorImageInfo *vkDescriptorImageInfos = tknMalloc(sizeof(VkDescriptorImageInfo) * bindingCount);
-
-    for (uint32_t bindingIndex = 0; bindingIndex < bindingCount; bindingIndex++)
+    if (newDescriptorCount > 0)
     {
-        Descriptor descriptor = bindings[bindingIndex];
-        uint32_t binding = descriptor.binding;
-        tknAssert(binding < pDescriptorSet->descriptorCount, "Invalid binding index");
-        VkDescriptorType vkDescriptorType = pDescriptorSet->descriptors[binding].descriptor.vkDescriptorType;
-        tknAssert(vkDescriptorType == descriptor.vkDescriptorType, "Incompatible descriptor type");
-        if (VK_DESCRIPTOR_TYPE_SAMPLER == vkDescriptorType)
+        DescriptorSet *pCurrentDescriptorSet = newDescriptors[0].pDescriptorSet;
+        tknAssert(pCurrentDescriptorSet != NULL, "Descriptor does not have a valid descriptor set");
+        uint32_t vkWriteDescriptorSetCount = 0;
+        VkWriteDescriptorSet *vkWriteDescriptorSets = tknMalloc(sizeof(VkWriteDescriptorSet) * newDescriptorCount);
+        VkDescriptorImageInfo *vkDescriptorImageInfos = tknMalloc(sizeof(VkDescriptorImageInfo) * newDescriptorCount);
+        for (uint32_t descriptorIndex = 0; descriptorIndex < newDescriptorCount; descriptorIndex++)
         {
-            SamplerDescriptorContent newDescriptorContent = descriptor.descriptorContent.samplerDescriptorContent;
-            Descriptor *pDescriptor = &pDescriptorSet->descriptors[binding];
-            Sampler *pSampler = pDescriptor->descriptor.descriptorContent.samplerDescriptorContent.pSampler;
-            if (newDescriptorContent.pSampler == pSampler)
+            Descriptor newDescriptor = newDescriptors[descriptorIndex];
+            tknAssert(newDescriptor.pDescriptorSet == pCurrentDescriptorSet, "All descriptors must belong to the same descriptor set");
+            uint32_t binding = newDescriptor.binding;
+            tknAssert(binding < pCurrentDescriptorSet->descriptorCount, "Invalid binding index");
+            VkDescriptorType vkDescriptorType = pCurrentDescriptorSet->descriptors[binding].vkDescriptorType;
+            tknAssert(vkDescriptorType == newDescriptor.vkDescriptorType, "Incompatible descriptor type");
+            if (VK_DESCRIPTOR_TYPE_SAMPLER == vkDescriptorType)
             {
-                // No change, skip
-            }
-            else
-            {
-                if (pSampler == NULL)
+                Sampler *pNewSampler = newDescriptor.descriptorContent.samplerDescriptorContent.pSampler;
+                Descriptor *pCurrentDescriptor = &pCurrentDescriptorSet->descriptors[binding];
+                Sampler *pCurrentSampler = pCurrentDescriptor->descriptorContent.samplerDescriptorContent.pSampler;
+                if (pNewSampler == pCurrentSampler)
                 {
-                    // Nothing
+                    // No change, skip
                 }
                 else
                 {
-                    // Remove reference
-                    tknRemoveFromHashSet(&pSampler->descriptorPtrHashSet, &pDescriptor);
+                    if (pCurrentSampler == NULL)
+                    {
+                        // Nothing
+                    }
+                    else
+                    {
+                        // Current sampler deref descriptor
+                        tknRemoveFromHashSet(&pCurrentSampler->descriptorPtrHashSet, &pCurrentDescriptor);
+                    }
+
+                    // Descriptor ref new sampler
+                    pCurrentDescriptor->descriptorContent.samplerDescriptorContent.pSampler = pNewSampler;
+                    if (pNewSampler == NULL)
+                    {
+                        vkDescriptorImageInfos[vkWriteDescriptorSetCount] = (VkDescriptorImageInfo){
+                            .sampler = NULL,
+                            .imageView = VK_NULL_HANDLE,
+                            .imageLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+                        };
+                    }
+                    else
+                    {
+                        // New sampler ref descriptor
+                        tknAddToHashSet(&pNewSampler->descriptorPtrHashSet, &pCurrentDescriptor);
+                        vkDescriptorImageInfos[vkWriteDescriptorSetCount] = (VkDescriptorImageInfo){
+                            .sampler = pNewSampler->vkSampler,
+                            .imageView = VK_NULL_HANDLE,
+                            .imageLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+                        };
+                    }
+                    VkWriteDescriptorSet vkWriteDescriptorSet = {
+                        .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+                        .dstSet = pCurrentDescriptorSet->vkDescriptorSet,
+                        .dstBinding = binding,
+                        .dstArrayElement = 0,
+                        .descriptorCount = 1,
+                        .descriptorType = vkDescriptorType,
+                        .pImageInfo = &vkDescriptorImageInfos[vkWriteDescriptorSetCount],
+                        .pBufferInfo = NULL,
+                        .pTexelBufferView = NULL,
+                    };
+                    vkWriteDescriptorSets[vkWriteDescriptorSetCount] = vkWriteDescriptorSet;
+                    vkWriteDescriptorSetCount++;
                 }
-                // Add reference
-                tknAddToHashSet(&newDescriptorContent.pSampler->descriptorPtrHashSet, &pDescriptor);
-                pDescriptor->descriptor.descriptorContent.samplerDescriptorContent = newDescriptorContent;
-                vkDescriptorImageInfos[vkWriteDescriptorSetCount] = (VkDescriptorImageInfo){
-                    .sampler = newDescriptorContent.pSampler->vkSampler,
-                    .imageView = VK_NULL_HANDLE,
-                    .imageLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-                };
-                VkWriteDescriptorSet vkWriteDescriptorSet = {
-                    .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-                    .dstSet = pDescriptorSet->vkDescriptorSet,
-                    .dstBinding = binding,
-                    .dstArrayElement = 0,
-                    .descriptorCount = 1,
-                    .descriptorType = vkDescriptorType,
-                    .pImageInfo = &vkDescriptorImageInfos[vkWriteDescriptorSetCount],
-                    .pBufferInfo = NULL,
-                    .pTexelBufferView = NULL,
-                };
-                vkWriteDescriptorSets[vkWriteDescriptorSetCount] = vkWriteDescriptorSet;
-                vkWriteDescriptorSetCount++;
             }
-        }
-        else if (VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT == vkDescriptorType)
-        {
-            InputAttachmentDescriptorContent newDescriptorContent = descriptor.descriptorContent.inputAttachmentDescriptorContent;
-            Descriptor *pDescriptor = &pDescriptorSet->descriptors[binding];
-            Attachment *pAttachment = pDescriptor->descriptor.descriptorContent.inputAttachmentDescriptorContent.pAttachment;
-            if (newDescriptorContent.pAttachment == pAttachment)
+            else if (VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT == vkDescriptorType)
             {
-                // No change, skip
+                InputAttachmentDescriptorContent newDescriptorContent = newDescriptor.descriptorContent.inputAttachmentDescriptorContent;
+                Descriptor *pCurrentDescriptor = &pCurrentDescriptorSet->descriptors[binding];
+                Attachment *pCurrentAttachment = pCurrentDescriptor->descriptorContent.inputAttachmentDescriptorContent.pAttachment;
+                Attachment *pNewAttachment = newDescriptorContent.pAttachment;
+                if (pNewAttachment->attachmentType == ATTACHMENT_TYPE_SWAPCHAIN)
+                {
+                    // Swapchain attachments are handled at render time.
+                }
+                else
+                {
+                    if (pNewAttachment == pCurrentAttachment)
+                    {
+                        // No change, skip
+                    }
+                    else
+                    {
+                        // Remove reference from old attachment
+                        if (pCurrentAttachment == NULL)
+                        {
+                            // Nothing
+                        }
+                        else
+                        {
+                            if (pCurrentAttachment->attachmentType == ATTACHMENT_TYPE_DYNAMIC)
+                            {
+                                tknRemoveFromHashSet(&pCurrentAttachment->attachmentContent.dynamicAttachmentContent.pImage->descriptorPtrHashSet, pCurrentDescriptor);
+                            }
+                            else if (pCurrentAttachment->attachmentType == ATTACHMENT_TYPE_FIXED)
+                            {
+                                tknRemoveFromHashSet(&pCurrentAttachment->attachmentContent.fixedAttachmentContent.pImage->descriptorPtrHashSet, pCurrentDescriptor);
+                            }
+                            else
+                            {
+                                tknError("Unsupported attachment type: %d", pNewAttachment->attachmentType);
+                            }
+                        }
+                        // Add reference to new attachment
+                        if (pNewAttachment == NULL)
+                        {
+                            // Nothing
+                        }
+                        else
+                        {
+                            if (pNewAttachment->attachmentType == ATTACHMENT_TYPE_DYNAMIC)
+                            {
+                                tknAddToHashSet(&pNewAttachment->attachmentContent.dynamicAttachmentContent.pImage->descriptorPtrHashSet, pCurrentDescriptor);
+                            }
+                            else if (pNewAttachment->attachmentType == ATTACHMENT_TYPE_FIXED)
+                            {
+                                tknAddToHashSet(&pNewAttachment->attachmentContent.fixedAttachmentContent.pImage->descriptorPtrHashSet, pCurrentDescriptor);
+                            }
+                            else
+                            {
+                                tknError("Unsupported attachment type: %d", pNewAttachment->attachmentType);
+                            }
+                        }
+                        pCurrentDescriptor->descriptorContent.inputAttachmentDescriptorContent = newDescriptorContent;
+                        VkImageView imageView;
+                        if (pNewAttachment != NULL)
+                        {
+                            if (pNewAttachment->attachmentType == ATTACHMENT_TYPE_DYNAMIC)
+                            {
+                                imageView = pNewAttachment->attachmentContent.dynamicAttachmentContent.pImage->vkImageView;
+                            }
+                            else if (pNewAttachment->attachmentType == ATTACHMENT_TYPE_FIXED)
+                            {
+                                imageView = pNewAttachment->attachmentContent.fixedAttachmentContent.pImage->vkImageView;
+                            }
+                            else
+                            {
+                                tknError("Unsupported attachment type: %d", pNewAttachment->attachmentType);
+                            }
+                        }
+                        else
+                        {
+                            imageView = VK_NULL_HANDLE;
+                        }
+                        vkDescriptorImageInfos[vkWriteDescriptorSetCount] = (VkDescriptorImageInfo){
+                            .sampler = VK_NULL_HANDLE,
+                            .imageView = imageView,
+                            .imageLayout = pCurrentDescriptor->descriptorContent.inputAttachmentDescriptorContent.vkImageLayout,
+                        };
+                        VkWriteDescriptorSet vkWriteDescriptorSet = {
+                            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+                            .dstSet = pCurrentDescriptorSet->vkDescriptorSet,
+                            .dstBinding = binding,
+                            .dstArrayElement = 0,
+                            .descriptorCount = 1,
+                            .descriptorType = vkDescriptorType,
+                            .pImageInfo = &vkDescriptorImageInfos[vkWriteDescriptorSetCount],
+                            .pBufferInfo = NULL,
+                            .pTexelBufferView = NULL,
+                        };
+                        vkWriteDescriptorSets[vkWriteDescriptorSetCount] = vkWriteDescriptorSet;
+                        vkWriteDescriptorSetCount++;
+                    }
+                }
             }
+            // TODO other types
             else
             {
-                if (pAttachment != NULL)
-                {
-                    // Remove reference from old attachment
-                    if (pAttachment->attachmentType == ATTACHMENT_TYPE_DYNAMIC)
-                    {
-                        tknRemoveFromHashSet(&pAttachment->attachmentContent.dynamicAttachmentContent.pImage->descriptorPtrHashSet, &pDescriptor);
-                    }
-                    else if (pAttachment->attachmentType == ATTACHMENT_TYPE_FIXED)
-                    {
-                        tknRemoveFromHashSet(&pAttachment->attachmentContent.fixedAttachmentContent.pImage->descriptorPtrHashSet, &pDescriptor);
-                    }
-                }
-                if (newDescriptorContent.pAttachment != NULL)
-                {
-                    // Add reference to new attachment
-                    if (newDescriptorContent.pAttachment->attachmentType == ATTACHMENT_TYPE_DYNAMIC)
-                    {
-                        tknAddToHashSet(&newDescriptorContent.pAttachment->attachmentContent.dynamicAttachmentContent.pImage->descriptorPtrHashSet, &pDescriptor);
-                    }
-                    else if (newDescriptorContent.pAttachment->attachmentType == ATTACHMENT_TYPE_FIXED)
-                    {
-                        tknAddToHashSet(&newDescriptorContent.pAttachment->attachmentContent.fixedAttachmentContent.pImage->descriptorPtrHashSet, &pDescriptor);
-                    }
-                }
-                pDescriptor->descriptor.descriptorContent.inputAttachmentDescriptorContent = newDescriptorContent;
-                VkImageView imageView = VK_NULL_HANDLE;
-                if (newDescriptorContent.pAttachment != NULL)
-                {
-                    if (newDescriptorContent.pAttachment->attachmentType == ATTACHMENT_TYPE_DYNAMIC)
-                    {
-                        imageView = newDescriptorContent.pAttachment->attachmentContent.dynamicAttachmentContent.pImage->vkImageView;
-                    }
-                    else if (newDescriptorContent.pAttachment->attachmentType == ATTACHMENT_TYPE_FIXED)
-                    {
-                        imageView = newDescriptorContent.pAttachment->attachmentContent.fixedAttachmentContent.pImage->vkImageView;
-                    }
-                    // SWAPCHAIN type needs special handling - might be handled at render time
-                }
-                vkDescriptorImageInfos[vkWriteDescriptorSetCount] = (VkDescriptorImageInfo){
-                    .sampler = VK_NULL_HANDLE,
-                    .imageView = imageView,
-                    .imageLayout = pDescriptor->descriptor.descriptorContent.inputAttachmentDescriptorContent.vkImageLayout,
-                };
-                VkWriteDescriptorSet vkWriteDescriptorSet = {
-                    .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-                    .dstSet = pDescriptorSet->vkDescriptorSet,
-                    .dstBinding = binding,
-                    .dstArrayElement = 0,
-                    .descriptorCount = 1,
-                    .descriptorType = vkDescriptorType,
-                    .pImageInfo = &vkDescriptorImageInfos[vkWriteDescriptorSetCount],
-                    .pBufferInfo = NULL,
-                    .pTexelBufferView = NULL,
-                };
-                vkWriteDescriptorSets[vkWriteDescriptorSetCount] = vkWriteDescriptorSet;
-                vkWriteDescriptorSetCount++;
+                tknError("Unsupported descriptor type: %d", vkDescriptorType);
             }
         }
-        // TODO other types
-        else
-        {
-            tknError("Unsupported descriptor type: %d", vkDescriptorType);
-        }
-    }
 
-    if (vkWriteDescriptorSetCount > 0)
-    {
-        vkUpdateDescriptorSets(vkDevice, vkWriteDescriptorSetCount, vkWriteDescriptorSets, 0, NULL);
+        if (vkWriteDescriptorSetCount > 0)
+        {
+            VkDevice vkDevice = pGfxContext->vkDevice;
+
+            vkUpdateDescriptorSets(vkDevice, vkWriteDescriptorSetCount, vkWriteDescriptorSets, 0, NULL);
+        }
+        tknFree(vkDescriptorImageInfos);
+        tknFree(vkWriteDescriptorSets);
     }
-    tknFree(vkDescriptorImageInfos);
-    tknFree(vkWriteDescriptorSets);
+    else
+    {
+        printf("Warning: No descriptors to update\n");
+        return;
+    }
 }
 void destroyDescriptorSetPtr(GfxContext *pGfxContext, DescriptorSet *pDescriptorSet)
 {
@@ -354,19 +413,20 @@ void destroyDescriptorSetPtr(GfxContext *pGfxContext, DescriptorSet *pDescriptor
     Descriptor *descriptors = tknMalloc(sizeof(Descriptor) * pDescriptorSet->descriptorCount);
     for (uint32_t binding = 0; binding < pDescriptorSet->descriptorCount; binding++)
     {
-        VkDescriptorType descriptorType = pDescriptorSet->descriptors[binding].descriptor.vkDescriptorType;
+        VkDescriptorType descriptorType = pDescriptorSet->descriptors[binding].vkDescriptorType;
         descriptors[binding] = (Descriptor){
             .vkDescriptorType = descriptorType,
             .descriptorContent = getNullDescriptorContent(descriptorType),
+            .pDescriptorSet = pDescriptorSet,
             .binding = binding,
         };
     }
-    updateDescriptorSetPtr(pGfxContext, pDescriptorSet, pDescriptorSet->descriptorCount, descriptors);
+    updateDescriptors(pGfxContext, pDescriptorSet->descriptorCount, descriptors);
     tknFree(descriptors);
+
     vkFreeDescriptorSets(vkDevice, pDescriptorSet->vkDescriptorPool, 1, &pDescriptorSet->vkDescriptorSet);
     vkDestroyDescriptorPool(vkDevice, pDescriptorSet->vkDescriptorPool, NULL);
     vkDestroyDescriptorSetLayout(vkDevice, pDescriptorSet->vkDescriptorSetLayout, NULL);
     tknFree(pDescriptorSet->descriptors);
-
     tknFree(pDescriptorSet);
 }

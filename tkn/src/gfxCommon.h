@@ -90,7 +90,7 @@ typedef union
 typedef struct
 {
     uint32_t descriptorCount;                    // for update descriptor sets
-    Descriptor *descriptors;       // for update descriptor sets
+    Descriptor *descriptors;                     // for update descriptor sets
     VkDescriptorSetLayout vkDescriptorSetLayout; // for creating descriptor set & pipelines
     VkDescriptorPool vkDescriptorPool;           // for creating descriptor
     VkDescriptorSet vkDescriptorSet;             // subpass descriptor set
@@ -183,4 +183,4 @@ void assertVkResult(VkResult vkResult);
 DescriptorContent getNullDescriptorContent(VkDescriptorType vkDescriptorType);
 DescriptorSet *createDescriptorSetPtr(GfxContext *pGfxContext, uint32_t spvReflectShaderModuleCount, SpvReflectShaderModule *spvReflectShaderModules, uint32_t set);
 void destroyDescriptorSetPtr(GfxContext *pGfxContext, DescriptorSet *pDescriptorSet);
-void updateDescriptorSetPtr(GfxContext *pGfxContext, DescriptorSet *pDescriptorSet, uint32_t bindingCount, Descriptor *bindings);
+void updateDescriptors(GfxContext *pGfxContext, uint32_t descriptorCount, Descriptor *descriptors);

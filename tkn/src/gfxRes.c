@@ -52,23 +52,20 @@ void resizeDynamicAttachmentPtr(GfxContext *pGfxContext, Attachment *pAttachment
         .height = (uint32_t)(pGfxContext->swapchainExtent.height * dynamicAttachmentContent.scaler),
         .depth = 1,
     };
-    Image *pImage = dynamicAttachmentContent.pImage;
-    Image *pNewImage = createImagePtr(pGfxContext, vkExtent3D, pImage->vkFormat, VK_IMAGE_TILING_OPTIMAL, pImage->vkImageUsageFlags, pImage->vkMemoryPropertyFlags, pImage->vkImageAspectFlags);
-    for (uint32_t i = 0; i < pImage->descriptorPtrHashSet.capacity; i++)
+    Image *pCurrentImage = dynamicAttachmentContent.pImage;
+    Image *pNewImage = createImagePtr(pGfxContext, vkExtent3D, pCurrentImage->vkFormat, VK_IMAGE_TILING_OPTIMAL, pCurrentImage->vkImageUsageFlags, pCurrentImage->vkMemoryPropertyFlags, pCurrentImage->vkImageAspectFlags);
+    for (uint32_t i = 0; i < pCurrentImage->descriptorPtrHashSet.capacity; i++)
     {
-        TknListNode *node = pImage->descriptorPtrHashSet.nodePtrs[i];
+        TknListNode *node = pCurrentImage->descriptorPtrHashSet.nodePtrs[i];
         while (node)
         {
             Descriptor *pDescriptor = (Descriptor *)node->value;
-            Descriptor descriptor = pDescriptor->descriptor;
-            updateDescriptorSetPtr(pGfxContext, pDescriptor->pDescriptorSet, 1, &descriptor);
+            pDescriptor->descriptorContent.inputAttachmentDescriptorContent.pAttachment->attachmentContent.dynamicAttachmentContent.pImage = pNewImage;
+            updateDescriptors(pGfxContext, 1, pDescriptor);
             node = node->nextNodePtr;
         }
     }
-
     destroyImagePtr(pGfxContext, dynamicAttachmentContent.pImage);
-
-    // TODO 引用关系被删除了需要加回来
     dynamicAttachmentContent.pImage = pNewImage;
 }
 
@@ -197,8 +194,9 @@ void destroyImagePtr(GfxContext *pGfxContext, Image *pImage)
         while (node)
         {
             Descriptor *pDescriptor = (Descriptor *)node->value;
-            pDescriptor->descriptorContent = getNullDescriptorContent(pDescriptor->vkDescriptorType);
-            updateDescriptorSetPtr(pGfxContext, pDescriptor->pDescriptorSet, 1, pDescriptor);
+            Descriptor newDescriptor = *pDescriptor;
+            newDescriptor.descriptorContent = getNullDescriptorContent(pDescriptor->vkDescriptorType);
+            updateDescriptors(pGfxContext, 1, &newDescriptor);
             node = node->nextNodePtr;
         }
     }

@@ -35,8 +35,6 @@ typedef struct
     TknListNode **nodePtrs;
 } TknHashSet;
 
-
-
 TknDynamicArray tknCreateDynamicArray(size_t dataSize, uint32_t maxCount);
 void tknDestroyDynamicArray(TknDynamicArray dynamicArray);
 void tknAddToDynamicArray(TknDynamicArray *pDynamicArray, void *pInput, uint32_t index);
@@ -51,3 +49,5 @@ bool tknAddToHashSet(TknHashSet *pTknHashSet, void *value);
 bool tknContainsInHashSet(TknHashSet *pTknHashSet, void *value);
 void tknRemoveFromHashSet(TknHashSet *pTknHashSet, void *value);
 void tknClearHashSet(TknHashSet *pTknHashSet);
+
+

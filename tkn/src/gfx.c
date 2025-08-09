@@ -624,10 +624,7 @@ void updateGfxContextPtr(GfxContext *pGfxContext, VkExtent2D swapchainExtent)
         pGfxContext->frameCount++;
         uint32_t swapchainIndex = pGfxContext->frameCount % pGfxContext->swapchainImageCount;
         VkDevice vkDevice = pGfxContext->vkDevice;
-        for (uint32_t renderPassIndex = 0; renderPassIndex < pGfxContext->renderPassPtrDynamicArray.count; renderPassIndex++)
-        {
-            /* code */
-        }
+
         if (swapchainExtent.width != pGfxContext->swapchainExtent.width || swapchainExtent.height != pGfxContext->swapchainExtent.height)
         {
             printf("Recreate swapchain because of a size change: (%d, %d) to (%d, %d) \n",
@@ -641,6 +638,7 @@ void updateGfxContextPtr(GfxContext *pGfxContext, VkExtent2D swapchainExtent)
             {
                 Attachment *pAttachment = tknGetFromDynamicArray(&pGfxContext->dynamicAttachmentPtrDynamicArray, attachmentPtrIndex);
                 resizeDynamicAttachmentPtr(pGfxContext, pAttachment);
+                
             }
             for (uint32_t renderPassIndex = 0; renderPassIndex < pGfxContext->renderPassPtrDynamicArray.count; renderPassIndex++)
             {
