@@ -32,45 +32,10 @@ function srp.setUp(pGfxContext, assetsPath)
         srp.pNormalAttachment,
         srp.pSwapchainAttachment
     }, assetsPath)
-    -- local meshLayout = {
-    --     vertexLayouts = {
-    --         {
-    --             name = "inputPosition",
-    --             size = 12,
-    --         },
-    --         {
-    --             name = "inputColor",
-    --             size = 16
-    --         },
-    --         {
-    --             name = "inputNormal",
-    --             size = 12,
-    --         }
-    --     },
-    --     instanceLayouts = {
-    --         {
-    --             name = "inputModel",
-    --             size = 64,
-    --         }
-    --     }
-    -- }
-    -- gfx.pGeometryPipeline = geometryPipeline.createPipeline(gfx.pDeferredRenderPass, 0, 0)
-
-    -- -- gfx.pLightingPipeline = lightingPipeline.createPipeline(gfx.pDeferredRenderPass, 1, 0)
-    -- -- gfx.pPostProgressPipeline = postProgressPipeline.createPipeline(gfx.pDeferredRenderPass, 2, 0)
-
-    -- local resources = {
-
-    -- }
-    -- gfx.createMaterial(gfx.pGeometryPipeline, resources)
 end
 
 function srp.tearDown(pGfxContext)
-    -- postProgressPipeline.destroyPipeline(gfx.pDeferredRenderPass, 2, gfx.pPostProgressPipeline)
-    -- lightingPipeline.destroyPipeline(gfx.pDeferredRenderPass, 1, gfx.gfxlightingPipeline)
-    -- geometryPipeline.destroyPipeline(gfx.pDeferredRenderPass, 0, gfx.pGeometryPipeline)
-    deferredRenderPass.destroyRenderPass(gfx.pDeferredRenderPass)
-
+    deferredRenderPass.destroyRenderPassPtr(pGfxContext, srp.pDeferredRenderPass)
     gfx.destroyDynamicAttachmentPtr(pGfxContext, srp.pNormalAttachment)
     gfx.destroyDynamicAttachmentPtr(pGfxContext, srp.pAlbedoAttachment)
     gfx.destroyDynamicAttachmentPtr(pGfxContext, srp.pDepthAttachment)

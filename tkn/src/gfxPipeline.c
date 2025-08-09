@@ -305,7 +305,7 @@ RenderPass *createRenderPassPtr(GfxContext *pGfxContext, uint32_t attachmentCoun
 void destroyRenderPassPtr(GfxContext *pGfxContext, RenderPass *pRenderPass)
 {
     VkDevice vkDevice = pGfxContext->vkDevice;
-    tknRemoveFromDynamicArray(&pGfxContext->renderPassPtrDynamicArray, pRenderPass);
+    tknRemoveFromDynamicArray(&pGfxContext->renderPassPtrDynamicArray, &pRenderPass);
 
     for (uint32_t i = 0; i < pRenderPass->subpassCount; i++)
     {

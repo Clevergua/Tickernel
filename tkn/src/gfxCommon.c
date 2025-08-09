@@ -34,10 +34,25 @@ VkFormat getSupportedFormat(GfxContext *pGfxContext, uint32_t candidateCount, Vk
 DescriptorContent getNullDescriptorContent(VkDescriptorType vkDescriptorType)
 {
     DescriptorContent descriptorContent = {0};
+    // VK_DESCRIPTOR_TYPE_SAMPLER = 0,
     if (VK_DESCRIPTOR_TYPE_SAMPLER == vkDescriptorType)
     {
         descriptorContent.samplerDescriptorContent.pSampler = NULL;
     }
+    // VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER = 1,
+    // VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE = 2,
+    // VK_DESCRIPTOR_TYPE_STORAGE_IMAGE = 3,
+    // VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER = 4,
+    // VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER = 5,
+    // VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER = 6,
+    if (VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER == vkDescriptorType)
+    {
+        descriptorContent.uniformBufferDescriptorContent.pBuffer = NULL;
+    }
+    // VK_DESCRIPTOR_TYPE_STORAGE_BUFFER = 7,
+    // VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC = 8,
+    // VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC = 9,
+    // VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT = 10,
     else if (VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT == vkDescriptorType)
     {
         descriptorContent.inputAttachmentDescriptorContent.pAttachment = NULL;
@@ -291,22 +306,22 @@ void updateDescriptors(GfxContext *pGfxContext, uint32_t newDescriptorCount, Des
                 Descriptor *pCurrentDescriptor = &pCurrentDescriptorSet->descriptors[binding];
                 Attachment *pCurrentAttachment = pCurrentDescriptor->descriptorContent.inputAttachmentDescriptorContent.pAttachment;
                 Attachment *pNewAttachment = newDescriptorContent.pAttachment;
-                if (pNewAttachment->attachmentType == ATTACHMENT_TYPE_SWAPCHAIN)
+                if (pCurrentAttachment == pNewAttachment)
                 {
-                    // Swapchain attachments are handled at render time.
+                    // No change, skip
                 }
                 else
                 {
-                    if (pNewAttachment == pCurrentAttachment)
+                    // Remove reference from old attachment
+                    if (pCurrentAttachment == NULL)
                     {
-                        // No change, skip
+                        // Nothing
                     }
                     else
                     {
-                        // Remove reference from old attachment
-                        if (pCurrentAttachment == NULL)
+                        if (pCurrentAttachment->attachmentType == ATTACHMENT_TYPE_SWAPCHAIN)
                         {
-                            // Nothing
+                            // Swapchain attachments are handled at render time.
                         }
                         else
                         {
@@ -323,66 +338,70 @@ void updateDescriptors(GfxContext *pGfxContext, uint32_t newDescriptorCount, Des
                                 tknError("Unsupported attachment type: %d", pNewAttachment->attachmentType);
                             }
                         }
-                        // Add reference to new attachment
-                        if (pNewAttachment == NULL)
-                        {
-                            // Nothing
-                        }
-                        else
-                        {
-                            if (pNewAttachment->attachmentType == ATTACHMENT_TYPE_DYNAMIC)
-                            {
-                                tknAddToHashSet(&pNewAttachment->attachmentContent.dynamicAttachmentContent.pImage->descriptorPtrHashSet, pCurrentDescriptor);
-                            }
-                            else if (pNewAttachment->attachmentType == ATTACHMENT_TYPE_FIXED)
-                            {
-                                tknAddToHashSet(&pNewAttachment->attachmentContent.fixedAttachmentContent.pImage->descriptorPtrHashSet, pCurrentDescriptor);
-                            }
-                            else
-                            {
-                                tknError("Unsupported attachment type: %d", pNewAttachment->attachmentType);
-                            }
-                        }
-                        pCurrentDescriptor->descriptorContent.inputAttachmentDescriptorContent = newDescriptorContent;
-                        VkImageView imageView;
-                        if (pNewAttachment != NULL)
-                        {
-                            if (pNewAttachment->attachmentType == ATTACHMENT_TYPE_DYNAMIC)
-                            {
-                                imageView = pNewAttachment->attachmentContent.dynamicAttachmentContent.pImage->vkImageView;
-                            }
-                            else if (pNewAttachment->attachmentType == ATTACHMENT_TYPE_FIXED)
-                            {
-                                imageView = pNewAttachment->attachmentContent.fixedAttachmentContent.pImage->vkImageView;
-                            }
-                            else
-                            {
-                                tknError("Unsupported attachment type: %d", pNewAttachment->attachmentType);
-                            }
-                        }
-                        else
-                        {
-                            imageView = VK_NULL_HANDLE;
-                        }
-                        vkDescriptorImageInfos[vkWriteDescriptorSetCount] = (VkDescriptorImageInfo){
-                            .sampler = VK_NULL_HANDLE,
-                            .imageView = imageView,
-                            .imageLayout = pCurrentDescriptor->descriptorContent.inputAttachmentDescriptorContent.vkImageLayout,
-                        };
-                        VkWriteDescriptorSet vkWriteDescriptorSet = {
-                            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-                            .dstSet = pCurrentDescriptorSet->vkDescriptorSet,
-                            .dstBinding = binding,
-                            .dstArrayElement = 0,
-                            .descriptorCount = 1,
-                            .descriptorType = vkDescriptorType,
-                            .pImageInfo = &vkDescriptorImageInfos[vkWriteDescriptorSetCount],
-                            .pBufferInfo = NULL,
-                            .pTexelBufferView = NULL,
-                        };
-                        vkWriteDescriptorSets[vkWriteDescriptorSetCount] = vkWriteDescriptorSet;
-                        vkWriteDescriptorSetCount++;
                     }
+                    // Add reference to new attachment
+                    if (pNewAttachment == NULL)
+                    {
+                        // Nothing
+                    }
+                    else
+                    {
+                        if (pNewAttachment->attachmentType == ATTACHMENT_TYPE_DYNAMIC)
+                        {
+                            tknAddToHashSet(&pNewAttachment->attachmentContent.dynamicAttachmentContent.pImage->descriptorPtrHashSet, pCurrentDescriptor);
+                        }
+                        else if (pNewAttachment->attachmentType == ATTACHMENT_TYPE_FIXED)
+                        {
+                            tknAddToHashSet(&pNewAttachment->attachmentContent.fixedAttachmentContent.pImage->descriptorPtrHashSet, pCurrentDescriptor);
+                        }
+                        else if (pCurrentAttachment->attachmentType == ATTACHMENT_TYPE_SWAPCHAIN)
+                        {
+                            // Swapchain attachments are handled at render time.
+                        }
+                        else
+                        {
+                            tknError("Unsupported attachment type: %d", pNewAttachment->attachmentType);
+                        }
+                    }
+                    pCurrentDescriptor->descriptorContent.inputAttachmentDescriptorContent = newDescriptorContent;
+                    VkImageView imageView;
+                    if (pNewAttachment != NULL)
+                    {
+                        if (pNewAttachment->attachmentType == ATTACHMENT_TYPE_DYNAMIC)
+                        {
+                            imageView = pNewAttachment->attachmentContent.dynamicAttachmentContent.pImage->vkImageView;
+                        }
+                        else if (pNewAttachment->attachmentType == ATTACHMENT_TYPE_FIXED)
+                        {
+                            imageView = pNewAttachment->attachmentContent.fixedAttachmentContent.pImage->vkImageView;
+                        }
+                        else
+                        {
+                            tknError("Unsupported attachment type: %d", pNewAttachment->attachmentType);
+                        }
+                    }
+                    else
+                    {
+                        imageView = VK_NULL_HANDLE;
+                    }
+                    vkDescriptorImageInfos[vkWriteDescriptorSetCount] = (VkDescriptorImageInfo){
+                        .sampler = VK_NULL_HANDLE,
+                        .imageView = imageView,
+                        .imageLayout = pCurrentDescriptor->descriptorContent.inputAttachmentDescriptorContent.vkImageLayout,
+                    };
+                    VkWriteDescriptorSet vkWriteDescriptorSet = {
+                        .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+                        .dstSet = pCurrentDescriptorSet->vkDescriptorSet,
+                        .dstBinding = binding,
+                        .dstArrayElement = 0,
+                        .descriptorCount = 1,
+                        .descriptorType = vkDescriptorType,
+                        .pImageInfo = &vkDescriptorImageInfos[vkWriteDescriptorSetCount],
+                        .pBufferInfo = NULL,
+                        .pTexelBufferView = NULL,
+                    };
+                    vkWriteDescriptorSets[vkWriteDescriptorSetCount] = vkWriteDescriptorSet;
+                    vkWriteDescriptorSetCount++;
                 }
             }
             // TODO other types

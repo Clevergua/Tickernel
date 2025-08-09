@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VariablesViewState
+   version = "1.0">
+   <ContextStates>
+      <ContextState
+         contextName = "GLOBAL">
+         <PersistentStrings>
+            <PersistentString
+               value = "((RenderPass **)pGfxContext-&gt;renderPassPtrDynamicArray.array)[0]">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "tknRemoveFromDynamicArray:tknCore.c">
+         <PersistentStrings>
+            <PersistentString
+               value = "(RenderPass**)pData">
+            </PersistentString>
+            <PersistentString
+               value = "(RenderPass**)currentElement">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "destroyRenderPassPtr:gfxPipeline.c">
+      </ContextState>
+   </ContextStates>
+</VariablesViewState>

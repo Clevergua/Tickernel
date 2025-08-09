@@ -77,13 +77,29 @@ typedef struct
 
 typedef struct
 {
+    Buffer *pBuffer;
+} UniformBufferDescriptorContent;
+
+typedef struct
+{
     Attachment *pAttachment;
     VkImageLayout vkImageLayout;
 } InputAttachmentDescriptorContent;
 
 typedef union
 {
+    // VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER = 1,
     SamplerDescriptorContent samplerDescriptorContent;
+    // VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE = 2,
+    // VK_DESCRIPTOR_TYPE_STORAGE_IMAGE = 3,
+    // VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER = 4,
+    // VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER = 5,
+    // VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER = 6,
+    UniformBufferDescriptorContent uniformBufferDescriptorContent;
+    // VK_DESCRIPTOR_TYPE_STORAGE_BUFFER = 7,
+    // VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC = 8,
+    // VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC = 9,
+    // VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT = 10,
     InputAttachmentDescriptorContent inputAttachmentDescriptorContent;
 } DescriptorContent;
 

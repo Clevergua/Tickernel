@@ -166,8 +166,8 @@ function deferredRenderPass.createRenderPassPtr(pGfxContext, pAttachments, asset
         spvPathsArray, vkSubpassDependencies, 0)
 end
 
-function deferredRenderPass.destroyRenderPass(pRenderPass)
-    gfx.destroyRenderPass(pRenderPass)
+function deferredRenderPass.destroyRenderPassPtr(pGfxContext, pRenderPass)
+    gfx.destroyRenderPassPtr(pGfxContext, pRenderPass)
 end
 
 return deferredRenderPass
