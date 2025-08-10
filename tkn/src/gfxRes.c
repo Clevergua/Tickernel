@@ -1,19 +1,18 @@
 #include "gfxRes.h"
 #include "gfxCommon.h"
-static void getMemoryType(VkPhysicalDevice vkPhysicalDevice, uint32_t typeFilter, VkMemoryPropertyFlags memoryPropertyFlags, uint32_t *memoryTypeIndex)
+static uint32_t getMemoryTypeIndex(VkPhysicalDevice vkPhysicalDevice, uint32_t typeFilter, VkMemoryPropertyFlags memoryPropertyFlags)
 {
-    *memoryTypeIndex = UINT32_MAX;
     VkPhysicalDeviceMemoryProperties physicalDeviceMemoryProperties;
     vkGetPhysicalDeviceMemoryProperties(vkPhysicalDevice, &physicalDeviceMemoryProperties);
     for (uint32_t i = 0; i < physicalDeviceMemoryProperties.memoryTypeCount; i++)
     {
         if ((typeFilter & (1 << i)) && (physicalDeviceMemoryProperties.memoryTypes[i].propertyFlags & memoryPropertyFlags) == memoryPropertyFlags)
         {
-            *memoryTypeIndex = i;
-            return;
+            return i;
         }
     }
     tknError("Failed to get suitable memory type!");
+    return UINT32_MAX;
 }
 
 Attachment *createDynamicAttachmentPtr(GfxContext *pGfxContext, VkFormat vkFormat, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags, float scaler)
@@ -134,8 +133,7 @@ Image *createImagePtr(GfxContext *pGfxContext, VkExtent3D vkExtent3D, VkFormat v
     assertVkResult(vkCreateImage(vkDevice, &imageCreateInfo, NULL, &vkImage));
     VkMemoryRequirements memoryRequirements;
     vkGetImageMemoryRequirements(vkDevice, vkImage, &memoryRequirements);
-    uint32_t memoryTypeIndex;
-    getMemoryType(vkPhysicalDevice, memoryRequirements.memoryTypeBits, vkMemoryPropertyFlags, &memoryTypeIndex);
+    uint32_t memoryTypeIndex = getMemoryTypeIndex(vkPhysicalDevice, memoryRequirements.memoryTypeBits, vkMemoryPropertyFlags);
     VkMemoryAllocateInfo memoryAllocateInfo = {
         .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
         .pNext = NULL,
@@ -207,4 +205,59 @@ void destroyImagePtr(GfxContext *pGfxContext, Image *pImage)
     vkFreeMemory(vkDevice, pImage->vkDeviceMemory, NULL);
 
     tknFree(pImage);
+}
+
+
+Buffer *createUniformBufferPtr(GfxContext *pGfxContext, VkDeviceSize bufferSize, VkBufferUsageFlags bufferUsageFlags, VkMemoryPropertyFlags msemoryPropertyFlags)
+{
+    Buffer *pBuffer = tknMalloc(sizeof(Buffer));
+    pBuffer->descriptorPtrHashSet = tknCreateHashSet(1);
+    VkDevice vkDevice = pGfxContext->vkDevice;
+    VkPhysicalDevice vkPhysicalDevice = pGfxContext->vkPhysicalDevice;
+    VkBufferCreateInfo bufferCreateInfo = {
+        .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+        .pNext = NULL,
+        .flags = 0,
+        .size = bufferSize,
+        .usage = bufferUsageFlags,
+        .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+        .queueFamilyIndexCount = 0,
+        .pQueueFamilyIndices = 0,
+    };
+    assertVkResult(vkCreateBuffer(vkDevice, &bufferCreateInfo, NULL, &pBuffer->vkBuffer));
+    VkMemoryRequirements memoryRequirements;
+    vkGetBufferMemoryRequirements(vkDevice, pBuffer->vkBuffer, &memoryRequirements);
+    uint32_t memoryTypeIndex = getMemoryTypeIndex(vkPhysicalDevice, memoryRequirements.memoryTypeBits, msemoryPropertyFlags);
+    VkMemoryAllocateInfo memoryAllocateInfo = {
+        .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
+        .pNext = NULL,
+        .allocationSize = memoryRequirements.size,
+        .memoryTypeIndex = memoryTypeIndex,
+    };
+    assertVkResult(vkAllocateMemory(vkDevice, &memoryAllocateInfo, NULL, &pBuffer->vkDeviceMemory));
+    assertVkResult(vkBindBufferMemory(vkDevice, pBuffer->vkBuffer, pBuffer->vkDeviceMemory, 0));
+    assertVkResult(vkMapMemory(vkDevice, pBuffer->vkDeviceMemory, 0, bufferSize, 0, &pBuffer->mapped));
+    return pBuffer;
+}
+
+void destroyUniformBufferPtr(GfxContext *pGfxContext, Buffer *pBuffer)
+{
+    for (uint32_t i = 0; i < pBuffer->descriptorPtrHashSet.capacity; i++)
+    {
+        TknListNode *node = pBuffer->descriptorPtrHashSet.nodePtrs[i];
+        while (node)
+        {
+            Descriptor *pDescriptor = (Descriptor *)node->value;
+            Descriptor newDescriptor = *pDescriptor;
+            newDescriptor.descriptorContent = getNullDescriptorContent(pDescriptor->vkDescriptorType);
+            updateDescriptors(pGfxContext, 1, &newDescriptor);
+            node = node->nextNodePtr;
+        }
+    }
+    VkDevice vkDevice = pGfxContext->vkDevice;
+    tknDestroyHashSet(pBuffer->descriptorPtrHashSet);
+    vkUnmapMemory(vkDevice, pBuffer->vkDeviceMemory);
+    vkDestroyBuffer(vkDevice, pBuffer->vkBuffer, NULL);
+    vkFreeMemory(vkDevice, pBuffer->vkDeviceMemory, NULL);
+    tknFree(pBuffer);
 }
