@@ -29,9 +29,15 @@ typedef struct
 {
     VkBuffer vkBuffer;
     VkDeviceMemory vkDeviceMemory;
-    void *mapped;
     TknHashSet descriptorPtrHashSet;
+    VkDeviceSize size;
 } Buffer;
+
+struct MappedBuffer
+{
+    Buffer buffer;
+    void *mapped;
+};
 
 typedef struct
 {

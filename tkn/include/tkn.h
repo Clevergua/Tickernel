@@ -4,10 +4,12 @@
 
 typedef struct GfxContext GfxContext;
 typedef struct RenderPass RenderPass;
+typedef struct Descriptor Descriptor;
+
 typedef struct Attachment Attachment;
 typedef struct Image Image;
 typedef struct Sampler Sampler;
-typedef struct Descriptor Descriptor;
+typedef struct MappedBuffer MappedBuffer;
 
 VkFormat getSupportedFormat(GfxContext *pGfxContext, uint32_t candidateCount, VkFormat *candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
 
@@ -29,6 +31,10 @@ Attachment *getSwapchainAttachmentPtr(GfxContext *pGfxContext);
 
 Image *createImagePtr(GfxContext *pGfxContext, VkExtent3D vkExtent3D, VkFormat vkFormat, VkImageTiling vkImageTiling, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags);
 void destroyImagePtr(GfxContext *pGfxContext, Image *pImage);
+
+MappedBuffer *createUniformBufferPtr(GfxContext *pGfxContext, VkDeviceSize size);
+void destroyMappedBufferPtr(GfxContext *pGfxContext, MappedBuffer *pMappedBuffer);
+void updateMappedBufferPtr(GfxContext *pGfxContext, MappedBuffer *pMappedBuffer, const void *data, VkDeviceSize size);
 
 void tknError(char const *const _Format, ...);
 void tknAssert(bool condition, char const *const _Format, ...);
