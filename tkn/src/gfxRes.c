@@ -83,6 +83,7 @@ Attachment *createDynamicAttachmentPtr(GfxContext *pGfxContext, VkFormat vkForma
         .height = (uint32_t)(pGfxContext->swapchainExtent.height * scaler),
         .depth = 1,
     };
+    printf("Dynamic attachment size: %d\n", vkImageAspectFlags);
     Image *pImage = createImagePtr(pGfxContext, vkExtent3D, vkFormat, VK_IMAGE_TILING_OPTIMAL, vkImageUsageFlags, vkMemoryPropertyFlags, vkImageAspectFlags);
     DynamicAttachmentContent dynamicAttachmentContent = {
         .pImage = pImage,

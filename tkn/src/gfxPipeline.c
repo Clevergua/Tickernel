@@ -54,33 +54,41 @@ static Subpass createSubpass(GfxContext *pGfxContext, uint32_t inputVkAttachment
     for (uint32_t pathIndex = 0; pathIndex < spvPathCount; pathIndex++)
     {
         SpvReflectShaderModule spvReflectShaderModule = spvReflectShaderModules[pathIndex];
-        SpvReflectDescriptorSet spvReflectDescriptorSet = spvReflectShaderModule.descriptor_sets[TICKERNEL_SUBPASS_DESCRIPTOR_SET];
-        if (TICKERNEL_SUBPASS_DESCRIPTOR_SET == spvReflectDescriptorSet.set)
+        for (uint32_t descriptorSetIndex = 0; descriptorSetIndex < spvReflectShaderModule.descriptor_set_count; descriptorSetIndex++)
         {
-            for (uint32_t bindingIndex = 0; bindingIndex < spvReflectDescriptorSet.binding_count; bindingIndex++)
+            SpvReflectDescriptorSet spvReflectDescriptorSet = spvReflectShaderModule.descriptor_sets[descriptorSetIndex];
+            if (TICKERNEL_SUBPASS_DESCRIPTOR_SET == spvReflectDescriptorSet.set)
             {
-                SpvReflectDescriptorBinding *pSpvReflectDescriptorBinding = spvReflectDescriptorSet.bindings[bindingIndex];
-                uint32_t binding = pSpvReflectDescriptorBinding->binding;
-                if (VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT == (VkDescriptorType)pSpvReflectDescriptorBinding->descriptor_type)
+                for (uint32_t bindingIndex = 0; bindingIndex < spvReflectDescriptorSet.binding_count; bindingIndex++)
                 {
-                    Descriptor descriptor = {
-                        .vkDescriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT,
-                        .descriptorContent.inputAttachmentDescriptorContent.pAttachment = attachmentPtrs[pSpvReflectDescriptorBinding->input_attachment_index],
-                        .pDescriptorSet = pSubpassDescriptorSet,
-                        .binding = binding,
-                    };
-                    tknAddToDynamicArray(&inputAttachmentDescriptorDynamicArray, &descriptor, inputAttachmentDescriptorDynamicArray.count);
+                    SpvReflectDescriptorBinding *pSpvReflectDescriptorBinding = spvReflectDescriptorSet.bindings[bindingIndex];
+                    uint32_t binding = pSpvReflectDescriptorBinding->binding;
+                    if (VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT == (VkDescriptorType)pSpvReflectDescriptorBinding->descriptor_type)
+                    {
+                        InputAttachmentDescriptorContent inputAttachmentDescriptorContent = {
+                            .pAttachment = attachmentPtrs[pSpvReflectDescriptorBinding->input_attachment_index],
+                            .vkImageLayout = inputVkAttachmentReferences[pSpvReflectDescriptorBinding->input_attachment_index].layout,
+                        };
+                        Descriptor descriptor = {
+                            .vkDescriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT,
+                            .descriptorContent.inputAttachmentDescriptorContent = inputAttachmentDescriptorContent,
+                            .pDescriptorSet = pSubpassDescriptorSet,
+                            .binding = binding,
+                        };
+                        pSubpassDescriptorSet->descriptors[binding].descriptorContent.inputAttachmentDescriptorContent.vkImageLayout = inputVkAttachmentReferences[pSpvReflectDescriptorBinding->input_attachment_index].layout;
+                        tknAddToDynamicArray(&inputAttachmentDescriptorDynamicArray, &descriptor, inputAttachmentDescriptorDynamicArray.count);
+                    }
                 }
+                // Skip other sets.
+                break;
             }
-            // Skip other sets.
-            break;
+            else
+            {
+                // Skip
+                printf("Warning: Descriptor set %d\n", spvReflectDescriptorSet.set);
+            }
+            destroySpvReflectShaderModule(&spvReflectShaderModule);
         }
-        else
-        {
-            // Skip
-            printf("Warning: descriptor set %d\n", spvReflectDescriptorSet.set);
-        }
-        destroySpvReflectShaderModule(&spvReflectShaderModule);
     }
 
     // Batch update all INPUT_ATTACHMENT descriptors

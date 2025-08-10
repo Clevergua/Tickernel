@@ -99,7 +99,7 @@ DescriptorSet *createDescriptorSetPtr(GfxContext *pGfxContext, uint32_t spvRefle
             else
             {
                 // Skip
-                printf("Warning: descriptor set %d\n", spvReflectDescriptorSet.set);
+                tknError("Descriptor set %d\n", spvReflectDescriptorSet.set);
             }
         }
     }
@@ -189,7 +189,7 @@ DescriptorSet *createDescriptorSetPtr(GfxContext *pGfxContext, uint32_t spvRefle
             else
             {
                 // Skip
-                printf("Warning: descriptor set %d\n", spvReflectDescriptorSet.set);
+                tknError("Descriptor set %d\n", spvReflectDescriptorSet.set);
             }
         }
     }
@@ -460,7 +460,6 @@ void updateDescriptors(GfxContext *pGfxContext, uint32_t newDescriptorCount, Des
         if (vkWriteDescriptorSetCount > 0)
         {
             VkDevice vkDevice = pGfxContext->vkDevice;
-
             vkUpdateDescriptorSets(vkDevice, vkWriteDescriptorSetCount, vkWriteDescriptorSets, 0, NULL);
         }
         tknFree(vkDescriptorImageInfos);
