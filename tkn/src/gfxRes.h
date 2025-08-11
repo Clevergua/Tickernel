@@ -197,7 +197,7 @@ struct GfxContext
     TknDynamicArray dynamicAttachmentPtrDynamicArray;
     TknDynamicArray renderPassPtrDynamicArray;
 
-    DescriptorSet globalDescriptorSet;
+    DescriptorSet* pGlobalDescriptorSet;
 };
 
 void assertVkResult(VkResult vkResult);

@@ -38,7 +38,6 @@ DescriptorContent getNullDescriptorContent(VkDescriptorType vkDescriptorType)
     return descriptorContent;
 }
 
-
 static uint32_t getMemoryTypeIndex(VkPhysicalDevice vkPhysicalDevice, uint32_t typeFilter, VkMemoryPropertyFlags memoryPropertyFlags)
 {
     VkPhysicalDeviceMemoryProperties physicalDeviceMemoryProperties;
@@ -128,12 +127,15 @@ Attachment *createDynamicAttachmentPtr(GfxContext *pGfxContext, VkFormat vkForma
     *pAttachment = (Attachment){
         .attachmentType = ATTACHMENT_TYPE_DYNAMIC,
         .attachmentContent.dynamicAttachmentContent = dynamicAttachmentContent,
+        .renderPassPtrHashSet = tknCreateHashSet(1),
     };
     return pAttachment;
 }
 void destroyDynamicAttachmentPtr(GfxContext *pGfxContext, Attachment *pAttachment)
 {
     tknAssert(pAttachment->attachmentType == ATTACHMENT_TYPE_DYNAMIC, "Attachment type mismatch!");
+    tknAssert(pAttachment->renderPassPtrHashSet.count == 0, "Cannot destroy dynamic attachment with render passes attached!");
+    tknDestroyHashSet(pAttachment->renderPassPtrHashSet);
     DynamicAttachmentContent dynamicAttachmentContent = pAttachment->attachmentContent.dynamicAttachmentContent;
     destroyImagePtr(pGfxContext, dynamicAttachmentContent.pImage);
     tknFree(pAttachment);
@@ -185,12 +187,15 @@ Attachment *createFixedAttachmentPtr(GfxContext *pGfxContext, VkFormat vkFormat,
     *pAttachment = (Attachment){
         .attachmentType = ATTACHMENT_TYPE_FIXED,
         .attachmentContent.fixedAttachmentContent = fixedAttachmentContent,
+        .renderPassPtrHashSet = tknCreateHashSet(1),
     };
     return pAttachment;
 }
 void destroyFixedAttachmentPtr(GfxContext *pGfxContext, Attachment *pAttachment)
 {
     tknAssert(pAttachment->attachmentType == ATTACHMENT_TYPE_FIXED, "Attachment type mismatch!");
+    tknAssert(pAttachment->renderPassPtrHashSet.count == 0, "Cannot destroy fixed attachment with render passes attached!");
+    tknDestroyHashSet(pAttachment->renderPassPtrHashSet);
     VkDevice vkDevice = pGfxContext->vkDevice;
     FixedAttachmentContent fixedAttachmentContent = pAttachment->attachmentContent.fixedAttachmentContent;
     destroyImagePtr(pGfxContext, fixedAttachmentContent.pImage);

@@ -131,7 +131,6 @@ static void destroySubpass(GfxContext *pGfxContext, Subpass subpass)
     // tknFree(pSubpass->vkDescriptorSetLayoutBindings);
 }
 
-
 bool canRecreateSwapchain(RenderPass renderPass)
 {
     for (uint32_t attachmentPtrIndex = 0; attachmentPtrIndex < renderPass.attachmentCount; attachmentPtrIndex++)
@@ -742,22 +741,23 @@ RenderPass *createRenderPassPtr(GfxContext *pGfxContext, uint32_t attachmentCoun
     VkRenderPass vkRenderPass = VK_NULL_HANDLE;
     // Create vkRenderPass
     VkDevice vkDevice = pGfxContext->vkDevice;
-    for (uint32_t i = 0; i < attachmentCount; i++)
+    for (uint32_t attachmentIndex = 0; attachmentIndex < attachmentCount; attachmentIndex++)
     {
-        Attachment *pAttachment = inputAttachmentPtrs[i];
-        attachmentPtrs[i] = pAttachment;
+        Attachment *pAttachment = inputAttachmentPtrs[attachmentIndex];
+        attachmentPtrs[attachmentIndex] = pAttachment;
         if (ATTACHMENT_TYPE_SWAPCHAIN == pAttachment->attachmentType)
         {
-            vkAttachmentDescriptions[i].format = pGfxContext->surfaceFormat.format;
+            vkAttachmentDescriptions[attachmentIndex].format = pGfxContext->surfaceFormat.format;
         }
         else if (ATTACHMENT_TYPE_DYNAMIC == pAttachment->attachmentType)
         {
-            vkAttachmentDescriptions[i].format = pAttachment->attachmentContent.dynamicAttachmentContent.pImage->vkFormat;
+            vkAttachmentDescriptions[attachmentIndex].format = pAttachment->attachmentContent.dynamicAttachmentContent.pImage->vkFormat;
         }
         else
         {
-            vkAttachmentDescriptions[i].format = pAttachment->attachmentContent.fixedAttachmentContent.pImage->vkFormat;
+            vkAttachmentDescriptions[attachmentIndex].format = pAttachment->attachmentContent.fixedAttachmentContent.pImage->vkFormat;
         }
+        tknAddToHashSet(&pAttachment->renderPassPtrHashSet, &pRenderPass);
     }
     VkRenderPassCreateInfo vkRenderPassCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
@@ -780,6 +780,7 @@ RenderPass *createRenderPassPtr(GfxContext *pGfxContext, uint32_t attachmentCoun
         .subpassCount = subpassCount,
         .subpasses = subpasses,
     };
+
     // Create framebuffers and subpasses
     populateFramebuffers(pGfxContext, pRenderPass);
     for (uint32_t subpassIndex = 0; subpassIndex < pRenderPass->subpassCount; subpassIndex++)
@@ -793,18 +794,20 @@ void destroyRenderPassPtr(GfxContext *pGfxContext, RenderPass *pRenderPass)
 {
     VkDevice vkDevice = pGfxContext->vkDevice;
     // tknRemoveFromDynamicArray(&pGfxContext->renderPassPtrDynamicArray, &pRenderPass);
+    cleanupFramebuffers(pGfxContext, pRenderPass);
+    vkDestroyRenderPass(pGfxContext->vkDevice, pRenderPass->vkRenderPass, NULL);
 
     for (uint32_t i = 0; i < pRenderPass->subpassCount; i++)
     {
         Subpass *pSubpass = &pRenderPass->subpasses[i];
         destroySubpass(pGfxContext, *pSubpass);
     }
-
     tknFree(pRenderPass->subpasses);
-
-    cleanupFramebuffers(pGfxContext, pRenderPass);
-
-    vkDestroyRenderPass(pGfxContext->vkDevice, pRenderPass->vkRenderPass, NULL);
+    for (uint32_t i = 0; i < pRenderPass->attachmentCount; i++)
+    {
+        Attachment *pAttachment = pRenderPass->attachmentPtrs[i];
+        tknRemoveFromHashSet(&pAttachment->renderPassPtrHashSet, &pRenderPass);
+    }
     tknFree(pRenderPass->attachmentPtrs);
     tknFree(pRenderPass);
 }
