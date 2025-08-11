@@ -4,11 +4,14 @@
 
 typedef struct GfxContext GfxContext;
 typedef struct RenderPass RenderPass;
+typedef struct Pipeline Pipeline;
 typedef struct Descriptor Descriptor;
+
 
 typedef struct Attachment Attachment;
 typedef struct Image Image;
 typedef struct Sampler Sampler;
+typedef struct Buffer Buffer;
 typedef struct MappedBuffer MappedBuffer;
 
 VkFormat getSupportedFormat(GfxContext *pGfxContext, uint32_t candidateCount, VkFormat *candidates, VkImageTiling tiling, VkFormatFeatureFlags features);

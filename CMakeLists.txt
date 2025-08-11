@@ -16,14 +16,13 @@ add_dependencies(${PROJECT_NAME} Tickernel TickernelLua)
 message(CMAKE_BINARY_DIR "${CMAKE_BINARY_DIR}")
 find_program(GLSLC glslc REQUIRED)
 set(SHADER_SOURCE_DIR ${CMAKE_SOURCE_DIR}/res/glsl)
-set(SHADER_OUTPUT_DIR ${CMAKE_BINARY_DIR}/assets/shaders)
+set(SHADER_OUTPUT_DIR ${CMAKE_SOURCE_DIR}/assets/shaders)
 file(MAKE_DIRECTORY ${SHADER_OUTPUT_DIR})
 file(GLOB_RECURSE SHADER_FILES ${SHADER_SOURCE_DIR}/*.vert ${SHADER_SOURCE_DIR}/*.frag)
 set(SPIRV_BINARIES)
 foreach(SHADER ${SHADER_FILES})
     get_filename_component(SHADER_NAME ${SHADER} NAME)
     set(SPIRV ${SHADER_OUTPUT_DIR}/${SHADER_NAME}.spv)
-
     add_custom_command(
         OUTPUT ${SPIRV}
         COMMAND ${GLSLC} ${SHADER} -o ${SPIRV}
@@ -33,6 +32,7 @@ foreach(SHADER ${SHADER_FILES})
     )
     list(APPEND SPIRV_BINARIES ${SPIRV})
 endforeach()
+
 if(SHADER_FILES)
     add_custom_target(CompileShaders DEPENDS ${SPIRV_BINARIES})
     add_dependencies(${PROJECT_NAME} CompileShaders)

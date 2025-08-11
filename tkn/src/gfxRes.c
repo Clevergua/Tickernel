@@ -1,5 +1,44 @@
 #include "gfxRes.h"
-#include "gfxCommon.h"
+
+void assertVkResult(VkResult vkResult)
+{
+    tknAssert(vkResult == VK_SUCCESS, "Vulkan error: %d", vkResult);
+}
+
+DescriptorContent getNullDescriptorContent(VkDescriptorType vkDescriptorType)
+{
+    DescriptorContent descriptorContent = {0};
+    // VK_DESCRIPTOR_TYPE_SAMPLER = 0,
+    if (VK_DESCRIPTOR_TYPE_SAMPLER == vkDescriptorType)
+    {
+        descriptorContent.samplerDescriptorContent.pSampler = NULL;
+    }
+    // VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER = 1,
+    // VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE = 2,
+    // VK_DESCRIPTOR_TYPE_STORAGE_IMAGE = 3,
+    // VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER = 4,
+    // VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER = 5,
+    // VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER = 6,
+    if (VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER == vkDescriptorType)
+    {
+        descriptorContent.uniformBufferDescriptorContent.pBuffer = NULL;
+    }
+    // VK_DESCRIPTOR_TYPE_STORAGE_BUFFER = 7,
+    // VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC = 8,
+    // VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC = 9,
+    // VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT = 10,
+    else if (VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT == vkDescriptorType)
+    {
+        descriptorContent.inputAttachmentDescriptorContent.pAttachment = NULL;
+    }
+    else
+    {
+        tknError("Unsupported descriptor type: %d", vkDescriptorType);
+    }
+    return descriptorContent;
+}
+
+
 static uint32_t getMemoryTypeIndex(VkPhysicalDevice vkPhysicalDevice, uint32_t typeFilter, VkMemoryPropertyFlags memoryPropertyFlags)
 {
     VkPhysicalDeviceMemoryProperties physicalDeviceMemoryProperties;
@@ -14,7 +53,6 @@ static uint32_t getMemoryTypeIndex(VkPhysicalDevice vkPhysicalDevice, uint32_t t
     tknError("Failed to get suitable memory type!");
     return UINT32_MAX;
 }
-
 static Buffer createBuffer(GfxContext *pGfxContext, VkDeviceSize bufferSize, VkBufferUsageFlags bufferUsageFlags, VkMemoryPropertyFlags msemoryPropertyFlags)
 {
     VkBuffer vkBuffer;
@@ -53,7 +91,6 @@ static Buffer createBuffer(GfxContext *pGfxContext, VkDeviceSize bufferSize, VkB
     };
     return buffer;
 }
-
 static void destroyBuffer(GfxContext *pGfxContext, Buffer buffer)
 {
     for (uint32_t i = 0; i < buffer.descriptorPtrHashSet.capacity; i++)
@@ -83,7 +120,6 @@ Attachment *createDynamicAttachmentPtr(GfxContext *pGfxContext, VkFormat vkForma
         .height = (uint32_t)(pGfxContext->swapchainExtent.height * scaler),
         .depth = 1,
     };
-    printf("Dynamic attachment size: %d\n", vkImageAspectFlags);
     Image *pImage = createImagePtr(pGfxContext, vkExtent3D, vkFormat, VK_IMAGE_TILING_OPTIMAL, vkImageUsageFlags, vkMemoryPropertyFlags, vkImageAspectFlags);
     DynamicAttachmentContent dynamicAttachmentContent = {
         .pImage = pImage,
