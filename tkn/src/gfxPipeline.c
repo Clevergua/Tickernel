@@ -37,18 +37,30 @@ static void destroySpvReflectShaderModule(SpvReflectShaderModule *pSpvReflectSha
     spvReflectDestroyShaderModule(pSpvReflectShaderModule);
 }
 
-static Subpass createSubpass(GfxContext *pGfxContext, uint32_t inputVkAttachmentReferenceCount, const VkAttachmentReference *inputVkAttachmentReferences, uint32_t spvPathCount, const char **spvPaths, Attachment **attachmentPtrs)
+static Subpass createSubpass(GfxContext *pGfxContext, uint32_t subpassIndex, uint32_t attachmentCount, uint32_t inputVkAttachmentReferenceCount, const VkAttachmentReference *inputVkAttachmentReferences, uint32_t spvPathCount, const char **spvPaths, Attachment **attachmentPtrs)
 {
     TknDynamicArray pipelinePtrDynamicArray = tknCreateDynamicArray(sizeof(Pipeline *), 1);
     SpvReflectShaderModule *spvReflectShaderModules = tknMalloc(sizeof(SpvReflectShaderModule) * spvPathCount);
+    VkImageLayout *inputAttachmentIndexToVkImageLayout = tknMalloc(sizeof(VkImageLayout) * attachmentCount);
+    for (uint32_t i = 0; i < attachmentCount; i++)
+    {
+        for (uint32_t j = 0; j < inputVkAttachmentReferenceCount; j++)
+        {
+            if (inputVkAttachmentReferences[j].attachment == i)
+            {
+                inputAttachmentIndexToVkImageLayout[i] = inputVkAttachmentReferences[j].layout;
+                break;
+            }
+        }
+        inputAttachmentIndexToVkImageLayout[i] = VK_IMAGE_LAYOUT_UNDEFINED;
+    }
+
     for (uint32_t pathIndex = 0; pathIndex < spvPathCount; pathIndex++)
     {
         const char *spvPath = spvPaths[pathIndex];
         spvReflectShaderModules[pathIndex] = createSpvReflectShaderModule(spvPath);
     }
     DescriptorSet *pSubpassDescriptorSet = createDescriptorSetPtr(pGfxContext, spvPathCount, spvReflectShaderModules, TICKERNEL_SUBPASS_DESCRIPTOR_SET);
-    // Collect all INPUT_ATTACHMENT descriptors for batch update
-    TknDynamicArray inputAttachmentDescriptorDynamicArray = tknCreateDynamicArray(sizeof(Descriptor), 4);
     for (uint32_t pathIndex = 0; pathIndex < spvPathCount; pathIndex++)
     {
         SpvReflectShaderModule spvReflectShaderModule = spvReflectShaderModules[pathIndex];
@@ -90,7 +102,8 @@ static Subpass createSubpass(GfxContext *pGfxContext, uint32_t inputVkAttachment
     // Batch update all INPUT_ATTACHMENT descriptors
     if (inputAttachmentDescriptorDynamicArray.count > 0)
     {
-        updateDescriptors(pGfxContext, inputAttachmentDescriptorDynamicArray.count, inputAttachmentDescriptorDynamicArray.array);
+        // TODO Update descriptor set
+        updateInputAttachmentDescriptors(pGfxContext, inputAttachmentDescriptorDynamicArray.count, inputAttachmentDescriptorDynamicArray.array);
     }
     tknDestroyDynamicArray(inputAttachmentDescriptorDynamicArray);
     tknFree(spvReflectShaderModules);
@@ -98,6 +111,8 @@ static Subpass createSubpass(GfxContext *pGfxContext, uint32_t inputVkAttachment
     Subpass subpass = {
         .pSubpassDescriptorSet = pSubpassDescriptorSet,
         .pipelinePtrDynamicArray = pipelinePtrDynamicArray,
+        .subpassIndex = subpassIndex,
+        .inputAttachmentIndexToVkImageLayout = inputAttachmentIndexToVkImageLayout,
     };
     return subpass;
 }
@@ -676,7 +691,7 @@ RenderPass *createRenderPassPtr(GfxContext *pGfxContext, uint32_t attachmentCoun
     populateFramebuffers(pGfxContext, pRenderPass);
     for (uint32_t subpassIndex = 0; subpassIndex < pRenderPass->subpassCount; subpassIndex++)
     {
-        pRenderPass->subpasses[subpassIndex] = createSubpass(pGfxContext, vkSubpassDescriptions[subpassIndex].inputAttachmentCount, vkSubpassDescriptions[subpassIndex].pInputAttachments, spvPathCounts[subpassIndex], spvPathsArray[subpassIndex], attachmentPtrs);
+        pRenderPass->subpasses[subpassIndex] = createSubpass(pGfxContext, subpassIndex, attachmentCount, vkSubpassDescriptions[subpassIndex].inputAttachmentCount, vkSubpassDescriptions[subpassIndex].pInputAttachments, spvPathCounts[subpassIndex], spvPathsArray[subpassIndex], attachmentPtrs);
     }
     // tknAddToDynamicArray(&pGfxContext->renderPassPtrDynamicArray, &pRenderPass, renderPassIndex);
     return pRenderPass;

@@ -1,43 +1,5 @@
 #include "gfxRes.h"
 
-void assertVkResult(VkResult vkResult)
-{
-    tknAssert(vkResult == VK_SUCCESS, "Vulkan error: %d", vkResult);
-}
-
-DescriptorContent getNullDescriptorContent(VkDescriptorType vkDescriptorType)
-{
-    DescriptorContent descriptorContent = {0};
-    // VK_DESCRIPTOR_TYPE_SAMPLER = 0,
-    if (VK_DESCRIPTOR_TYPE_SAMPLER == vkDescriptorType)
-    {
-        descriptorContent.samplerDescriptorContent.pSampler = NULL;
-    }
-    // VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER = 1,
-    // VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE = 2,
-    // VK_DESCRIPTOR_TYPE_STORAGE_IMAGE = 3,
-    // VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER = 4,
-    // VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER = 5,
-    // VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER = 6,
-    if (VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER == vkDescriptorType)
-    {
-        descriptorContent.uniformBufferDescriptorContent.pBuffer = NULL;
-    }
-    // VK_DESCRIPTOR_TYPE_STORAGE_BUFFER = 7,
-    // VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC = 8,
-    // VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC = 9,
-    // VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT = 10,
-    else if (VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT == vkDescriptorType)
-    {
-        descriptorContent.inputAttachmentDescriptorContent.inputAttachmentIndex = UINT32_MAX;
-    }
-    else
-    {
-        tknError("Unsupported descriptor type: %d", vkDescriptorType);
-    }
-    return descriptorContent;
-}
-
 static uint32_t getMemoryTypeIndex(VkPhysicalDevice vkPhysicalDevice, uint32_t typeFilter, VkMemoryPropertyFlags memoryPropertyFlags)
 {
     VkPhysicalDeviceMemoryProperties physicalDeviceMemoryProperties;
@@ -178,6 +140,44 @@ static void destroyVkImage(GfxContext *pGfxContext, VkImage vkImage, VkDeviceMem
     vkFreeMemory(vkDevice, vkDeviceMemory, NULL);
 }
 
+void assertVkResult(VkResult vkResult)
+{
+    tknAssert(vkResult == VK_SUCCESS, "Vulkan error: %d", vkResult);
+}
+
+DescriptorContent getNullDescriptorContent(VkDescriptorType vkDescriptorType)
+{
+    DescriptorContent descriptorContent = {0};
+    // VK_DESCRIPTOR_TYPE_SAMPLER = 0,
+    if (VK_DESCRIPTOR_TYPE_SAMPLER == vkDescriptorType)
+    {
+        descriptorContent.samplerDescriptorContent.pSampler = NULL;
+    }
+    // VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER = 1,
+    // VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE = 2,
+    // VK_DESCRIPTOR_TYPE_STORAGE_IMAGE = 3,
+    // VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER = 4,
+    // VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER = 5,
+    // VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER = 6,
+    if (VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER == vkDescriptorType)
+    {
+        descriptorContent.uniformBufferDescriptorContent.pBuffer = NULL;
+    }
+    // VK_DESCRIPTOR_TYPE_STORAGE_BUFFER = 7,
+    // VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC = 8,
+    // VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC = 9,
+    // VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT = 10,
+    else if (VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT == vkDescriptorType)
+    {
+        descriptorContent.inputAttachmentDescriptorContent.inputAttachmentIndex = UINT32_MAX;
+    }
+    else
+    {
+        tknError("Unsupported descriptor type: %d", vkDescriptorType);
+    }
+    return descriptorContent;
+}
+
 Attachment *createDynamicAttachmentPtr(GfxContext *pGfxContext, VkFormat vkFormat, VkImageUsageFlags vkImageUsageFlags, VkImageAspectFlags vkImageAspectFlags, float scaler)
 {
     Attachment *pAttachment = tknMalloc(sizeof(Attachment));
@@ -237,7 +237,7 @@ void resizeDynamicAttachmentPtr(GfxContext *pGfxContext, Attachment *pAttachment
             RenderPass *pRenderPass = (RenderPass *)node->value;
             for (uint32_t attachmentIndex = 0; attachmentIndex < pRenderPass->attachmentCount; attachmentIndex++)
             {
-                // TODO
+                // TODO 先处理完Subpass的更新再回来
             }
             node = node->nextNodePtr;
         }

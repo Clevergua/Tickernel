@@ -146,9 +146,10 @@ struct Pipeline
 
 typedef struct
 {
-    DescriptorSet *pSubpassDescriptorSet;    // subpass descriptor set
-    TknDynamicArray pipelinePtrDynamicArray; // pipelines
-    uint32_t subpassIndex;                   // subpass index in the render pass
+    DescriptorSet *pSubpassDescriptorSet;               // subpass descriptor set
+    TknDynamicArray pipelinePtrDynamicArray;            // pipelines
+    uint32_t subpassIndex;                              // subpass index in the render pass
+    VkImageLayout *inputAttachmentIndexToVkImageLayout; // input attachment layout
 } Subpass;
 
 struct RenderPass
