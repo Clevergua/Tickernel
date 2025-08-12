@@ -656,7 +656,6 @@ void updateGfxContextPtr(GfxContext *pGfxContext, VkExtent2D swapchainExtent)
                     // Don't need to recreate framebuffers
                 }
             }
-            // TODO Recreate subpass descriptor sets for input attachments
         }
         else
         {

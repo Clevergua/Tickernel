@@ -7,7 +7,6 @@ typedef struct RenderPass RenderPass;
 typedef struct Pipeline Pipeline;
 typedef struct Descriptor Descriptor;
 
-
 typedef struct Attachment Attachment;
 typedef struct Image Image;
 typedef struct Sampler Sampler;
@@ -24,10 +23,10 @@ void destroyGfxContextPtr(GfxContext *pGfxContext);
 RenderPass *createRenderPassPtr(GfxContext *pGfxContext, uint32_t attachmentCount, VkAttachmentDescription *vkAttachmentDescriptions, Attachment **inputAttachmentPtrs, uint32_t subpassCount, VkSubpassDescription *vkSubpassDescriptions, uint32_t *spvPathCounts, const char ***spvPathsArray, uint32_t vkSubpassDependencyCount, VkSubpassDependency *vkSubpassDependencies, uint32_t renderPassIndex);
 void destroyRenderPassPtr(GfxContext *pGfxContext, RenderPass *pRenderPass);
 
-Attachment *createDynamicAttachmentPtr(GfxContext *pGfxContext, VkFormat vkFormat, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags, float scaler);
+Attachment *createDynamicAttachmentPtr(GfxContext *pGfxContext, VkFormat vkFormat, VkImageUsageFlags vkImageUsageFlags, VkImageAspectFlags vkImageAspectFlags, float scaler);
 void destroyDynamicAttachmentPtr(GfxContext *pGfxContext, Attachment *pAttachment);
 
-Attachment *createFixedAttachmentPtr(GfxContext *pGfxContext, VkFormat vkFormat, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags, uint32_t width, uint32_t height);
+Attachment *createFixedAttachmentPtr(GfxContext *pGfxContext, VkFormat vkFormat, VkImageUsageFlags vkImageUsageFlags, VkImageAspectFlags vkImageAspectFlags, uint32_t width, uint32_t height);
 void destroyFixedAttachmentPtr(GfxContext *pGfxContext, Attachment *pAttachment);
 
 Attachment *getSwapchainAttachmentPtr(GfxContext *pGfxContext);

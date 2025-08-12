@@ -23,27 +23,25 @@ static int luaGetSupportedFormat(lua_State *pLuaState)
 
 static int luaCreateDynamicAttachmentPtr(lua_State *pLuaState)
 {
-    GfxContext *pGfxContext = (GfxContext *)lua_touserdata(pLuaState, -6);
-    VkFormat vkFormat = (VkFormat)lua_tointeger(pLuaState, -5);
-    VkImageUsageFlags vkImageUsageFlags = (VkImageUsageFlags)lua_tointeger(pLuaState, -4);
-    VkMemoryPropertyFlags vkMemoryPropertyFlags = (VkMemoryPropertyFlags)lua_tointeger(pLuaState, -3);
+    GfxContext *pGfxContext = (GfxContext *)lua_touserdata(pLuaState, -5);
+    VkFormat vkFormat = (VkFormat)lua_tointeger(pLuaState, -4);
+    VkImageUsageFlags vkImageUsageFlags = (VkImageUsageFlags)lua_tointeger(pLuaState, -3);
     VkImageAspectFlags vkImageAspectFlags = (VkImageAspectFlags)lua_tointeger(pLuaState, -2);
     float scaler = (float)lua_tonumber(pLuaState, -1);
-    Attachment *pAttachment = createDynamicAttachmentPtr(pGfxContext, vkFormat, vkImageUsageFlags, vkMemoryPropertyFlags, vkImageAspectFlags, scaler);
+    Attachment *pAttachment = createDynamicAttachmentPtr(pGfxContext, vkFormat, vkImageUsageFlags, vkImageAspectFlags, scaler);
     lua_pushlightuserdata(pLuaState, pAttachment);
     return 1;
 }
 
 static int luaCreateFixedAttachmentPtr(lua_State *pLuaState)
 {
-    GfxContext *pGfxContext = (GfxContext *)lua_touserdata(pLuaState, -7);
-    VkFormat vkFormat = (VkFormat)lua_tointeger(pLuaState, -6);
-    VkImageUsageFlags vkImageUsageFlags = (VkImageUsageFlags)lua_tointeger(pLuaState, -5);
-    VkMemoryPropertyFlags vkMemoryPropertyFlags = (VkMemoryPropertyFlags)lua_tointeger(pLuaState, -4);
+    GfxContext *pGfxContext = (GfxContext *)lua_touserdata(pLuaState, -6);
+    VkFormat vkFormat = (VkFormat)lua_tointeger(pLuaState, -5);
+    VkImageUsageFlags vkImageUsageFlags = (VkImageUsageFlags)lua_tointeger(pLuaState, -4);
     VkImageAspectFlags vkImageAspectFlags = (VkImageAspectFlags)lua_tointeger(pLuaState, -3);
     uint32_t width = (uint32_t)lua_tointeger(pLuaState, -2);
     uint32_t height = (uint32_t)lua_tointeger(pLuaState, -1);
-    Attachment *pAttachment = createFixedAttachmentPtr(pGfxContext, vkFormat, vkImageUsageFlags, vkMemoryPropertyFlags, vkImageAspectFlags, width, height);
+    Attachment *pAttachment = createFixedAttachmentPtr(pGfxContext, vkFormat, vkImageUsageFlags, vkImageAspectFlags, width, height);
     lua_pushlightuserdata(pLuaState, pAttachment);
     return 1;
 }

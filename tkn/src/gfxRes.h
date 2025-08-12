@@ -7,7 +7,6 @@
 struct Sampler
 {
     VkSampler vkSampler;
-    VkSamplerCreateInfo vkSamplerCreateInfo;
     TknHashSet descriptorPtrHashSet;
 };
 
@@ -16,12 +15,6 @@ struct Image
     VkImage vkImage;
     VkDeviceMemory vkDeviceMemory;
     VkImageView vkImageView;
-    VkExtent3D vkExtent3D;
-    VkFormat vkFormat;
-    VkImageTiling vkImageTiling;
-    VkImageUsageFlags vkImageUsageFlags;
-    VkMemoryPropertyFlags vkMemoryPropertyFlags;
-    VkImageAspectFlags vkImageAspectFlags;
     TknHashSet descriptorPtrHashSet;
 };
 
@@ -41,15 +34,23 @@ struct MappedBuffer
 
 typedef struct
 {
-    Image *pImage;
+    VkImage vkImage;
+    VkDeviceMemory vkDeviceMemory;
+    VkImageView vkImageView;
     uint32_t width;
     uint32_t height;
+    VkFormat vkFormat;
 } FixedAttachmentContent;
 
 typedef struct
 {
-    Image *pImage;
+    VkImage vkImage;
+    VkDeviceMemory vkDeviceMemory;
+    VkImageView vkImageView;
     float32_t scaler;
+    VkFormat vkFormat;
+    VkImageUsageFlags vkImageUsageFlags;
+    VkImageAspectFlags vkImageAspectFlags;
 } DynamicAttachmentContent;
 
 typedef struct
@@ -89,8 +90,7 @@ typedef struct
 
 typedef struct
 {
-    Attachment *pAttachment;
-    VkImageLayout vkImageLayout;
+    uint32_t inputAttachmentIndex;
 } InputAttachmentDescriptorContent;
 
 typedef union
@@ -197,7 +197,7 @@ struct GfxContext
     TknDynamicArray dynamicAttachmentPtrDynamicArray;
     TknDynamicArray renderPassPtrDynamicArray;
 
-    DescriptorSet* pGlobalDescriptorSet;
+    DescriptorSet *pGlobalDescriptorSet;
 };
 
 void assertVkResult(VkResult vkResult);

@@ -65,8 +65,7 @@ static Subpass createSubpass(GfxContext *pGfxContext, uint32_t inputVkAttachment
                     if (VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT == (VkDescriptorType)pSpvReflectDescriptorBinding->descriptor_type)
                     {
                         InputAttachmentDescriptorContent inputAttachmentDescriptorContent = {
-                            .pAttachment = attachmentPtrs[pSpvReflectDescriptorBinding->input_attachment_index],
-                            .vkImageLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+                            .inputAttachmentIndex = pSpvReflectDescriptorBinding->input_attachment_index,
                         };
                         Descriptor descriptor = {
                             .vkDescriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT,
@@ -74,17 +73,6 @@ static Subpass createSubpass(GfxContext *pGfxContext, uint32_t inputVkAttachment
                             .pDescriptorSet = pSubpassDescriptorSet,
                             .binding = binding,
                         };
-                        uint32_t inputVkAttachmentReferenceIndex;
-                        for (inputVkAttachmentReferenceIndex = 0; inputVkAttachmentReferenceIndex < inputVkAttachmentReferenceCount; inputVkAttachmentReferenceIndex++)
-                        {
-                            VkAttachmentReference ref = inputVkAttachmentReferences[inputVkAttachmentReferenceIndex];
-                            if (ref.attachment == pSpvReflectDescriptorBinding->input_attachment_index)
-                            {
-                                pSubpassDescriptorSet->descriptors[binding].descriptorContent.inputAttachmentDescriptorContent.vkImageLayout = ref.layout;
-                                break;
-                            }
-                        }
-                        tknAssert(inputVkAttachmentReferenceIndex < inputVkAttachmentReferenceCount, "Input attachment reference not found for binding %d in shader %s", binding, spvPaths[pathIndex]);
                         tknAddToDynamicArray(&inputAttachmentDescriptorDynamicArray, &descriptor, inputAttachmentDescriptorDynamicArray.count);
                     }
                 }
@@ -326,6 +314,22 @@ DescriptorSet *createDescriptorSetPtr(GfxContext *pGfxContext, uint32_t spvRefle
     };
     return pDescriptorSet;
 }
+
+void updateInputAttachmentDescriptors(GfxContext *pGfxContext, RenderPass *pRenderPass, Subpass *pSubpass, uint32_t inputAttachmentCount, InputAttachmentDescriptorContent *inputAttachmentContents)
+{
+    if (inputAttachmentCount > 0)
+    {
+        VkWriteDescriptorSet *vkWriteDescriptorSets = tknMalloc(sizeof(VkWriteDescriptorSet) * inputAttachmentCount);
+        for (uint32_t inputAttachmentIndex = 0; inputAttachmentIndex < inputAttachmentCount; inputAttachmentIndex++)
+        {
+        }
+        tknFree(vkWriteDescriptorSets);
+    }
+    else
+    {
+        printf("No input attachments to update");
+    }
+}
 void updateDescriptors(GfxContext *pGfxContext, uint32_t newDescriptorCount, Descriptor *newDescriptors)
 {
     if (newDescriptorCount > 0)
@@ -446,112 +450,6 @@ void updateDescriptors(GfxContext *pGfxContext, uint32_t newDescriptorCount, Des
             {
                 tknError("Storage buffer dynamic not yet implemented");
             }
-            else if (VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT == vkDescriptorType)
-            {
-                InputAttachmentDescriptorContent newDescriptorContent = newDescriptor.descriptorContent.inputAttachmentDescriptorContent;
-                Descriptor *pCurrentDescriptor = &pCurrentDescriptorSet->descriptors[binding];
-                Attachment *pCurrentAttachment = pCurrentDescriptor->descriptorContent.inputAttachmentDescriptorContent.pAttachment;
-                Attachment *pNewAttachment = newDescriptorContent.pAttachment;
-                if (pCurrentAttachment == pNewAttachment)
-                {
-                    // No change, skip
-                }
-                else
-                {
-                    // Remove reference from old attachment
-                    if (pCurrentAttachment == NULL)
-                    {
-                        // Nothing
-                    }
-                    else
-                    {
-                        if (pCurrentAttachment->attachmentType == ATTACHMENT_TYPE_SWAPCHAIN)
-                        {
-                            // Swapchain attachments are handled at render time.
-                        }
-                        else
-                        {
-                            if (pCurrentAttachment->attachmentType == ATTACHMENT_TYPE_DYNAMIC)
-                            {
-                                tknRemoveFromHashSet(&pCurrentAttachment->attachmentContent.dynamicAttachmentContent.pImage->descriptorPtrHashSet, pCurrentDescriptor);
-                            }
-                            else if (pCurrentAttachment->attachmentType == ATTACHMENT_TYPE_FIXED)
-                            {
-                                tknRemoveFromHashSet(&pCurrentAttachment->attachmentContent.fixedAttachmentContent.pImage->descriptorPtrHashSet, pCurrentDescriptor);
-                            }
-                            else
-                            {
-                                tknError("Unsupported attachment type: %d", pNewAttachment->attachmentType);
-                            }
-                        }
-                    }
-                    // Add reference to new attachment
-                    if (pNewAttachment == NULL)
-                    {
-                        // Nothing
-                    }
-                    else
-                    {
-                        if (pNewAttachment->attachmentType == ATTACHMENT_TYPE_DYNAMIC)
-                        {
-                            tknAddToHashSet(&pNewAttachment->attachmentContent.dynamicAttachmentContent.pImage->descriptorPtrHashSet, pCurrentDescriptor);
-                        }
-                        else if (pNewAttachment->attachmentType == ATTACHMENT_TYPE_FIXED)
-                        {
-                            tknAddToHashSet(&pNewAttachment->attachmentContent.fixedAttachmentContent.pImage->descriptorPtrHashSet, pCurrentDescriptor);
-                        }
-                        else if (pCurrentAttachment->attachmentType == ATTACHMENT_TYPE_SWAPCHAIN)
-                        {
-                            // Swapchain attachments are handled at render time.
-                        }
-                        else
-                        {
-                            tknError("Unsupported attachment type: %d", pNewAttachment->attachmentType);
-                        }
-                        pCurrentDescriptor->descriptorContent.inputAttachmentDescriptorContent.pAttachment = newDescriptorContent.pAttachment;
-                        VkImageView imageView;
-                        if (pNewAttachment != NULL)
-                        {
-                            if (pNewAttachment->attachmentType == ATTACHMENT_TYPE_DYNAMIC)
-                            {
-                                imageView = pNewAttachment->attachmentContent.dynamicAttachmentContent.pImage->vkImageView;
-                            }
-                            else if (pNewAttachment->attachmentType == ATTACHMENT_TYPE_FIXED)
-                            {
-                                imageView = pNewAttachment->attachmentContent.fixedAttachmentContent.pImage->vkImageView;
-                            }
-                            else
-                            {
-                                tknError("Unsupported attachment type: %d", pNewAttachment->attachmentType);
-                            }
-                        }
-                        else
-                        {
-                            imageView = VK_NULL_HANDLE;
-                        }
-                        vkDescriptorImageInfos[vkWriteDescriptorSetCount] = (VkDescriptorImageInfo){
-                            .sampler = VK_NULL_HANDLE,
-                            .imageView = imageView,
-                            .imageLayout = pCurrentDescriptor->descriptorContent.inputAttachmentDescriptorContent.vkImageLayout,
-                        };
-                        printf("Input attachment binding %d, image view: %p, layout: %d\n", binding, vkDescriptorImageInfos[vkWriteDescriptorSetCount].imageView, pCurrentDescriptor->descriptorContent.inputAttachmentDescriptorContent.vkImageLayout);
-
-                        VkWriteDescriptorSet vkWriteDescriptorSet = {
-                            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-                            .dstSet = pCurrentDescriptorSet->vkDescriptorSet,
-                            .dstBinding = binding,
-                            .dstArrayElement = 0,
-                            .descriptorCount = 1,
-                            .descriptorType = vkDescriptorType,
-                            .pImageInfo = &vkDescriptorImageInfos[vkWriteDescriptorSetCount],
-                            .pBufferInfo = NULL,
-                            .pTexelBufferView = NULL,
-                        };
-                        vkWriteDescriptorSets[vkWriteDescriptorSetCount] = vkWriteDescriptorSet;
-                        vkWriteDescriptorSetCount++;
-                    }
-                }
-            }
             else
             {
                 tknError("Unsupported descriptor type: %d", vkDescriptorType);
@@ -662,11 +560,11 @@ void populateFramebuffers(GfxContext *pGfxContext, RenderPass *pRenderPass)
                 }
                 else if (ATTACHMENT_TYPE_DYNAMIC == pAttachment->attachmentType)
                 {
-                    attachmentVkImageViews[attachmentIndex] = pAttachment->attachmentContent.dynamicAttachmentContent.pImage->vkImageView;
+                    attachmentVkImageViews[attachmentIndex] = pAttachment->attachmentContent.dynamicAttachmentContent.vkImageView;
                 }
                 else
                 {
-                    attachmentVkImageViews[attachmentIndex] = pAttachment->attachmentContent.fixedAttachmentContent.pImage->vkImageView;
+                    attachmentVkImageViews[attachmentIndex] = pAttachment->attachmentContent.fixedAttachmentContent.vkImageView;
                 }
             }
             VkFramebufferCreateInfo vkFramebufferCreateInfo = {
@@ -694,11 +592,11 @@ void populateFramebuffers(GfxContext *pGfxContext, RenderPass *pRenderPass)
             Attachment *pAttachment = attachmentPtrs[attachmentIndex];
             if (ATTACHMENT_TYPE_DYNAMIC == pAttachment->attachmentType)
             {
-                attachmentVkImageViews[attachmentIndex] = pAttachment->attachmentContent.dynamicAttachmentContent.pImage->vkImageView;
+                attachmentVkImageViews[attachmentIndex] = pAttachment->attachmentContent.dynamicAttachmentContent.vkImageView;
             }
             else
             {
-                attachmentVkImageViews[attachmentIndex] = pAttachment->attachmentContent.fixedAttachmentContent.pImage->vkImageView;
+                attachmentVkImageViews[attachmentIndex] = pAttachment->attachmentContent.fixedAttachmentContent.vkImageView;
             }
         }
         VkFramebufferCreateInfo vkFramebufferCreateInfo = {
@@ -744,11 +642,11 @@ RenderPass *createRenderPassPtr(GfxContext *pGfxContext, uint32_t attachmentCoun
         }
         else if (ATTACHMENT_TYPE_DYNAMIC == pAttachment->attachmentType)
         {
-            vkAttachmentDescriptions[attachmentIndex].format = pAttachment->attachmentContent.dynamicAttachmentContent.pImage->vkFormat;
+            vkAttachmentDescriptions[attachmentIndex].format = pAttachment->attachmentContent.dynamicAttachmentContent.vkFormat;
         }
         else
         {
-            vkAttachmentDescriptions[attachmentIndex].format = pAttachment->attachmentContent.fixedAttachmentContent.pImage->vkFormat;
+            vkAttachmentDescriptions[attachmentIndex].format = pAttachment->attachmentContent.fixedAttachmentContent.vkFormat;
         }
         tknAddToHashSet(&pAttachment->renderPassPtrHashSet, &pRenderPass);
     }
