@@ -37,76 +37,38 @@ static void destroySpvReflectShaderModule(SpvReflectShaderModule *pSpvReflectSha
     spvReflectDestroyShaderModule(pSpvReflectShaderModule);
 }
 
-static Subpass createSubpass(GfxContext *pGfxContext, uint32_t subpassIndex, uint32_t attachmentCount, uint32_t inputVkAttachmentReferenceCount, const VkAttachmentReference *inputVkAttachmentReferences, uint32_t spvPathCount, const char **spvPaths, Attachment **attachmentPtrs)
+static Subpass createSubpass(GfxContext *pGfxContext, uint32_t subpassIndex, uint32_t attachmentCount, Attachment **attachmentPtrs, uint32_t inputVkAttachmentReferenceCount, const VkAttachmentReference *inputVkAttachmentReferences, uint32_t spvPathCount, const char **spvPaths)
 {
     TknDynamicArray pipelinePtrDynamicArray = tknCreateDynamicArray(sizeof(Pipeline *), 1);
-    SpvReflectShaderModule *spvReflectShaderModules = tknMalloc(sizeof(SpvReflectShaderModule) * spvPathCount);
     VkImageLayout *inputAttachmentIndexToVkImageLayout = tknMalloc(sizeof(VkImageLayout) * attachmentCount);
-    for (uint32_t i = 0; i < attachmentCount; i++)
+    for (uint32_t attachmentIndex = 0; attachmentIndex < attachmentCount; attachmentIndex++)
     {
-        for (uint32_t j = 0; j < inputVkAttachmentReferenceCount; j++)
-        {
-            if (inputVkAttachmentReferences[j].attachment == i)
-            {
-                inputAttachmentIndexToVkImageLayout[i] = inputVkAttachmentReferences[j].layout;
-                break;
-            }
-        }
-        inputAttachmentIndexToVkImageLayout[i] = VK_IMAGE_LAYOUT_UNDEFINED;
+        inputAttachmentIndexToVkImageLayout[attachmentIndex] = VK_IMAGE_LAYOUT_UNDEFINED;
+    }
+    for (uint32_t inputVkAttachmentReferenceIndex = 0; inputVkAttachmentReferenceIndex < inputVkAttachmentReferenceCount; inputVkAttachmentReferenceIndex++)
+    {
+        inputAttachmentIndexToVkImageLayout[inputVkAttachmentReferences[inputVkAttachmentReferenceIndex].attachment] = inputVkAttachmentReferences[inputVkAttachmentReferenceIndex].layout;
     }
 
-    for (uint32_t pathIndex = 0; pathIndex < spvPathCount; pathIndex++)
+    DescriptorSet *pSubpassDescriptorSet = createDescriptorSetPtr(pGfxContext, spvPathCount, spvPaths, TICKERNEL_SUBPASS_DESCRIPTOR_SET);
+
+    uint32_t descriptorCount = 0;
+    Descriptor *descriptors = tknMalloc(sizeof(Descriptor) * inputVkAttachmentReferenceCount);
+    for (uint32_t descriptorIndex = 0; descriptorIndex < pSubpassDescriptorSet->descriptorCount; descriptorIndex++)
     {
-        const char *spvPath = spvPaths[pathIndex];
-        spvReflectShaderModules[pathIndex] = createSpvReflectShaderModule(spvPath);
-    }
-    DescriptorSet *pSubpassDescriptorSet = createDescriptorSetPtr(pGfxContext, spvPathCount, spvReflectShaderModules, TICKERNEL_SUBPASS_DESCRIPTOR_SET);
-    for (uint32_t pathIndex = 0; pathIndex < spvPathCount; pathIndex++)
-    {
-        SpvReflectShaderModule spvReflectShaderModule = spvReflectShaderModules[pathIndex];
-        for (uint32_t descriptorSetIndex = 0; descriptorSetIndex < spvReflectShaderModule.descriptor_set_count; descriptorSetIndex++)
+        Descriptor descriptor = pSubpassDescriptorSet->descriptors[descriptorIndex];
+        if (descriptor.vkDescriptorType == VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT)
         {
-            SpvReflectDescriptorSet spvReflectDescriptorSet = spvReflectShaderModule.descriptor_sets[descriptorSetIndex];
-            if (TICKERNEL_SUBPASS_DESCRIPTOR_SET == spvReflectDescriptorSet.set)
-            {
-                // Update descriptors
-                for (uint32_t bindingIndex = 0; bindingIndex < spvReflectDescriptorSet.binding_count; bindingIndex++)
-                {
-                    SpvReflectDescriptorBinding *pSpvReflectDescriptorBinding = spvReflectDescriptorSet.bindings[bindingIndex];
-                    uint32_t binding = pSpvReflectDescriptorBinding->binding;
-                    if (VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT == (VkDescriptorType)pSpvReflectDescriptorBinding->descriptor_type)
-                    {
-                        InputAttachmentDescriptorContent inputAttachmentDescriptorContent = {
-                            .inputAttachmentIndex = pSpvReflectDescriptorBinding->input_attachment_index,
-                        };
-                        Descriptor descriptor = {
-                            .vkDescriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT,
-                            .descriptorContent.inputAttachmentDescriptorContent = inputAttachmentDescriptorContent,
-                            .pDescriptorSet = pSubpassDescriptorSet,
-                            .binding = binding,
-                        };
-                        tknAddToDynamicArray(&inputAttachmentDescriptorDynamicArray, &descriptor, inputAttachmentDescriptorDynamicArray.count);
-                    }
-                }
-                // Skip other sets.
-                break;
-            }
-            else
-            {
-                // Skip
-                printf("Warning: Descriptor set %d\n", spvReflectDescriptorSet.set);
-            }
+            descriptors[descriptorCount] = descriptor;
+            descriptorCount++;
         }
-        destroySpvReflectShaderModule(&spvReflectShaderModule);
+        else
+        {
+            // Skip
+        }
     }
-    // Batch update all INPUT_ATTACHMENT descriptors
-    if (inputAttachmentDescriptorDynamicArray.count > 0)
-    {
-        // TODO Update descriptor set
-        updateInputAttachmentDescriptors(pGfxContext, inputAttachmentDescriptorDynamicArray.count, inputAttachmentDescriptorDynamicArray.array);
-    }
-    tknDestroyDynamicArray(inputAttachmentDescriptorDynamicArray);
-    tknFree(spvReflectShaderModules);
+    updateInputAttachmentDescriptors(pGfxContext, attachmentCount, attachmentPtrs, inputAttachmentIndexToVkImageLayout, descriptorCount, descriptors);
+    tknFree(descriptors);
 
     Subpass subpass = {
         .pSubpassDescriptorSet = pSubpassDescriptorSet,
@@ -124,6 +86,7 @@ static void destroySubpass(GfxContext *pGfxContext, Subpass subpass)
         // destroyPipeline(pGfxContext, pPipeline);
     }
     destroyDescriptorSetPtr(pGfxContext, subpass.pSubpassDescriptorSet);
+    tknFree(subpass.inputAttachmentIndexToVkImageLayout);
     tknDestroyDynamicArray(subpass.pipelinePtrDynamicArray);
     // assertVkResult(vkFreeDescriptorSets(vkDevice, pSubpass->vkDescriptorPool, 1, &pSubpass->vkDescriptorSet));
     // vkDestroyDescriptorPool(vkDevice, pSubpass->vkDescriptorPool, NULL);
@@ -172,7 +135,7 @@ VkFormat getSupportedFormat(GfxContext *pGfxContext, uint32_t candidateCount, Vk
     return VK_FORMAT_MAX_ENUM;
 }
 
-DescriptorSet *createDescriptorSetPtr(GfxContext *pGfxContext, uint32_t spvReflectShaderModuleCount, SpvReflectShaderModule *spvReflectShaderModules, uint32_t set)
+DescriptorSet *createDescriptorSetPtr(GfxContext *pGfxContext, uint32_t spvPathCount, const char **spvPaths, uint32_t set)
 {
     DescriptorSet *pDescriptorSet = tknMalloc(sizeof(DescriptorSet));
     uint32_t descriptorCount = 0;
@@ -181,9 +144,13 @@ DescriptorSet *createDescriptorSetPtr(GfxContext *pGfxContext, uint32_t spvRefle
     VkDescriptorPool vkDescriptorPool = VK_NULL_HANDLE;
     VkDescriptorSet vkDescriptorSet = VK_NULL_HANDLE;
     TknDynamicArray vkDescriptorPoolSizeDynamicArray = tknCreateDynamicArray(sizeof(VkDescriptorPoolSize), 1);
-    for (uint32_t moduleIndex = 0; moduleIndex < spvReflectShaderModuleCount; moduleIndex++)
+
+    SpvReflectShaderModule *spvReflectShaderModules = tknMalloc(sizeof(SpvReflectShaderModule) * spvPathCount);
+    for (uint32_t pathIndex = 0; pathIndex < spvPathCount; pathIndex++)
     {
-        SpvReflectShaderModule spvReflectShaderModule = spvReflectShaderModules[moduleIndex];
+        const char *spvPath = spvPaths[pathIndex];
+        spvReflectShaderModules[pathIndex] = createSpvReflectShaderModule(spvPath);
+        SpvReflectShaderModule spvReflectShaderModule = spvReflectShaderModules[pathIndex];
         for (uint32_t setIndex = 0; setIndex < spvReflectShaderModule.descriptor_set_count; setIndex++)
         {
             SpvReflectDescriptorSet spvReflectDescriptorSet = spvReflectShaderModule.descriptor_sets[setIndex];
@@ -223,7 +190,7 @@ DescriptorSet *createDescriptorSetPtr(GfxContext *pGfxContext, uint32_t spvRefle
             .pImmutableSamplers = NULL,
         };
     }
-    for (uint32_t moduleIndex = 0; moduleIndex < spvReflectShaderModuleCount; moduleIndex++)
+    for (uint32_t moduleIndex = 0; moduleIndex < spvPathCount; moduleIndex++)
     {
         SpvReflectShaderModule spvReflectShaderModule = spvReflectShaderModules[moduleIndex];
         for (uint32_t setIndex = 0; setIndex < spvReflectShaderModule.descriptor_set_count; setIndex++)
@@ -237,25 +204,42 @@ DescriptorSet *createDescriptorSetPtr(GfxContext *pGfxContext, uint32_t spvRefle
                     uint32_t binding = pSpvReflectDescriptorBinding->binding;
                     if (vkDescriptorSetLayoutBindings[binding].descriptorType == VK_DESCRIPTOR_TYPE_MAX_ENUM)
                     {
+                        VkDescriptorType vkDescriptorType = (VkDescriptorType)pSpvReflectDescriptorBinding->descriptor_type;
+
                         VkDescriptorSetLayoutBinding vkDescriptorSetLayoutBinding = {
                             .binding = binding,
-                            .descriptorType = (VkDescriptorType)pSpvReflectDescriptorBinding->descriptor_type,
+                            .descriptorType = vkDescriptorType,
                             .descriptorCount = pSpvReflectDescriptorBinding->count,
                             .stageFlags = (VkShaderStageFlags)spvReflectShaderModule.shader_stage,
                             .pImmutableSamplers = NULL,
                         };
                         vkDescriptorSetLayoutBindings[binding] = vkDescriptorSetLayoutBinding;
-                        descriptors[binding] = (Descriptor){
-                            .vkDescriptorType = vkDescriptorSetLayoutBinding.descriptorType,
-                            .descriptorContent = getNullDescriptorContent(vkDescriptorSetLayoutBinding.descriptorType),
-                            .pDescriptorSet = pDescriptorSet,
-                            .binding = binding};
+
+                        if (VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT == vkDescriptorType)
+                        {
+                            tknAssert(set == TICKERNEL_SUBPASS_DESCRIPTOR_SET, "Input attachments can only be used in subpass descriptor sets");
+                            descriptors[binding] = (Descriptor){
+                                .vkDescriptorType = vkDescriptorType,
+                                .descriptorContent.inputAttachmentDescriptorContent.inputAttachmentIndex = pSpvReflectDescriptorBinding->input_attachment_index,
+                                .pDescriptorSet = pDescriptorSet,
+                                .binding = binding,
+                            };
+                        }
+                        else
+                        {
+                            descriptors[binding] = (Descriptor){
+                                .vkDescriptorType = vkDescriptorType,
+                                .descriptorContent = getNullDescriptorContent(vkDescriptorType),
+                                .pDescriptorSet = pDescriptorSet,
+                                .binding = binding,
+                            };
+                        }
 
                         uint32_t poolSizeIndex;
                         for (poolSizeIndex = 0; poolSizeIndex < vkDescriptorPoolSizeDynamicArray.count; poolSizeIndex++)
                         {
                             VkDescriptorPoolSize *pVkDescriptorPoolSize = tknGetFromDynamicArray(&vkDescriptorPoolSizeDynamicArray, poolSizeIndex);
-                            if (pVkDescriptorPoolSize->type == vkDescriptorSetLayoutBinding.descriptorType)
+                            if (pVkDescriptorPoolSize->type == vkDescriptorType)
                             {
                                 pVkDescriptorPoolSize->descriptorCount += vkDescriptorSetLayoutBinding.descriptorCount;
                                 break;
@@ -294,7 +278,10 @@ DescriptorSet *createDescriptorSetPtr(GfxContext *pGfxContext, uint32_t spvRefle
                 tknError("Descriptor set %d\n", spvReflectDescriptorSet.set);
             }
         }
+        destroySpvReflectShaderModule(&spvReflectShaderModule);
     }
+    tknFree(spvReflectShaderModules);
+
     VkDevice vkDevice = pGfxContext->vkDevice;
     VkDescriptorSetLayoutCreateInfo vkDescriptorSetLayoutCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
@@ -330,15 +317,37 @@ DescriptorSet *createDescriptorSetPtr(GfxContext *pGfxContext, uint32_t spvRefle
     return pDescriptorSet;
 }
 
-void updateInputAttachmentDescriptors(GfxContext *pGfxContext, RenderPass *pRenderPass, Subpass *pSubpass, uint32_t inputAttachmentCount, InputAttachmentDescriptorContent *inputAttachmentContents)
+void updateInputAttachmentDescriptors(GfxContext *pGfxContext, uint32_t attachmentCount, Attachment **attachmentPtrs, const VkImageLayout *inputAttachmentIndexToVkImageLayout, uint32_t inputAttachmentDescriptorCount, Descriptor *inputAttachmentDescriptors)
 {
-    if (inputAttachmentCount > 0)
+    if (inputAttachmentDescriptorCount > 0)
     {
-        VkWriteDescriptorSet *vkWriteDescriptorSets = tknMalloc(sizeof(VkWriteDescriptorSet) * inputAttachmentCount);
-        for (uint32_t inputAttachmentIndex = 0; inputAttachmentIndex < inputAttachmentCount; inputAttachmentIndex++)
+        VkWriteDescriptorSet *vkWriteDescriptorSets = tknMalloc(sizeof(VkWriteDescriptorSet) * inputAttachmentDescriptorCount);
+        VkDescriptorImageInfo *vkDescriptorImageInfos = tknMalloc(sizeof(VkDescriptorImageInfo) * inputAttachmentDescriptorCount);
+        for (uint32_t inputAttachmentDescriptorIndex = 0; inputAttachmentDescriptorIndex < inputAttachmentDescriptorCount; inputAttachmentDescriptorIndex++)
         {
+            Descriptor *pDescriptor = &inputAttachmentDescriptors[inputAttachmentDescriptorIndex];
+            uint32_t inputAttachmentIndex = pDescriptor->descriptorContent.inputAttachmentDescriptorContent.inputAttachmentIndex;
+            vkDescriptorImageInfos[inputAttachmentDescriptorIndex] = (VkDescriptorImageInfo){
+                .sampler = VK_NULL_HANDLE,
+                .imageView = VK_NULL_HANDLE,
+                .imageLayout = inputAttachmentIndexToVkImageLayout[inputAttachmentIndex],
+            };
+            vkWriteDescriptorSets[inputAttachmentDescriptorIndex] = (VkWriteDescriptorSet){
+                .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+                .dstSet = pDescriptor->pDescriptorSet->vkDescriptorSet,
+                .dstBinding = pDescriptor->binding,
+                .dstArrayElement = 0,
+                .descriptorCount = 1,
+                .descriptorType = pDescriptor->vkDescriptorType,
+                .pImageInfo = &vkDescriptorImageInfos[inputAttachmentDescriptorIndex],
+                .pBufferInfo = VK_NULL_HANDLE,
+                .pTexelBufferView = VK_NULL_HANDLE,
+            };
         }
+        tknFree(vkDescriptorImageInfos);
         tknFree(vkWriteDescriptorSets);
+        VkDevice vkDevice = pGfxContext->vkDevice;
+        vkUpdateDescriptorSets(vkDevice, inputAttachmentDescriptorCount, vkWriteDescriptorSets, 0, NULL);
     }
     else
     {
@@ -691,7 +700,7 @@ RenderPass *createRenderPassPtr(GfxContext *pGfxContext, uint32_t attachmentCoun
     populateFramebuffers(pGfxContext, pRenderPass);
     for (uint32_t subpassIndex = 0; subpassIndex < pRenderPass->subpassCount; subpassIndex++)
     {
-        pRenderPass->subpasses[subpassIndex] = createSubpass(pGfxContext, subpassIndex, attachmentCount, vkSubpassDescriptions[subpassIndex].inputAttachmentCount, vkSubpassDescriptions[subpassIndex].pInputAttachments, spvPathCounts[subpassIndex], spvPathsArray[subpassIndex], attachmentPtrs);
+        pRenderPass->subpasses[subpassIndex] = createSubpass(pGfxContext, subpassIndex, attachmentCount, attachmentPtrs, vkSubpassDescriptions[subpassIndex].inputAttachmentCount, vkSubpassDescriptions[subpassIndex].pInputAttachments, spvPathCounts[subpassIndex], spvPathsArray[subpassIndex]);
     }
     // tknAddToDynamicArray(&pGfxContext->renderPassPtrDynamicArray, &pRenderPass, renderPassIndex);
     return pRenderPass;
