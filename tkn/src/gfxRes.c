@@ -306,7 +306,6 @@ void destroyImagePtr(GfxContext *pGfxContext, Image *pImage)
     vkDestroyImageView(vkDevice, pImage->vkImageView, NULL);
     vkDestroyImage(vkDevice, pImage->vkImage, NULL);
     vkFreeMemory(vkDevice, pImage->vkDeviceMemory, NULL);
-
     tknFree(pImage);
 }
 

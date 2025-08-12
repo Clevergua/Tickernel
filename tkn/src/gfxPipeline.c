@@ -49,7 +49,6 @@ static Subpass createSubpass(GfxContext *pGfxContext, uint32_t inputVkAttachment
     DescriptorSet *pSubpassDescriptorSet = createDescriptorSetPtr(pGfxContext, spvPathCount, spvReflectShaderModules, TICKERNEL_SUBPASS_DESCRIPTOR_SET);
     // Collect all INPUT_ATTACHMENT descriptors for batch update
     TknDynamicArray inputAttachmentDescriptorDynamicArray = tknCreateDynamicArray(sizeof(Descriptor), 4);
-
     for (uint32_t pathIndex = 0; pathIndex < spvPathCount; pathIndex++)
     {
         SpvReflectShaderModule spvReflectShaderModule = spvReflectShaderModules[pathIndex];
@@ -58,6 +57,7 @@ static Subpass createSubpass(GfxContext *pGfxContext, uint32_t inputVkAttachment
             SpvReflectDescriptorSet spvReflectDescriptorSet = spvReflectShaderModule.descriptor_sets[descriptorSetIndex];
             if (TICKERNEL_SUBPASS_DESCRIPTOR_SET == spvReflectDescriptorSet.set)
             {
+                // Update descriptors
                 for (uint32_t bindingIndex = 0; bindingIndex < spvReflectDescriptorSet.binding_count; bindingIndex++)
                 {
                     SpvReflectDescriptorBinding *pSpvReflectDescriptorBinding = spvReflectDescriptorSet.bindings[bindingIndex];
@@ -96,10 +96,9 @@ static Subpass createSubpass(GfxContext *pGfxContext, uint32_t inputVkAttachment
                 // Skip
                 printf("Warning: Descriptor set %d\n", spvReflectDescriptorSet.set);
             }
-            destroySpvReflectShaderModule(&spvReflectShaderModule);
         }
+        destroySpvReflectShaderModule(&spvReflectShaderModule);
     }
-
     // Batch update all INPUT_ATTACHMENT descriptors
     if (inputAttachmentDescriptorDynamicArray.count > 0)
     {
@@ -213,12 +212,6 @@ DescriptorSet *createDescriptorSetPtr(GfxContext *pGfxContext, uint32_t spvRefle
     VkDescriptorSetLayoutBinding *vkDescriptorSetLayoutBindings = tknMalloc(sizeof(VkDescriptorSetLayoutBinding) * descriptorCount);
     for (uint32_t binding = 0; binding < descriptorCount; binding++)
     {
-        descriptors[binding] = (Descriptor){
-            .vkDescriptorType = VK_DESCRIPTOR_TYPE_MAX_ENUM, // Set later
-            .descriptorContent = {0},                        // Set later
-            .pDescriptorSet = pDescriptorSet,
-            .binding = binding,
-        };
         vkDescriptorSetLayoutBindings[binding] = (VkDescriptorSetLayoutBinding){
             .binding = binding,
             .descriptorType = VK_DESCRIPTOR_TYPE_MAX_ENUM,
