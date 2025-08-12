@@ -32,7 +32,7 @@ static void initializeGfxContext(GfxContext *pGfxContext, VkInstance vkInstance,
         .gfxVkCommandBuffers = NULL,
 
         .renderPassPtrDynamicArray = {},
-        .globalDescriptorSet = {0},
+        .pGlobalDescriptorSet = NULL,
     };
 }
 
@@ -577,7 +577,7 @@ static void present(GfxContext *pGfxContext, uint32_t swapchainIndex)
         for (uint32_t renderPassIndex = 0; renderPassIndex < pGfxContext->renderPassPtrDynamicArray.count; renderPassIndex++)
         {
             RenderPass *pRenderPass = tknGetFromDynamicArray(&pGfxContext->renderPassPtrDynamicArray, renderPassIndex);
-            if (canRecreateSwapchain(*pRenderPass))
+            if (hasSwapchain(*pRenderPass))
             {
                 cleanupFramebuffers(pGfxContext, pRenderPass);
                 populateFramebuffers(pGfxContext, pRenderPass);
@@ -671,7 +671,7 @@ void updateGfxContextPtr(GfxContext *pGfxContext, VkExtent2D swapchainExtent)
                     {
                         RenderPass *pRenderPass = tknGetFromDynamicArray(&pGfxContext->renderPassPtrDynamicArray, renderPassIndex);
 
-                        if (canRecreateSwapchain(*pRenderPass))
+                        if (hasSwapchain(*pRenderPass))
                         {
                             cleanupFramebuffers(pGfxContext, pRenderPass);
                             populateFramebuffers(pGfxContext, pRenderPass);

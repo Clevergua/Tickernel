@@ -131,7 +131,7 @@ static void destroySubpass(GfxContext *pGfxContext, Subpass subpass)
     // tknFree(pSubpass->vkDescriptorSetLayoutBindings);
 }
 
-bool canRecreateSwapchain(RenderPass renderPass)
+bool hasSwapchain(RenderPass renderPass)
 {
     for (uint32_t attachmentPtrIndex = 0; attachmentPtrIndex < renderPass.attachmentCount; attachmentPtrIndex++)
     {
@@ -653,7 +653,7 @@ void populateFramebuffers(GfxContext *pGfxContext, RenderPass *pRenderPass)
         }
     }
 
-    if (canRecreateSwapchain(*pRenderPass))
+    if (hasSwapchain(*pRenderPass))
     {
         pRenderPass->vkFramebufferCount = pGfxContext->swapchainImageCount;
         pRenderPass->vkFramebuffers = tknMalloc(sizeof(VkFramebuffer) * pGfxContext->swapchainImageCount);
