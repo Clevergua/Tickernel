@@ -39,7 +39,6 @@ typedef struct
     VkImageView vkImageView;
     uint32_t width;
     uint32_t height;
-    VkFormat vkFormat;
     TknHashSet descriptorPtrHashSet;
 } FixedAttachmentContent;
 
@@ -49,7 +48,6 @@ typedef struct
     VkDeviceMemory vkDeviceMemory;
     VkImageView vkImageView;
     float32_t scaler;
-    VkFormat vkFormat;
     VkImageUsageFlags vkImageUsageFlags;
     VkImageAspectFlags vkImageAspectFlags;
     TknHashSet descriptorPtrHashSet;
@@ -57,6 +55,11 @@ typedef struct
 
 typedef struct
 {
+    VkExtent2D swapchainExtent;
+    VkSwapchainKHR vkSwapchain;
+    uint32_t swapchainImageCount;
+    VkImage *swapchainImages;
+    VkImageView *swapchainImageViews;
 } SwapchainAttachmentContent;
 
 typedef union
@@ -77,6 +80,7 @@ struct Attachment
 {
     AttachmentType attachmentType;
     AttachmentContent attachmentContent;
+    VkFormat vkFormat;
     TknHashSet renderPassPtrHashSet;
 };
 
@@ -183,12 +187,7 @@ struct GfxContext
     VkQueue vkPresentQueue;
 
     VkSurfaceCapabilitiesKHR vkSurfaceCapabilities;
-    Attachment *swapchainAttachmentPtr;
-    VkExtent2D swapchainExtent;
-    VkSwapchainKHR vkSwapchain;
-    uint32_t swapchainImageCount;
-    VkImage *swapchainImages;
-    VkImageView *swapchainImageViews;
+    Attachment *pSwapchainAttachment;
 
     VkSemaphore imageAvailableSemaphore;
     VkSemaphore renderFinishedSemaphore;
