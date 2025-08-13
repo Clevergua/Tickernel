@@ -32,7 +32,7 @@ static void initializeGfxContext(GfxContext *pGfxContext, VkInstance vkInstance,
         .gfxVkCommandPool = VK_NULL_HANDLE,
         .gfxVkCommandBuffers = NULL,
 
-        .dynamicAttachmentPtrHashSet = {},
+        .dynamicAttachmentDynamicArray = {},
         .renderPassPtrDynamicArray = {},
         .pGlobalDescriptorSet = NULL,
     };
@@ -585,7 +585,7 @@ static void cleanupVkCommandBuffers(GfxContext *pGfxContext)
 
 void setupRenderPipelineAndResources(GfxContext *pGfxContext)
 {
-    pGfxContext->dynamicAttachmentPtrHashSet = tknCreateHashSet(4);
+    pGfxContext->dynamicAttachmentDynamicArray = tknCreateDynamicArray(sizeof(Attachment *), 4);
     pGfxContext->renderPassPtrDynamicArray = tknCreateDynamicArray(sizeof(RenderPass *), 4);
 }
 void teardownRenderPipelineAndResources(GfxContext *pGfxContext)
@@ -597,8 +597,8 @@ void teardownRenderPipelineAndResources(GfxContext *pGfxContext)
     // }
     tknAssert(pGfxContext->renderPassPtrDynamicArray.count == 0, "Render pass dynamic array should be empty before destroying GfxContext.");
     tknDestroyDynamicArray(pGfxContext->renderPassPtrDynamicArray);
-    tknAssert(pGfxContext->dynamicAttachmentPtrHashSet.count == 0, "Dynamic attachment hash set should be empty before destroying GfxContext.");
-    tknDestroyHashSet(pGfxContext->dynamicAttachmentPtrHashSet);
+    tknAssert(pGfxContext->dynamicAttachmentDynamicArray.count == 0, "Dynamic attachment hash set should be empty before destroying GfxContext.");
+    tknDestroyDynamicArray(pGfxContext->dynamicAttachmentDynamicArray);
 }
 
 static void recordCommandBuffer(GfxContext *pGfxContext, uint32_t swapchainIndex)
@@ -716,26 +716,23 @@ void updateGfxContextPtr(GfxContext *pGfxContext, VkExtent2D swapchainExtent)
             repopulateSwapchain(pGfxContext, swapchainExtent);
 
             TknDynamicArray dirtyRenderPassPtrDynamicArray = tknCreateDynamicArray(sizeof(RenderPass *), 4);
-            for (uint32_t i = 0; i < pGfxContext->dynamicAttachmentPtrHashSet.capacity; i++)
+
+            for (uint32_t i = 0; i < pGfxContext->dynamicAttachmentDynamicArray.count; i++)
             {
-                TknListNode *node = pGfxContext->dynamicAttachmentPtrHashSet.nodePtrs[i];
-                while (node)
+                Attachment *pDynamicAttachment = tknGetFromDynamicArray(&pGfxContext->dynamicAttachmentDynamicArray, i);
+                resizeDynamicAttachmentPtr(pGfxContext, pDynamicAttachment);
+                for (uint32_t i = 0; i < pDynamicAttachment->renderPassPtrHashSet.capacity; i++)
                 {
-                    Attachment *pDynamicAttachment = (Attachment *)node->value;
-                    resizeDynamicAttachmentPtr(pGfxContext, pDynamicAttachment);
-                    for (uint32_t i = 0; i < pDynamicAttachment->renderPassPtrHashSet.capacity; i++)
+                    TknListNode *node = pDynamicAttachment->renderPassPtrHashSet.nodePtrs[i];
+                    while (node)
                     {
-                        TknListNode *node = pDynamicAttachment->renderPassPtrHashSet.nodePtrs[i];
-                        while (node)
+                        RenderPass *pRenderPass = (RenderPass *)node->value;
+                        if (!tknContainsInDynamicArray(&dirtyRenderPassPtrDynamicArray, &pRenderPass))
                         {
-                            RenderPass *pRenderPass = (RenderPass *)node->value;
-                            if (!tknContainsInDynamicArray(&dirtyRenderPassPtrDynamicArray, &pRenderPass))
-                            {
-                                tknAddToDynamicArray(&dirtyRenderPassPtrDynamicArray, &pRenderPass, dirtyRenderPassPtrDynamicArray.count);
-                            }
+                            tknAddToDynamicArray(&dirtyRenderPassPtrDynamicArray, &pRenderPass, dirtyRenderPassPtrDynamicArray.count);
                         }
+                        node = node->nextNodePtr;
                     }
-                    node = node->nextNodePtr;
                 }
             }
 
