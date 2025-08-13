@@ -114,7 +114,9 @@
         "tickernellua.h": "c",
         "tkn.h": "c",
         "tknluagfx.h": "c",
-        "tknluabinding.h": "c"
+        "tknluabinding.h": "c",
+        "gfxresource.h": "c",
+        "gfxcore.h": "c"
     },
     "cmake.sourceDirectory": "/Users/forgemastergua/Documents/GitHub/Tickernel"
 }

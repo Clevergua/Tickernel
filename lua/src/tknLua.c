@@ -24,7 +24,18 @@ static void assertLuaResult(lua_State *pLuaState, int result)
 TknContext *createTknContextPtr(const char *assetsPath, uint32_t luaLibraryCount, LuaLibrary *luaLibraries, int targetSwapchainImageCount, VkSurfaceFormatKHR targetVkSurfaceFormat, VkPresentModeKHR targetVkPresentMode, VkInstance vkInstance, VkSurfaceKHR vkSurface, VkExtent2D swapchainExtent)
 {
     TknContext *pTknContext = tknMalloc(sizeof(TknContext));
-    GfxContext *pGfxContext = createGfxContextPtr(targetSwapchainImageCount, targetVkSurfaceFormat, targetVkPresentMode, vkInstance, vkSurface, swapchainExtent);
+
+    char globalVertSpvPath[FILENAME_MAX];
+    char globalFragSpvPath[FILENAME_MAX];
+    snprintf(globalVertSpvPath, FILENAME_MAX, "%s/shaders/global.vert.spv", assetsPath);
+    snprintf(globalFragSpvPath, FILENAME_MAX, "%s/shaders/global.frag.spv", assetsPath);
+
+    const char *spvPaths[] = {
+        globalVertSpvPath,
+        globalFragSpvPath,
+    };
+
+    GfxContext *pGfxContext = createGfxContextPtr(targetSwapchainImageCount, targetVkSurfaceFormat, targetVkPresentMode, vkInstance, vkSurface, swapchainExtent, TKN_ARRAY_COUNT(spvPaths), spvPaths);
 
     lua_State *pLuaState = luaL_newstate();
     printf("DEBUG: luaL_newstate() returned %p\n", (void *)pLuaState);

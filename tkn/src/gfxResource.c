@@ -228,7 +228,7 @@ void resizeDynamicAttachmentPtr(GfxContext *pGfxContext, Attachment *pAttachment
     };
     destroyVkImage(pGfxContext, dynamicAttachmentContent.vkImage, dynamicAttachmentContent.vkDeviceMemory, dynamicAttachmentContent.vkImageView);
     createVkImage(pGfxContext, vkExtent3D, pAttachment->vkFormat, VK_IMAGE_TILING_OPTIMAL, dynamicAttachmentContent.vkImageUsageFlags, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, dynamicAttachmentContent.vkImageAspectFlags, &dynamicAttachmentContent.vkImage, &dynamicAttachmentContent.vkDeviceMemory, &dynamicAttachmentContent.vkImageView);
-    // Write descriptor set
+
     for (uint32_t i = 0; i < pAttachment->attachmentContent.dynamicAttachmentContent.descriptorPtrHashSet.capacity; i++)
     {
         TknListNode *node = pAttachment->attachmentContent.dynamicAttachmentContent.descriptorPtrHashSet.nodePtrs[i];

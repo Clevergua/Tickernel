@@ -2,6 +2,8 @@
 #include <stdbool.h>
 #include "vulkan/vulkan.h"
 
+#define TKN_ARRAY_COUNT(array) (NULL == array) ? 0 : (sizeof(array) / sizeof(array[0]))
+
 typedef struct GfxContext GfxContext;
 typedef struct RenderPass RenderPass;
 typedef struct Pipeline Pipeline;
@@ -15,7 +17,7 @@ typedef struct MappedBuffer MappedBuffer;
 
 VkFormat getSupportedFormat(GfxContext *pGfxContext, uint32_t candidateCount, VkFormat *candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
 
-GfxContext *createGfxContextPtr(int targetSwapchainImageCount, VkSurfaceFormatKHR targetVkSurfaceFormat, VkPresentModeKHR targetVkPresentMode, VkInstance vkInstance, VkSurfaceKHR vkSurface, VkExtent2D swapchainExtent);
+GfxContext *createGfxContextPtr(int targetSwapchainImageCount, VkSurfaceFormatKHR targetVkSurfaceFormat, VkPresentModeKHR targetVkPresentMode, VkInstance vkInstance, VkSurfaceKHR vkSurface, VkExtent2D swapchainExtent, uint32_t spvPathCount, const char **spvPaths);
 void waitGfxContextPtr(GfxContext *pGfxContext);
 void updateGfxContextPtr(GfxContext *pGfxContext, VkExtent2D swapchainExtent);
 void destroyGfxContextPtr(GfxContext *pGfxContext);

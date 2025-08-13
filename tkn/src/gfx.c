@@ -461,7 +461,7 @@ static void updateSwapchainAttachmentPtr(GfxContext *pGfxContext, VkExtent2D swa
 {
     VkDevice vkDevice = pGfxContext->vkDevice;
     assertVkResult(vkDeviceWaitIdle(vkDevice));
-    Attachment* pSwapchainAttachment = pGfxContext->pSwapchainAttachment;
+    Attachment *pSwapchainAttachment = pGfxContext->pSwapchainAttachment;
     SwapchainAttachmentContent *pSwapchainAttachmentContent = &pSwapchainAttachment->attachmentContent.swapchainAttachmentContent;
     for (uint32_t i = 0; i < pSwapchainAttachmentContent->swapchainImageCount; i++)
     {
@@ -587,22 +587,30 @@ static void cleanupVkCommandBuffers(GfxContext *pGfxContext)
     tknFree(pGfxContext->gfxVkCommandBuffers);
 }
 
-void setupRenderPipelineAndResources(GfxContext *pGfxContext)
+void setupRenderPipelineAndResources(GfxContext *pGfxContext, uint32_t spvPathCount, const char **spvPaths)
 {
     pGfxContext->dynamicAttachmentDynamicArray = tknCreateDynamicArray(sizeof(Attachment *), 4);
     pGfxContext->renderPassPtrDynamicArray = tknCreateDynamicArray(sizeof(RenderPass *), 4);
+    SpvReflectShaderModule *spvReflectShaderModules = tknMalloc(sizeof(SpvReflectShaderModule) * spvPathCount);
+    for (uint32_t spvPathIndex = 0; spvPathIndex < spvPathCount; spvPathIndex++)
+    {
+        spvReflectShaderModules[spvPathIndex] = createSpvReflectShaderModule(spvPaths[spvPathIndex]);
+    }
+    pGfxContext->pGlobalDescriptorSet = createDescriptorSetPtr(pGfxContext, spvPathCount, spvReflectShaderModules, TICKERNEL_GLOBAL_DESCRIPTOR_SET);
+    for (uint32_t spvPathIndex = 0; spvPathIndex < spvPathCount; spvPathIndex++)
+    {
+        destroySpvReflectShaderModule(&spvReflectShaderModules[spvPathIndex]);
+    }
+    tknFree(spvReflectShaderModules);
 }
 void teardownRenderPipelineAndResources(GfxContext *pGfxContext)
 {
-    // for (uint32_t pRenderPassIndex = 0; pRenderPassIndex < pGfxContext->renderPassPtrDynamicArray.count; pRenderPassIndex++)
-    // {
-    //     RenderPass *pRenderPass = tknGetFromDynamicArray(&pGfxContext->renderPassPtrDynamicArray, pRenderPassIndex);
-    //     destroyRenderPassPtr(pGfxContext, pRenderPass);
-    // }
+    destroyDescriptorSetPtr(pGfxContext, pGfxContext->pGlobalDescriptorSet);
     tknAssert(pGfxContext->renderPassPtrDynamicArray.count == 0, "Render pass dynamic array should be empty before destroying GfxContext.");
     tknDestroyDynamicArray(pGfxContext->renderPassPtrDynamicArray);
     tknAssert(pGfxContext->dynamicAttachmentDynamicArray.count == 0, "Dynamic attachment hash set should be empty before destroying GfxContext.");
     tknDestroyDynamicArray(pGfxContext->dynamicAttachmentDynamicArray);
+    destroyDescriptorSetPtr(pGfxContext, pGfxContext->pGlobalDescriptorSet);
 }
 
 static void recordCommandBuffer(GfxContext *pGfxContext, uint32_t swapchainIndex)
@@ -676,7 +684,7 @@ static void present(GfxContext *pGfxContext, uint32_t swapchainIndex)
     }
 }
 
-GfxContext *createGfxContextPtr(int targetSwapchainImageCount, VkSurfaceFormatKHR targetVkSurfaceFormat, VkPresentModeKHR targetVkPresentMode, VkInstance vkInstance, VkSurfaceKHR vkSurface, VkExtent2D swapchainExtent)
+GfxContext *createGfxContextPtr(int targetSwapchainImageCount, VkSurfaceFormatKHR targetVkSurfaceFormat, VkPresentModeKHR targetVkPresentMode, VkInstance vkInstance, VkSurfaceKHR vkSurface, VkExtent2D swapchainExtent, uint32_t spvPathCount, const char **spvPaths)
 {
     GfxContext *pGfxContext = tknMalloc(sizeof(GfxContext));
     initializeGfxContext(pGfxContext, vkInstance, vkSurface);
@@ -686,14 +694,12 @@ GfxContext *createGfxContextPtr(int targetSwapchainImageCount, VkSurfaceFormatKH
     populateSignals(pGfxContext);
     populateCommandPools(pGfxContext);
     populateVkCommandBuffers(pGfxContext);
-    setupRenderPipelineAndResources(pGfxContext);
-    // TODO: createDescriptorSetPtr(pGfxContext,
+    setupRenderPipelineAndResources(pGfxContext, spvPathCount, spvPaths);
     return pGfxContext;
 }
 
 void destroyGfxContextPtr(GfxContext *pGfxContext)
 {
-    // TODO destroyDescriptorSetPtr
     teardownRenderPipelineAndResources(pGfxContext);
     cleanupVkCommandBuffers(pGfxContext);
     cleanupCommandPools(pGfxContext);

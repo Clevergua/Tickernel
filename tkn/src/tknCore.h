@@ -10,7 +10,6 @@
 
 #include "tkn.h"
 
-#define TKN_ARRAY_COUNT(array) (NULL == array) ? 0 : (sizeof(array) / sizeof(array[0]))
 #define TKN_CLAMP(x, min, max) \
     ((x) < (min) ? (min) : ((x) > (max) ? (max) : (x)))
 
