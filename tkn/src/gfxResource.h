@@ -204,6 +204,7 @@ struct GfxContext
 };
 
 void assertVkResult(VkResult vkResult);
+
 DescriptorContent getNullDescriptorContent(VkDescriptorType vkDescriptorType);
 DescriptorSet *createDescriptorSetPtr(GfxContext *pGfxContext, uint32_t spvReflectShaderModuleCount, SpvReflectShaderModule *spvReflectShaderModules, uint32_t set);
 void destroyDescriptorSetPtr(GfxContext *pGfxContext, DescriptorSet *pDescriptorSet);

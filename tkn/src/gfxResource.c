@@ -1,4 +1,4 @@
-#include "gfxRes.h"
+#include "gfxResource.h"
 
 static uint32_t getMemoryTypeIndex(VkPhysicalDevice vkPhysicalDevice, uint32_t typeFilter, VkMemoryPropertyFlags memoryPropertyFlags)
 {
@@ -72,7 +72,6 @@ static void destroyBuffer(GfxContext *pGfxContext, Buffer buffer)
     vkDestroyBuffer(vkDevice, buffer.vkBuffer, NULL);
     vkFreeMemory(vkDevice, buffer.vkDeviceMemory, NULL);
 }
-
 static void createVkImage(GfxContext *pGfxContext, VkExtent3D vkExtent3D, VkFormat vkFormat, VkImageTiling vkImageTiling, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags, VkImage *pVkImage, VkDeviceMemory *pVkDeviceMemory, VkImageView *pVkImageView)
 {
     VkDevice vkDevice = pGfxContext->vkDevice;
@@ -140,10 +139,13 @@ static void destroyVkImage(GfxContext *pGfxContext, VkImage vkImage, VkDeviceMem
     vkFreeMemory(vkDevice, vkDeviceMemory, NULL);
 }
 
+
 void assertVkResult(VkResult vkResult)
 {
     tknAssert(vkResult == VK_SUCCESS, "Vulkan error: %d", vkResult);
 }
+
+
 
 DescriptorContent getNullDescriptorContent(VkDescriptorType vkDescriptorType)
 {

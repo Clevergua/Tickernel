@@ -1,5 +1,5 @@
 #pragma once
-#include "gfxRes.h"
+#include "gfxResource.h"
 
 void populateFramebuffers(GfxContext *pGfxContext, RenderPass *pRenderPass);
 void cleanupFramebuffers(GfxContext *pGfxContext, RenderPass *pRenderPass);
