@@ -207,8 +207,8 @@ Attachment *createDynamicAttachmentPtr(GfxContext *pGfxContext, VkFormat vkForma
 }
 void destroyDynamicAttachmentPtr(GfxContext *pGfxContext, Attachment *pAttachment)
 {
-    tknAssert(pAttachment->attachmentType == ATTACHMENT_TYPE_DYNAMIC, "Attachment type mismatch!");
-    tknAssert(pAttachment->renderPassPtrHashSet.count == 0, "Cannot destroy dynamic attachment with render passes attached!");
+    tknAssert(ATTACHMENT_TYPE_DYNAMIC == pAttachment->attachmentType, "Attachment type mismatch!");
+    tknAssert(0 == pAttachment->renderPassPtrHashSet.count, "Cannot destroy dynamic attachment with render passes attached!");
     tknRemoveFromDynamicArray(&pGfxContext->dynamicAttachmentDynamicArray, pAttachment);
     tknDestroyHashSet(pAttachment->attachmentContent.dynamicAttachmentContent.descriptorPtrHashSet);
     tknDestroyHashSet(pAttachment->renderPassPtrHashSet);
@@ -218,7 +218,7 @@ void destroyDynamicAttachmentPtr(GfxContext *pGfxContext, Attachment *pAttachmen
 }
 void resizeDynamicAttachmentPtr(GfxContext *pGfxContext, Attachment *pAttachment)
 {
-    tknAssert(pAttachment->attachmentType == ATTACHMENT_TYPE_DYNAMIC, "Attachment type mismatch!");
+    tknAssert(ATTACHMENT_TYPE_DYNAMIC == pAttachment->attachmentType, "Attachment type mismatch!");
     DynamicAttachmentContent dynamicAttachmentContent = pAttachment->attachmentContent.dynamicAttachmentContent;
     SwapchainAttachmentContent* pSwapchainAttachmentContent = &pGfxContext->pSwapchainAttachment->attachmentContent.swapchainAttachmentContent;
     VkExtent3D vkExtent3D = {
@@ -273,8 +273,8 @@ Attachment *createFixedAttachmentPtr(GfxContext *pGfxContext, VkFormat vkFormat,
 }
 void destroyFixedAttachmentPtr(GfxContext *pGfxContext, Attachment *pAttachment)
 {
-    tknAssert(pAttachment->attachmentType == ATTACHMENT_TYPE_FIXED, "Attachment type mismatch!");
-    tknAssert(pAttachment->renderPassPtrHashSet.count == 0, "Cannot destroy fixed attachment with render passes attached!");
+    tknAssert(ATTACHMENT_TYPE_FIXED == pAttachment->attachmentType, "Attachment type mismatch!");
+    tknAssert(0 == pAttachment->renderPassPtrHashSet.count, "Cannot destroy fixed attachment with render passes attached!");
     tknDestroyHashSet(pAttachment->renderPassPtrHashSet);
     VkDevice vkDevice = pGfxContext->vkDevice;
     FixedAttachmentContent fixedAttachmentContent = pAttachment->attachmentContent.fixedAttachmentContent;

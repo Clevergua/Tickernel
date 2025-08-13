@@ -258,7 +258,7 @@ static void pickPhysicalDevice(GfxContext *pGfxContext, VkSurfaceFormatKHR targe
         }
         tknFree(devices);
 
-        if (pGfxContext->vkPhysicalDevice != NULL)
+        if (NULL != pGfxContext->vkPhysicalDevice)
         {
             printf("Selected target physical device named %s\n", targetDeviceName);
         }
@@ -606,9 +606,9 @@ void setupRenderPipelineAndResources(GfxContext *pGfxContext, uint32_t spvPathCo
 void teardownRenderPipelineAndResources(GfxContext *pGfxContext)
 {
     destroyDescriptorSetPtr(pGfxContext, pGfxContext->pGlobalDescriptorSet);
-    tknAssert(pGfxContext->renderPassPtrDynamicArray.count == 0, "Render pass dynamic array should be empty before destroying GfxContext.");
+    tknAssert(0 == pGfxContext->renderPassPtrDynamicArray.count, "Render pass dynamic array should be empty before destroying GfxContext.");
     tknDestroyDynamicArray(pGfxContext->renderPassPtrDynamicArray);
-    tknAssert(pGfxContext->dynamicAttachmentDynamicArray.count == 0, "Dynamic attachment hash set should be empty before destroying GfxContext.");
+    tknAssert(0 == pGfxContext->dynamicAttachmentDynamicArray.count, "Dynamic attachment hash set should be empty before destroying GfxContext.");
     tknDestroyDynamicArray(pGfxContext->dynamicAttachmentDynamicArray);
     destroyDescriptorSetPtr(pGfxContext, pGfxContext->pGlobalDescriptorSet);
 }

@@ -40,7 +40,7 @@ TknContext *createTknContextPtr(const char *assetsPath, uint32_t luaLibraryCount
     lua_State *pLuaState = luaL_newstate();
     printf("DEBUG: luaL_newstate() returned %p\n", (void *)pLuaState);
 
-    if (pLuaState == NULL)
+    if (NULL == pLuaState)
     {
         printf("ERROR: luaL_newstate() failed!\n");
         return NULL;

@@ -36,21 +36,21 @@ static Subpass createSubpass(GfxContext *pGfxContext, uint32_t subpassIndex, uin
                 for (uint32_t bindingIndex = 0; bindingIndex < spvReflectDescriptorSet.binding_count; bindingIndex++)
                 {
                     SpvReflectDescriptorBinding *pSpvReflectDescriptorBinding = spvReflectDescriptorSet.bindings[bindingIndex];
-                    if (pSpvReflectDescriptorBinding->descriptor_type == SPV_REFLECT_DESCRIPTOR_TYPE_INPUT_ATTACHMENT)
+                    if (SPV_REFLECT_DESCRIPTOR_TYPE_INPUT_ATTACHMENT == pSpvReflectDescriptorBinding->descriptor_type)
                     {
                         uint32_t binding = pSpvReflectDescriptorBinding->binding;
                         uint32_t inputAttachmentIndex = pSpvReflectDescriptorBinding->input_attachment_index;
                         Descriptor *pDescriptor = &pSubpassDescriptorSet->descriptors[binding];
-                        if (pDescriptor->descriptorContent.inputAttachmentDescriptorContent.pAttachment == NULL)
+                        if (NULL == pDescriptor->descriptorContent.inputAttachmentDescriptorContent.pAttachment)
                         {
                             tknAssert(inputAttachmentIndex < attachmentCount, "Input attachment index %u out of bounds", inputAttachmentIndex);
                             pDescriptor->descriptorContent.inputAttachmentDescriptorContent.pAttachment = attachmentPtrs[inputAttachmentIndex];
                             pDescriptor->descriptorContent.inputAttachmentDescriptorContent.vkImageLayout = inputAttachmentIndexToVkImageLayout[inputAttachmentIndex];
-                            if (attachmentPtrs[inputAttachmentIndex]->attachmentType == ATTACHMENT_TYPE_DYNAMIC)
+                            if (ATTACHMENT_TYPE_DYNAMIC == attachmentPtrs[inputAttachmentIndex]->attachmentType)
                             {
                                 tknAddToHashSet(&attachmentPtrs[inputAttachmentIndex]->attachmentContent.dynamicAttachmentContent.descriptorPtrHashSet, &pDescriptor);
                             }
-                            else if (attachmentPtrs[inputAttachmentIndex]->attachmentType == ATTACHMENT_TYPE_FIXED)
+                            else if (ATTACHMENT_TYPE_FIXED == attachmentPtrs[inputAttachmentIndex]->attachmentType)
                             {
                                 tknAddToHashSet(&attachmentPtrs[inputAttachmentIndex]->attachmentContent.fixedAttachmentContent.descriptorPtrHashSet, &pDescriptor);
                             }
@@ -98,14 +98,14 @@ static void destroySubpass(GfxContext *pGfxContext, Subpass subpass)
     for (uint32_t descriptorIndex = 0; descriptorIndex < subpass.pSubpassDescriptorSet->descriptorCount; descriptorIndex++)
     {
         Descriptor *pDescriptor = &subpass.pSubpassDescriptorSet->descriptors[descriptorIndex];
-        if (pDescriptor->vkDescriptorType == VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT)
+        if (VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT == pDescriptor->vkDescriptorType)
         {
             Attachment *pAttachment = pDescriptor->descriptorContent.inputAttachmentDescriptorContent.pAttachment;
-            if (pAttachment->attachmentType == ATTACHMENT_TYPE_DYNAMIC)
+            if (ATTACHMENT_TYPE_DYNAMIC == pAttachment->attachmentType)
             {
                 tknRemoveFromHashSet(&pAttachment->attachmentContent.dynamicAttachmentContent.descriptorPtrHashSet, pDescriptor);
             }
-            else if (pAttachment->attachmentType == ATTACHMENT_TYPE_FIXED)
+            else if (ATTACHMENT_TYPE_FIXED == pAttachment->attachmentType)
             {
                 tknRemoveFromHashSet(&pAttachment->attachmentContent.fixedAttachmentContent.descriptorPtrHashSet, pDescriptor);
             }
@@ -127,14 +127,14 @@ VkFormat getSupportedFormat(GfxContext *pGfxContext, uint32_t candidateCount, Vk
         VkFormat format = candidates[i];
         VkFormatProperties props;
         vkGetPhysicalDeviceFormatProperties(pGfxContext->vkPhysicalDevice, format, &props);
-        if (tiling == VK_IMAGE_TILING_LINEAR)
+        if (VK_IMAGE_TILING_LINEAR == tiling)
         {
             if ((props.linearTilingFeatures & features) == features)
             {
                 return format;
             }
         }
-        else if (tiling == VK_IMAGE_TILING_OPTIMAL)
+        else if (VK_IMAGE_TILING_OPTIMAL == tiling)
         {
             if ((props.optimalTilingFeatures & features) == features)
             {
@@ -210,7 +210,7 @@ DescriptorSet *createDescriptorSetPtr(GfxContext *pGfxContext, uint32_t spvRefle
                 {
                     SpvReflectDescriptorBinding *pSpvReflectDescriptorBinding = spvReflectDescriptorSet.bindings[bindingIndex];
                     uint32_t binding = pSpvReflectDescriptorBinding->binding;
-                    if (vkDescriptorSetLayoutBindings[binding].descriptorType == VK_DESCRIPTOR_TYPE_MAX_ENUM)
+                    if (VK_DESCRIPTOR_TYPE_MAX_ENUM == vkDescriptorSetLayoutBindings[binding].descriptorType)
                     {
                         VkDescriptorType vkDescriptorType = (VkDescriptorType)pSpvReflectDescriptorBinding->descriptor_type;
 
@@ -234,7 +234,7 @@ DescriptorSet *createDescriptorSetPtr(GfxContext *pGfxContext, uint32_t spvRefle
                         for (poolSizeIndex = 0; poolSizeIndex < vkDescriptorPoolSizeDynamicArray.count; poolSizeIndex++)
                         {
                             VkDescriptorPoolSize *pVkDescriptorPoolSize = tknGetFromDynamicArray(&vkDescriptorPoolSizeDynamicArray, poolSizeIndex);
-                            if (pVkDescriptorPoolSize->type == vkDescriptorType)
+                            if (vkDescriptorType == pVkDescriptorPoolSize->type)
                             {
                                 pVkDescriptorPoolSize->descriptorCount += vkDescriptorSetLayoutBinding.descriptorCount;
                                 break;
@@ -314,7 +314,7 @@ void updateDescriptors(GfxContext *pGfxContext, uint32_t newDescriptorCount, Des
     if (newDescriptorCount > 0)
     {
         DescriptorSet *pCurrentDescriptorSet = newDescriptors[0].pDescriptorSet;
-        tknAssert(pCurrentDescriptorSet != NULL, "Descriptor does not have a valid descriptor set");
+        tknAssert(NULL != pCurrentDescriptorSet, "Descriptor does not have a valid descriptor set");
         uint32_t vkWriteDescriptorSetCount = 0;
         VkWriteDescriptorSet *vkWriteDescriptorSets = tknMalloc(sizeof(VkWriteDescriptorSet) * newDescriptorCount);
         VkDescriptorImageInfo *vkDescriptorImageInfos = tknMalloc(sizeof(VkDescriptorImageInfo) * newDescriptorCount);
@@ -347,7 +347,7 @@ void updateDescriptors(GfxContext *pGfxContext, uint32_t newDescriptorCount, Des
                 }
                 else
                 {
-                    if (pCurrentSampler == NULL)
+                    if (NULL == pCurrentSampler)
                     {
                         // Nothing
                     }
@@ -359,7 +359,7 @@ void updateDescriptors(GfxContext *pGfxContext, uint32_t newDescriptorCount, Des
 
                     // Descriptor ref new sampler
                     pCurrentDescriptor->descriptorContent.samplerDescriptorContent.pSampler = pNewSampler;
-                    if (pNewSampler == NULL)
+                    if (NULL == pNewSampler)
                     {
                         vkDescriptorImageInfos[vkWriteDescriptorSetCount] = (VkDescriptorImageInfo){
                             .sampler = NULL,
@@ -488,46 +488,50 @@ void populateFramebuffers(GfxContext *pGfxContext, RenderPass *pRenderPass)
     uint32_t height = UINT32_MAX;
     uint32_t attachmentCount = pRenderPass->attachmentCount;
     Attachment **attachmentPtrs = pRenderPass->attachmentPtrs;
-    SwapchainAttachmentContent *pSwapchainAttachmentContent = &pGfxContext->pSwapchainAttachment->attachmentContent.swapchainAttachmentContent;
+    SwapchainAttachmentContent *pSwapchainContent = &pGfxContext->pSwapchainAttachment->attachmentContent.swapchainAttachmentContent;
+    uint32_t swapchainWidth = pSwapchainContent->swapchainExtent.width;
+    uint32_t swapchainHeight = pSwapchainContent->swapchainExtent.height;
     for (uint32_t attachmentIndex = 0; attachmentIndex < attachmentCount; attachmentIndex++)
     {
         Attachment *pAttachment = attachmentPtrs[attachmentIndex];
         if (ATTACHMENT_TYPE_SWAPCHAIN == pAttachment->attachmentType)
         {
-            if (width == UINT32_MAX && height == UINT32_MAX)
+            if (UINT32_MAX == width && UINT32_MAX == height)
             {
-                width = pSwapchainAttachmentContent->swapchainExtent.width;
-                height = pSwapchainAttachmentContent->swapchainExtent.height;
+                width = swapchainWidth;
+                height = swapchainHeight;
             }
             else
             {
-                tknAssert(width == pSwapchainAttachmentContent->swapchainExtent.width && height == pSwapchainAttachmentContent->swapchainExtent.height, "Swapchain attachment size mismatch!");
+                tknAssert(width == swapchainWidth && height == swapchainHeight, "Swapchain attachment size mismatch!");
             }
         }
         else if (ATTACHMENT_TYPE_DYNAMIC == pAttachment->attachmentType)
         {
-            DynamicAttachmentContent dynamicAttachmentContent = pAttachment->attachmentContent.dynamicAttachmentContent;
-            if (width == UINT32_MAX && height == UINT32_MAX)
+            DynamicAttachmentContent dynamicContent = pAttachment->attachmentContent.dynamicAttachmentContent;
+            uint32_t dynamicWidth = swapchainWidth * dynamicContent.scaler;
+            uint32_t dynamicHeight = swapchainHeight * dynamicContent.scaler;
+            if (UINT32_MAX == width && UINT32_MAX == height)
             {
-                width = pSwapchainAttachmentContent->swapchainExtent.width * dynamicAttachmentContent.scaler;
-                height = pSwapchainAttachmentContent->swapchainExtent.height * dynamicAttachmentContent.scaler;
+                width = dynamicWidth;
+                height = dynamicHeight;
             }
             else
             {
-                tknAssert(width == pSwapchainAttachmentContent->swapchainExtent.width * dynamicAttachmentContent.scaler && height == pSwapchainAttachmentContent->swapchainExtent.height * dynamicAttachmentContent.scaler, "Dynamic attachment size mismatch!");
+                tknAssert(width == dynamicWidth && height == dynamicHeight, "Dynamic attachment size mismatch!");
             }
         }
         else
         {
-            FixedAttachmentContent fixedAttachmentContent = pAttachment->attachmentContent.fixedAttachmentContent;
-            if (width == UINT32_MAX && height == UINT32_MAX)
+            FixedAttachmentContent fixedContent = pAttachment->attachmentContent.fixedAttachmentContent;
+            if (UINT32_MAX == width && UINT32_MAX == height)
             {
-                width = fixedAttachmentContent.width;
-                height = fixedAttachmentContent.height;
+                width = fixedContent.width;
+                height = fixedContent.height;
             }
             else
             {
-                tknAssert(width == fixedAttachmentContent.width && height == fixedAttachmentContent.height, "Fixed attachment size mismatch!");
+                tknAssert(width == fixedContent.width && height == fixedContent.height, "Fixed attachment size mismatch!");
             }
         }
     }
@@ -535,17 +539,18 @@ void populateFramebuffers(GfxContext *pGfxContext, RenderPass *pRenderPass)
     Attachment *pSwapchainAttachment = getSwapchainAttachmentPtr(pGfxContext);
     if (tknContainsInHashSet(&pSwapchainAttachment->renderPassPtrHashSet, pRenderPass))
     {
-        pRenderPass->vkFramebufferCount = pSwapchainAttachmentContent->swapchainImageCount;
-        pRenderPass->vkFramebuffers = tknMalloc(sizeof(VkFramebuffer) * pSwapchainAttachmentContent->swapchainImageCount);
+        uint32_t swapchainImageCount = pSwapchainContent->swapchainImageCount;
+        pRenderPass->vkFramebufferCount = swapchainImageCount;
+        pRenderPass->vkFramebuffers = tknMalloc(sizeof(VkFramebuffer) * swapchainImageCount);
         VkImageView *attachmentVkImageViews = tknMalloc(sizeof(VkImageView) * attachmentCount);
-        for (uint32_t swapchainIndex = 0; swapchainIndex < pSwapchainAttachmentContent->swapchainImageCount; swapchainIndex++)
+        for (uint32_t swapchainIndex = 0; swapchainIndex < swapchainImageCount; swapchainIndex++)
         {
             for (uint32_t attachmentIndex = 0; attachmentIndex < attachmentCount; attachmentIndex++)
             {
                 Attachment *pAttachment = attachmentPtrs[attachmentIndex];
                 if (ATTACHMENT_TYPE_SWAPCHAIN == pAttachment->attachmentType)
                 {
-                    attachmentVkImageViews[attachmentIndex] = pSwapchainAttachmentContent->swapchainImageViews[swapchainIndex];
+                    attachmentVkImageViews[attachmentIndex] = pSwapchainContent->swapchainImageViews[swapchainIndex];
                 }
                 else if (ATTACHMENT_TYPE_DYNAMIC == pAttachment->attachmentType)
                 {
@@ -619,7 +624,7 @@ void repopulateFramebuffers(GfxContext *pGfxContext, RenderPass *pRenderPass)
     populateFramebuffers(pGfxContext, pRenderPass);
 }
 
-RenderPass *createRenderPassPtr(GfxContext *pGfxContext, uint32_t attachmentCount, VkAttachmentDescription *vkAttachmentDescriptions, Attachment **inputAttachmentPtrs, uint32_t subpassCount, VkSubpassDescription *vkSubpassDescriptions, uint32_t *spvPathCounts, const char ***spvPathsArray, uint32_t vkSubpassDependencyCount, VkSubpassDependency *vkSubpassDependencies, uint32_t renderPassIndex)
+RenderPass *createRenderPassPtr(GfxContext *pGfxContext, uint32_t attachmentCount, VkAttachmentDescription *vkAttachmentDescriptions, Attachment **inputAttachmentPtrs, uint32_t subpassCount, VkSubpassDescription *vkSubpassDescriptions, uint32_t *spvPathCounts, const char ***spvPathsArray, uint32_t vkSubpassDependencyCount, VkSubpassDependency *vkSubpassDependencies)
 {
     RenderPass *pRenderPass = tknMalloc(sizeof(RenderPass));
     Attachment **attachmentPtrs = tknMalloc(sizeof(Attachment *) * attachmentCount);
@@ -667,7 +672,6 @@ RenderPass *createRenderPassPtr(GfxContext *pGfxContext, uint32_t attachmentCoun
 }
 void destroyRenderPassPtr(GfxContext *pGfxContext, RenderPass *pRenderPass)
 {
-    VkDevice vkDevice = pGfxContext->vkDevice;
     // tknRemoveFromDynamicArray(&pGfxContext->renderPassPtrDynamicArray, &pRenderPass);
     cleanupFramebuffers(pGfxContext, pRenderPass);
     vkDestroyRenderPass(pGfxContext->vkDevice, pRenderPass->vkRenderPass, NULL);

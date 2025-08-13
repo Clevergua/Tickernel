@@ -291,7 +291,7 @@ static int luaCreateRenderPassPtr(lua_State *pLuaState)
     RenderPass *pRenderPass = createRenderPassPtr(pGfxContext, attachmentCount, vkAttachmentDescriptions, 
                                                   inputAttachmentPtrs, subpassCount, vkSubpassDescriptions, 
                                                   spvPathCounts, spvPathsArray, vkSubpassDependencyCount, 
-                                                  vkSubpassDependencies, renderPassIndex);
+                                                  vkSubpassDependencies);
     
     // Clean up memory
     tknFree(vkAttachmentDescriptions);
