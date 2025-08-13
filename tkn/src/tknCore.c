@@ -176,9 +176,9 @@ void tknDestroyHashSet(TknHashSet tknHashSet)
     tknClearHashSet(&tknHashSet);
     tknFree(tknHashSet.nodePtrs);
 }
-bool tknAddToHashSet(TknHashSet *pTknHashSet, void *value)
+bool tknAddToHashSet(TknHashSet *pTknHashSet, void *pointer)
 {
-    if (tknContainsInHashSet(pTknHashSet, value))
+    if (tknContainsInHashSet(pTknHashSet, pointer))
     {
         return false;
     }
@@ -195,7 +195,7 @@ bool tknAddToHashSet(TknHashSet *pTknHashSet, void *value)
                 TknListNode *node = pTknHashSet->nodePtrs[i];
                 while (node)
                 {
-                    size_t newIndex = (size_t)node->value % newCapacity;
+                    size_t newIndex = (size_t)node->pointer % newCapacity;
                     TknListNode *nextNode = node->nextNodePtr;
                     node->nextNodePtr = newNodePtrs[newIndex];
                     newNodePtrs[newIndex] = node;
@@ -210,22 +210,22 @@ bool tknAddToHashSet(TknHashSet *pTknHashSet, void *value)
         {
             // nothing
         }
-        size_t index = (size_t)value % pTknHashSet->capacity;
+        size_t index = (size_t)pointer % pTknHashSet->capacity;
         TknListNode *newNode = tknMalloc(sizeof(TknListNode));
-        newNode->value = value;
+        newNode->pointer = pointer;
         newNode->nextNodePtr = pTknHashSet->nodePtrs[index];
         pTknHashSet->nodePtrs[index] = newNode;
         pTknHashSet->count++;
         return true;
     }
 }
-bool tknContainsInHashSet(TknHashSet *pTknHashSet, void *value)
+bool tknContainsInHashSet(TknHashSet *pTknHashSet, void *pointer)
 {
-    size_t index = (size_t)value % pTknHashSet->capacity;
+    size_t index = (size_t)pointer % pTknHashSet->capacity;
     TknListNode *node = pTknHashSet->nodePtrs[index];
     while (node)
     {
-        if (node->value == value)
+        if (node->pointer == pointer)
         {
             return true;
         }
@@ -233,14 +233,14 @@ bool tknContainsInHashSet(TknHashSet *pTknHashSet, void *value)
     }
     return false;
 }
-void tknRemoveFromHashSet(TknHashSet *pTknHashSet, void *value)
+void tknRemoveFromHashSet(TknHashSet *pTknHashSet, void *pointer)
 {
-    size_t index = (size_t)value % pTknHashSet->capacity;
+    size_t index = (size_t)pointer % pTknHashSet->capacity;
     TknListNode *node = pTknHashSet->nodePtrs[index];
     TknListNode *prevNode = NULL;
     while (node)
     {
-        if (node->value == value)
+        if (node->pointer == pointer)
         {
             if (prevNode)
             {

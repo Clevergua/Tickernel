@@ -59,7 +59,7 @@ static void destroyBuffer(GfxContext *pGfxContext, Buffer buffer)
         TknListNode *node = buffer.descriptorPtrHashSet.nodePtrs[i];
         while (node)
         {
-            Descriptor *pDescriptor = (Descriptor *)node->value;
+            Descriptor *pDescriptor = (Descriptor *)node->pointer;
             Descriptor newDescriptor = *pDescriptor;
             newDescriptor.descriptorContent = getNullDescriptorContent(pDescriptor->vkDescriptorType);
             updateDescriptors(pGfxContext, 1, &newDescriptor);
@@ -234,7 +234,7 @@ void resizeDynamicAttachmentPtr(GfxContext *pGfxContext, Attachment *pAttachment
         TknListNode *node = pAttachment->attachmentContent.dynamicAttachmentContent.descriptorPtrHashSet.nodePtrs[i];
         while (node)
         {
-            Descriptor *pDescriptor = (Descriptor *)node->value;
+            Descriptor *pDescriptor = (Descriptor *)node->pointer;
             updateInputAttachmentDescriptors(pGfxContext, 1, pDescriptor);
             node = node->nextNodePtr;
         }
@@ -312,7 +312,7 @@ void destroyImagePtr(GfxContext *pGfxContext, Image *pImage)
         TknListNode *node = pImage->descriptorPtrHashSet.nodePtrs[i];
         while (node)
         {
-            Descriptor *pDescriptor = (Descriptor *)node->value;
+            Descriptor *pDescriptor = (Descriptor *)node->pointer;
             Descriptor newDescriptor = *pDescriptor;
             newDescriptor.descriptorContent = getNullDescriptorContent(pDescriptor->vkDescriptorType);
             updateDescriptors(pGfxContext, 1, &newDescriptor);

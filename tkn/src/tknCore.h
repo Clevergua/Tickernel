@@ -23,7 +23,7 @@ typedef struct
 
 typedef struct TknListNode
 {
-    void *value;
+    void *pointer;
     struct TknListNode *nextNodePtr;
 } TknListNode;
 
@@ -46,9 +46,7 @@ bool tknContainsInDynamicArray(TknDynamicArray *pDynamicArray, void *pData);
 
 TknHashSet tknCreateHashSet(uint32_t capacity);
 void tknDestroyHashSet(TknHashSet tknHashSet);
-bool tknAddToHashSet(TknHashSet *pTknHashSet, void *value);
-bool tknContainsInHashSet(TknHashSet *pTknHashSet, void *value);
-void tknRemoveFromHashSet(TknHashSet *pTknHashSet, void *value);
+bool tknAddToHashSet(TknHashSet *pTknHashSet, void *pointer);
+bool tknContainsInHashSet(TknHashSet *pTknHashSet, void *pointer);
+void tknRemoveFromHashSet(TknHashSet *pTknHashSet, void *pointer);
 void tknClearHashSet(TknHashSet *pTknHashSet);
-
-

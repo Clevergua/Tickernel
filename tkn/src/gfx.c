@@ -737,7 +737,7 @@ void updateGfxContextPtr(GfxContext *pGfxContext, VkExtent2D swapchainExtent)
                     TknListNode *node = pDynamicAttachment->renderPassPtrHashSet.nodePtrs[i];
                     while (node)
                     {
-                        RenderPass *pRenderPass = (RenderPass *)node->value;
+                        RenderPass *pRenderPass = (RenderPass *)node->pointer;
                         if (!tknContainsInDynamicArray(&dirtyRenderPassPtrDynamicArray, &pRenderPass))
                         {
                             tknAddToDynamicArray(&dirtyRenderPassPtrDynamicArray, &pRenderPass);
@@ -752,7 +752,7 @@ void updateGfxContextPtr(GfxContext *pGfxContext, VkExtent2D swapchainExtent)
                 TknListNode *node = pGfxContext->pSwapchainAttachment->renderPassPtrHashSet.nodePtrs[i];
                 while (node)
                 {
-                    RenderPass *pRenderPass = (RenderPass *)node->value;
+                    RenderPass *pRenderPass = (RenderPass *)node->pointer;
                     if (!tknContainsInDynamicArray(&dirtyRenderPassPtrDynamicArray, &pRenderPass))
                     {
                         tknAddToDynamicArray(&dirtyRenderPassPtrDynamicArray, &pRenderPass);
