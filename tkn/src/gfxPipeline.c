@@ -1,10 +1,7 @@
 #include "gfxPipeline.h"
 
-
-
 static Subpass createSubpass(GfxContext *pGfxContext, uint32_t subpassIndex, uint32_t attachmentCount, Attachment **attachmentPtrs, uint32_t inputVkAttachmentReferenceCount, const VkAttachmentReference *inputVkAttachmentReferences, uint32_t spvPathCount, const char **spvPaths)
 {
-    TknDynamicArray pipelinePtrDynamicArray = tknCreateDynamicArray(sizeof(Pipeline *), 1);
     uint32_t inputAttachmentDescriptorCount = 0;
     Descriptor *inputAttachmentDescriptors = tknMalloc(sizeof(Descriptor) * inputVkAttachmentReferenceCount);
 
@@ -48,11 +45,11 @@ static Subpass createSubpass(GfxContext *pGfxContext, uint32_t subpassIndex, uin
                             pDescriptor->descriptorContent.inputAttachmentDescriptorContent.vkImageLayout = inputAttachmentIndexToVkImageLayout[inputAttachmentIndex];
                             if (ATTACHMENT_TYPE_DYNAMIC == attachmentPtrs[inputAttachmentIndex]->attachmentType)
                             {
-                                tknAddToHashSet(&attachmentPtrs[inputAttachmentIndex]->attachmentContent.dynamicAttachmentContent.descriptorPtrHashSet, &pDescriptor);
+                                tknAddToHashSet(&attachmentPtrs[inputAttachmentIndex]->attachmentContent.dynamicAttachmentContent.descriptorPtrHashSet, pDescriptor);
                             }
                             else if (ATTACHMENT_TYPE_FIXED == attachmentPtrs[inputAttachmentIndex]->attachmentType)
                             {
-                                tknAddToHashSet(&attachmentPtrs[inputAttachmentIndex]->attachmentContent.fixedAttachmentContent.descriptorPtrHashSet, &pDescriptor);
+                                tknAddToHashSet(&attachmentPtrs[inputAttachmentIndex]->attachmentContent.fixedAttachmentContent.descriptorPtrHashSet, pDescriptor);
                             }
                             else
                             {
@@ -80,6 +77,7 @@ static Subpass createSubpass(GfxContext *pGfxContext, uint32_t subpassIndex, uin
     tknFree(inputAttachmentIndexToVkImageLayout);
     updateInputAttachmentDescriptors(pGfxContext, inputAttachmentDescriptorCount, inputAttachmentDescriptors);
     tknFree(inputAttachmentDescriptors);
+    TknDynamicArray pipelinePtrDynamicArray = tknCreateDynamicArray(sizeof(Pipeline *), 1);
 
     Subpass subpass = {
         .pSubpassDescriptorSet = pSubpassDescriptorSet,
@@ -90,11 +88,11 @@ static Subpass createSubpass(GfxContext *pGfxContext, uint32_t subpassIndex, uin
 }
 static void destroySubpass(GfxContext *pGfxContext, Subpass subpass)
 {
-    // for (uint32_t pipelinePtrIndex = 0; pipelinePtrIndex < subpass.pipelinePtrDynamicArray.count; pipelinePtrIndex++)
-    // {
-    //     Pipeline *pPipeline = tknGetFromDynamicArray(&subpass.pipelinePtrDynamicArray, pipelinePtrIndex);
-    //     // destroyPipeline(pGfxContext, pPipeline);
-    // }
+    for (uint32_t pipelinePtrIndex = 0; pipelinePtrIndex < subpass.pipelinePtrDynamicArray.count; pipelinePtrIndex++)
+    {
+        Pipeline *pPipeline = *(Pipeline **)tknGetFromDynamicArray(&subpass.pipelinePtrDynamicArray, pipelinePtrIndex);
+        // destroyPipeline(pGfxContext, pPipeline);
+    }
     for (uint32_t descriptorIndex = 0; descriptorIndex < subpass.pSubpassDescriptorSet->descriptorCount; descriptorIndex++)
     {
         Descriptor *pDescriptor = &subpass.pSubpassDescriptorSet->descriptors[descriptorIndex];
@@ -115,7 +113,6 @@ static void destroySubpass(GfxContext *pGfxContext, Subpass subpass)
             }
         }
     }
-
     destroyDescriptorSetPtr(pGfxContext, subpass.pSubpassDescriptorSet);
     tknDestroyDynamicArray(subpass.pipelinePtrDynamicArray);
 }
@@ -354,7 +351,7 @@ void updateDescriptors(GfxContext *pGfxContext, uint32_t newDescriptorCount, Des
                     else
                     {
                         // Current sampler deref descriptor
-                        tknRemoveFromHashSet(&pCurrentSampler->descriptorPtrHashSet, &pCurrentDescriptor);
+                        tknRemoveFromHashSet(&pCurrentSampler->descriptorPtrHashSet, pCurrentDescriptor);
                     }
 
                     // Descriptor ref new sampler
@@ -370,7 +367,7 @@ void updateDescriptors(GfxContext *pGfxContext, uint32_t newDescriptorCount, Des
                     else
                     {
                         // New sampler ref descriptor
-                        tknAddToHashSet(&pNewSampler->descriptorPtrHashSet, &pCurrentDescriptor);
+                        tknAddToHashSet(&pNewSampler->descriptorPtrHashSet, pCurrentDescriptor);
                         vkDescriptorImageInfos[vkWriteDescriptorSetCount] = (VkDescriptorImageInfo){
                             .sampler = pNewSampler->vkSampler,
                             .imageView = VK_NULL_HANDLE,
@@ -637,7 +634,7 @@ RenderPass *createRenderPassPtr(GfxContext *pGfxContext, uint32_t attachmentCoun
         Attachment *pAttachment = inputAttachmentPtrs[attachmentIndex];
         attachmentPtrs[attachmentIndex] = pAttachment;
         vkAttachmentDescriptions[attachmentIndex].format = pAttachment->vkFormat;
-        tknAddToHashSet(&pAttachment->renderPassPtrHashSet, &pRenderPass);
+        tknAddToHashSet(&pAttachment->renderPassPtrHashSet, pRenderPass);
     }
     VkRenderPassCreateInfo vkRenderPassCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
@@ -685,7 +682,7 @@ void destroyRenderPassPtr(GfxContext *pGfxContext, RenderPass *pRenderPass)
     for (uint32_t i = 0; i < pRenderPass->attachmentCount; i++)
     {
         Attachment *pAttachment = pRenderPass->attachmentPtrs[i];
-        tknRemoveFromHashSet(&pAttachment->renderPassPtrHashSet, &pRenderPass);
+        tknRemoveFromHashSet(&pAttachment->renderPassPtrHashSet, pRenderPass);
     }
     tknFree(pRenderPass->attachmentPtrs);
     tknFree(pRenderPass);
