@@ -140,11 +140,6 @@ static void destroyVkImage(GfxContext *pGfxContext, VkImage vkImage, VkDeviceMem
 }
 
 
-void assertVkResult(VkResult vkResult)
-{
-    tknAssert(vkResult == VK_SUCCESS, "Vulkan error: %d", vkResult);
-}
-
 
 
 DescriptorContent getNullDescriptorContent(VkDescriptorType vkDescriptorType)
