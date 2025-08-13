@@ -23,6 +23,7 @@ static void initializeGfxContext(GfxContext *pGfxContext, VkInstance vkInstance,
         .swapchainImageCount = 0,
         .swapchainImages = NULL,
         .swapchainImageViews = NULL,
+        .swapchainAttachmentPtr = NULL,
 
         .imageAvailableSemaphore = VK_NULL_HANDLE,
         .renderFinishedSemaphore = VK_NULL_HANDLE,
@@ -31,6 +32,7 @@ static void initializeGfxContext(GfxContext *pGfxContext, VkInstance vkInstance,
         .gfxVkCommandPool = VK_NULL_HANDLE,
         .gfxVkCommandBuffers = NULL,
 
+        .dynamicAttachmentPtrHashSet = {},
         .renderPassPtrDynamicArray = {},
         .pGlobalDescriptorSet = NULL,
     };
@@ -449,8 +451,11 @@ static void cleanupSwapchain(GfxContext *pGfxContext)
     tknFree(pGfxContext->swapchainImageViews);
     tknFree(pGfxContext->swapchainImages);
     vkDestroySwapchainKHR(vkDevice, pGfxContext->vkSwapchain, NULL);
+
+    tknDestroyHashSet(pGfxContext->swapchainAttachmentPtr->renderPassPtrHashSet);
     tknFree(pGfxContext->swapchainAttachmentPtr);
 }
+
 static void repopulateSwapchain(GfxContext *pGfxContext, VkExtent2D swapchainExtent)
 {
     VkDevice vkDevice = pGfxContext->vkDevice;
@@ -578,18 +583,22 @@ static void cleanupVkCommandBuffers(GfxContext *pGfxContext)
     tknFree(pGfxContext->gfxVkCommandBuffers);
 }
 
-void setupRenderPipeline(GfxContext *pGfxContext)
+void setupRenderPipelineAndResources(GfxContext *pGfxContext)
 {
+    pGfxContext->dynamicAttachmentPtrHashSet = tknCreateHashSet(4);
     pGfxContext->renderPassPtrDynamicArray = tknCreateDynamicArray(sizeof(RenderPass *), 4);
 }
-void teardownRenderPipeline(GfxContext *pGfxContext)
+void teardownRenderPipelineAndResources(GfxContext *pGfxContext)
 {
-    for (uint32_t pRenderPassIndex = 0; pRenderPassIndex < pGfxContext->renderPassPtrDynamicArray.count; pRenderPassIndex++)
-    {
-        RenderPass *pRenderPass = tknGetFromDynamicArray(&pGfxContext->renderPassPtrDynamicArray, pRenderPassIndex);
-        destroyRenderPassPtr(pGfxContext, pRenderPass);
-    }
+    // for (uint32_t pRenderPassIndex = 0; pRenderPassIndex < pGfxContext->renderPassPtrDynamicArray.count; pRenderPassIndex++)
+    // {
+    //     RenderPass *pRenderPass = tknGetFromDynamicArray(&pGfxContext->renderPassPtrDynamicArray, pRenderPassIndex);
+    //     destroyRenderPassPtr(pGfxContext, pRenderPass);
+    // }
+    tknAssert(pGfxContext->renderPassPtrDynamicArray.count == 0, "Render pass dynamic array should be empty before destroying GfxContext.");
     tknDestroyDynamicArray(pGfxContext->renderPassPtrDynamicArray);
+    tknAssert(pGfxContext->dynamicAttachmentPtrHashSet.count == 0, "Dynamic attachment hash set should be empty before destroying GfxContext.");
+    tknDestroyHashSet(pGfxContext->dynamicAttachmentPtrHashSet);
 }
 
 static void recordCommandBuffer(GfxContext *pGfxContext, uint32_t swapchainIndex)
@@ -672,7 +681,8 @@ GfxContext *createGfxContextPtr(int targetSwapchainImageCount, VkSurfaceFormatKH
     populateSignals(pGfxContext);
     populateCommandPools(pGfxContext);
     populateVkCommandBuffers(pGfxContext);
-    setupRenderPipeline(pGfxContext);
+    setupRenderPipelineAndResources(pGfxContext);
+
     // TODO: createDescriptorSetPtr(pGfxContext,
     return pGfxContext;
 }
@@ -680,7 +690,7 @@ GfxContext *createGfxContextPtr(int targetSwapchainImageCount, VkSurfaceFormatKH
 void destroyGfxContextPtr(GfxContext *pGfxContext)
 {
     // TODO destroyDescriptorSetPtr
-    teardownRenderPipeline(pGfxContext);
+    teardownRenderPipelineAndResources(pGfxContext);
     cleanupVkCommandBuffers(pGfxContext);
     cleanupCommandPools(pGfxContext);
     cleanupSignals(pGfxContext);
