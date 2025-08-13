@@ -50,6 +50,7 @@ static Subpass createSubpass(GfxContext *pGfxContext, uint32_t subpassIndex, uin
     }
     for (uint32_t inputVkAttachmentReferenceIndex = 0; inputVkAttachmentReferenceIndex < inputVkAttachmentReferenceCount; inputVkAttachmentReferenceIndex++)
     {
+        tknAssert(inputVkAttachmentReferences[inputVkAttachmentReferenceIndex].attachment < attachmentCount, "Input attachment reference index %u out of bounds", inputVkAttachmentReferenceIndex);
         inputAttachmentIndexToVkImageLayout[inputVkAttachmentReferences[inputVkAttachmentReferenceIndex].attachment] = inputVkAttachmentReferences[inputVkAttachmentReferenceIndex].layout;
     }
     SpvReflectShaderModule *spvReflectShaderModules = tknMalloc(sizeof(SpvReflectShaderModule) * spvPathCount);
@@ -72,11 +73,12 @@ static Subpass createSubpass(GfxContext *pGfxContext, uint32_t subpassIndex, uin
                     SpvReflectDescriptorBinding *pSpvReflectDescriptorBinding = spvReflectDescriptorSet.bindings[bindingIndex];
                     if (pSpvReflectDescriptorBinding->descriptor_type == SPV_REFLECT_DESCRIPTOR_TYPE_INPUT_ATTACHMENT)
                     {
-                        uint32_t inputAttachmentIndex = pSpvReflectDescriptorBinding->input_attachment_index;
                         uint32_t binding = pSpvReflectDescriptorBinding->binding;
+                        uint32_t inputAttachmentIndex = pSpvReflectDescriptorBinding->input_attachment_index;
                         Descriptor *pDescriptor = &pSubpassDescriptorSet->descriptors[binding];
                         if (pDescriptor->descriptorContent.inputAttachmentDescriptorContent.pAttachment == NULL)
                         {
+                            tknAssert(inputAttachmentIndex < attachmentCount, "Input attachment index %u out of bounds", inputAttachmentIndex);
                             pDescriptor->descriptorContent.inputAttachmentDescriptorContent.pAttachment = attachmentPtrs[inputAttachmentIndex];
                             pDescriptor->descriptorContent.inputAttachmentDescriptorContent.vkImageLayout = inputAttachmentIndexToVkImageLayout[inputAttachmentIndex];
                             tknAddToHashSet(&attachmentPtrs[inputAttachmentIndex]->descriptorPtrHashSet, &pDescriptor);
