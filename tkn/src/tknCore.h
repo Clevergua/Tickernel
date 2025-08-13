@@ -36,7 +36,8 @@ typedef struct
 
 TknDynamicArray tknCreateDynamicArray(size_t dataSize, uint32_t maxCount);
 void tknDestroyDynamicArray(TknDynamicArray dynamicArray);
-void tknAddToDynamicArray(TknDynamicArray *pDynamicArray, void *pInput, uint32_t index);
+void tknInsertIntoDynamicArray(TknDynamicArray *pDynamicArray, void *pInput, uint32_t index);
+void tknAddToDynamicArray(TknDynamicArray *pDynamicArray, void *pInput);
 void tknRemoveFromDynamicArray(TknDynamicArray *pDynamicArray, void *pData);
 void tknRemoveAtIndexFromDynamicArray(TknDynamicArray *pDynamicArray, uint32_t index);
 void tknClearDynamicArray(TknDynamicArray *pDynamicArray);

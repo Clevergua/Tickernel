@@ -740,7 +740,7 @@ void updateGfxContextPtr(GfxContext *pGfxContext, VkExtent2D swapchainExtent)
                         RenderPass *pRenderPass = (RenderPass *)node->value;
                         if (!tknContainsInDynamicArray(&dirtyRenderPassPtrDynamicArray, &pRenderPass))
                         {
-                            tknAddToDynamicArray(&dirtyRenderPassPtrDynamicArray, &pRenderPass, dirtyRenderPassPtrDynamicArray.count);
+                            tknAddToDynamicArray(&dirtyRenderPassPtrDynamicArray, &pRenderPass);
                         }
                         node = node->nextNodePtr;
                     }
@@ -755,7 +755,7 @@ void updateGfxContextPtr(GfxContext *pGfxContext, VkExtent2D swapchainExtent)
                     RenderPass *pRenderPass = (RenderPass *)node->value;
                     if (!tknContainsInDynamicArray(&dirtyRenderPassPtrDynamicArray, &pRenderPass))
                     {
-                        tknAddToDynamicArray(&dirtyRenderPassPtrDynamicArray, &pRenderPass, dirtyRenderPassPtrDynamicArray.count);
+                        tknAddToDynamicArray(&dirtyRenderPassPtrDynamicArray, &pRenderPass);
                     }
                     node = node->nextNodePtr;
                 }

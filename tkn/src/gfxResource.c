@@ -202,7 +202,7 @@ Attachment *createDynamicAttachmentPtr(GfxContext *pGfxContext, VkFormat vkForma
         .vkFormat = vkFormat,
         .renderPassPtrHashSet = tknCreateHashSet(4),
     };
-    tknAddToDynamicArray(&pGfxContext->dynamicAttachmentDynamicArray, pAttachment, pGfxContext->dynamicAttachmentDynamicArray.count);
+    tknAddToDynamicArray(&pGfxContext->dynamicAttachmentDynamicArray, pAttachment);
     return pAttachment;
 }
 void destroyDynamicAttachmentPtr(GfxContext *pGfxContext, Attachment *pAttachment)
