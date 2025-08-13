@@ -40,6 +40,7 @@ typedef struct
     uint32_t width;
     uint32_t height;
     VkFormat vkFormat;
+    TknHashSet descriptorPtrHashSet;
 } FixedAttachmentContent;
 
 typedef struct
@@ -51,6 +52,7 @@ typedef struct
     VkFormat vkFormat;
     VkImageUsageFlags vkImageUsageFlags;
     VkImageAspectFlags vkImageAspectFlags;
+    TknHashSet descriptorPtrHashSet;
 } DynamicAttachmentContent;
 
 typedef struct
@@ -76,7 +78,6 @@ struct Attachment
     AttachmentType attachmentType;
     AttachmentContent attachmentContent;
     TknHashSet renderPassPtrHashSet;
-    TknHashSet descriptorPtrHashSet;
 };
 
 typedef struct
@@ -148,9 +149,9 @@ struct Pipeline
 
 typedef struct
 {
-    DescriptorSet *pSubpassDescriptorSet;               // subpass descriptor set
-    TknDynamicArray pipelinePtrDynamicArray;            // pipelines
-    uint32_t subpassIndex;                              // subpass index in the render pass
+    DescriptorSet *pSubpassDescriptorSet;    // subpass descriptor set
+    TknDynamicArray pipelinePtrDynamicArray; // pipelines
+    uint32_t subpassIndex;                   // subpass index in the render pass
 } Subpass;
 
 struct RenderPass

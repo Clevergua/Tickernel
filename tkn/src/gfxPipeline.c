@@ -81,7 +81,18 @@ static Subpass createSubpass(GfxContext *pGfxContext, uint32_t subpassIndex, uin
                             tknAssert(inputAttachmentIndex < attachmentCount, "Input attachment index %u out of bounds", inputAttachmentIndex);
                             pDescriptor->descriptorContent.inputAttachmentDescriptorContent.pAttachment = attachmentPtrs[inputAttachmentIndex];
                             pDescriptor->descriptorContent.inputAttachmentDescriptorContent.vkImageLayout = inputAttachmentIndexToVkImageLayout[inputAttachmentIndex];
-                            tknAddToHashSet(&attachmentPtrs[inputAttachmentIndex]->descriptorPtrHashSet, &pDescriptor);
+                            if (attachmentPtrs[inputAttachmentIndex]->attachmentType == ATTACHMENT_TYPE_DYNAMIC)
+                            {
+                                tknAddToHashSet(&attachmentPtrs[inputAttachmentIndex]->attachmentContent.dynamicAttachmentContent.descriptorPtrHashSet, &pDescriptor);
+                            }
+                            else if (attachmentPtrs[inputAttachmentIndex]->attachmentType == ATTACHMENT_TYPE_FIXED)
+                            {
+                                tknAddToHashSet(&attachmentPtrs[inputAttachmentIndex]->attachmentContent.fixedAttachmentContent.descriptorPtrHashSet, &pDescriptor);
+                            }
+                            else
+                            {
+                                tknError("Input attachment %u is not dynamic or fixed attachment", inputAttachmentIndex);
+                            }
                             inputAttachmentDescriptors[inputAttachmentDescriptorCount] = *pDescriptor;
                             inputAttachmentDescriptorCount++;
                         }
@@ -124,24 +135,24 @@ static void destroySubpass(GfxContext *pGfxContext, Subpass subpass)
         Descriptor *pDescriptor = &subpass.pSubpassDescriptorSet->descriptors[descriptorIndex];
         if (pDescriptor->vkDescriptorType == VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT)
         {
-            tknRemoveFromHashSet(&pDescriptor->descriptorContent.inputAttachmentDescriptorContent.pAttachment->descriptorPtrHashSet, pDescriptor);
+            Attachment *pAttachment = pDescriptor->descriptorContent.inputAttachmentDescriptorContent.pAttachment;
+            if (pAttachment->attachmentType == ATTACHMENT_TYPE_DYNAMIC)
+            {
+                tknRemoveFromHashSet(&pAttachment->attachmentContent.dynamicAttachmentContent.descriptorPtrHashSet, pDescriptor);
+            }
+            else if (pAttachment->attachmentType == ATTACHMENT_TYPE_FIXED)
+            {
+                tknRemoveFromHashSet(&pAttachment->attachmentContent.fixedAttachmentContent.descriptorPtrHashSet, pDescriptor);
+            }
+            else
+            {
+                tknError("Input attachment is swapchian attachment");
+            }
         }
     }
+
     destroyDescriptorSetPtr(pGfxContext, subpass.pSubpassDescriptorSet);
     tknDestroyDynamicArray(subpass.pipelinePtrDynamicArray);
-}
-
-bool hasSwapchain(RenderPass renderPass)
-{
-    for (uint32_t attachmentPtrIndex = 0; attachmentPtrIndex < renderPass.attachmentCount; attachmentPtrIndex++)
-    {
-        Attachment *pAttachment = renderPass.attachmentPtrs[attachmentPtrIndex];
-        if (pAttachment->attachmentType == ATTACHMENT_TYPE_SWAPCHAIN)
-        {
-            return true;
-        }
-    }
-    return false;
 }
 
 VkFormat getSupportedFormat(GfxContext *pGfxContext, uint32_t candidateCount, VkFormat *candidates, VkImageTiling tiling, VkFormatFeatureFlags features)
@@ -556,7 +567,8 @@ void populateFramebuffers(GfxContext *pGfxContext, RenderPass *pRenderPass)
         }
     }
 
-    if (hasSwapchain(*pRenderPass))
+    Attachment *pSwapchainAttachment = getSwapchainAttachmentPtr(pGfxContext);
+    if (tknContainsInHashSet(&pSwapchainAttachment->renderPassPtrHashSet, pRenderPass))
     {
         pRenderPass->vkFramebufferCount = pGfxContext->swapchainImageCount;
         pRenderPass->vkFramebuffers = tknMalloc(sizeof(VkFramebuffer) * pGfxContext->swapchainImageCount);
@@ -608,6 +620,7 @@ void populateFramebuffers(GfxContext *pGfxContext, RenderPass *pRenderPass)
             }
             else
             {
+                // ATTACHMENT_TYPE_FIXED == pAttachment->attachmentType
                 attachmentVkImageViews[attachmentIndex] = pAttachment->attachmentContent.fixedAttachmentContent.vkImageView;
             }
         }
@@ -634,6 +647,11 @@ void cleanupFramebuffers(GfxContext *pGfxContext, RenderPass *pRenderPass)
         vkDestroyFramebuffer(vkDevice, pRenderPass->vkFramebuffers[i], NULL);
     }
     tknFree(pRenderPass->vkFramebuffers);
+}
+void repopulateFramebuffers(GfxContext *pGfxContext, RenderPass *pRenderPass)
+{
+    cleanupFramebuffers(pGfxContext, pRenderPass);
+    populateFramebuffers(pGfxContext, pRenderPass);
 }
 
 RenderPass *createRenderPassPtr(GfxContext *pGfxContext, uint32_t attachmentCount, VkAttachmentDescription *vkAttachmentDescriptions, Attachment **inputAttachmentPtrs, uint32_t subpassCount, VkSubpassDescription *vkSubpassDescriptions, uint32_t *spvPathCounts, const char ***spvPathsArray, uint32_t vkSubpassDependencyCount, VkSubpassDependency *vkSubpassDependencies, uint32_t renderPassIndex)
