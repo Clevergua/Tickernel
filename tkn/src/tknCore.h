@@ -13,6 +13,8 @@
 #define TKN_CLAMP(x, min, max) \
     ((x) < (min) ? (min) : ((x) > (max) ? (max) : (x)))
 
+#define TKN_DEFAULT_COLLECTION_SIZE 8
+
 typedef struct
 {
     uint32_t maxCount;

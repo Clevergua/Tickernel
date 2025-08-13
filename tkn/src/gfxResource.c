@@ -19,7 +19,7 @@ static Buffer createBuffer(GfxContext *pGfxContext, VkDeviceSize bufferSize, VkB
     VkBuffer vkBuffer;
     VkDeviceMemory vkDeviceMemory;
     void *mapped;
-    TknHashSet descriptorPtrHashSet = tknCreateHashSet(1);
+    TknHashSet descriptorPtrHashSet = tknCreateHashSet(TKN_DEFAULT_COLLECTION_SIZE);
 
     VkDevice vkDevice = pGfxContext->vkDevice;
     VkPhysicalDevice vkPhysicalDevice = pGfxContext->vkPhysicalDevice;
@@ -194,13 +194,13 @@ Attachment *createDynamicAttachmentPtr(GfxContext *pGfxContext, VkFormat vkForma
         .vkImageUsageFlags = vkImageUsageFlags,
         .vkImageAspectFlags = vkImageAspectFlags,
         .scaler = scaler,
-        .descriptorPtrHashSet = tknCreateHashSet(4),
+        .descriptorPtrHashSet = tknCreateHashSet(TKN_DEFAULT_COLLECTION_SIZE),
     };
     *pAttachment = (Attachment){
         .attachmentType = ATTACHMENT_TYPE_DYNAMIC,
         .attachmentContent.dynamicAttachmentContent = dynamicAttachmentContent,
         .vkFormat = vkFormat,
-        .renderPassPtrHashSet = tknCreateHashSet(4),
+        .renderPassPtrHashSet = tknCreateHashSet(TKN_DEFAULT_COLLECTION_SIZE),
     };
     tknAddToDynamicArray(&pGfxContext->dynamicAttachmentPtrDynamicArray, &pAttachment);
     return pAttachment;
@@ -260,14 +260,14 @@ Attachment *createFixedAttachmentPtr(GfxContext *pGfxContext, VkFormat vkFormat,
         .vkImageView = vkImageView,
         .width = width,
         .height = height,
-        .descriptorPtrHashSet = tknCreateHashSet(4),
+        .descriptorPtrHashSet = tknCreateHashSet(TKN_DEFAULT_COLLECTION_SIZE),
     };
 
     *pAttachment = (Attachment){
         .attachmentType = ATTACHMENT_TYPE_FIXED,
         .attachmentContent.fixedAttachmentContent = fixedAttachmentContent,
         .vkFormat = vkFormat,
-        .renderPassPtrHashSet = tknCreateHashSet(4),
+        .renderPassPtrHashSet = tknCreateHashSet(TKN_DEFAULT_COLLECTION_SIZE),
     };
     return pAttachment;
 }
@@ -299,7 +299,7 @@ Image *createImagePtr(GfxContext *pGfxContext, VkExtent3D vkExtent3D, VkFormat v
         .vkImage = vkImage,
         .vkDeviceMemory = vkDeviceMemory,
         .vkImageView = vkImageView,
-        .descriptorPtrHashSet = tknCreateHashSet(1),
+        .descriptorPtrHashSet = tknCreateHashSet(TKN_DEFAULT_COLLECTION_SIZE),
     };
     *pImage = image;
 

@@ -77,7 +77,7 @@ static Subpass createSubpass(GfxContext *pGfxContext, uint32_t subpassIndex, uin
     tknFree(inputAttachmentIndexToVkImageLayout);
     updateInputAttachmentDescriptors(pGfxContext, inputAttachmentDescriptorCount, inputAttachmentDescriptors);
     tknFree(inputAttachmentDescriptors);
-    TknDynamicArray pipelinePtrDynamicArray = tknCreateDynamicArray(sizeof(Pipeline *), 1);
+    TknDynamicArray pipelinePtrDynamicArray = tknCreateDynamicArray(sizeof(Pipeline *), TKN_DEFAULT_COLLECTION_SIZE);
 
     Subpass subpass = {
         .pSubpassDescriptorSet = pSubpassDescriptorSet,
@@ -151,7 +151,7 @@ DescriptorSet *createDescriptorSetPtr(GfxContext *pGfxContext, uint32_t spvRefle
     VkDescriptorSetLayout vkDescriptorSetLayout = VK_NULL_HANDLE;
     VkDescriptorPool vkDescriptorPool = VK_NULL_HANDLE;
     VkDescriptorSet vkDescriptorSet = VK_NULL_HANDLE;
-    TknDynamicArray vkDescriptorPoolSizeDynamicArray = tknCreateDynamicArray(sizeof(VkDescriptorPoolSize), 1);
+    TknDynamicArray vkDescriptorPoolSizeDynamicArray = tknCreateDynamicArray(sizeof(VkDescriptorPoolSize), TKN_DEFAULT_COLLECTION_SIZE);
 
     for (uint32_t spvReflectShaderModuleIndex = 0; spvReflectShaderModuleIndex < spvReflectShaderModuleCount; spvReflectShaderModuleIndex++)
     {
@@ -686,4 +686,18 @@ void destroyRenderPassPtr(GfxContext *pGfxContext, RenderPass *pRenderPass)
     }
     tknFree(pRenderPass->attachmentPtrs);
     tknFree(pRenderPass);
+}
+
+Pipeline *createPipelinePtr(GfxContext *pGfxContext)
+{
+    Pipeline *pPipeline = tknMalloc(sizeof(Pipeline));
+
+    *pPipeline = (Pipeline){};
+    return pPipeline;
+}
+
+void destroyPipelinePtr(GfxContext *pGfxContext, Pipeline *pPipeline)
+{
+    // Cleanup pipeline resources
+    tknFree(pPipeline);
 }

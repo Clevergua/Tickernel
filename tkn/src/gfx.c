@@ -437,7 +437,7 @@ static void createSwapchainAttachmentPtr(GfxContext *pGfxContext, VkExtent2D tar
             .swapchainImageViews = swapchainImageViews,
         },
         .vkFormat = pGfxContext->surfaceFormat.format,
-        .renderPassPtrHashSet = tknCreateHashSet(4),
+        .renderPassPtrHashSet = tknCreateHashSet(TKN_DEFAULT_COLLECTION_SIZE),
     };
     pGfxContext->pSwapchainAttachment = pSwapchainAttachment;
 };
@@ -589,8 +589,8 @@ static void cleanupVkCommandBuffers(GfxContext *pGfxContext)
 
 void setupRenderPipelineAndResources(GfxContext *pGfxContext, uint32_t spvPathCount, const char **spvPaths)
 {
-    pGfxContext->dynamicAttachmentPtrDynamicArray = tknCreateDynamicArray(sizeof(Attachment *), 4);
-    pGfxContext->renderPassPtrDynamicArray = tknCreateDynamicArray(sizeof(RenderPass *), 4);
+    pGfxContext->dynamicAttachmentPtrDynamicArray = tknCreateDynamicArray(sizeof(Attachment *), TKN_DEFAULT_COLLECTION_SIZE);
+    pGfxContext->renderPassPtrDynamicArray = tknCreateDynamicArray(sizeof(RenderPass *), TKN_DEFAULT_COLLECTION_SIZE);
     SpvReflectShaderModule *spvReflectShaderModules = tknMalloc(sizeof(SpvReflectShaderModule) * spvPathCount);
     for (uint32_t spvPathIndex = 0; spvPathIndex < spvPathCount; spvPathIndex++)
     {
@@ -726,7 +726,7 @@ void updateGfxContextPtr(GfxContext *pGfxContext, VkExtent2D swapchainExtent)
                    swapchainExtent.height);
             updateSwapchainAttachmentPtr(pGfxContext, swapchainExtent);
 
-            TknDynamicArray dirtyRenderPassPtrDynamicArray = tknCreateDynamicArray(sizeof(RenderPass *), 4);
+            TknDynamicArray dirtyRenderPassPtrDynamicArray = tknCreateDynamicArray(sizeof(RenderPass *), TKN_DEFAULT_COLLECTION_SIZE);
 
             for (uint32_t i = 0; i < pGfxContext->dynamicAttachmentPtrDynamicArray.count; i++)
             {
