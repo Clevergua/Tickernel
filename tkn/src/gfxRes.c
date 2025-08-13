@@ -169,7 +169,8 @@ DescriptorContent getNullDescriptorContent(VkDescriptorType vkDescriptorType)
     // VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT = 10,
     else if (VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT == vkDescriptorType)
     {
-        descriptorContent.inputAttachmentDescriptorContent.inputAttachmentIndex = UINT32_MAX;
+        descriptorContent.inputAttachmentDescriptorContent.pAttachment = NULL;
+        descriptorContent.inputAttachmentDescriptorContent.vkImageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
     }
     else
     {
@@ -204,6 +205,7 @@ Attachment *createDynamicAttachmentPtr(GfxContext *pGfxContext, VkFormat vkForma
         .attachmentType = ATTACHMENT_TYPE_DYNAMIC,
         .attachmentContent.dynamicAttachmentContent = dynamicAttachmentContent,
         .renderPassPtrHashSet = tknCreateHashSet(1),
+        .descriptorPtrHashSet = tknCreateHashSet(1),
     };
     return pAttachment;
 }
@@ -211,6 +213,8 @@ void destroyDynamicAttachmentPtr(GfxContext *pGfxContext, Attachment *pAttachmen
 {
     tknAssert(pAttachment->attachmentType == ATTACHMENT_TYPE_DYNAMIC, "Attachment type mismatch!");
     tknAssert(pAttachment->renderPassPtrHashSet.count == 0, "Cannot destroy dynamic attachment with render passes attached!");
+
+    tknDestroyHashSet(pAttachment->descriptorPtrHashSet);
     tknDestroyHashSet(pAttachment->renderPassPtrHashSet);
     DynamicAttachmentContent dynamicAttachmentContent = pAttachment->attachmentContent.dynamicAttachmentContent;
     destroyVkImage(pGfxContext, dynamicAttachmentContent.vkImage, dynamicAttachmentContent.vkDeviceMemory, dynamicAttachmentContent.vkImageView);
@@ -229,16 +233,13 @@ void resizeDynamicAttachmentPtr(GfxContext *pGfxContext, Attachment *pAttachment
     destroyVkImage(pGfxContext, dynamicAttachmentContent.vkImage, dynamicAttachmentContent.vkDeviceMemory, dynamicAttachmentContent.vkImageView);
     createVkImage(pGfxContext, vkExtent3D, dynamicAttachmentContent.vkFormat, VK_IMAGE_TILING_OPTIMAL, dynamicAttachmentContent.vkImageUsageFlags, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, dynamicAttachmentContent.vkImageAspectFlags, &dynamicAttachmentContent.vkImage, &dynamicAttachmentContent.vkDeviceMemory, &dynamicAttachmentContent.vkImageView);
     // Write descriptor set
-    for (uint32_t i = 0; i < pAttachment->renderPassPtrHashSet.capacity; i++)
+    for (uint32_t i = 0; i < pAttachment->descriptorPtrHashSet.capacity; i++)
     {
-        TknListNode *node = pAttachment->renderPassPtrHashSet.nodePtrs[i];
+        TknListNode *node = pAttachment->descriptorPtrHashSet.nodePtrs[i];
         while (node)
         {
-            RenderPass *pRenderPass = (RenderPass *)node->value;
-            for (uint32_t attachmentIndex = 0; attachmentIndex < pRenderPass->attachmentCount; attachmentIndex++)
-            {
-                // TODO 先处理完Subpass的更新再回来
-            }
+            Descriptor *pDescriptor = (Descriptor *)node->value;
+            updateInputAttachmentDescriptors(pGfxContext, 1, pDescriptor);
             node = node->nextNodePtr;
         }
     }
@@ -351,4 +352,43 @@ void updateMappedBufferPtr(GfxContext *pGfxContext, MappedBuffer *pMappedBuffer,
     tknAssert(pMappedBuffer->buffer.vkDeviceMemory != VK_NULL_HANDLE, "Mapped buffer memory is not allocated!");
     tknAssert(size <= pMappedBuffer->buffer.size, "Data size exceeds mapped buffer size!");
     memcpy(pMappedBuffer->mapped, data, size);
+}
+
+void updateInputAttachmentDescriptors(GfxContext *pGfxContext, uint32_t inputAttachmentDescriptorCount, Descriptor *inputAttachmentDescriptors)
+{
+    if (inputAttachmentDescriptorCount > 0)
+    {
+        VkWriteDescriptorSet *vkWriteDescriptorSets = tknMalloc(sizeof(VkWriteDescriptorSet) * inputAttachmentDescriptorCount);
+        VkDescriptorImageInfo *vkDescriptorImageInfos = tknMalloc(sizeof(VkDescriptorImageInfo) * inputAttachmentDescriptorCount);
+        for (uint32_t inputAttachmentDescriptorIndex = 0; inputAttachmentDescriptorIndex < inputAttachmentDescriptorCount; inputAttachmentDescriptorIndex++)
+        {
+            Descriptor descriptor = inputAttachmentDescriptors[inputAttachmentDescriptorIndex];
+            tknAssert(VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT == descriptor.vkDescriptorType, "Input attachment descriptor type mismatch!");
+
+            vkDescriptorImageInfos[inputAttachmentDescriptorIndex] = (VkDescriptorImageInfo){
+                .sampler = VK_NULL_HANDLE,
+                .imageView = VK_NULL_HANDLE,
+                .imageLayout = descriptor.descriptorContent.inputAttachmentDescriptorContent.vkImageLayout,
+            };
+            vkWriteDescriptorSets[inputAttachmentDescriptorIndex] = (VkWriteDescriptorSet){
+                .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+                .dstSet = descriptor.pDescriptorSet->vkDescriptorSet,
+                .dstBinding = descriptor.binding,
+                .dstArrayElement = 0,
+                .descriptorCount = 1,
+                .descriptorType = descriptor.vkDescriptorType,
+                .pImageInfo = &vkDescriptorImageInfos[inputAttachmentDescriptorIndex],
+                .pBufferInfo = VK_NULL_HANDLE,
+                .pTexelBufferView = VK_NULL_HANDLE,
+            };
+        }
+        VkDevice vkDevice = pGfxContext->vkDevice;
+        vkUpdateDescriptorSets(vkDevice, inputAttachmentDescriptorCount, vkWriteDescriptorSets, 0, NULL);
+        tknFree(vkDescriptorImageInfos);
+        tknFree(vkWriteDescriptorSets);
+    }
+    else
+    {
+        printf("No input attachments to update");
+    }
 }

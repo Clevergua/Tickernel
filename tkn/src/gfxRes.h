@@ -76,6 +76,7 @@ struct Attachment
     AttachmentType attachmentType;
     AttachmentContent attachmentContent;
     TknHashSet renderPassPtrHashSet;
+    TknHashSet descriptorPtrHashSet;
 };
 
 typedef struct
@@ -90,7 +91,8 @@ typedef struct
 
 typedef struct
 {
-    uint32_t inputAttachmentIndex;
+    Attachment *pAttachment;
+    VkImageLayout vkImageLayout;
 } InputAttachmentDescriptorContent;
 
 typedef union
@@ -149,7 +151,6 @@ typedef struct
     DescriptorSet *pSubpassDescriptorSet;               // subpass descriptor set
     TknDynamicArray pipelinePtrDynamicArray;            // pipelines
     uint32_t subpassIndex;                              // subpass index in the render pass
-    VkImageLayout *inputAttachmentIndexToVkImageLayout; // input attachment layout
 } Subpass;
 
 struct RenderPass
@@ -203,8 +204,9 @@ struct GfxContext
 
 void assertVkResult(VkResult vkResult);
 DescriptorContent getNullDescriptorContent(VkDescriptorType vkDescriptorType);
-DescriptorSet *createDescriptorSetPtr(GfxContext *pGfxContext, uint32_t spvPathCount, const char **spvPaths, uint32_t set);
+DescriptorSet *createDescriptorSetPtr(GfxContext *pGfxContext, uint32_t spvReflectShaderModuleCount, SpvReflectShaderModule *spvReflectShaderModules, uint32_t set);
 void destroyDescriptorSetPtr(GfxContext *pGfxContext, DescriptorSet *pDescriptorSet);
 void updateDescriptors(GfxContext *pGfxContext, uint32_t descriptorCount, Descriptor *descriptors);
 
 void resizeDynamicAttachmentPtr(GfxContext *pGfxContext, Attachment *pAttachment);
+void updateInputAttachmentDescriptors(GfxContext *pGfxContext, uint32_t inputAttachmentDescriptorCount, Descriptor *inputAttachmentDescriptors);
