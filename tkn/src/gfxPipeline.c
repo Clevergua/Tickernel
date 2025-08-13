@@ -497,18 +497,23 @@ void updateDescriptors(GfxContext *pGfxContext, uint32_t newDescriptorCount, Des
 void destroyDescriptorSetPtr(GfxContext *pGfxContext, DescriptorSet *pDescriptorSet)
 {
     VkDevice vkDevice = pGfxContext->vkDevice;
+    uint32_t descriptorCount = 0;
     Descriptor *descriptors = tknMalloc(sizeof(Descriptor) * pDescriptorSet->descriptorCount);
     for (uint32_t binding = 0; binding < pDescriptorSet->descriptorCount; binding++)
     {
         VkDescriptorType descriptorType = pDescriptorSet->descriptors[binding].vkDescriptorType;
-        descriptors[binding] = (Descriptor){
-            .vkDescriptorType = descriptorType,
-            .descriptorContent = getNullDescriptorContent(descriptorType),
-            .pDescriptorSet = pDescriptorSet,
-            .binding = binding,
-        };
+        if (descriptorType != VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT && descriptorType != VK_DESCRIPTOR_TYPE_MAX_ENUM)
+        {
+            descriptors[descriptorCount] = (Descriptor){
+                .vkDescriptorType = descriptorType,
+                .descriptorContent = getNullDescriptorContent(descriptorType),
+                .pDescriptorSet = pDescriptorSet,
+                .binding = binding,
+            };
+            descriptorCount++;
+        }
     }
-    updateDescriptors(pGfxContext, pDescriptorSet->descriptorCount, descriptors);
+    updateDescriptors(pGfxContext, descriptorCount, descriptors);
     tknFree(descriptors);
 
     vkFreeDescriptorSets(vkDevice, pDescriptorSet->vkDescriptorPool, 1, &pDescriptorSet->vkDescriptorSet);
