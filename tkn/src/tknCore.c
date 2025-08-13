@@ -139,6 +139,24 @@ void *tknGetFromDynamicArray(TknDynamicArray *pDynamicArray, uint32_t index)
     }
 }
 
+bool tknContainsInDynamicArray(TknDynamicArray *pDynamicArray, void *pData)
+{
+    if (pDynamicArray == NULL || pData == NULL || pDynamicArray->count == 0)
+    {
+        return false;
+    }
+    uint8_t *arrayData = (uint8_t *)pDynamicArray->array;
+    for (uint32_t i = 0; i < pDynamicArray->count; i++)
+    {
+        void *currentElement = arrayData + (i * pDynamicArray->dataSize);
+        if (memcmp(currentElement, pData, pDynamicArray->dataSize) == 0)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
 TknHashSet tknCreateHashSet(uint32_t capacity)
 {
     TknHashSet tknHashSet = {

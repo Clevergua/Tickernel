@@ -361,7 +361,6 @@ void updateDescriptors(GfxContext *pGfxContext, uint32_t newDescriptorCount, Des
             // VK_DESCRIPTOR_TYPE_STORAGE_BUFFER = 7,
             // VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC = 8,
             // VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC = 9,
-            // VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT = 10,
             if (VK_DESCRIPTOR_TYPE_SAMPLER == vkDescriptorType)
             {
                 Sampler *pNewSampler = newDescriptor.descriptorContent.samplerDescriptorContent.pSampler;

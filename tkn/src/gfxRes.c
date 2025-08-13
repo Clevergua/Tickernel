@@ -207,13 +207,14 @@ Attachment *createDynamicAttachmentPtr(GfxContext *pGfxContext, VkFormat vkForma
         .renderPassPtrHashSet = tknCreateHashSet(1),
         .descriptorPtrHashSet = tknCreateHashSet(1),
     };
+    tknAddToHashSet(&pGfxContext->dynamicAttachmentPtrHashSet, pAttachment);
     return pAttachment;
 }
 void destroyDynamicAttachmentPtr(GfxContext *pGfxContext, Attachment *pAttachment)
 {
     tknAssert(pAttachment->attachmentType == ATTACHMENT_TYPE_DYNAMIC, "Attachment type mismatch!");
     tknAssert(pAttachment->renderPassPtrHashSet.count == 0, "Cannot destroy dynamic attachment with render passes attached!");
-
+    tknRemoveFromHashSet(&pGfxContext->dynamicAttachmentPtrHashSet, pAttachment);
     tknDestroyHashSet(pAttachment->descriptorPtrHashSet);
     tknDestroyHashSet(pAttachment->renderPassPtrHashSet);
     DynamicAttachmentContent dynamicAttachmentContent = pAttachment->attachmentContent.dynamicAttachmentContent;
@@ -232,17 +233,17 @@ void resizeDynamicAttachmentPtr(GfxContext *pGfxContext, Attachment *pAttachment
     };
     destroyVkImage(pGfxContext, dynamicAttachmentContent.vkImage, dynamicAttachmentContent.vkDeviceMemory, dynamicAttachmentContent.vkImageView);
     createVkImage(pGfxContext, vkExtent3D, dynamicAttachmentContent.vkFormat, VK_IMAGE_TILING_OPTIMAL, dynamicAttachmentContent.vkImageUsageFlags, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, dynamicAttachmentContent.vkImageAspectFlags, &dynamicAttachmentContent.vkImage, &dynamicAttachmentContent.vkDeviceMemory, &dynamicAttachmentContent.vkImageView);
-    // Write descriptor set
-    for (uint32_t i = 0; i < pAttachment->descriptorPtrHashSet.capacity; i++)
-    {
-        TknListNode *node = pAttachment->descriptorPtrHashSet.nodePtrs[i];
-        while (node)
-        {
-            Descriptor *pDescriptor = (Descriptor *)node->value;
-            updateInputAttachmentDescriptors(pGfxContext, 1, pDescriptor);
-            node = node->nextNodePtr;
-        }
-    }
+    // // Write descriptor set
+    // for (uint32_t i = 0; i < pAttachment->descriptorPtrHashSet.capacity; i++)
+    // {
+    //     TknListNode *node = pAttachment->descriptorPtrHashSet.nodePtrs[i];
+    //     while (node)
+    //     {
+    //         Descriptor *pDescriptor = (Descriptor *)node->value;
+    //         updateInputAttachmentDescriptors(pGfxContext, 1, pDescriptor);
+    //         node = node->nextNodePtr;
+    //     }
+    // }
 }
 Attachment *createFixedAttachmentPtr(GfxContext *pGfxContext, VkFormat vkFormat, VkImageUsageFlags vkImageUsageFlags, VkImageAspectFlags vkImageAspectFlags, uint32_t width, uint32_t height)
 {
