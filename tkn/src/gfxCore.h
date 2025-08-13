@@ -175,7 +175,6 @@ struct GfxContext
     VkPhysicalDeviceProperties vkPhysicalDeviceProperties;
     uint32_t gfxQueueFamilyIndex;
     uint32_t presentQueueFamilyIndex;
-
     VkSurfaceFormatKHR surfaceFormat;
     VkPresentModeKHR presentMode;
 
@@ -183,10 +182,11 @@ struct GfxContext
     VkQueue vkGfxQueue;
     VkQueue vkPresentQueue;
 
+    VkSurfaceCapabilitiesKHR vkSurfaceCapabilities;
+    Attachment *swapchainAttachmentPtr;
     VkExtent2D swapchainExtent;
     VkSwapchainKHR vkSwapchain;
     uint32_t swapchainImageCount;
-    Attachment *swapchainAttachmentPtr;
     VkImage *swapchainImages;
     VkImageView *swapchainImageViews;
 

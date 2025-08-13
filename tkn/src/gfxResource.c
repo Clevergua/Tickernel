@@ -139,9 +139,6 @@ static void destroyVkImage(GfxContext *pGfxContext, VkImage vkImage, VkDeviceMem
     vkFreeMemory(vkDevice, vkDeviceMemory, NULL);
 }
 
-
-
-
 DescriptorContent getNullDescriptorContent(VkDescriptorType vkDescriptorType)
 {
     DescriptorContent descriptorContent = {0};

@@ -361,20 +361,17 @@ static void populateSwapchain(GfxContext *pGfxContext, VkExtent2D targetSwapchai
     VkPhysicalDevice vkPhysicalDevice = pGfxContext->vkPhysicalDevice;
     VkSurfaceKHR vkSurface = pGfxContext->vkSurface;
     VkDevice vkDevice = pGfxContext->vkDevice;
-    uint32_t gfxQueueFamilyIndex = pGfxContext->gfxQueueFamilyIndex;
-    uint32_t presentQueueFamilyIndex = pGfxContext->presentQueueFamilyIndex;
 
-    VkSurfaceCapabilitiesKHR vkSurfaceCapabilities;
-    assertVkResult(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(vkPhysicalDevice, vkSurface, &vkSurfaceCapabilities));
-    pGfxContext->swapchainImageCount = TKN_CLAMP(targetSwapchainImageCount, vkSurfaceCapabilities.minImageCount, vkSurfaceCapabilities.maxImageCount);
+    assertVkResult(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(vkPhysicalDevice, vkSurface, &pGfxContext->vkSurfaceCapabilities));
+    pGfxContext->swapchainImageCount = TKN_CLAMP(targetSwapchainImageCount, pGfxContext->vkSurfaceCapabilities.minImageCount, pGfxContext->vkSurfaceCapabilities.maxImageCount);
 
     VkExtent2D swapchainExtent;
-    swapchainExtent.width = TKN_CLAMP(targetSwapchainExtent.width, vkSurfaceCapabilities.minImageExtent.width, vkSurfaceCapabilities.maxImageExtent.width);
-    swapchainExtent.height = TKN_CLAMP(targetSwapchainExtent.height, vkSurfaceCapabilities.minImageExtent.height, vkSurfaceCapabilities.maxImageExtent.height);
+    swapchainExtent.width = TKN_CLAMP(targetSwapchainExtent.width, pGfxContext->vkSurfaceCapabilities.minImageExtent.width, pGfxContext->vkSurfaceCapabilities.maxImageExtent.width);
+    swapchainExtent.height = TKN_CLAMP(targetSwapchainExtent.height, pGfxContext->vkSurfaceCapabilities.minImageExtent.height, pGfxContext->vkSurfaceCapabilities.maxImageExtent.height);
 
-    VkSharingMode imageSharingMode = gfxQueueFamilyIndex != presentQueueFamilyIndex ? VK_SHARING_MODE_CONCURRENT : VK_SHARING_MODE_EXCLUSIVE;
-    uint32_t queueFamilyIndexCount = gfxQueueFamilyIndex != presentQueueFamilyIndex ? 2 : 0;
-    uint32_t pQueueFamilyIndices[] = {gfxQueueFamilyIndex, presentQueueFamilyIndex};
+    VkSharingMode imageSharingMode = pGfxContext->gfxQueueFamilyIndex != pGfxContext->presentQueueFamilyIndex ? VK_SHARING_MODE_CONCURRENT : VK_SHARING_MODE_EXCLUSIVE;
+    uint32_t queueFamilyIndexCount = pGfxContext->gfxQueueFamilyIndex != pGfxContext->presentQueueFamilyIndex ? 2 : 0;
+    uint32_t pQueueFamilyIndices[] = {pGfxContext->gfxQueueFamilyIndex, pGfxContext->presentQueueFamilyIndex};
 
     VkSwapchainCreateInfoKHR swapchainCreateInfo =
         {
@@ -391,7 +388,7 @@ static void populateSwapchain(GfxContext *pGfxContext, VkExtent2D targetSwapchai
             .imageSharingMode = imageSharingMode,
             .queueFamilyIndexCount = queueFamilyIndexCount,
             .pQueueFamilyIndices = pQueueFamilyIndices,
-            .preTransform = vkSurfaceCapabilities.currentTransform,
+            .preTransform = pGfxContext->vkSurfaceCapabilities.currentTransform,
             .compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
             .presentMode = pGfxContext->presentMode,
             .clipped = VK_TRUE,
@@ -456,21 +453,72 @@ static void cleanupSwapchain(GfxContext *pGfxContext)
 }
 static void repopulateSwapchain(GfxContext *pGfxContext, VkExtent2D swapchainExtent)
 {
-    pGfxContext->swapchainExtent = swapchainExtent;
-    // TODO: keep swapchain attachment references
     VkDevice vkDevice = pGfxContext->vkDevice;
     assertVkResult(vkDeviceWaitIdle(vkDevice));
-    // cleanupSwapchain(pGfxContext);
+
     for (uint32_t i = 0; i < pGfxContext->swapchainImageCount; i++)
     {
         vkDestroyImageView(vkDevice, pGfxContext->swapchainImageViews[i], NULL);
     }
-    tknFree(pGfxContext->swapchainImageViews);
-    tknFree(pGfxContext->swapchainImages);
     vkDestroySwapchainKHR(vkDevice, pGfxContext->vkSwapchain, NULL);
 
-    // populateSwapchain(pGfxContext, swapchainExtent, pGfxContext->swapchainImageCount);
+    swapchainExtent.width = TKN_CLAMP(swapchainExtent.width, pGfxContext->vkSurfaceCapabilities.minImageExtent.width, pGfxContext->vkSurfaceCapabilities.maxImageExtent.width);
+    swapchainExtent.height = TKN_CLAMP(swapchainExtent.height, pGfxContext->vkSurfaceCapabilities.minImageExtent.height, pGfxContext->vkSurfaceCapabilities.maxImageExtent.height);
+    pGfxContext->swapchainExtent = swapchainExtent;
 
+    VkSharingMode imageSharingMode = pGfxContext->gfxQueueFamilyIndex != pGfxContext->presentQueueFamilyIndex ? VK_SHARING_MODE_CONCURRENT : VK_SHARING_MODE_EXCLUSIVE;
+    uint32_t queueFamilyIndexCount = pGfxContext->gfxQueueFamilyIndex != pGfxContext->presentQueueFamilyIndex ? 2 : 0;
+    uint32_t pQueueFamilyIndices[] = {pGfxContext->gfxQueueFamilyIndex, pGfxContext->presentQueueFamilyIndex};
+    VkSwapchainCreateInfoKHR swapchainCreateInfo =
+        {
+            .sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
+            .pNext = NULL,
+            .flags = 0,
+            .surface = pGfxContext->vkSurface,
+            .minImageCount = pGfxContext->swapchainImageCount,
+            .imageFormat = pGfxContext->surfaceFormat.format,
+            .imageColorSpace = pGfxContext->surfaceFormat.colorSpace,
+            .imageExtent = swapchainExtent,
+            .imageArrayLayers = 1,
+            .imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+            .imageSharingMode = imageSharingMode,
+            .queueFamilyIndexCount = queueFamilyIndexCount,
+            .pQueueFamilyIndices = pQueueFamilyIndices,
+            .preTransform = pGfxContext->vkSurfaceCapabilities.currentTransform,
+            .compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
+            .presentMode = pGfxContext->presentMode,
+            .clipped = VK_TRUE,
+            .oldSwapchain = VK_NULL_HANDLE,
+        };
+    assertVkResult(vkCreateSwapchainKHR(vkDevice, &swapchainCreateInfo, NULL, &pGfxContext->vkSwapchain));
+    assertVkResult(vkGetSwapchainImagesKHR(vkDevice, pGfxContext->vkSwapchain, &pGfxContext->swapchainImageCount, pGfxContext->swapchainImages));
+    for (uint32_t i = 0; i < pGfxContext->swapchainImageCount; i++)
+    {
+        VkComponentMapping components = {
+            .r = VK_COMPONENT_SWIZZLE_IDENTITY,
+            .g = VK_COMPONENT_SWIZZLE_IDENTITY,
+            .b = VK_COMPONENT_SWIZZLE_IDENTITY,
+            .a = VK_COMPONENT_SWIZZLE_IDENTITY,
+        };
+        VkImageSubresourceRange subresourceRange = {
+            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+            .levelCount = 1,
+            .baseMipLevel = 0,
+            .layerCount = 1,
+            .baseArrayLayer = 0,
+        };
+        VkImageViewCreateInfo imageViewCreateInfo = {
+            .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+            .pNext = NULL,
+            .flags = 0,
+            .image = pGfxContext->swapchainImages[i],
+            .viewType = VK_IMAGE_VIEW_TYPE_2D,
+            .format = pGfxContext->surfaceFormat.format,
+            .components = components,
+            .subresourceRange = subresourceRange,
+        };
+        assertVkResult(vkCreateImageView(vkDevice, &imageViewCreateInfo, NULL, &pGfxContext->swapchainImageViews[i]));
+    }
 }
 
 static void populateSignals(GfxContext *pGfxContext)
