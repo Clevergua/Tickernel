@@ -228,17 +228,17 @@ void resizeDynamicAttachmentPtr(GfxContext *pGfxContext, Attachment *pAttachment
     };
     destroyVkImage(pGfxContext, dynamicAttachmentContent.vkImage, dynamicAttachmentContent.vkDeviceMemory, dynamicAttachmentContent.vkImageView);
     createVkImage(pGfxContext, vkExtent3D, pAttachment->vkFormat, VK_IMAGE_TILING_OPTIMAL, dynamicAttachmentContent.vkImageUsageFlags, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, dynamicAttachmentContent.vkImageAspectFlags, &dynamicAttachmentContent.vkImage, &dynamicAttachmentContent.vkDeviceMemory, &dynamicAttachmentContent.vkImageView);
-    // // Write descriptor set
-    // for (uint32_t i = 0; i < pAttachment->descriptorPtrHashSet.capacity; i++)
-    // {
-    //     TknListNode *node = pAttachment->descriptorPtrHashSet.nodePtrs[i];
-    //     while (node)
-    //     {
-    //         Descriptor *pDescriptor = (Descriptor *)node->value;
-    //         updateInputAttachmentDescriptors(pGfxContext, 1, pDescriptor);
-    //         node = node->nextNodePtr;
-    //     }
-    // }
+    // Write descriptor set
+    for (uint32_t i = 0; i < pAttachment->attachmentContent.dynamicAttachmentContent.descriptorPtrHashSet.capacity; i++)
+    {
+        TknListNode *node = pAttachment->attachmentContent.dynamicAttachmentContent.descriptorPtrHashSet.nodePtrs[i];
+        while (node)
+        {
+            Descriptor *pDescriptor = (Descriptor *)node->value;
+            updateInputAttachmentDescriptors(pGfxContext, 1, pDescriptor);
+            node = node->nextNodePtr;
+        }
+    }
 }
 Attachment *createFixedAttachmentPtr(GfxContext *pGfxContext, VkFormat vkFormat, VkImageUsageFlags vkImageUsageFlags, VkImageAspectFlags vkImageAspectFlags, uint32_t width, uint32_t height)
 {

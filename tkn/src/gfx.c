@@ -353,7 +353,7 @@ static void cleanupLogicalDevice(GfxContext *pGfxContext)
     vkDestroyDevice(pGfxContext->vkDevice, NULL);
 }
 
-static Attachment *createSwapchainAttachmentPtr(GfxContext *pGfxContext, VkExtent2D targetSwapchainExtent, uint32_t targetSwapchainImageCount)
+static void createSwapchainAttachmentPtr(GfxContext *pGfxContext, VkExtent2D targetSwapchainExtent, uint32_t targetSwapchainImageCount)
 {
     Attachment *pSwapchainAttachment = tknMalloc(sizeof(Attachment));
 
@@ -439,10 +439,11 @@ static Attachment *createSwapchainAttachmentPtr(GfxContext *pGfxContext, VkExten
         .vkFormat = pGfxContext->surfaceFormat.format,
         .renderPassPtrHashSet = tknCreateHashSet(4),
     };
-    return pSwapchainAttachment;
+    pGfxContext->pSwapchainAttachment = pSwapchainAttachment;
 };
-static void destroySwapchainAttachmentPtr(GfxContext *pGfxContext, Attachment *pSwapchainAttachment)
+static void destroySwapchainAttachmentPtr(GfxContext *pGfxContext)
 {
+    Attachment *pSwapchainAttachment = pGfxContext->pSwapchainAttachment;
     VkDevice vkDevice = pGfxContext->vkDevice;
     SwapchainAttachmentContent content = pSwapchainAttachment->attachmentContent.swapchainAttachmentContent;
     for (uint32_t i = 0; i < content.swapchainImageCount; i++)
@@ -456,11 +457,11 @@ static void destroySwapchainAttachmentPtr(GfxContext *pGfxContext, Attachment *p
     tknDestroyHashSet(pSwapchainAttachment->renderPassPtrHashSet);
     tknFree(pSwapchainAttachment);
 }
-
-static void updateSwapchainAttachmentPtr(GfxContext *pGfxContext, VkExtent2D swapchainExtent, Attachment *pSwapchainAttachment)
+static void updateSwapchainAttachmentPtr(GfxContext *pGfxContext, VkExtent2D swapchainExtent)
 {
     VkDevice vkDevice = pGfxContext->vkDevice;
     assertVkResult(vkDeviceWaitIdle(vkDevice));
+    Attachment* pSwapchainAttachment = pGfxContext->pSwapchainAttachment;
     SwapchainAttachmentContent *pSwapchainAttachmentContent = &pSwapchainAttachment->attachmentContent.swapchainAttachmentContent;
     for (uint32_t i = 0; i < pSwapchainAttachmentContent->swapchainImageCount; i++)
     {
@@ -654,7 +655,7 @@ static void present(GfxContext *pGfxContext, uint32_t swapchainIndex)
     if (VK_ERROR_OUT_OF_DATE_KHR == result || VK_SUBOPTIMAL_KHR == result)
     {
         printf("Recreate swapchain because of the result: %d when presenting.\n", result);
-        updateSwapchainAttachmentPtr(pGfxContext, pSwapchainAttachmentContent->swapchainExtent, pGfxContext->pSwapchainAttachment);
+        updateSwapchainAttachmentPtr(pGfxContext, pSwapchainAttachmentContent->swapchainExtent);
         for (uint32_t renderPassIndex = 0; renderPassIndex < pGfxContext->renderPassPtrDynamicArray.count; renderPassIndex++)
         {
             RenderPass *pRenderPass = tknGetFromDynamicArray(&pGfxContext->renderPassPtrDynamicArray, renderPassIndex);
@@ -681,7 +682,7 @@ GfxContext *createGfxContextPtr(int targetSwapchainImageCount, VkSurfaceFormatKH
     initializeGfxContext(pGfxContext, vkInstance, vkSurface);
     pickPhysicalDevice(pGfxContext, targetVkSurfaceFormat, targetVkPresentMode);
     populateLogicalDevice(pGfxContext);
-    pGfxContext->pSwapchainAttachment = createSwapchainAttachmentPtr(pGfxContext, swapchainExtent, targetSwapchainImageCount);
+    createSwapchainAttachmentPtr(pGfxContext, swapchainExtent, targetSwapchainImageCount);
     populateSignals(pGfxContext);
     populateCommandPools(pGfxContext);
     populateVkCommandBuffers(pGfxContext);
@@ -697,7 +698,7 @@ void destroyGfxContextPtr(GfxContext *pGfxContext)
     cleanupVkCommandBuffers(pGfxContext);
     cleanupCommandPools(pGfxContext);
     cleanupSignals(pGfxContext);
-    destroySwapchainAttachmentPtr(pGfxContext, pGfxContext->pSwapchainAttachment);
+    destroySwapchainAttachmentPtr(pGfxContext);
     cleanupLogicalDevice(pGfxContext);
     tknFree(pGfxContext);
 }
@@ -717,7 +718,7 @@ void updateGfxContextPtr(GfxContext *pGfxContext, VkExtent2D swapchainExtent)
                    pSwapchainAttachmentContent->swapchainExtent.height,
                    swapchainExtent.width,
                    swapchainExtent.height);
-            updateSwapchainAttachmentPtr(pGfxContext, swapchainExtent, pGfxContext->pSwapchainAttachment);
+            updateSwapchainAttachmentPtr(pGfxContext, swapchainExtent);
 
             TknDynamicArray dirtyRenderPassPtrDynamicArray = tknCreateDynamicArray(sizeof(RenderPass *), 4);
 
@@ -768,7 +769,7 @@ void updateGfxContextPtr(GfxContext *pGfxContext, VkExtent2D swapchainExtent)
                 if (VK_ERROR_OUT_OF_DATE_KHR == result)
                 {
                     printf("Recreate swapchain because of result: %d\n", result);
-                    updateSwapchainAttachmentPtr(pGfxContext, pSwapchainAttachmentContent->swapchainExtent, pGfxContext->pSwapchainAttachment);
+                    updateSwapchainAttachmentPtr(pGfxContext, pSwapchainAttachmentContent->swapchainExtent);
                     for (uint32_t renderPassIndex = 0; renderPassIndex < pGfxContext->renderPassPtrDynamicArray.count; renderPassIndex++)
                     {
                         RenderPass *pRenderPass = tknGetFromDynamicArray(&pGfxContext->renderPassPtrDynamicArray, renderPassIndex);
