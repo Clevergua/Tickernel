@@ -139,40 +139,6 @@ static void destroyVkImage(GfxContext *pGfxContext, VkImage vkImage, VkDeviceMem
     vkFreeMemory(vkDevice, vkDeviceMemory, NULL);
 }
 
-BindingUnion getNullBindingUnion(VkDescriptorType vkDescriptorType)
-{
-    BindingUnion bindingUnion = {0};
-    // VK_DESCRIPTOR_TYPE_SAMPLER = 0,
-    if (VK_DESCRIPTOR_TYPE_SAMPLER == vkDescriptorType)
-    {
-        bindingUnion.samplerBinding.pSampler = NULL;
-    }
-    // VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER = 1,
-    // VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE = 2,
-    // VK_DESCRIPTOR_TYPE_STORAGE_IMAGE = 3,
-    // VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER = 4,
-    // VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER = 5,
-    // VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER = 6,
-    if (VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER == vkDescriptorType)
-    {
-        bindingUnion.uniformBufferBinding.pBuffer = NULL;
-    }
-    // VK_DESCRIPTOR_TYPE_STORAGE_BUFFER = 7,
-    // VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC = 8,
-    // VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC = 9,
-    // VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT = 10,
-    else if (VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT == vkDescriptorType)
-    {
-        bindingUnion.inputAttachmentBinding.pAttachment = NULL;
-        bindingUnion.inputAttachmentBinding.vkImageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    }
-    else
-    {
-        tknError("Unsupported descriptor type: %d", vkDescriptorType);
-    }
-    return bindingUnion;
-}
-
 Attachment *createDynamicAttachmentPtr(GfxContext *pGfxContext, VkFormat vkFormat, VkImageUsageFlags vkImageUsageFlags, VkImageAspectFlags vkImageAspectFlags, float scaler)
 {
     SwapchainAttachment *pswapchainAttachment = &pGfxContext->pSwapchainAttachment->attachmentUnion.swapchainAttachment;
@@ -352,45 +318,6 @@ void updateMappedBufferPtr(GfxContext *pGfxContext, MappedBuffer *pMappedBuffer,
     memcpy(pMappedBuffer->mapped, data, size);
 }
 
-void updateInputAttachmentBindings(GfxContext *pGfxContext, uint32_t inputAttachmentBindingCount, Binding *inputAttachmentBindings)
-{
-    if (inputAttachmentBindingCount > 0)
-    {
-        VkWriteDescriptorSet *vkWriteDescriptorSets = tknMalloc(sizeof(VkWriteDescriptorSet) * inputAttachmentBindingCount);
-        VkDescriptorImageInfo *vkDescriptorImageInfos = tknMalloc(sizeof(VkDescriptorImageInfo) * inputAttachmentBindingCount);
-        for (uint32_t inputAttachmentBindingIndex = 0; inputAttachmentBindingIndex < inputAttachmentBindingCount; inputAttachmentBindingIndex++)
-        {
-            Binding descriptor = inputAttachmentBindings[inputAttachmentBindingIndex];
-            tknAssert(VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT == descriptor.vkDescriptorType, "Input attachment descriptor type mismatch!");
-
-            vkDescriptorImageInfos[inputAttachmentBindingIndex] = (VkDescriptorImageInfo){
-                .sampler = VK_NULL_HANDLE,
-                .imageView = VK_NULL_HANDLE,
-                .imageLayout = descriptor.bindingUnion.inputAttachmentBinding.vkImageLayout,
-            };
-            vkWriteDescriptorSets[inputAttachmentBindingIndex] = (VkWriteDescriptorSet){
-                .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-                .dstSet = descriptor.pMaterial->vkDescriptorSet,
-                .dstBinding = descriptor.binding,
-                .dstArrayElement = 0,
-                .descriptorCount = 1,
-                .descriptorType = descriptor.vkDescriptorType,
-                .pImageInfo = &vkDescriptorImageInfos[inputAttachmentBindingIndex],
-                .pBufferInfo = VK_NULL_HANDLE,
-                .pTexelBufferView = VK_NULL_HANDLE,
-            };
-        }
-        VkDevice vkDevice = pGfxContext->vkDevice;
-        vkUpdateDescriptorSets(vkDevice, inputAttachmentBindingCount, vkWriteDescriptorSets, 0, NULL);
-        tknFree(vkDescriptorImageInfos);
-        tknFree(vkWriteDescriptorSets);
-    }
-    else
-    {
-        printf("No input attachments to update");
-    }
-}
-
 Material *createMaterialPtr(GfxContext *pGfxContext, DescriptorSet *pDescriptorSet)
 {
     Material *pMaterial = tknMalloc(sizeof(Material));
@@ -464,4 +391,213 @@ void destroyMaterialPtr(GfxContext *pGfxContext, Material *pMaterial)
     vkFreeDescriptorSets(vkDevice, pMaterial->vkDescriptorPool, 1, &pMaterial->vkDescriptorSet);
     vkDestroyDescriptorPool(vkDevice, pMaterial->vkDescriptorPool, NULL);
     tknFree(pMaterial);
+}
+BindingUnion getNullBindingUnion(VkDescriptorType vkDescriptorType)
+{
+    BindingUnion bindingUnion = {0};
+    // VK_DESCRIPTOR_TYPE_SAMPLER = 0,
+    if (VK_DESCRIPTOR_TYPE_SAMPLER == vkDescriptorType)
+    {
+        bindingUnion.samplerBinding.pSampler = NULL;
+    }
+    // VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER = 1,
+    // VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE = 2,
+    // VK_DESCRIPTOR_TYPE_STORAGE_IMAGE = 3,
+    // VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER = 4,
+    // VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER = 5,
+    // VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER = 6,
+    if (VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER == vkDescriptorType)
+    {
+        bindingUnion.uniformBufferBinding.pBuffer = NULL;
+    }
+    // VK_DESCRIPTOR_TYPE_STORAGE_BUFFER = 7,
+    // VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC = 8,
+    // VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC = 9,
+    // VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT = 10,
+    else if (VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT == vkDescriptorType)
+    {
+        bindingUnion.inputAttachmentBinding.pAttachment = NULL;
+        bindingUnion.inputAttachmentBinding.vkImageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    }
+    else
+    {
+        tknError("Unsupported descriptor type: %d", vkDescriptorType);
+    }
+    return bindingUnion;
+}
+void updateInputAttachmentBindings(GfxContext *pGfxContext, uint32_t inputAttachmentBindingCount, Binding *inputAttachmentBindings)
+{
+    if (inputAttachmentBindingCount > 0)
+    {
+        VkWriteDescriptorSet *vkWriteDescriptorSets = tknMalloc(sizeof(VkWriteDescriptorSet) * inputAttachmentBindingCount);
+        VkDescriptorImageInfo *vkDescriptorImageInfos = tknMalloc(sizeof(VkDescriptorImageInfo) * inputAttachmentBindingCount);
+        for (uint32_t inputAttachmentBindingIndex = 0; inputAttachmentBindingIndex < inputAttachmentBindingCount; inputAttachmentBindingIndex++)
+        {
+            Binding descriptor = inputAttachmentBindings[inputAttachmentBindingIndex];
+            tknAssert(VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT == descriptor.vkDescriptorType, "Input attachment descriptor type mismatch!");
+
+            vkDescriptorImageInfos[inputAttachmentBindingIndex] = (VkDescriptorImageInfo){
+                .sampler = VK_NULL_HANDLE,
+                .imageView = VK_NULL_HANDLE,
+                .imageLayout = descriptor.bindingUnion.inputAttachmentBinding.vkImageLayout,
+            };
+            vkWriteDescriptorSets[inputAttachmentBindingIndex] = (VkWriteDescriptorSet){
+                .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+                .dstSet = descriptor.pMaterial->vkDescriptorSet,
+                .dstBinding = descriptor.binding,
+                .dstArrayElement = 0,
+                .descriptorCount = 1,
+                .descriptorType = descriptor.vkDescriptorType,
+                .pImageInfo = &vkDescriptorImageInfos[inputAttachmentBindingIndex],
+                .pBufferInfo = VK_NULL_HANDLE,
+                .pTexelBufferView = VK_NULL_HANDLE,
+            };
+        }
+        VkDevice vkDevice = pGfxContext->vkDevice;
+        vkUpdateDescriptorSets(vkDevice, inputAttachmentBindingCount, vkWriteDescriptorSets, 0, NULL);
+        tknFree(vkDescriptorImageInfos);
+        tknFree(vkWriteDescriptorSets);
+    }
+    else
+    {
+        printf("No input attachments to update");
+    }
+}
+void updateBindings(GfxContext *pGfxContext, uint32_t bindingCount, Binding *bindings)
+{
+    if (bindingCount > 0)
+    {
+        Material *pMaterial = bindings[0].pMaterial;
+        tknAssert(NULL != pMaterial, "Material must not be NULL");
+        uint32_t vkWriteDescriptorSetCount = 0;
+        VkWriteDescriptorSet *vkWriteDescriptorSets = tknMalloc(sizeof(VkWriteDescriptorSet) * bindingCount);
+        VkDescriptorImageInfo *vkDescriptorImageInfos = tknMalloc(sizeof(VkDescriptorImageInfo) * bindingCount);
+        for (uint32_t bindingIndex = 0; bindingIndex < bindingCount; bindingIndex++)
+        {
+            Binding newBinding = bindings[bindingIndex];
+            tknAssert(newBinding.pMaterial == pMaterial, "All bindings must belong to the same descriptor set");
+            uint32_t binding = newBinding.binding;
+            tknAssert(binding < pMaterial->bindingCount, "Invalid binding index");
+            VkDescriptorType vkDescriptorType = pMaterial->bindings[binding].vkDescriptorType;
+            tknAssert(vkDescriptorType == newBinding.vkDescriptorType, "Incompatible descriptor type");
+            // VK_DESCRIPTOR_TYPE_SAMPLER = 0,
+            // VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER = 1,
+            // VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE = 2,
+            // VK_DESCRIPTOR_TYPE_STORAGE_IMAGE = 3,
+            // VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER = 4,
+            // VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER = 5,
+            // VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER = 6,
+            // VK_DESCRIPTOR_TYPE_STORAGE_BUFFER = 7,
+            // VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC = 8,
+            // VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC = 9,
+            if (VK_DESCRIPTOR_TYPE_SAMPLER == vkDescriptorType)
+            {
+                Sampler *pNewSampler = newBinding.bindingUnion.samplerBinding.pSampler;
+                Binding *pCurrentBinding = &pMaterial->bindings[binding];
+                Sampler *pCurrentSampler = pCurrentBinding->bindingUnion.samplerBinding.pSampler;
+                if (pNewSampler == pCurrentSampler)
+                {
+                    // No change, skip
+                }
+                else
+                {
+                    if (NULL == pCurrentSampler)
+                    {
+                        // Nothing
+                    }
+                    else
+                    {
+                        // Current sampler deref descriptor
+                        tknRemoveFromHashSet(&pCurrentSampler->bindingPtrHashSet, pCurrentBinding);
+                    }
+
+                    pCurrentBinding->bindingUnion.samplerBinding.pSampler = pNewSampler;
+                    if (NULL == pNewSampler)
+                    {
+                        vkDescriptorImageInfos[vkWriteDescriptorSetCount] = (VkDescriptorImageInfo){
+                            .sampler = NULL,
+                            .imageView = VK_NULL_HANDLE,
+                            .imageLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+                        };
+                    }
+                    else
+                    {
+                        // New sampler ref descriptor
+                        tknAddToHashSet(&pNewSampler->bindingPtrHashSet, pCurrentBinding);
+                        vkDescriptorImageInfos[vkWriteDescriptorSetCount] = (VkDescriptorImageInfo){
+                            .sampler = pNewSampler->vkSampler,
+                            .imageView = VK_NULL_HANDLE,
+                            .imageLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+                        };
+                    }
+                    VkWriteDescriptorSet vkWriteDescriptorSet = {
+                        .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+                        .dstSet = pMaterial->vkDescriptorSet,
+                        .dstBinding = binding,
+                        .dstArrayElement = 0,
+                        .descriptorCount = 1,
+                        .descriptorType = vkDescriptorType,
+                        .pImageInfo = &vkDescriptorImageInfos[vkWriteDescriptorSetCount],
+                        .pBufferInfo = NULL,
+                        .pTexelBufferView = NULL,
+                    };
+                    vkWriteDescriptorSets[vkWriteDescriptorSetCount] = vkWriteDescriptorSet;
+                    vkWriteDescriptorSetCount++;
+                }
+            }
+            else if (VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER == vkDescriptorType)
+            {
+                tknError("Combined image sampler not yet implemented");
+            }
+            else if (VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE == vkDescriptorType)
+            {
+                tknError("Sampled image not yet implemented");
+            }
+            else if (VK_DESCRIPTOR_TYPE_STORAGE_IMAGE == vkDescriptorType)
+            {
+                tknError("Storage image not yet implemented");
+            }
+            else if (VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER == vkDescriptorType)
+            {
+                tknError("Uniform texel buffer not yet implemented");
+            }
+            else if (VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER == vkDescriptorType)
+            {
+                tknError("Storage texel buffer not yet implemented");
+            }
+            else if (VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER == vkDescriptorType)
+            {
+                tknError("Uniform buffer not yet implemented");
+            }
+            else if (VK_DESCRIPTOR_TYPE_STORAGE_BUFFER == vkDescriptorType)
+            {
+                tknError("Storage buffer not yet implemented");
+            }
+            else if (VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC == vkDescriptorType)
+            {
+                tknError("Uniform buffer dynamic not yet implemented");
+            }
+            else if (VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC == vkDescriptorType)
+            {
+                tknError("Storage buffer dynamic not yet implemented");
+            }
+            else
+            {
+                tknError("Unsupported descriptor type: %d", vkDescriptorType);
+            }
+        }
+
+        if (vkWriteDescriptorSetCount > 0)
+        {
+            VkDevice vkDevice = pGfxContext->vkDevice;
+            vkUpdateDescriptorSets(vkDevice, vkWriteDescriptorSetCount, vkWriteDescriptorSets, 0, NULL);
+        }
+        tknFree(vkDescriptorImageInfos);
+        tknFree(vkWriteDescriptorSets);
+    }
+    else
+    {
+        printf("Warning: No bindings to update\n");
+        return;
+    }
 }
