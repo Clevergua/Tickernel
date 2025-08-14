@@ -2,8 +2,8 @@
 
 static Subpass createSubpass(GfxContext *pGfxContext, uint32_t subpassIndex, uint32_t attachmentCount, Attachment **attachmentPtrs, uint32_t inputVkAttachmentReferenceCount, const VkAttachmentReference *inputVkAttachmentReferences, uint32_t spvPathCount, const char **spvPaths)
 {
-    uint32_t inputAttachmentDescriptorCount = 0;
-    Descriptor *inputAttachmentDescriptors = tknMalloc(sizeof(Descriptor) * inputVkAttachmentReferenceCount);
+    uint32_t inputAttachmentBindingCount = 0;
+    Binding *inputAttachmentBindings = tknMalloc(sizeof(Binding) * inputVkAttachmentReferenceCount);
 
     VkImageLayout *inputAttachmentIndexToVkImageLayout = tknMalloc(sizeof(VkImageLayout) * attachmentCount);
     for (uint32_t attachmentIndex = 0; attachmentIndex < attachmentCount; attachmentIndex++)
@@ -39,30 +39,30 @@ static Subpass createSubpass(GfxContext *pGfxContext, uint32_t subpassIndex, uin
                         uint32_t binding = pSpvReflectDescriptorBinding->binding;
                         uint32_t inputAttachmentIndex = pSpvReflectDescriptorBinding->input_attachment_index;
 
-                        Descriptor *pDescriptor = &pMaterial->descriptors[binding];
-                        if (NULL == pDescriptor->descriptorContent.inputAttachmentDescriptorContent.pAttachment)
+                        Binding *pBinding = &pMaterial->bindings[binding];
+                        if (NULL == pBinding->bindingUnion.inputAttachmentBinding.pAttachment)
                         {
                             tknAssert(inputAttachmentIndex < attachmentCount, "Input attachment index %u out of bounds", inputAttachmentIndex);
-                            pDescriptor->descriptorContent.inputAttachmentDescriptorContent.pAttachment = attachmentPtrs[inputAttachmentIndex];
-                            pDescriptor->descriptorContent.inputAttachmentDescriptorContent.vkImageLayout = inputAttachmentIndexToVkImageLayout[inputAttachmentIndex];
+                            pBinding->bindingUnion.inputAttachmentBinding.pAttachment = attachmentPtrs[inputAttachmentIndex];
+                            pBinding->bindingUnion.inputAttachmentBinding.vkImageLayout = inputAttachmentIndexToVkImageLayout[inputAttachmentIndex];
                             if (ATTACHMENT_TYPE_DYNAMIC == attachmentPtrs[inputAttachmentIndex]->attachmentType)
                             {
-                                tknAddToHashSet(&attachmentPtrs[inputAttachmentIndex]->attachmentContent.dynamicAttachmentContent.descriptorPtrHashSet, pDescriptor);
+                                tknAddToHashSet(&attachmentPtrs[inputAttachmentIndex]->attachmentUnion.dynamicAttachment.bindingPtrHashSet, pBinding);
                             }
                             else if (ATTACHMENT_TYPE_FIXED == attachmentPtrs[inputAttachmentIndex]->attachmentType)
                             {
-                                tknAddToHashSet(&attachmentPtrs[inputAttachmentIndex]->attachmentContent.fixedAttachmentContent.descriptorPtrHashSet, pDescriptor);
+                                tknAddToHashSet(&attachmentPtrs[inputAttachmentIndex]->attachmentUnion.fixedAttachment.bindingPtrHashSet, pBinding);
                             }
                             else
                             {
                                 tknError("Input attachment %u is not dynamic or fixed attachment", inputAttachmentIndex);
                             }
-                            inputAttachmentDescriptors[inputAttachmentDescriptorCount] = *pDescriptor;
-                            inputAttachmentDescriptorCount++;
+                            inputAttachmentBindings[inputAttachmentBindingCount] = *pBinding;
+                            inputAttachmentBindingCount++;
                         }
                         else
                         {
-                            tknAssert(pDescriptor->descriptorContent.inputAttachmentDescriptorContent.pAttachment == attachmentPtrs[inputAttachmentIndex],
+                            tknAssert(pBinding->bindingUnion.inputAttachmentBinding.pAttachment == attachmentPtrs[inputAttachmentIndex],
                                       "Input attachment %u already set for binding %u in subpass descriptor set", inputAttachmentIndex, binding);
                         }
                     }
@@ -77,8 +77,8 @@ static Subpass createSubpass(GfxContext *pGfxContext, uint32_t subpassIndex, uin
     }
     tknFree(spvReflectShaderModules);
     tknFree(inputAttachmentIndexToVkImageLayout);
-    updateInputAttachmentDescriptors(pGfxContext, inputAttachmentDescriptorCount, inputAttachmentDescriptors);
-    tknFree(inputAttachmentDescriptors);
+    updateInputAttachmentBindings(pGfxContext, inputAttachmentBindingCount, inputAttachmentBindings);
+    tknFree(inputAttachmentBindings);
     TknDynamicArray pipelinePtrDynamicArray = tknCreateDynamicArray(sizeof(Pipeline *), TKN_DEFAULT_COLLECTION_SIZE);
 
     Subpass subpass = {
@@ -98,17 +98,17 @@ static void destroySubpass(GfxContext *pGfxContext, Subpass subpass)
     for (uint32_t descriptorIndex = 0; descriptorIndex < subpass.pSubpassDescriptorSet->descriptorCount; descriptorIndex++)
     {
         Material *pMaterial = *(Material **)tknGetFromDynamicArray(&subpass.pSubpassDescriptorSet->materialPtrDynamicArray, 0);
-        Descriptor *pDescriptor = &pMaterial->descriptors[descriptorIndex];
-        if (VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT == pDescriptor->vkDescriptorType)
+        Binding *pBinding = &pMaterial->bindings[descriptorIndex];
+        if (VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT == pBinding->vkDescriptorType)
         {
-            Attachment *pAttachment = pDescriptor->descriptorContent.inputAttachmentDescriptorContent.pAttachment;
+            Attachment *pAttachment = pBinding->bindingUnion.inputAttachmentBinding.pAttachment;
             if (ATTACHMENT_TYPE_DYNAMIC == pAttachment->attachmentType)
             {
-                tknRemoveFromHashSet(&pAttachment->attachmentContent.dynamicAttachmentContent.descriptorPtrHashSet, pDescriptor);
+                tknRemoveFromHashSet(&pAttachment->attachmentUnion.dynamicAttachment.bindingPtrHashSet, pBinding);
             }
             else if (ATTACHMENT_TYPE_FIXED == pAttachment->attachmentType)
             {
-                tknRemoveFromHashSet(&pAttachment->attachmentContent.fixedAttachmentContent.descriptorPtrHashSet, pDescriptor);
+                tknRemoveFromHashSet(&pAttachment->attachmentUnion.fixedAttachment.bindingPtrHashSet, pBinding);
             }
             else
             {
@@ -154,9 +154,7 @@ DescriptorSet *createDescriptorSetPtr(GfxContext *pGfxContext, uint32_t spvRefle
     TknDynamicArray vkDescriptorPoolSizeDynamicArray = tknCreateDynamicArray(sizeof(VkDescriptorPoolSize), TKN_DEFAULT_COLLECTION_SIZE);
     uint32_t descriptorCount = 0;
     VkDescriptorType *vkDescriptorTypes = NULL;
-    // Descriptor *descriptors = NULL;
-    // VkDescriptorPool vkDescriptorPool = VK_NULL_HANDLE;
-    // VkDescriptorSet vkDescriptorSet = VK_NULL_HANDLE;
+
     for (uint32_t spvReflectShaderModuleIndex = 0; spvReflectShaderModuleIndex < spvReflectShaderModuleCount; spvReflectShaderModuleIndex++)
     {
         SpvReflectShaderModule spvReflectShaderModule = spvReflectShaderModules[spvReflectShaderModuleIndex];
@@ -187,7 +185,7 @@ DescriptorSet *createDescriptorSetPtr(GfxContext *pGfxContext, uint32_t spvRefle
             }
         }
     }
-    // descriptors = tknMalloc(sizeof(Descriptor) * descriptorCount);
+
     vkDescriptorTypes = tknMalloc(sizeof(VkDescriptorType) * descriptorCount);
     VkDescriptorSetLayoutBinding *vkDescriptorSetLayoutBindings = tknMalloc(sizeof(VkDescriptorSetLayoutBinding) * descriptorCount);
     for (uint32_t binding = 0; binding < descriptorCount; binding++)
@@ -290,24 +288,23 @@ DescriptorSet *createDescriptorSetPtr(GfxContext *pGfxContext, uint32_t spvRefle
     };
     return pDescriptorSet;
 }
-void updateDescriptors(GfxContext *pGfxContext, uint32_t newDescriptorCount, Descriptor *newDescriptors)
+void updateBindings(GfxContext *pGfxContext, uint32_t bindingCount, Binding *bindings)
 {
-    if (newDescriptorCount > 0)
+    if (bindingCount > 0)
     {
-        
-        Material *pMaterial = newDescriptors[0].pMaterial;
-        tknAssert(NULL != pMaterial, "Descriptor does not have a valid descriptor set");
+        Material *pMaterial = bindings[0].pMaterial;
+        tknAssert(NULL != pMaterial, "Material must not be NULL");
         uint32_t vkWriteDescriptorSetCount = 0;
-        VkWriteDescriptorSet *vkWriteDescriptorSets = tknMalloc(sizeof(VkWriteDescriptorSet) * newDescriptorCount);
-        VkDescriptorImageInfo *vkDescriptorImageInfos = tknMalloc(sizeof(VkDescriptorImageInfo) * newDescriptorCount);
-        for (uint32_t descriptorIndex = 0; descriptorIndex < newDescriptorCount; descriptorIndex++)
+        VkWriteDescriptorSet *vkWriteDescriptorSets = tknMalloc(sizeof(VkWriteDescriptorSet) * bindingCount);
+        VkDescriptorImageInfo *vkDescriptorImageInfos = tknMalloc(sizeof(VkDescriptorImageInfo) * bindingCount);
+        for (uint32_t bindingIndex = 0; bindingIndex < bindingCount; bindingIndex++)
         {
-            Descriptor newDescriptor = newDescriptors[descriptorIndex];
-            tknAssert(newDescriptor.pMaterial == pMaterial, "All descriptors must belong to the same descriptor set");
-            uint32_t binding = newDescriptor.binding;
-            tknAssert(binding < pMaterial->descriptorCount, "Invalid binding index");
-            VkDescriptorType vkDescriptorType = pMaterial->descriptors[binding].vkDescriptorType;
-            tknAssert(vkDescriptorType == newDescriptor.vkDescriptorType, "Incompatible descriptor type");
+            Binding newBinding = bindings[bindingIndex];
+            tknAssert(newBinding.pMaterial == pMaterial, "All bindings must belong to the same descriptor set");
+            uint32_t binding = newBinding.binding;
+            tknAssert(binding < pMaterial->bindingCount, "Invalid binding index");
+            VkDescriptorType vkDescriptorType = pMaterial->bindings[binding].vkDescriptorType;
+            tknAssert(vkDescriptorType == newBinding.vkDescriptorType, "Incompatible descriptor type");
             // VK_DESCRIPTOR_TYPE_SAMPLER = 0,
             // VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER = 1,
             // VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE = 2,
@@ -320,9 +317,9 @@ void updateDescriptors(GfxContext *pGfxContext, uint32_t newDescriptorCount, Des
             // VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC = 9,
             if (VK_DESCRIPTOR_TYPE_SAMPLER == vkDescriptorType)
             {
-                Sampler *pNewSampler = newDescriptor.descriptorContent.samplerDescriptorContent.pSampler;
-                Descriptor *pCurrentDescriptor = &pMaterial->descriptors[binding];
-                Sampler *pCurrentSampler = pCurrentDescriptor->descriptorContent.samplerDescriptorContent.pSampler;
+                Sampler *pNewSampler = newBinding.bindingUnion.samplerBinding.pSampler;
+                Binding *pCurrentBinding = &pMaterial->bindings[binding];
+                Sampler *pCurrentSampler = pCurrentBinding->bindingUnion.samplerBinding.pSampler;
                 if (pNewSampler == pCurrentSampler)
                 {
                     // No change, skip
@@ -336,11 +333,10 @@ void updateDescriptors(GfxContext *pGfxContext, uint32_t newDescriptorCount, Des
                     else
                     {
                         // Current sampler deref descriptor
-                        tknRemoveFromHashSet(&pCurrentSampler->descriptorPtrHashSet, pCurrentDescriptor);
+                        tknRemoveFromHashSet(&pCurrentSampler->bindingPtrHashSet, pCurrentBinding);
                     }
 
-                    // Descriptor ref new sampler
-                    pCurrentDescriptor->descriptorContent.samplerDescriptorContent.pSampler = pNewSampler;
+                    pCurrentBinding->bindingUnion.samplerBinding.pSampler = pNewSampler;
                     if (NULL == pNewSampler)
                     {
                         vkDescriptorImageInfos[vkWriteDescriptorSetCount] = (VkDescriptorImageInfo){
@@ -352,7 +348,7 @@ void updateDescriptors(GfxContext *pGfxContext, uint32_t newDescriptorCount, Des
                     else
                     {
                         // New sampler ref descriptor
-                        tknAddToHashSet(&pNewSampler->descriptorPtrHashSet, pCurrentDescriptor);
+                        tknAddToHashSet(&pNewSampler->bindingPtrHashSet, pCurrentBinding);
                         vkDescriptorImageInfos[vkWriteDescriptorSetCount] = (VkDescriptorImageInfo){
                             .sampler = pNewSampler->vkSampler,
                             .imageView = VK_NULL_HANDLE,
@@ -426,32 +422,22 @@ void updateDescriptors(GfxContext *pGfxContext, uint32_t newDescriptorCount, Des
     }
     else
     {
-        printf("Warning: No descriptors to update\n");
+        printf("Warning: No bindings to update\n");
         return;
     }
 }
 void destroyDescriptorSetPtr(GfxContext *pGfxContext, DescriptorSet *pDescriptorSet)
 {
-    // materialPtrDynamicArray
     for (uint32_t i = 0; i < pDescriptorSet->materialPtrDynamicArray.count; i++)
     {
         Material *pMaterial = *(Material **)tknGetFromDynamicArray(&pDescriptorSet->materialPtrDynamicArray, i);
         destroyMaterialPtr(pGfxContext, pMaterial);
     }
     tknDestroyDynamicArray(pDescriptorSet->materialPtrDynamicArray);
-    // vkDescriptorSetLayout
     VkDevice vkDevice = pGfxContext->vkDevice;
     vkDestroyDescriptorSetLayout(vkDevice, pDescriptorSet->vkDescriptorSetLayout, NULL);
-    // vkDescriptorPoolSizeDynamicArray
     tknDestroyDynamicArray(pDescriptorSet->vkDescriptorPoolSizeDynamicArray);
-    // descriptorCount
-    // vkDescriptorTypes
     tknFree(pDescriptorSet->vkDescriptorTypes);
-
-    // tknFree(descriptors);
-    // vkFreeDescriptorSets(vkDevice, pDescriptorSet->vkDescriptorPool, 1, &pDescriptorSet->vkDescriptorSet);
-    // vkDestroyDescriptorPool(vkDevice, pDescriptorSet->vkDescriptorPool, NULL);
-    // tknFree(pDescriptorSet->descriptors);
     tknFree(pDescriptorSet);
 }
 
@@ -462,9 +448,9 @@ void populateFramebuffers(GfxContext *pGfxContext, RenderPass *pRenderPass)
     uint32_t height = UINT32_MAX;
     uint32_t attachmentCount = pRenderPass->attachmentCount;
     Attachment **attachmentPtrs = pRenderPass->attachmentPtrs;
-    SwapchainAttachmentContent *pSwapchainContent = &pGfxContext->pSwapchainAttachment->attachmentContent.swapchainAttachmentContent;
-    uint32_t swapchainWidth = pSwapchainContent->swapchainExtent.width;
-    uint32_t swapchainHeight = pSwapchainContent->swapchainExtent.height;
+    SwapchainAttachment *pSwapchainUnion = &pGfxContext->pSwapchainAttachment->attachmentUnion.swapchainAttachment;
+    uint32_t swapchainWidth = pSwapchainUnion->swapchainExtent.width;
+    uint32_t swapchainHeight = pSwapchainUnion->swapchainExtent.height;
     for (uint32_t attachmentIndex = 0; attachmentIndex < attachmentCount; attachmentIndex++)
     {
         Attachment *pAttachment = attachmentPtrs[attachmentIndex];
@@ -482,9 +468,9 @@ void populateFramebuffers(GfxContext *pGfxContext, RenderPass *pRenderPass)
         }
         else if (ATTACHMENT_TYPE_DYNAMIC == pAttachment->attachmentType)
         {
-            DynamicAttachmentContent dynamicContent = pAttachment->attachmentContent.dynamicAttachmentContent;
-            uint32_t dynamicWidth = swapchainWidth * dynamicContent.scaler;
-            uint32_t dynamicHeight = swapchainHeight * dynamicContent.scaler;
+            DynamicAttachment dynamicUnion = pAttachment->attachmentUnion.dynamicAttachment;
+            uint32_t dynamicWidth = swapchainWidth * dynamicUnion.scaler;
+            uint32_t dynamicHeight = swapchainHeight * dynamicUnion.scaler;
             if (UINT32_MAX == width && UINT32_MAX == height)
             {
                 width = dynamicWidth;
@@ -497,15 +483,15 @@ void populateFramebuffers(GfxContext *pGfxContext, RenderPass *pRenderPass)
         }
         else
         {
-            FixedAttachmentContent fixedContent = pAttachment->attachmentContent.fixedAttachmentContent;
+            FixedAttachment fixedUnion = pAttachment->attachmentUnion.fixedAttachment;
             if (UINT32_MAX == width && UINT32_MAX == height)
             {
-                width = fixedContent.width;
-                height = fixedContent.height;
+                width = fixedUnion.width;
+                height = fixedUnion.height;
             }
             else
             {
-                tknAssert(width == fixedContent.width && height == fixedContent.height, "Fixed attachment size mismatch!");
+                tknAssert(width == fixedUnion.width && height == fixedUnion.height, "Fixed attachment size mismatch!");
             }
         }
     }
@@ -513,7 +499,7 @@ void populateFramebuffers(GfxContext *pGfxContext, RenderPass *pRenderPass)
     Attachment *pSwapchainAttachment = getSwapchainAttachmentPtr(pGfxContext);
     if (tknContainsInHashSet(&pSwapchainAttachment->renderPassPtrHashSet, pRenderPass))
     {
-        uint32_t swapchainImageCount = pSwapchainContent->swapchainImageCount;
+        uint32_t swapchainImageCount = pSwapchainUnion->swapchainImageCount;
         pRenderPass->vkFramebufferCount = swapchainImageCount;
         pRenderPass->vkFramebuffers = tknMalloc(sizeof(VkFramebuffer) * swapchainImageCount);
         VkImageView *attachmentVkImageViews = tknMalloc(sizeof(VkImageView) * attachmentCount);
@@ -524,15 +510,15 @@ void populateFramebuffers(GfxContext *pGfxContext, RenderPass *pRenderPass)
                 Attachment *pAttachment = attachmentPtrs[attachmentIndex];
                 if (ATTACHMENT_TYPE_SWAPCHAIN == pAttachment->attachmentType)
                 {
-                    attachmentVkImageViews[attachmentIndex] = pSwapchainContent->swapchainImageViews[swapchainIndex];
+                    attachmentVkImageViews[attachmentIndex] = pSwapchainUnion->swapchainImageViews[swapchainIndex];
                 }
                 else if (ATTACHMENT_TYPE_DYNAMIC == pAttachment->attachmentType)
                 {
-                    attachmentVkImageViews[attachmentIndex] = pAttachment->attachmentContent.dynamicAttachmentContent.vkImageView;
+                    attachmentVkImageViews[attachmentIndex] = pAttachment->attachmentUnion.dynamicAttachment.vkImageView;
                 }
                 else
                 {
-                    attachmentVkImageViews[attachmentIndex] = pAttachment->attachmentContent.fixedAttachmentContent.vkImageView;
+                    attachmentVkImageViews[attachmentIndex] = pAttachment->attachmentUnion.fixedAttachment.vkImageView;
                 }
             }
             VkFramebufferCreateInfo vkFramebufferCreateInfo = {
@@ -560,12 +546,12 @@ void populateFramebuffers(GfxContext *pGfxContext, RenderPass *pRenderPass)
             Attachment *pAttachment = attachmentPtrs[attachmentIndex];
             if (ATTACHMENT_TYPE_DYNAMIC == pAttachment->attachmentType)
             {
-                attachmentVkImageViews[attachmentIndex] = pAttachment->attachmentContent.dynamicAttachmentContent.vkImageView;
+                attachmentVkImageViews[attachmentIndex] = pAttachment->attachmentUnion.dynamicAttachment.vkImageView;
             }
             else
             {
                 // ATTACHMENT_TYPE_FIXED == pAttachment->attachmentType
-                attachmentVkImageViews[attachmentIndex] = pAttachment->attachmentContent.fixedAttachmentContent.vkImageView;
+                attachmentVkImageViews[attachmentIndex] = pAttachment->attachmentUnion.fixedAttachment.vkImageView;
             }
         }
         VkFramebufferCreateInfo vkFramebufferCreateInfo = {

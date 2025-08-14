@@ -19,7 +19,7 @@ static Buffer createBuffer(GfxContext *pGfxContext, VkDeviceSize bufferSize, VkB
     VkBuffer vkBuffer;
     VkDeviceMemory vkDeviceMemory;
     void *mapped;
-    TknHashSet descriptorPtrHashSet = tknCreateHashSet(TKN_DEFAULT_COLLECTION_SIZE);
+    TknHashSet bindingPtrHashSet = tknCreateHashSet(TKN_DEFAULT_COLLECTION_SIZE);
 
     VkDevice vkDevice = pGfxContext->vkDevice;
     VkPhysicalDevice vkPhysicalDevice = pGfxContext->vkPhysicalDevice;
@@ -48,26 +48,26 @@ static Buffer createBuffer(GfxContext *pGfxContext, VkDeviceSize bufferSize, VkB
     Buffer buffer = {
         .vkBuffer = vkBuffer,
         .vkDeviceMemory = vkDeviceMemory,
-        .descriptorPtrHashSet = descriptorPtrHashSet,
+        .bindingPtrHashSet = bindingPtrHashSet,
     };
     return buffer;
 }
 static void destroyBuffer(GfxContext *pGfxContext, Buffer buffer)
 {
-    for (uint32_t i = 0; i < buffer.descriptorPtrHashSet.capacity; i++)
+    for (uint32_t i = 0; i < buffer.bindingPtrHashSet.capacity; i++)
     {
-        TknListNode *node = buffer.descriptorPtrHashSet.nodePtrs[i];
+        TknListNode *node = buffer.bindingPtrHashSet.nodePtrs[i];
         while (node)
         {
-            Descriptor *pDescriptor = (Descriptor *)node->pointer;
-            Descriptor newDescriptor = *pDescriptor;
-            newDescriptor.descriptorContent = getNullDescriptorContent(pDescriptor->vkDescriptorType);
-            updateDescriptors(pGfxContext, 1, &newDescriptor);
+            Binding *pBinding = (Binding *)node->pointer;
+            Binding binding = *pBinding;
+            binding.bindingUnion = getNullBindingUnion(pBinding->vkDescriptorType);
+            updateBindings(pGfxContext, 1, &binding);
             node = node->nextNodePtr;
         }
     }
     VkDevice vkDevice = pGfxContext->vkDevice;
-    tknDestroyHashSet(buffer.descriptorPtrHashSet);
+    tknDestroyHashSet(buffer.bindingPtrHashSet);
     vkUnmapMemory(vkDevice, buffer.vkDeviceMemory);
     vkDestroyBuffer(vkDevice, buffer.vkBuffer, NULL);
     vkFreeMemory(vkDevice, buffer.vkDeviceMemory, NULL);
@@ -139,13 +139,13 @@ static void destroyVkImage(GfxContext *pGfxContext, VkImage vkImage, VkDeviceMem
     vkFreeMemory(vkDevice, vkDeviceMemory, NULL);
 }
 
-DescriptorContent getNullDescriptorContent(VkDescriptorType vkDescriptorType)
+BindingUnion getNullBindingUnion(VkDescriptorType vkDescriptorType)
 {
-    DescriptorContent descriptorContent = {0};
+    BindingUnion bindingUnion = {0};
     // VK_DESCRIPTOR_TYPE_SAMPLER = 0,
     if (VK_DESCRIPTOR_TYPE_SAMPLER == vkDescriptorType)
     {
-        descriptorContent.samplerDescriptorContent.pSampler = NULL;
+        bindingUnion.samplerBinding.pSampler = NULL;
     }
     // VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER = 1,
     // VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE = 2,
@@ -155,7 +155,7 @@ DescriptorContent getNullDescriptorContent(VkDescriptorType vkDescriptorType)
     // VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER = 6,
     if (VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER == vkDescriptorType)
     {
-        descriptorContent.uniformBufferDescriptorContent.pBuffer = NULL;
+        bindingUnion.uniformBufferBinding.pBuffer = NULL;
     }
     // VK_DESCRIPTOR_TYPE_STORAGE_BUFFER = 7,
     // VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC = 8,
@@ -163,23 +163,23 @@ DescriptorContent getNullDescriptorContent(VkDescriptorType vkDescriptorType)
     // VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT = 10,
     else if (VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT == vkDescriptorType)
     {
-        descriptorContent.inputAttachmentDescriptorContent.pAttachment = NULL;
-        descriptorContent.inputAttachmentDescriptorContent.vkImageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+        bindingUnion.inputAttachmentBinding.pAttachment = NULL;
+        bindingUnion.inputAttachmentBinding.vkImageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
     }
     else
     {
         tknError("Unsupported descriptor type: %d", vkDescriptorType);
     }
-    return descriptorContent;
+    return bindingUnion;
 }
 
 Attachment *createDynamicAttachmentPtr(GfxContext *pGfxContext, VkFormat vkFormat, VkImageUsageFlags vkImageUsageFlags, VkImageAspectFlags vkImageAspectFlags, float scaler)
 {
-    SwapchainAttachmentContent *pSwapchainAttachmentContent = &pGfxContext->pSwapchainAttachment->attachmentContent.swapchainAttachmentContent;
+    SwapchainAttachment *pswapchainAttachment = &pGfxContext->pSwapchainAttachment->attachmentUnion.swapchainAttachment;
     Attachment *pAttachment = tknMalloc(sizeof(Attachment));
     VkExtent3D vkExtent3D = {
-        .width = (uint32_t)(pSwapchainAttachmentContent->swapchainExtent.width * scaler),
-        .height = (uint32_t)(pSwapchainAttachmentContent->swapchainExtent.height * scaler),
+        .width = (uint32_t)(pswapchainAttachment->swapchainExtent.width * scaler),
+        .height = (uint32_t)(pswapchainAttachment->swapchainExtent.height * scaler),
         .depth = 1,
     };
 
@@ -187,18 +187,18 @@ Attachment *createDynamicAttachmentPtr(GfxContext *pGfxContext, VkFormat vkForma
     VkDeviceMemory vkDeviceMemory;
     VkImageView vkImageView;
     createVkImage(pGfxContext, vkExtent3D, vkFormat, VK_IMAGE_TILING_OPTIMAL, vkImageUsageFlags, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vkImageAspectFlags, &vkImage, &vkDeviceMemory, &vkImageView);
-    DynamicAttachmentContent dynamicAttachmentContent = {
+    DynamicAttachment dynamicAttachment = {
         .vkImage = vkImage,
         .vkDeviceMemory = vkDeviceMemory,
         .vkImageView = vkImageView,
         .vkImageUsageFlags = vkImageUsageFlags,
         .vkImageAspectFlags = vkImageAspectFlags,
         .scaler = scaler,
-        .descriptorPtrHashSet = tknCreateHashSet(TKN_DEFAULT_COLLECTION_SIZE),
+        .bindingPtrHashSet = tknCreateHashSet(TKN_DEFAULT_COLLECTION_SIZE),
     };
     *pAttachment = (Attachment){
         .attachmentType = ATTACHMENT_TYPE_DYNAMIC,
-        .attachmentContent.dynamicAttachmentContent = dynamicAttachmentContent,
+        .attachmentUnion.dynamicAttachment = dynamicAttachment,
         .vkFormat = vkFormat,
         .renderPassPtrHashSet = tknCreateHashSet(TKN_DEFAULT_COLLECTION_SIZE),
     };
@@ -210,32 +210,32 @@ void destroyDynamicAttachmentPtr(GfxContext *pGfxContext, Attachment *pAttachmen
     tknAssert(ATTACHMENT_TYPE_DYNAMIC == pAttachment->attachmentType, "Attachment type mismatch!");
     tknAssert(0 == pAttachment->renderPassPtrHashSet.count, "Cannot destroy dynamic attachment with render passes attached!");
     tknRemoveFromDynamicArray(&pGfxContext->dynamicAttachmentPtrDynamicArray, &pAttachment);
-    tknDestroyHashSet(pAttachment->attachmentContent.dynamicAttachmentContent.descriptorPtrHashSet);
+    tknDestroyHashSet(pAttachment->attachmentUnion.dynamicAttachment.bindingPtrHashSet);
     tknDestroyHashSet(pAttachment->renderPassPtrHashSet);
-    DynamicAttachmentContent dynamicAttachmentContent = pAttachment->attachmentContent.dynamicAttachmentContent;
-    destroyVkImage(pGfxContext, dynamicAttachmentContent.vkImage, dynamicAttachmentContent.vkDeviceMemory, dynamicAttachmentContent.vkImageView);
+    DynamicAttachment dynamicAttachment = pAttachment->attachmentUnion.dynamicAttachment;
+    destroyVkImage(pGfxContext, dynamicAttachment.vkImage, dynamicAttachment.vkDeviceMemory, dynamicAttachment.vkImageView);
     tknFree(pAttachment);
 }
 void resizeDynamicAttachmentPtr(GfxContext *pGfxContext, Attachment *pAttachment)
 {
     tknAssert(ATTACHMENT_TYPE_DYNAMIC == pAttachment->attachmentType, "Attachment type mismatch!");
-    DynamicAttachmentContent dynamicAttachmentContent = pAttachment->attachmentContent.dynamicAttachmentContent;
-    SwapchainAttachmentContent *pSwapchainAttachmentContent = &pGfxContext->pSwapchainAttachment->attachmentContent.swapchainAttachmentContent;
+    DynamicAttachment dynamicAttachment = pAttachment->attachmentUnion.dynamicAttachment;
+    SwapchainAttachment *pswapchainAttachment = &pGfxContext->pSwapchainAttachment->attachmentUnion.swapchainAttachment;
     VkExtent3D vkExtent3D = {
-        .width = (uint32_t)(pSwapchainAttachmentContent->swapchainExtent.width * dynamicAttachmentContent.scaler),
-        .height = (uint32_t)(pSwapchainAttachmentContent->swapchainExtent.height * dynamicAttachmentContent.scaler),
+        .width = (uint32_t)(pswapchainAttachment->swapchainExtent.width * dynamicAttachment.scaler),
+        .height = (uint32_t)(pswapchainAttachment->swapchainExtent.height * dynamicAttachment.scaler),
         .depth = 1,
     };
-    destroyVkImage(pGfxContext, dynamicAttachmentContent.vkImage, dynamicAttachmentContent.vkDeviceMemory, dynamicAttachmentContent.vkImageView);
-    createVkImage(pGfxContext, vkExtent3D, pAttachment->vkFormat, VK_IMAGE_TILING_OPTIMAL, dynamicAttachmentContent.vkImageUsageFlags, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, dynamicAttachmentContent.vkImageAspectFlags, &dynamicAttachmentContent.vkImage, &dynamicAttachmentContent.vkDeviceMemory, &dynamicAttachmentContent.vkImageView);
+    destroyVkImage(pGfxContext, dynamicAttachment.vkImage, dynamicAttachment.vkDeviceMemory, dynamicAttachment.vkImageView);
+    createVkImage(pGfxContext, vkExtent3D, pAttachment->vkFormat, VK_IMAGE_TILING_OPTIMAL, dynamicAttachment.vkImageUsageFlags, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, dynamicAttachment.vkImageAspectFlags, &dynamicAttachment.vkImage, &dynamicAttachment.vkDeviceMemory, &dynamicAttachment.vkImageView);
 
-    for (uint32_t i = 0; i < pAttachment->attachmentContent.dynamicAttachmentContent.descriptorPtrHashSet.capacity; i++)
+    for (uint32_t i = 0; i < pAttachment->attachmentUnion.dynamicAttachment.bindingPtrHashSet.capacity; i++)
     {
-        TknListNode *node = pAttachment->attachmentContent.dynamicAttachmentContent.descriptorPtrHashSet.nodePtrs[i];
+        TknListNode *node = pAttachment->attachmentUnion.dynamicAttachment.bindingPtrHashSet.nodePtrs[i];
         while (node)
         {
-            Descriptor *pDescriptor = (Descriptor *)node->pointer;
-            updateInputAttachmentDescriptors(pGfxContext, 1, pDescriptor);
+            Binding *pBinding = (Binding *)node->pointer;
+            updateInputAttachmentBindings(pGfxContext, 1, pBinding);
             node = node->nextNodePtr;
         }
     }
@@ -254,18 +254,18 @@ Attachment *createFixedAttachmentPtr(GfxContext *pGfxContext, VkFormat vkFormat,
     VkImageView vkImageView;
     createVkImage(pGfxContext, vkExtent3D, vkFormat, VK_IMAGE_TILING_OPTIMAL, vkImageUsageFlags, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vkImageAspectFlags, &vkImage, &vkDeviceMemory, &vkImageView);
 
-    FixedAttachmentContent fixedAttachmentContent = {
+    FixedAttachment fixedAttachment = {
         .vkImage = vkImage,
         .vkDeviceMemory = vkDeviceMemory,
         .vkImageView = vkImageView,
         .width = width,
         .height = height,
-        .descriptorPtrHashSet = tknCreateHashSet(TKN_DEFAULT_COLLECTION_SIZE),
+        .bindingPtrHashSet = tknCreateHashSet(TKN_DEFAULT_COLLECTION_SIZE),
     };
 
     *pAttachment = (Attachment){
         .attachmentType = ATTACHMENT_TYPE_FIXED,
-        .attachmentContent.fixedAttachmentContent = fixedAttachmentContent,
+        .attachmentUnion.fixedAttachment = fixedAttachment,
         .vkFormat = vkFormat,
         .renderPassPtrHashSet = tknCreateHashSet(TKN_DEFAULT_COLLECTION_SIZE),
     };
@@ -277,9 +277,9 @@ void destroyFixedAttachmentPtr(GfxContext *pGfxContext, Attachment *pAttachment)
     tknAssert(0 == pAttachment->renderPassPtrHashSet.count, "Cannot destroy fixed attachment with render passes attached!");
     tknDestroyHashSet(pAttachment->renderPassPtrHashSet);
     VkDevice vkDevice = pGfxContext->vkDevice;
-    FixedAttachmentContent fixedAttachmentContent = pAttachment->attachmentContent.fixedAttachmentContent;
-    destroyVkImage(pGfxContext, fixedAttachmentContent.vkImage, fixedAttachmentContent.vkDeviceMemory, fixedAttachmentContent.vkImageView);
-    tknDestroyHashSet(fixedAttachmentContent.descriptorPtrHashSet);
+    FixedAttachment fixedAttachment = pAttachment->attachmentUnion.fixedAttachment;
+    destroyVkImage(pGfxContext, fixedAttachment.vkImage, fixedAttachment.vkDeviceMemory, fixedAttachment.vkImageView);
+    tknDestroyHashSet(fixedAttachment.bindingPtrHashSet);
     tknFree(pAttachment);
 }
 Attachment *getSwapchainAttachmentPtr(GfxContext *pGfxContext)
@@ -299,7 +299,7 @@ Image *createImagePtr(GfxContext *pGfxContext, VkExtent3D vkExtent3D, VkFormat v
         .vkImage = vkImage,
         .vkDeviceMemory = vkDeviceMemory,
         .vkImageView = vkImageView,
-        .descriptorPtrHashSet = tknCreateHashSet(TKN_DEFAULT_COLLECTION_SIZE),
+        .bindingPtrHashSet = tknCreateHashSet(TKN_DEFAULT_COLLECTION_SIZE),
     };
     *pImage = image;
 
@@ -307,19 +307,19 @@ Image *createImagePtr(GfxContext *pGfxContext, VkExtent3D vkExtent3D, VkFormat v
 }
 void destroyImagePtr(GfxContext *pGfxContext, Image *pImage)
 {
-    for (uint32_t i = 0; i < pImage->descriptorPtrHashSet.capacity; i++)
+    for (uint32_t i = 0; i < pImage->bindingPtrHashSet.capacity; i++)
     {
-        TknListNode *node = pImage->descriptorPtrHashSet.nodePtrs[i];
+        TknListNode *node = pImage->bindingPtrHashSet.nodePtrs[i];
         while (node)
         {
-            Descriptor *pDescriptor = (Descriptor *)node->pointer;
-            Descriptor newDescriptor = *pDescriptor;
-            newDescriptor.descriptorContent = getNullDescriptorContent(pDescriptor->vkDescriptorType);
-            updateDescriptors(pGfxContext, 1, &newDescriptor);
+            Binding *pBinding = (Binding *)node->pointer;
+            Binding binding = *pBinding;
+            binding.bindingUnion = getNullBindingUnion(pBinding->vkDescriptorType);
+            updateBindings(pGfxContext, 1, &binding);
             node = node->nextNodePtr;
         }
     }
-    tknDestroyHashSet(pImage->descriptorPtrHashSet);
+    tknDestroyHashSet(pImage->bindingPtrHashSet);
     destroyVkImage(pGfxContext, pImage->vkImage, pImage->vkDeviceMemory, pImage->vkImageView);
     tknFree(pImage);
 }
@@ -352,36 +352,36 @@ void updateMappedBufferPtr(GfxContext *pGfxContext, MappedBuffer *pMappedBuffer,
     memcpy(pMappedBuffer->mapped, data, size);
 }
 
-void updateInputAttachmentDescriptors(GfxContext *pGfxContext, uint32_t inputAttachmentDescriptorCount, Descriptor *inputAttachmentDescriptors)
+void updateInputAttachmentBindings(GfxContext *pGfxContext, uint32_t inputAttachmentBindingCount, Binding *inputAttachmentBindings)
 {
-    if (inputAttachmentDescriptorCount > 0)
+    if (inputAttachmentBindingCount > 0)
     {
-        VkWriteDescriptorSet *vkWriteDescriptorSets = tknMalloc(sizeof(VkWriteDescriptorSet) * inputAttachmentDescriptorCount);
-        VkDescriptorImageInfo *vkDescriptorImageInfos = tknMalloc(sizeof(VkDescriptorImageInfo) * inputAttachmentDescriptorCount);
-        for (uint32_t inputAttachmentDescriptorIndex = 0; inputAttachmentDescriptorIndex < inputAttachmentDescriptorCount; inputAttachmentDescriptorIndex++)
+        VkWriteDescriptorSet *vkWriteDescriptorSets = tknMalloc(sizeof(VkWriteDescriptorSet) * inputAttachmentBindingCount);
+        VkDescriptorImageInfo *vkDescriptorImageInfos = tknMalloc(sizeof(VkDescriptorImageInfo) * inputAttachmentBindingCount);
+        for (uint32_t inputAttachmentBindingIndex = 0; inputAttachmentBindingIndex < inputAttachmentBindingCount; inputAttachmentBindingIndex++)
         {
-            Descriptor descriptor = inputAttachmentDescriptors[inputAttachmentDescriptorIndex];
+            Binding descriptor = inputAttachmentBindings[inputAttachmentBindingIndex];
             tknAssert(VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT == descriptor.vkDescriptorType, "Input attachment descriptor type mismatch!");
 
-            vkDescriptorImageInfos[inputAttachmentDescriptorIndex] = (VkDescriptorImageInfo){
+            vkDescriptorImageInfos[inputAttachmentBindingIndex] = (VkDescriptorImageInfo){
                 .sampler = VK_NULL_HANDLE,
                 .imageView = VK_NULL_HANDLE,
-                .imageLayout = descriptor.descriptorContent.inputAttachmentDescriptorContent.vkImageLayout,
+                .imageLayout = descriptor.bindingUnion.inputAttachmentBinding.vkImageLayout,
             };
-            vkWriteDescriptorSets[inputAttachmentDescriptorIndex] = (VkWriteDescriptorSet){
+            vkWriteDescriptorSets[inputAttachmentBindingIndex] = (VkWriteDescriptorSet){
                 .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
                 .dstSet = descriptor.pMaterial->vkDescriptorSet,
                 .dstBinding = descriptor.binding,
                 .dstArrayElement = 0,
                 .descriptorCount = 1,
                 .descriptorType = descriptor.vkDescriptorType,
-                .pImageInfo = &vkDescriptorImageInfos[inputAttachmentDescriptorIndex],
+                .pImageInfo = &vkDescriptorImageInfos[inputAttachmentBindingIndex],
                 .pBufferInfo = VK_NULL_HANDLE,
                 .pTexelBufferView = VK_NULL_HANDLE,
             };
         }
         VkDevice vkDevice = pGfxContext->vkDevice;
-        vkUpdateDescriptorSets(vkDevice, inputAttachmentDescriptorCount, vkWriteDescriptorSets, 0, NULL);
+        vkUpdateDescriptorSets(vkDevice, inputAttachmentBindingCount, vkWriteDescriptorSets, 0, NULL);
         tknFree(vkDescriptorImageInfos);
         tknFree(vkWriteDescriptorSets);
     }
@@ -396,15 +396,15 @@ Material *createMaterialPtr(GfxContext *pGfxContext, DescriptorSet *pDescriptorS
     Material *pMaterial = tknMalloc(sizeof(Material));
     VkDescriptorSet vkDescriptorSet = VK_NULL_HANDLE;
     uint32_t descriptorCount = pDescriptorSet->descriptorCount;
-    Descriptor *descriptors = tknMalloc(sizeof(Descriptor) * descriptorCount);
+    Binding *bindings = tknMalloc(sizeof(Binding) * descriptorCount);
     VkDescriptorPool vkDescriptorPool = VK_NULL_HANDLE;
 
     for (uint32_t descriptorIndex = 0; descriptorIndex < descriptorCount; descriptorIndex++)
     {
         VkDescriptorType vkDescriptorType = pDescriptorSet->vkDescriptorTypes[descriptorIndex];
-        descriptors[descriptorIndex] = (Descriptor){
+        bindings[descriptorIndex] = (Binding){
             .vkDescriptorType = vkDescriptorType,
-            .descriptorContent = getNullDescriptorContent(vkDescriptorType),
+            .bindingUnion = getNullBindingUnion(vkDescriptorType),
             .pMaterial = pMaterial,
             .binding = descriptorIndex,
         };
@@ -427,8 +427,8 @@ Material *createMaterialPtr(GfxContext *pGfxContext, DescriptorSet *pDescriptorS
     assertVkResult(vkAllocateDescriptorSets(vkDevice, &vkDescriptorSetAllocateInfo, &vkDescriptorSet));
     *pMaterial = (Material){
         .vkDescriptorSet = vkDescriptorSet,
-        .descriptorCount = descriptorCount,
-        .descriptors = descriptors,
+        .bindingCount = descriptorCount,
+        .bindings = bindings,
         .vkDescriptorPool = vkDescriptorPool,
         .pDescriptorSet = pDescriptorSet,
     };
@@ -440,15 +440,15 @@ void destroyMaterialPtr(GfxContext *pGfxContext, Material *pMaterial)
     tknRemoveFromDynamicArray(&pMaterial->pDescriptorSet->materialPtrDynamicArray, &pMaterial);
     VkDevice vkDevice = pGfxContext->vkDevice;
     uint32_t descriptorCount = 0;
-    Descriptor *descriptors = tknMalloc(sizeof(Descriptor) * pMaterial->descriptorCount);
-    for (uint32_t binding = 0; binding < pMaterial->descriptorCount; binding++)
+    Binding *bindings = tknMalloc(sizeof(Binding) * pMaterial->bindingCount);
+    for (uint32_t binding = 0; binding < pMaterial->bindingCount; binding++)
     {
-        VkDescriptorType descriptorType = pMaterial->descriptors[binding].vkDescriptorType;
+        VkDescriptorType descriptorType = pMaterial->bindings[binding].vkDescriptorType;
         if (descriptorType != VK_DESCRIPTOR_TYPE_MAX_ENUM && descriptorType != VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT)
         {
-            descriptors[descriptorCount] = (Descriptor){
+            bindings[descriptorCount] = (Binding){
                 .vkDescriptorType = descriptorType,
-                .descriptorContent = getNullDescriptorContent(descriptorType),
+                .bindingUnion = getNullBindingUnion(descriptorType),
                 .pMaterial = pMaterial,
                 .binding = binding,
             };
@@ -459,8 +459,8 @@ void destroyMaterialPtr(GfxContext *pGfxContext, Material *pMaterial)
             // Skip
         }
     }
-    updateDescriptors(pGfxContext, descriptorCount, descriptors);
-    tknFree(pMaterial->descriptors);
+    updateBindings(pGfxContext, descriptorCount, bindings);
+    tknFree(pMaterial->bindings);
     vkFreeDescriptorSets(vkDevice, pMaterial->vkDescriptorPool, 1, &pMaterial->vkDescriptorSet);
     vkDestroyDescriptorPool(vkDevice, pMaterial->vkDescriptorPool, NULL);
     tknFree(pMaterial);

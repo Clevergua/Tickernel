@@ -7,7 +7,7 @@
 struct Sampler
 {
     VkSampler vkSampler;
-    TknHashSet descriptorPtrHashSet;
+    TknHashSet bindingPtrHashSet;
 };
 
 struct Image
@@ -15,14 +15,14 @@ struct Image
     VkImage vkImage;
     VkDeviceMemory vkDeviceMemory;
     VkImageView vkImageView;
-    TknHashSet descriptorPtrHashSet;
+    TknHashSet bindingPtrHashSet;
 };
 
 struct Buffer
 {
     VkBuffer vkBuffer;
     VkDeviceMemory vkDeviceMemory;
-    TknHashSet descriptorPtrHashSet;
+    TknHashSet bindingPtrHashSet;
     VkDeviceSize size;
 };
 
@@ -39,8 +39,8 @@ typedef struct
     VkImageView vkImageView;
     uint32_t width;
     uint32_t height;
-    TknHashSet descriptorPtrHashSet;
-} FixedAttachmentContent;
+    TknHashSet bindingPtrHashSet;
+} FixedAttachment;
 
 typedef struct
 {
@@ -50,8 +50,8 @@ typedef struct
     float32_t scaler;
     VkImageUsageFlags vkImageUsageFlags;
     VkImageAspectFlags vkImageAspectFlags;
-    TknHashSet descriptorPtrHashSet;
-} DynamicAttachmentContent;
+    TknHashSet bindingPtrHashSet;
+} DynamicAttachment;
 
 typedef struct
 {
@@ -60,14 +60,14 @@ typedef struct
     uint32_t swapchainImageCount;
     VkImage *swapchainImages;
     VkImageView *swapchainImageViews;
-} SwapchainAttachmentContent;
+} SwapchainAttachment;
 
 typedef union
 {
-    FixedAttachmentContent fixedAttachmentContent;
-    DynamicAttachmentContent dynamicAttachmentContent;
-    SwapchainAttachmentContent swapchainAttachmentContent;
-} AttachmentContent;
+    FixedAttachment fixedAttachment;
+    DynamicAttachment dynamicAttachment;
+    SwapchainAttachment swapchainAttachment;
+} AttachmentUnion;
 
 typedef enum
 {
@@ -79,7 +79,7 @@ typedef enum
 struct Attachment
 {
     AttachmentType attachmentType;
-    AttachmentContent attachmentContent;
+    AttachmentUnion attachmentUnion;
     VkFormat vkFormat;
     TknHashSet renderPassPtrHashSet;
 };
@@ -87,43 +87,43 @@ struct Attachment
 typedef struct
 {
     Sampler *pSampler;
-} SamplerDescriptorContent;
+} SamplerBinding;
 
 typedef struct
 {
     Buffer *pBuffer;
-} UniformBufferDescriptorContent;
+} UniformBufferBinding;
 
 typedef struct
 {
     Attachment *pAttachment;
     VkImageLayout vkImageLayout;
-} InputAttachmentDescriptorContent;
+} InputAttachmentBinding;
 
 typedef union
 {
     // VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER = 1,
-    SamplerDescriptorContent samplerDescriptorContent;
+    SamplerBinding samplerBinding;
     // VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE = 2,
     // VK_DESCRIPTOR_TYPE_STORAGE_IMAGE = 3,
     // VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER = 4,
     // VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER = 5,
     // VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER = 6,
-    UniformBufferDescriptorContent uniformBufferDescriptorContent;
+    UniformBufferBinding uniformBufferBinding;
     // VK_DESCRIPTOR_TYPE_STORAGE_BUFFER = 7,
     // VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC = 8,
     // VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC = 9,
     // VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT = 10,
-    InputAttachmentDescriptorContent inputAttachmentDescriptorContent;
-} DescriptorContent;
+    InputAttachmentBinding inputAttachmentBinding;
+} BindingUnion;
 
 typedef struct
 {
     VkDescriptorType vkDescriptorType;
-    DescriptorContent descriptorContent;
+    BindingUnion bindingUnion;
     Material *pMaterial;
     uint32_t binding;
-} Descriptor;
+} Binding;
 
 typedef struct
 {
@@ -137,8 +137,8 @@ typedef struct
 struct Material
 {
     VkDescriptorSet vkDescriptorSet;
-    uint32_t descriptorCount;
-    Descriptor *descriptors;
+    uint32_t bindingCount;
+    Binding *bindings;
     VkDescriptorPool vkDescriptorPool;
     DescriptorSet *pDescriptorSet;
 };
@@ -153,18 +153,18 @@ typedef enum
 
 struct Pipeline
 {
-    VkPipelineLayout vkPipelineLayout;                // for recording command buffers
-    VkDescriptorSetLayout vkDescriptorSetLayout;      // for creating descriptor set
-    TknDynamicArray vkDescriptorPoolSizeDynamicArray; // for creating descriptor pool
-    VkPipeline vkPipeline;                            // vkPipeline
-    TknDynamicArray materialPtrDynamicArray;          // materials
+    VkPipelineLayout vkPipelineLayout;
+    VkDescriptorSetLayout vkDescriptorSetLayout;
+    TknDynamicArray vkDescriptorPoolSizeDynamicArray;
+    VkPipeline vkPipeline;
+    TknDynamicArray materialPtrDynamicArray;
 };
 
 typedef struct
 {
-    DescriptorSet *pSubpassDescriptorSet;    // subpass descriptor set
-    TknDynamicArray pipelinePtrDynamicArray; // pipelines
-    uint32_t subpassIndex;                   // subpass index in the render pass
+    DescriptorSet *pSubpassDescriptorSet;
+    TknDynamicArray pipelinePtrDynamicArray;
+    uint32_t subpassIndex;
 } Subpass;
 
 struct RenderPass
