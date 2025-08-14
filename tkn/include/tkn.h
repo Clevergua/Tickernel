@@ -22,16 +22,17 @@ void waitGfxContextPtr(GfxContext *pGfxContext);
 void updateGfxContextPtr(GfxContext *pGfxContext, VkExtent2D swapchainExtent);
 void destroyGfxContextPtr(GfxContext *pGfxContext);
 
+Attachment *createDynamicAttachmentPtr(GfxContext *pGfxContext, VkFormat vkFormat, VkImageUsageFlags vkImageUsageFlags, VkImageAspectFlags vkImageAspectFlags, float scaler);
+void destroyDynamicAttachmentPtr(GfxContext *pGfxContext, Attachment *pAttachment);
+Attachment *createFixedAttachmentPtr(GfxContext *pGfxContext, VkFormat vkFormat, VkImageUsageFlags vkImageUsageFlags, VkImageAspectFlags vkImageAspectFlags, uint32_t width, uint32_t height);
+void destroyFixedAttachmentPtr(GfxContext *pGfxContext, Attachment *pAttachment);
+Attachment *getSwapchainAttachmentPtr(GfxContext *pGfxContext);
+
 RenderPass *createRenderPassPtr(GfxContext *pGfxContext, uint32_t attachmentCount, VkAttachmentDescription *vkAttachmentDescriptions, Attachment **inputAttachmentPtrs, uint32_t subpassCount, VkSubpassDescription *vkSubpassDescriptions, uint32_t *spvPathCounts, const char ***spvPathsArray, uint32_t vkSubpassDependencyCount, VkSubpassDependency *vkSubpassDependencies);
 void destroyRenderPassPtr(GfxContext *pGfxContext, RenderPass *pRenderPass);
 
-Attachment *createDynamicAttachmentPtr(GfxContext *pGfxContext, VkFormat vkFormat, VkImageUsageFlags vkImageUsageFlags, VkImageAspectFlags vkImageAspectFlags, float scaler);
-void destroyDynamicAttachmentPtr(GfxContext *pGfxContext, Attachment *pAttachment);
-
-Attachment *createFixedAttachmentPtr(GfxContext *pGfxContext, VkFormat vkFormat, VkImageUsageFlags vkImageUsageFlags, VkImageAspectFlags vkImageAspectFlags, uint32_t width, uint32_t height);
-void destroyFixedAttachmentPtr(GfxContext *pGfxContext, Attachment *pAttachment);
-
-Attachment *getSwapchainAttachmentPtr(GfxContext *pGfxContext);
+Pipeline *createPipelinePtr(GfxContext *pGfxContext, RenderPass *pRenderPass, uint32_t subpassIndex, uint32_t spvPathCount, const char **spvPaths, VkPipelineVertexInputStateCreateInfo vkPipelineVertexInputStateCreateInfo, VkPipelineInputAssemblyStateCreateInfo vkPipelineInputAssemblyStateCreateInfo, VkPipelineViewportStateCreateInfo vkPipelineViewportStateCreateInfo, VkPipelineRasterizationStateCreateInfo vkPipelineRasterizationStateCreateInfo, VkPipelineMultisampleStateCreateInfo vkPipelineMultisampleStateCreateInfo, VkPipelineDepthStencilStateCreateInfo vkPipelineDepthStencilStateCreateInfo, VkPipelineColorBlendStateCreateInfo vkPipelineColorBlendStateCreateInfo, VkPipelineDynamicStateCreateInfo vkPipelineDynamicStateCreateInfo);
+void destroyPipelinePtr(GfxContext *pGfxContext, Pipeline *pPipeline);
 
 Image *createImagePtr(GfxContext *pGfxContext, VkExtent3D vkExtent3D, VkFormat vkFormat, VkImageTiling vkImageTiling, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags);
 void destroyImagePtr(GfxContext *pGfxContext, Image *pImage);

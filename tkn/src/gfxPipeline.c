@@ -513,15 +513,7 @@ void destroyRenderPassPtr(GfxContext *pGfxContext, RenderPass *pRenderPass)
     tknFree(pRenderPass);
 }
 
-Pipeline *createPipelinePtr(GfxContext *pGfxContext, RenderPass *pRenderPass, uint32_t subpassIndex, uint32_t spvPathCount, const char **spvPaths,
-                            VkPipelineVertexInputStateCreateInfo vkPipelineVertexInputStateCreateInfo,
-                            VkPipelineInputAssemblyStateCreateInfo vkPipelineInputAssemblyStateCreateInfo,
-                            VkPipelineViewportStateCreateInfo vkPipelineViewportStateCreateInfo,
-                            VkPipelineRasterizationStateCreateInfo vkPipelineRasterizationStateCreateInfo,
-                            VkPipelineMultisampleStateCreateInfo vkPipelineMultisampleStateCreateInfo,
-                            VkPipelineDepthStencilStateCreateInfo vkPipelineDepthStencilStateCreateInfo,
-                            VkPipelineColorBlendStateCreateInfo vkPipelineColorBlendStateCreateInfo,
-                            VkPipelineDynamicStateCreateInfo vkPipelineDynamicStateCreateInfo)
+Pipeline *createPipelinePtr(GfxContext *pGfxContext, RenderPass *pRenderPass, uint32_t subpassIndex, uint32_t spvPathCount, const char **spvPaths, VkPipelineVertexInputStateCreateInfo vkPipelineVertexInputStateCreateInfo, VkPipelineInputAssemblyStateCreateInfo vkPipelineInputAssemblyStateCreateInfo, VkPipelineViewportStateCreateInfo vkPipelineViewportStateCreateInfo, VkPipelineRasterizationStateCreateInfo vkPipelineRasterizationStateCreateInfo, VkPipelineMultisampleStateCreateInfo vkPipelineMultisampleStateCreateInfo, VkPipelineDepthStencilStateCreateInfo vkPipelineDepthStencilStateCreateInfo, VkPipelineColorBlendStateCreateInfo vkPipelineColorBlendStateCreateInfo, VkPipelineDynamicStateCreateInfo vkPipelineDynamicStateCreateInfo)
 {
     Pipeline *pPipeline = tknMalloc(sizeof(Pipeline));
 
