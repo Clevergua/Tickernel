@@ -230,14 +230,7 @@ static void pickPhysicalDevice(GfxContext *pGfxContext, VkSurfaceFormatKHR targe
             {
                 score += 100;
             }
-            if (deviceProperties.deviceType != VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
-            {
-                // nothing
-            }
-            else
-            {
-                tknError("Unknown device type");
-            }
+
             if (score >= maxScore)
             {
                 maxScore = score;
@@ -441,14 +434,14 @@ static void destroySwapchainAttachmentPtr(GfxContext *pGfxContext)
 {
     Attachment *pSwapchainAttachment = pGfxContext->pSwapchainAttachment;
     VkDevice vkDevice = pGfxContext->vkDevice;
-    SwapchainAttachment content = pSwapchainAttachment->attachmentUnion.swapchainAttachment;
-    for (uint32_t i = 0; i < content.swapchainImageCount; i++)
+    SwapchainAttachment swapchainAttachment = pSwapchainAttachment->attachmentUnion.swapchainAttachment;
+    for (uint32_t i = 0; i < swapchainAttachment.swapchainImageCount; i++)
     {
-        vkDestroyImageView(vkDevice, content.swapchainImageViews[i], NULL);
+        vkDestroyImageView(vkDevice, swapchainAttachment.swapchainImageViews[i], NULL);
     }
-    tknFree(content.swapchainImageViews);
-    tknFree(content.swapchainImages);
-    vkDestroySwapchainKHR(vkDevice, content.vkSwapchain, NULL);
+    tknFree(swapchainAttachment.swapchainImageViews);
+    tknFree(swapchainAttachment.swapchainImages);
+    vkDestroySwapchainKHR(vkDevice, swapchainAttachment.vkSwapchain, NULL);
 
     tknDestroyHashSet(pSwapchainAttachment->renderPassPtrHashSet);
     tknFree(pSwapchainAttachment);
@@ -667,12 +660,12 @@ static void setupRenderPipelineAndResources(GfxContext *pGfxContext, uint32_t sp
 }
 static void teardownRenderPipelineAndResources(GfxContext *pGfxContext)
 {
+    // Auto delete pGlobalDescriptorSet
     destroyDescriptorSetPtr(pGfxContext, pGfxContext->pGlobalDescriptorSet);
     tknAssert(0 == pGfxContext->renderPassPtrDynamicArray.count, "Render pass dynamic array should be empty before destroying GfxContext.");
     tknDestroyDynamicArray(pGfxContext->renderPassPtrDynamicArray);
     tknAssert(0 == pGfxContext->dynamicAttachmentPtrDynamicArray.count, "Dynamic attachment hash set should be empty before destroying GfxContext.");
     tknDestroyDynamicArray(pGfxContext->dynamicAttachmentPtrDynamicArray);
-    destroyDescriptorSetPtr(pGfxContext, pGfxContext->pGlobalDescriptorSet);
 }
 
 GfxContext *createGfxContextPtr(int targetSwapchainImageCount, VkSurfaceFormatKHR targetVkSurfaceFormat, VkPresentModeKHR targetVkPresentMode, VkInstance vkInstance, VkSurfaceKHR vkSurface, VkExtent2D swapchainExtent, uint32_t spvPathCount, const char **spvPaths)
