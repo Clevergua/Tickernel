@@ -84,7 +84,6 @@ static Subpass createSubpass(GfxContext *pGfxContext, uint32_t subpassIndex, uin
     Subpass subpass = {
         .pSubpassDescriptorSet = pSubpassDescriptorSet,
         .pipelinePtrDynamicArray = pipelinePtrDynamicArray,
-        .subpassIndex = subpassIndex,
     };
     return subpass;
 }
@@ -518,7 +517,35 @@ Pipeline *createPipelinePtr(GfxContext *pGfxContext)
 {
     Pipeline *pPipeline = tknMalloc(sizeof(Pipeline));
 
-    *pPipeline = (Pipeline){};
+    DescriptorSet *pPipelineDescriptorSet = createDescriptorSetPtr(pGfxContext, 0, NULL, TICKERNEL_PIPELINE_DESCRIPTOR_SET);
+    VkPipeline vkPipeline = VK_NULL_HANDLE;
+    VkDevice vkDevice = pGfxContext->vkDevice;
+    VkGraphicsPipelineCreateInfo vkGraphicsPipelineCreateInfo = {
+        .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
+        .pNext = NULL,
+        .flags = 0,
+        .stageCount = 0, // No shader stages specified
+        .pStages = NULL,
+        .pVertexInputState = NULL,
+        .pInputAssemblyState = NULL,
+        .pTessellationState = NULL,
+        .pViewportState = NULL,
+        .pRasterizationState = NULL,
+        .pMultisampleState = NULL,
+        .pDepthStencilState = NULL,
+        .pColorBlendState = NULL,
+        .pDynamicState = NULL,
+        .layout = pPipelineDescriptorSet->vkDescriptorSetLayout, // Use descriptor set layout as pipeline layout
+        .renderPass = VK_NULL_HANDLE, // No render pass specified
+        .subpass = 0, // No subpass specified
+        .basePipelineHandle = VK_NULL_HANDLE,
+        .basePipelineIndex = -1,
+    };
+    assertVkResult(vkCreateGraphicsPipelines(vkDevice, NULL, 1, NULL, NULL, &vkPipeline));
+    *pPipeline = (Pipeline){
+        .pPipelineDescriptorSet = pPipelineDescriptorSet,
+        .vkPipeline = vkPipeline,
+    };
     return pPipeline;
 }
 

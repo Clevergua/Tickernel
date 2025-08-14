@@ -145,26 +145,22 @@ struct Material
 
 typedef enum
 {
-    TICKERNEL_MATERIAL_DESCRIPTOR_SET,
-    TICKERNEL_SUBPASS_DESCRIPTOR_SET,
     TICKERNEL_GLOBAL_DESCRIPTOR_SET,
+    TICKERNEL_SUBPASS_DESCRIPTOR_SET,
+    TICKERNEL_PIPELINE_DESCRIPTOR_SET,
     TICKERNEL_MAX_DESCRIPTOR_SET,
 } TickernelDescriptorSet;
 
 struct Pipeline
 {
-    VkPipelineLayout vkPipelineLayout;
-    VkDescriptorSetLayout vkDescriptorSetLayout;
-    TknDynamicArray vkDescriptorPoolSizeDynamicArray;
     VkPipeline vkPipeline;
-    TknDynamicArray materialPtrDynamicArray;
+    DescriptorSet *pPipelineDescriptorSet;
 };
 
 typedef struct
 {
     DescriptorSet *pSubpassDescriptorSet;
     TknDynamicArray pipelinePtrDynamicArray;
-    uint32_t subpassIndex;
 } Subpass;
 
 struct RenderPass
@@ -214,4 +210,3 @@ struct GfxContext
 void assertVkResult(VkResult vkResult);
 SpvReflectShaderModule createSpvReflectShaderModule(const char *filePath);
 void destroySpvReflectShaderModule(SpvReflectShaderModule *pSpvReflectShaderModule);
-

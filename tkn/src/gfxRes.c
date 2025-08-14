@@ -1,4 +1,4 @@
-#include "gfxResource.h"
+#include "gfxRes.h"
 
 static uint32_t getMemoryTypeIndex(VkPhysicalDevice vkPhysicalDevice, uint32_t typeFilter, VkMemoryPropertyFlags memoryPropertyFlags)
 {
