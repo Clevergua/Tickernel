@@ -513,7 +513,7 @@ void destroyRenderPassPtr(GfxContext *pGfxContext, RenderPass *pRenderPass)
     tknFree(pRenderPass);
 }
 
-Pipeline *createPipelinePtr(GfxContext *pGfxContext)
+Pipeline *createPipelinePtr(GfxContext *pGfxContext, RenderPass *pRenderPass, uint32_t subpassIndex, uint32_t spvPathCount, const char **spvPaths)
 {
     Pipeline *pPipeline = tknMalloc(sizeof(Pipeline));
 
@@ -524,7 +524,7 @@ Pipeline *createPipelinePtr(GfxContext *pGfxContext)
         .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
         .pNext = NULL,
         .flags = 0,
-        .stageCount = 0, // No shader stages specified
+        .stageCount = 0,
         .pStages = NULL,
         .pVertexInputState = NULL,
         .pInputAssemblyState = NULL,
@@ -535,13 +535,13 @@ Pipeline *createPipelinePtr(GfxContext *pGfxContext)
         .pDepthStencilState = NULL,
         .pColorBlendState = NULL,
         .pDynamicState = NULL,
-        .layout = pPipelineDescriptorSet->vkDescriptorSetLayout, // Use descriptor set layout as pipeline layout
-        .renderPass = VK_NULL_HANDLE, // No render pass specified
-        .subpass = 0, // No subpass specified
+        .layout = NULL,
+        .renderPass = VK_NULL_HANDLE,
+        .subpass = 0,
         .basePipelineHandle = VK_NULL_HANDLE,
         .basePipelineIndex = -1,
     };
-    assertVkResult(vkCreateGraphicsPipelines(vkDevice, NULL, 1, NULL, NULL, &vkPipeline));
+    assertVkResult(vkCreateGraphicsPipelines(vkDevice, NULL, 1, &vkGraphicsPipelineCreateInfo, NULL, &vkPipeline));
     *pPipeline = (Pipeline){
         .pPipelineDescriptorSet = pPipelineDescriptorSet,
         .vkPipeline = vkPipeline,
