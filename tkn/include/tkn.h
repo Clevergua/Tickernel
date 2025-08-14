@@ -7,7 +7,7 @@
 typedef struct GfxContext GfxContext;
 typedef struct RenderPass RenderPass;
 typedef struct Pipeline Pipeline;
-typedef struct Descriptor Descriptor;
+typedef struct Material Material;
 
 typedef struct Attachment Attachment;
 typedef struct Image Image;

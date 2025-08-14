@@ -14,6 +14,7 @@
     ((x) < (min) ? (min) : ((x) > (max) ? (max) : (x)))
 
 #define TKN_DEFAULT_COLLECTION_SIZE 8
+#define TKN_MIN_COLLECTION_SIZE 1
 
 typedef struct
 {

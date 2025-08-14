@@ -8,3 +8,6 @@ void updateDescriptors(GfxContext *pGfxContext, uint32_t descriptorCount, Descri
 
 void resizeDynamicAttachmentPtr(GfxContext *pGfxContext, Attachment *pAttachment);
 void updateInputAttachmentDescriptors(GfxContext *pGfxContext, uint32_t inputAttachmentDescriptorCount, Descriptor *inputAttachmentDescriptors);
+
+Material *createMaterialPtr(GfxContext *pGfxContext, DescriptorSet *pDescriptorSet);
+void destroyMaterialPtr(GfxContext *pGfxContext, Material *pMaterial);

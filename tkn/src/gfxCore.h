@@ -119,19 +119,28 @@ typedef union
 
 typedef struct
 {
-    uint32_t descriptorCount;                    // for update descriptor sets
-    Descriptor *descriptors;                     // for update descriptor sets
-    VkDescriptorSetLayout vkDescriptorSetLayout; // for creating descriptor set & pipelines
-    VkDescriptorPool vkDescriptorPool;           // for creating descriptor
-    VkDescriptorSet vkDescriptorSet;             // subpass descriptor set
-} DescriptorSet;
-
-struct Descriptor
-{
     VkDescriptorType vkDescriptorType;
     DescriptorContent descriptorContent;
-    DescriptorSet *pDescriptorSet;
+    Material *pMaterial;
     uint32_t binding;
+} Descriptor;
+
+typedef struct
+{
+    TknDynamicArray materialPtrDynamicArray;
+    VkDescriptorSetLayout vkDescriptorSetLayout;
+    TknDynamicArray vkDescriptorPoolSizeDynamicArray;
+    uint32_t descriptorCount;
+    VkDescriptorType *vkDescriptorTypes;
+} DescriptorSet;
+
+struct Material
+{
+    VkDescriptorSet vkDescriptorSet;
+    uint32_t descriptorCount;
+    Descriptor *descriptors;
+    VkDescriptorPool vkDescriptorPool;
+    DescriptorSet *pDescriptorSet;
 };
 
 typedef enum

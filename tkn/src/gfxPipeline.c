@@ -22,6 +22,7 @@ static Subpass createSubpass(GfxContext *pGfxContext, uint32_t subpassIndex, uin
         spvReflectShaderModules[spvPathIndex] = createSpvReflectShaderModule(spvPath);
     }
     DescriptorSet *pSubpassDescriptorSet = createDescriptorSetPtr(pGfxContext, spvPathCount, spvReflectShaderModules, TICKERNEL_SUBPASS_DESCRIPTOR_SET);
+    Material *pMaterial = createMaterialPtr(pGfxContext, pSubpassDescriptorSet);
     for (uint32_t spvPathIndex = 0; spvPathIndex < spvPathCount; spvPathIndex++)
     {
         SpvReflectShaderModule spvReflectShaderModule = spvReflectShaderModules[spvPathIndex];
@@ -37,7 +38,8 @@ static Subpass createSubpass(GfxContext *pGfxContext, uint32_t subpassIndex, uin
                     {
                         uint32_t binding = pSpvReflectDescriptorBinding->binding;
                         uint32_t inputAttachmentIndex = pSpvReflectDescriptorBinding->input_attachment_index;
-                        Descriptor *pDescriptor = &pSubpassDescriptorSet->descriptors[binding];
+
+                        Descriptor *pDescriptor = &pMaterial->descriptors[binding];
                         if (NULL == pDescriptor->descriptorContent.inputAttachmentDescriptorContent.pAttachment)
                         {
                             tknAssert(inputAttachmentIndex < attachmentCount, "Input attachment index %u out of bounds", inputAttachmentIndex);
@@ -95,7 +97,8 @@ static void destroySubpass(GfxContext *pGfxContext, Subpass subpass)
     }
     for (uint32_t descriptorIndex = 0; descriptorIndex < subpass.pSubpassDescriptorSet->descriptorCount; descriptorIndex++)
     {
-        Descriptor *pDescriptor = &subpass.pSubpassDescriptorSet->descriptors[descriptorIndex];
+        Material *pMaterial = *(Material **)tknGetFromDynamicArray(&subpass.pSubpassDescriptorSet->materialPtrDynamicArray, 0);
+        Descriptor *pDescriptor = &pMaterial->descriptors[descriptorIndex];
         if (VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT == pDescriptor->vkDescriptorType)
         {
             Attachment *pAttachment = pDescriptor->descriptorContent.inputAttachmentDescriptorContent.pAttachment;
@@ -146,13 +149,14 @@ VkFormat getSupportedFormat(GfxContext *pGfxContext, uint32_t candidateCount, Vk
 DescriptorSet *createDescriptorSetPtr(GfxContext *pGfxContext, uint32_t spvReflectShaderModuleCount, SpvReflectShaderModule *spvReflectShaderModules, uint32_t set)
 {
     DescriptorSet *pDescriptorSet = tknMalloc(sizeof(DescriptorSet));
-    uint32_t descriptorCount = 0;
-    Descriptor *descriptors = NULL;
+    TknDynamicArray materialPtrDynamicArray = tknCreateDynamicArray(sizeof(Material *), TKN_MIN_COLLECTION_SIZE);
     VkDescriptorSetLayout vkDescriptorSetLayout = VK_NULL_HANDLE;
-    VkDescriptorPool vkDescriptorPool = VK_NULL_HANDLE;
-    VkDescriptorSet vkDescriptorSet = VK_NULL_HANDLE;
     TknDynamicArray vkDescriptorPoolSizeDynamicArray = tknCreateDynamicArray(sizeof(VkDescriptorPoolSize), TKN_DEFAULT_COLLECTION_SIZE);
-
+    uint32_t descriptorCount = 0;
+    VkDescriptorType *vkDescriptorTypes = NULL;
+    // Descriptor *descriptors = NULL;
+    // VkDescriptorPool vkDescriptorPool = VK_NULL_HANDLE;
+    // VkDescriptorSet vkDescriptorSet = VK_NULL_HANDLE;
     for (uint32_t spvReflectShaderModuleIndex = 0; spvReflectShaderModuleIndex < spvReflectShaderModuleCount; spvReflectShaderModuleIndex++)
     {
         SpvReflectShaderModule spvReflectShaderModule = spvReflectShaderModules[spvReflectShaderModuleIndex];
@@ -183,10 +187,12 @@ DescriptorSet *createDescriptorSetPtr(GfxContext *pGfxContext, uint32_t spvRefle
             }
         }
     }
-    descriptors = tknMalloc(sizeof(Descriptor) * descriptorCount);
+    // descriptors = tknMalloc(sizeof(Descriptor) * descriptorCount);
+    vkDescriptorTypes = tknMalloc(sizeof(VkDescriptorType) * descriptorCount);
     VkDescriptorSetLayoutBinding *vkDescriptorSetLayoutBindings = tknMalloc(sizeof(VkDescriptorSetLayoutBinding) * descriptorCount);
     for (uint32_t binding = 0; binding < descriptorCount; binding++)
     {
+        vkDescriptorTypes[binding] = VK_DESCRIPTOR_TYPE_MAX_ENUM;
         vkDescriptorSetLayoutBindings[binding] = (VkDescriptorSetLayoutBinding){
             .binding = binding,
             .descriptorType = VK_DESCRIPTOR_TYPE_MAX_ENUM,
@@ -219,13 +225,7 @@ DescriptorSet *createDescriptorSetPtr(GfxContext *pGfxContext, uint32_t spvRefle
                             .pImmutableSamplers = NULL,
                         };
                         vkDescriptorSetLayoutBindings[binding] = vkDescriptorSetLayoutBinding;
-
-                        descriptors[binding] = (Descriptor){
-                            .vkDescriptorType = vkDescriptorType,
-                            .descriptorContent = getNullDescriptorContent(vkDescriptorType),
-                            .pDescriptorSet = pDescriptorSet,
-                            .binding = binding,
-                        };
+                        vkDescriptorTypes[binding] = vkDescriptorType;
 
                         uint32_t poolSizeIndex;
                         for (poolSizeIndex = 0; poolSizeIndex < vkDescriptorPoolSizeDynamicArray.count; poolSizeIndex++)
@@ -280,29 +280,13 @@ DescriptorSet *createDescriptorSetPtr(GfxContext *pGfxContext, uint32_t spvRefle
     };
     assertVkResult(vkCreateDescriptorSetLayout(vkDevice, &vkDescriptorSetLayoutCreateInfo, NULL, &vkDescriptorSetLayout));
     tknFree(vkDescriptorSetLayoutBindings);
-    VkDescriptorPoolCreateInfo vkDescriptorPoolCreateInfo = {
-        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
-        .poolSizeCount = vkDescriptorPoolSizeDynamicArray.count,
-        .pPoolSizes = vkDescriptorPoolSizeDynamicArray.array,
-        .maxSets = 1,
-    };
-    assertVkResult(vkCreateDescriptorPool(vkDevice, &vkDescriptorPoolCreateInfo, NULL, &vkDescriptorPool));
-    tknDestroyDynamicArray(vkDescriptorPoolSizeDynamicArray);
-
-    VkDescriptorSetAllocateInfo vkDescriptorSetAllocateInfo = {
-        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-        .descriptorPool = vkDescriptorPool,
-        .descriptorSetCount = 1,
-        .pSetLayouts = &vkDescriptorSetLayout,
-    };
-    assertVkResult(vkAllocateDescriptorSets(vkDevice, &vkDescriptorSetAllocateInfo, &vkDescriptorSet));
 
     *pDescriptorSet = (DescriptorSet){
-        .descriptorCount = descriptorCount,
-        .descriptors = descriptors,
+        .materialPtrDynamicArray = materialPtrDynamicArray,
         .vkDescriptorSetLayout = vkDescriptorSetLayout,
-        .vkDescriptorPool = vkDescriptorPool,
-        .vkDescriptorSet = vkDescriptorSet,
+        .vkDescriptorPoolSizeDynamicArray = vkDescriptorPoolSizeDynamicArray,
+        .descriptorCount = descriptorCount,
+        .vkDescriptorTypes = vkDescriptorTypes,
     };
     return pDescriptorSet;
 }
@@ -310,18 +294,19 @@ void updateDescriptors(GfxContext *pGfxContext, uint32_t newDescriptorCount, Des
 {
     if (newDescriptorCount > 0)
     {
-        DescriptorSet *pCurrentDescriptorSet = newDescriptors[0].pDescriptorSet;
-        tknAssert(NULL != pCurrentDescriptorSet, "Descriptor does not have a valid descriptor set");
+        
+        Material *pMaterial = newDescriptors[0].pMaterial;
+        tknAssert(NULL != pMaterial, "Descriptor does not have a valid descriptor set");
         uint32_t vkWriteDescriptorSetCount = 0;
         VkWriteDescriptorSet *vkWriteDescriptorSets = tknMalloc(sizeof(VkWriteDescriptorSet) * newDescriptorCount);
         VkDescriptorImageInfo *vkDescriptorImageInfos = tknMalloc(sizeof(VkDescriptorImageInfo) * newDescriptorCount);
         for (uint32_t descriptorIndex = 0; descriptorIndex < newDescriptorCount; descriptorIndex++)
         {
             Descriptor newDescriptor = newDescriptors[descriptorIndex];
-            tknAssert(newDescriptor.pDescriptorSet == pCurrentDescriptorSet, "All descriptors must belong to the same descriptor set");
+            tknAssert(newDescriptor.pMaterial == pMaterial, "All descriptors must belong to the same descriptor set");
             uint32_t binding = newDescriptor.binding;
-            tknAssert(binding < pCurrentDescriptorSet->descriptorCount, "Invalid binding index");
-            VkDescriptorType vkDescriptorType = pCurrentDescriptorSet->descriptors[binding].vkDescriptorType;
+            tknAssert(binding < pMaterial->descriptorCount, "Invalid binding index");
+            VkDescriptorType vkDescriptorType = pMaterial->descriptors[binding].vkDescriptorType;
             tknAssert(vkDescriptorType == newDescriptor.vkDescriptorType, "Incompatible descriptor type");
             // VK_DESCRIPTOR_TYPE_SAMPLER = 0,
             // VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER = 1,
@@ -336,7 +321,7 @@ void updateDescriptors(GfxContext *pGfxContext, uint32_t newDescriptorCount, Des
             if (VK_DESCRIPTOR_TYPE_SAMPLER == vkDescriptorType)
             {
                 Sampler *pNewSampler = newDescriptor.descriptorContent.samplerDescriptorContent.pSampler;
-                Descriptor *pCurrentDescriptor = &pCurrentDescriptorSet->descriptors[binding];
+                Descriptor *pCurrentDescriptor = &pMaterial->descriptors[binding];
                 Sampler *pCurrentSampler = pCurrentDescriptor->descriptorContent.samplerDescriptorContent.pSampler;
                 if (pNewSampler == pCurrentSampler)
                 {
@@ -376,7 +361,7 @@ void updateDescriptors(GfxContext *pGfxContext, uint32_t newDescriptorCount, Des
                     }
                     VkWriteDescriptorSet vkWriteDescriptorSet = {
                         .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-                        .dstSet = pCurrentDescriptorSet->vkDescriptorSet,
+                        .dstSet = pMaterial->vkDescriptorSet,
                         .dstBinding = binding,
                         .dstArrayElement = 0,
                         .descriptorCount = 1,
@@ -447,34 +432,26 @@ void updateDescriptors(GfxContext *pGfxContext, uint32_t newDescriptorCount, Des
 }
 void destroyDescriptorSetPtr(GfxContext *pGfxContext, DescriptorSet *pDescriptorSet)
 {
-    VkDevice vkDevice = pGfxContext->vkDevice;
-    uint32_t descriptorCount = 0;
-    Descriptor *descriptors = tknMalloc(sizeof(Descriptor) * pDescriptorSet->descriptorCount);
-    for (uint32_t binding = 0; binding < pDescriptorSet->descriptorCount; binding++)
+    // materialPtrDynamicArray
+    for (uint32_t i = 0; i < pDescriptorSet->materialPtrDynamicArray.count; i++)
     {
-        VkDescriptorType descriptorType = pDescriptorSet->descriptors[binding].vkDescriptorType;
-        if (descriptorType != VK_DESCRIPTOR_TYPE_MAX_ENUM && descriptorType != VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT)
-        {
-            descriptors[descriptorCount] = (Descriptor){
-                .vkDescriptorType = descriptorType,
-                .descriptorContent = getNullDescriptorContent(descriptorType),
-                .pDescriptorSet = pDescriptorSet,
-                .binding = binding,
-            };
-            descriptorCount++;
-        }
-        else
-        {
-            // Skip
-        }
+        Material *pMaterial = *(Material **)tknGetFromDynamicArray(&pDescriptorSet->materialPtrDynamicArray, i);
+        destroyMaterialPtr(pGfxContext, pMaterial);
     }
-    updateDescriptors(pGfxContext, descriptorCount, descriptors);
-    tknFree(descriptors);
-
-    vkFreeDescriptorSets(vkDevice, pDescriptorSet->vkDescriptorPool, 1, &pDescriptorSet->vkDescriptorSet);
-    vkDestroyDescriptorPool(vkDevice, pDescriptorSet->vkDescriptorPool, NULL);
+    tknDestroyDynamicArray(pDescriptorSet->materialPtrDynamicArray);
+    // vkDescriptorSetLayout
+    VkDevice vkDevice = pGfxContext->vkDevice;
     vkDestroyDescriptorSetLayout(vkDevice, pDescriptorSet->vkDescriptorSetLayout, NULL);
-    tknFree(pDescriptorSet->descriptors);
+    // vkDescriptorPoolSizeDynamicArray
+    tknDestroyDynamicArray(pDescriptorSet->vkDescriptorPoolSizeDynamicArray);
+    // descriptorCount
+    // vkDescriptorTypes
+    tknFree(pDescriptorSet->vkDescriptorTypes);
+
+    // tknFree(descriptors);
+    // vkFreeDescriptorSets(vkDevice, pDescriptorSet->vkDescriptorPool, 1, &pDescriptorSet->vkDescriptorSet);
+    // vkDestroyDescriptorPool(vkDevice, pDescriptorSet->vkDescriptorPool, NULL);
+    // tknFree(pDescriptorSet->descriptors);
     tknFree(pDescriptorSet);
 }
 

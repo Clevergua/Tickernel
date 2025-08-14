@@ -175,7 +175,7 @@ DescriptorContent getNullDescriptorContent(VkDescriptorType vkDescriptorType)
 
 Attachment *createDynamicAttachmentPtr(GfxContext *pGfxContext, VkFormat vkFormat, VkImageUsageFlags vkImageUsageFlags, VkImageAspectFlags vkImageAspectFlags, float scaler)
 {
-    SwapchainAttachmentContent* pSwapchainAttachmentContent = &pGfxContext->pSwapchainAttachment->attachmentContent.swapchainAttachmentContent;
+    SwapchainAttachmentContent *pSwapchainAttachmentContent = &pGfxContext->pSwapchainAttachment->attachmentContent.swapchainAttachmentContent;
     Attachment *pAttachment = tknMalloc(sizeof(Attachment));
     VkExtent3D vkExtent3D = {
         .width = (uint32_t)(pSwapchainAttachmentContent->swapchainExtent.width * scaler),
@@ -220,7 +220,7 @@ void resizeDynamicAttachmentPtr(GfxContext *pGfxContext, Attachment *pAttachment
 {
     tknAssert(ATTACHMENT_TYPE_DYNAMIC == pAttachment->attachmentType, "Attachment type mismatch!");
     DynamicAttachmentContent dynamicAttachmentContent = pAttachment->attachmentContent.dynamicAttachmentContent;
-    SwapchainAttachmentContent* pSwapchainAttachmentContent = &pGfxContext->pSwapchainAttachment->attachmentContent.swapchainAttachmentContent;
+    SwapchainAttachmentContent *pSwapchainAttachmentContent = &pGfxContext->pSwapchainAttachment->attachmentContent.swapchainAttachmentContent;
     VkExtent3D vkExtent3D = {
         .width = (uint32_t)(pSwapchainAttachmentContent->swapchainExtent.width * dynamicAttachmentContent.scaler),
         .height = (uint32_t)(pSwapchainAttachmentContent->swapchainExtent.height * dynamicAttachmentContent.scaler),
@@ -370,7 +370,7 @@ void updateInputAttachmentDescriptors(GfxContext *pGfxContext, uint32_t inputAtt
             };
             vkWriteDescriptorSets[inputAttachmentDescriptorIndex] = (VkWriteDescriptorSet){
                 .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-                .dstSet = descriptor.pDescriptorSet->vkDescriptorSet,
+                .dstSet = descriptor.pMaterial->vkDescriptorSet,
                 .dstBinding = descriptor.binding,
                 .dstArrayElement = 0,
                 .descriptorCount = 1,
@@ -389,4 +389,79 @@ void updateInputAttachmentDescriptors(GfxContext *pGfxContext, uint32_t inputAtt
     {
         printf("No input attachments to update");
     }
+}
+
+Material *createMaterialPtr(GfxContext *pGfxContext, DescriptorSet *pDescriptorSet)
+{
+    Material *pMaterial = tknMalloc(sizeof(Material));
+    VkDescriptorSet vkDescriptorSet = VK_NULL_HANDLE;
+    uint32_t descriptorCount = pDescriptorSet->descriptorCount;
+    Descriptor *descriptors = tknMalloc(sizeof(Descriptor) * descriptorCount);
+    VkDescriptorPool vkDescriptorPool = VK_NULL_HANDLE;
+
+    for (uint32_t descriptorIndex = 0; descriptorIndex < descriptorCount; descriptorIndex++)
+    {
+        VkDescriptorType vkDescriptorType = pDescriptorSet->vkDescriptorTypes[descriptorIndex];
+        descriptors[descriptorIndex] = (Descriptor){
+            .vkDescriptorType = vkDescriptorType,
+            .descriptorContent = getNullDescriptorContent(vkDescriptorType),
+            .pMaterial = pMaterial,
+            .binding = descriptorIndex,
+        };
+    }
+    VkDescriptorPoolCreateInfo vkDescriptorPoolCreateInfo = {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+        .poolSizeCount = pDescriptorSet->vkDescriptorPoolSizeDynamicArray.count,
+        .pPoolSizes = pDescriptorSet->vkDescriptorPoolSizeDynamicArray.array,
+        .maxSets = 1,
+    };
+    VkDevice vkDevice = pGfxContext->vkDevice;
+    assertVkResult(vkCreateDescriptorPool(vkDevice, &vkDescriptorPoolCreateInfo, NULL, &vkDescriptorPool));
+
+    VkDescriptorSetAllocateInfo vkDescriptorSetAllocateInfo = {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+        .descriptorPool = vkDescriptorPool,
+        .descriptorSetCount = 1,
+        .pSetLayouts = &pDescriptorSet->vkDescriptorSetLayout,
+    };
+    assertVkResult(vkAllocateDescriptorSets(vkDevice, &vkDescriptorSetAllocateInfo, &vkDescriptorSet));
+    *pMaterial = (Material){
+        .vkDescriptorSet = vkDescriptorSet,
+        .descriptorCount = descriptorCount,
+        .descriptors = descriptors,
+        .vkDescriptorPool = vkDescriptorPool,
+        .pDescriptorSet = pDescriptorSet,
+    };
+    tknAddToDynamicArray(&pDescriptorSet->materialPtrDynamicArray, &pMaterial);
+    return pMaterial;
+}
+void destroyMaterialPtr(GfxContext *pGfxContext, Material *pMaterial)
+{
+    tknRemoveFromDynamicArray(&pMaterial->pDescriptorSet->materialPtrDynamicArray, &pMaterial);
+    VkDevice vkDevice = pGfxContext->vkDevice;
+    uint32_t descriptorCount = 0;
+    Descriptor *descriptors = tknMalloc(sizeof(Descriptor) * pMaterial->descriptorCount);
+    for (uint32_t binding = 0; binding < pMaterial->descriptorCount; binding++)
+    {
+        VkDescriptorType descriptorType = pMaterial->descriptors[binding].vkDescriptorType;
+        if (descriptorType != VK_DESCRIPTOR_TYPE_MAX_ENUM && descriptorType != VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT)
+        {
+            descriptors[descriptorCount] = (Descriptor){
+                .vkDescriptorType = descriptorType,
+                .descriptorContent = getNullDescriptorContent(descriptorType),
+                .pMaterial = pMaterial,
+                .binding = binding,
+            };
+            descriptorCount++;
+        }
+        else
+        {
+            // Skip
+        }
+    }
+    updateDescriptors(pGfxContext, descriptorCount, descriptors);
+    tknFree(pMaterial->descriptors);
+    vkFreeDescriptorSets(vkDevice, pMaterial->vkDescriptorPool, 1, &pMaterial->vkDescriptorSet);
+    vkDestroyDescriptorPool(vkDevice, pMaterial->vkDescriptorPool, NULL);
+    tknFree(pMaterial);
 }
