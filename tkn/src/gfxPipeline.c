@@ -513,44 +513,111 @@ void destroyRenderPassPtr(GfxContext *pGfxContext, RenderPass *pRenderPass)
     tknFree(pRenderPass);
 }
 
-Pipeline *createPipelinePtr(GfxContext *pGfxContext, RenderPass *pRenderPass, uint32_t subpassIndex, uint32_t spvPathCount, const char **spvPaths)
+Pipeline *createPipelinePtr(GfxContext *pGfxContext, RenderPass *pRenderPass, uint32_t subpassIndex, uint32_t spvPathCount, const char **spvPaths,
+                            VkPipelineVertexInputStateCreateInfo vkPipelineVertexInputStateCreateInfo,
+                            VkPipelineInputAssemblyStateCreateInfo vkPipelineInputAssemblyStateCreateInfo,
+                            VkPipelineViewportStateCreateInfo vkPipelineViewportStateCreateInfo,
+                            VkPipelineRasterizationStateCreateInfo vkPipelineRasterizationStateCreateInfo,
+                            VkPipelineMultisampleStateCreateInfo vkPipelineMultisampleStateCreateInfo,
+                            VkPipelineDepthStencilStateCreateInfo vkPipelineDepthStencilStateCreateInfo,
+                            VkPipelineColorBlendStateCreateInfo vkPipelineColorBlendStateCreateInfo,
+                            VkPipelineDynamicStateCreateInfo vkPipelineDynamicStateCreateInfo)
 {
     Pipeline *pPipeline = tknMalloc(sizeof(Pipeline));
 
-    DescriptorSet *pPipelineDescriptorSet = createDescriptorSetPtr(pGfxContext, 0, NULL, TICKERNEL_PIPELINE_DESCRIPTOR_SET);
-    VkPipeline vkPipeline = VK_NULL_HANDLE;
+    SpvReflectShaderModule *spvReflectShaderModules = tknMalloc(sizeof(SpvReflectShaderModule) * spvPathCount);
+    VkShaderStageFlagBits vkShaderStageFlagBits = 0;
+    VkPipelineShaderStageCreateInfo *pipelineShaderStageCreateInfos = tknMalloc(sizeof(VkPipelineShaderStageCreateInfo) * spvPathCount);
     VkDevice vkDevice = pGfxContext->vkDevice;
+    for (uint32_t spvPathIndex = 0; spvPathIndex < spvPathCount; spvPathIndex++)
+    {
+        spvReflectShaderModules[spvPathIndex] = createSpvReflectShaderModule(spvPaths[spvPathIndex]);
+    }
+    DescriptorSet *pPipelineDescriptorSet = createDescriptorSetPtr(pGfxContext, spvPathCount, spvReflectShaderModules, TICKERNEL_GLOBAL_DESCRIPTOR_SET);
+    for (uint32_t spvPathIndex = 0; spvPathIndex < spvPathCount; spvPathIndex++)
+    {
+        SpvReflectShaderModule spvReflectShaderModule = spvReflectShaderModules[spvPathIndex];
+        if ((vkShaderStageFlagBits & spvReflectShaderModule.shader_stage) == 0)
+        {
+            tknError("Incompatible shader stage");
+        }
+        else
+        {
+            vkShaderStageFlagBits |= spvReflectShaderModule.shader_stage;
+            VkShaderModuleCreateInfo vkShaderModuleCreateInfo = {
+                .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
+                .pNext = NULL,
+                .flags = 0,
+                .codeSize = spvReflectGetCodeSize(&spvReflectShaderModule),
+                .pCode = spvReflectGetCode(&spvReflectShaderModule),
+            };
+            VkShaderModule shaderModule;
+            assertVkResult(vkCreateShaderModule(vkDevice, &vkShaderModuleCreateInfo, NULL, &shaderModule));
+            pipelineShaderStageCreateInfos[spvPathIndex] = (VkPipelineShaderStageCreateInfo){
+                .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+                .pNext = NULL,
+                .flags = 0,
+                .stage = (VkShaderStageFlagBits)spvReflectShaderModule.shader_stage,
+                .module = shaderModule,
+                .pName = spvReflectShaderModule.entry_point_name,
+                .pSpecializationInfo = NULL,
+            };
+        }
+        destroySpvReflectShaderModule(&spvReflectShaderModules[spvPathIndex]);
+    }
+    tknFree(spvReflectShaderModules);
+    VkPipelineLayout vkPipelineLayout;
+    VkPipelineLayoutCreateInfo vkPipelineLayoutCreateInfo = {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+        .pNext = NULL,
+        .flags = 0,
+        .setLayoutCount = 1,
+        .pSetLayouts = &pPipelineDescriptorSet->vkDescriptorSetLayout,
+        .pushConstantRangeCount = 0,
+        .pPushConstantRanges = NULL,
+    };
+    assertVkResult(vkCreatePipelineLayout(vkDevice, &vkPipelineLayoutCreateInfo, NULL, &vkPipelineLayout));
+    VkPipeline vkPipeline = VK_NULL_HANDLE;
     VkGraphicsPipelineCreateInfo vkGraphicsPipelineCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
         .pNext = NULL,
         .flags = 0,
-        .stageCount = 0,
-        .pStages = NULL,
-        .pVertexInputState = NULL,
-        .pInputAssemblyState = NULL,
+        .stageCount = spvPathCount,
+        .pStages = pipelineShaderStageCreateInfos,
+        .pVertexInputState = &vkPipelineVertexInputStateCreateInfo,
+        .pInputAssemblyState = &vkPipelineInputAssemblyStateCreateInfo,
         .pTessellationState = NULL,
-        .pViewportState = NULL,
-        .pRasterizationState = NULL,
-        .pMultisampleState = NULL,
-        .pDepthStencilState = NULL,
-        .pColorBlendState = NULL,
-        .pDynamicState = NULL,
-        .layout = NULL,
-        .renderPass = VK_NULL_HANDLE,
-        .subpass = 0,
+        .pViewportState = &vkPipelineViewportStateCreateInfo,
+        .pRasterizationState = &vkPipelineRasterizationStateCreateInfo,
+        .pMultisampleState = &vkPipelineMultisampleStateCreateInfo,
+        .pDepthStencilState = &vkPipelineDepthStencilStateCreateInfo,
+        .pColorBlendState = &vkPipelineColorBlendStateCreateInfo,
+        .pDynamicState = &vkPipelineDynamicStateCreateInfo,
+        .layout = vkPipelineLayout,
+        .renderPass = pRenderPass->vkRenderPass,
+        .subpass = subpassIndex,
         .basePipelineHandle = VK_NULL_HANDLE,
-        .basePipelineIndex = -1,
+        .basePipelineIndex = 0,
     };
+    for (uint32_t pipelineShaderStageCreateInfoIndex = 0; pipelineShaderStageCreateInfoIndex < spvPathCount; pipelineShaderStageCreateInfoIndex++)
+    {
+        vkDestroyShaderModule(vkDevice, pipelineShaderStageCreateInfos[pipelineShaderStageCreateInfoIndex].module, NULL);
+    }
+    tknFree(pipelineShaderStageCreateInfos);
     assertVkResult(vkCreateGraphicsPipelines(vkDevice, NULL, 1, &vkGraphicsPipelineCreateInfo, NULL, &vkPipeline));
     *pPipeline = (Pipeline){
         .pPipelineDescriptorSet = pPipelineDescriptorSet,
         .vkPipeline = vkPipeline,
+        .vkPipelineLayout = vkPipelineLayout,
     };
     return pPipeline;
 }
 
 void destroyPipelinePtr(GfxContext *pGfxContext, Pipeline *pPipeline)
 {
-    // Cleanup pipeline resources
+    VkDevice vkDevice = pGfxContext->vkDevice;
+    vkDestroyPipeline(vkDevice, pPipeline->vkPipeline, NULL);
+    vkDestroyPipelineLayout(vkDevice, pPipeline->vkPipelineLayout, NULL);
+    destroyDescriptorSetPtr(pGfxContext, pPipeline->pPipelineDescriptorSet);
     tknFree(pPipeline);
 }

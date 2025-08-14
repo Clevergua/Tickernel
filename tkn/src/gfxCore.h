@@ -155,6 +155,7 @@ struct Pipeline
 {
     VkPipeline vkPipeline;
     DescriptorSet *pPipelineDescriptorSet;
+    VkPipelineLayout vkPipelineLayout;
 };
 
 typedef struct

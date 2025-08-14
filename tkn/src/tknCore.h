@@ -9,7 +9,6 @@
 #include <assert.h>
 
 #include "tkn.h"
-
 #define TKN_CLAMP(x, min, max) \
     ((x) < (min) ? (min) : ((x) > (max) ? (max) : (x)))
 
