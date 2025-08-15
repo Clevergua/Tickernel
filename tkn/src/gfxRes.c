@@ -14,7 +14,7 @@ static uint32_t getMemoryTypeIndex(VkPhysicalDevice vkPhysicalDevice, uint32_t t
     tknError("Failed to get suitable memory type!");
     return UINT32_MAX;
 }
-static void createBuffer(GfxContext *pGfxContext, VkDeviceSize bufferSize, VkBufferUsageFlags bufferUsageFlags, VkMemoryPropertyFlags msemoryPropertyFlags, VkBuffer *pVkBuffer, VkDeviceMemory *pVkDeviceMemory)
+static void createBuffer(GfxContext *pGfxContext, VkDeviceSize bufferSize, VkBufferUsageFlags bufferUsageFlags, VkMemoryPropertyFlags memoryPropertyFlags, VkBuffer *pVkBuffer, VkDeviceMemory *pVkDeviceMemory)
 {
     VkDevice vkDevice = pGfxContext->vkDevice;
     VkPhysicalDevice vkPhysicalDevice = pGfxContext->vkPhysicalDevice;
@@ -31,7 +31,7 @@ static void createBuffer(GfxContext *pGfxContext, VkDeviceSize bufferSize, VkBuf
     assertVkResult(vkCreateBuffer(vkDevice, &bufferCreateInfo, NULL, pVkBuffer));
     VkMemoryRequirements memoryRequirements;
     vkGetBufferMemoryRequirements(vkDevice, *pVkBuffer, &memoryRequirements);
-    uint32_t memoryTypeIndex = getMemoryTypeIndex(vkPhysicalDevice, memoryRequirements.memoryTypeBits, msemoryPropertyFlags);
+    uint32_t memoryTypeIndex = getMemoryTypeIndex(vkPhysicalDevice, memoryRequirements.memoryTypeBits, memoryPropertyFlags);
     VkMemoryAllocateInfo memoryAllocateInfo = {
         .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
         .pNext = NULL,
@@ -43,9 +43,7 @@ static void createBuffer(GfxContext *pGfxContext, VkDeviceSize bufferSize, VkBuf
 }
 static void destroyBuffer(GfxContext *pGfxContext, VkBuffer vkBuffer, VkDeviceMemory vkDeviceMemory)
 {
-
     VkDevice vkDevice = pGfxContext->vkDevice;
-    vkUnmapMemory(vkDevice, vkDeviceMemory);
     vkDestroyBuffer(vkDevice, vkBuffer, NULL);
     vkFreeMemory(vkDevice, vkDeviceMemory, NULL);
 }
@@ -470,6 +468,7 @@ void updateBindings(GfxContext *pGfxContext, uint32_t bindingCount, Binding *bin
         uint32_t vkWriteDescriptorSetCount = 0;
         VkWriteDescriptorSet *vkWriteDescriptorSets = tknMalloc(sizeof(VkWriteDescriptorSet) * bindingCount);
         VkDescriptorImageInfo *vkDescriptorImageInfos = tknMalloc(sizeof(VkDescriptorImageInfo) * bindingCount);
+        VkDescriptorBufferInfo *vkDescriptorBufferInfos = tknMalloc(sizeof(VkDescriptorBufferInfo) * bindingCount);
         for (uint32_t bindingIndex = 0; bindingIndex < bindingCount; bindingIndex++)
         {
             Binding newBinding = bindings[bindingIndex];
@@ -565,7 +564,58 @@ void updateBindings(GfxContext *pGfxContext, uint32_t bindingCount, Binding *bin
             }
             else if (VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER == vkDescriptorType)
             {
-                tknError("Uniform buffer not yet implemented");
+                UniformBuffer *pNewUniformBuffer = newBinding.bindingUnion.uniformBufferBinding.pUniformBuffer;
+                Binding *pCurrentBinding = &pMaterial->bindings[binding];
+                UniformBuffer *pCurrentUniformBuffer = pCurrentBinding->bindingUnion.uniformBufferBinding.pUniformBuffer;
+                if (pNewUniformBuffer == pCurrentUniformBuffer)
+                {
+                    // No change, skip
+                }
+                else
+                {
+                    if (NULL == pCurrentUniformBuffer)
+                    {
+                        // Nothing
+                    }
+                    else
+                    {
+                        // Current uniform buffer deref descriptor
+                        tknRemoveFromHashSet(&pCurrentUniformBuffer->bindingPtrHashSet, pCurrentBinding);
+                    }
+
+                    pCurrentBinding->bindingUnion.uniformBufferBinding.pUniformBuffer = pNewUniformBuffer;
+                    if (NULL == pNewUniformBuffer)
+                    {
+                        vkDescriptorBufferInfos[vkWriteDescriptorSetCount] = (VkDescriptorBufferInfo){
+                            .buffer = VK_NULL_HANDLE,
+                            .offset = 0,
+                            .range = VK_WHOLE_SIZE,
+                        };
+                    }
+                    else
+                    {
+                        // New uniform buffer ref descriptor
+                        tknAddToHashSet(&pNewUniformBuffer->bindingPtrHashSet, pCurrentBinding);
+                        vkDescriptorBufferInfos[vkWriteDescriptorSetCount] = (VkDescriptorBufferInfo){
+                            .buffer = pNewUniformBuffer->vkBuffer,
+                            .offset = 0,
+                            .range = pNewUniformBuffer->size,
+                        };
+                    }
+                    VkWriteDescriptorSet vkWriteDescriptorSet = {
+                        .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+                        .dstSet = pMaterial->vkDescriptorSet,
+                        .dstBinding = binding,
+                        .dstArrayElement = 0,
+                        .descriptorCount = 1,
+                        .descriptorType = vkDescriptorType,
+                        .pImageInfo = NULL,
+                        .pBufferInfo = &vkDescriptorBufferInfos[vkWriteDescriptorSetCount],
+                        .pTexelBufferView = NULL,
+                    };
+                    vkWriteDescriptorSets[vkWriteDescriptorSetCount] = vkWriteDescriptorSet;
+                    vkWriteDescriptorSetCount++;
+                }
             }
             else if (VK_DESCRIPTOR_TYPE_STORAGE_BUFFER == vkDescriptorType)
             {
@@ -590,6 +640,7 @@ void updateBindings(GfxContext *pGfxContext, uint32_t bindingCount, Binding *bin
             VkDevice vkDevice = pGfxContext->vkDevice;
             vkUpdateDescriptorSets(vkDevice, vkWriteDescriptorSetCount, vkWriteDescriptorSets, 0, NULL);
         }
+        tknFree(vkDescriptorBufferInfos);
         tknFree(vkDescriptorImageInfos);
         tknFree(vkWriteDescriptorSets);
     }
