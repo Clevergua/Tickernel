@@ -73,84 +73,122 @@ static int luaDestroyFixedAttachmentPtr(lua_State *pLuaState)
 static int luaCreateRenderPassPtr(lua_State *pLuaState)
 {
     // Get parameters from Lua stack
-    GfxContext *pGfxContext = (GfxContext *)lua_touserdata(pLuaState, -7);
-    
+    GfxContext *pGfxContext = (GfxContext *)lua_touserdata(pLuaState, -8);
+
     // Get VkAttachmentDescription array
-    lua_len(pLuaState, -6);
+    lua_len(pLuaState, -7);
     uint32_t attachmentCount = (uint32_t)lua_tointeger(pLuaState, -1);
     lua_pop(pLuaState, 1);
     VkAttachmentDescription *vkAttachmentDescriptions = tknMalloc(sizeof(VkAttachmentDescription) * attachmentCount);
     for (uint32_t i = 0; i < attachmentCount; i++)
     {
-        lua_rawgeti(pLuaState, -6, i + 1);
+        lua_rawgeti(pLuaState, -7, i + 1);
         VkAttachmentDescription attachmentDescription = {0};
-        
+
         lua_getfield(pLuaState, -1, "flags");
         attachmentDescription.flags = lua_isnil(pLuaState, -1) ? 0 : (VkAttachmentDescriptionFlags)lua_tointeger(pLuaState, -1);
         lua_pop(pLuaState, 1);
-        
+
         lua_getfield(pLuaState, -1, "format");
         attachmentDescription.format = lua_isnil(pLuaState, -1) ? VK_FORMAT_UNDEFINED : (VkFormat)lua_tointeger(pLuaState, -1);
         lua_pop(pLuaState, 1);
-        
+
         lua_getfield(pLuaState, -1, "samples");
         attachmentDescription.samples = (VkSampleCountFlagBits)lua_tointeger(pLuaState, -1);
         lua_pop(pLuaState, 1);
-        
+
         lua_getfield(pLuaState, -1, "loadOp");
         attachmentDescription.loadOp = (VkAttachmentLoadOp)lua_tointeger(pLuaState, -1);
         lua_pop(pLuaState, 1);
-        
+
         lua_getfield(pLuaState, -1, "storeOp");
         attachmentDescription.storeOp = (VkAttachmentStoreOp)lua_tointeger(pLuaState, -1);
         lua_pop(pLuaState, 1);
-        
+
         lua_getfield(pLuaState, -1, "stencilLoadOp");
         attachmentDescription.stencilLoadOp = (VkAttachmentLoadOp)lua_tointeger(pLuaState, -1);
         lua_pop(pLuaState, 1);
-        
+
         lua_getfield(pLuaState, -1, "stencilStoreOp");
         attachmentDescription.stencilStoreOp = (VkAttachmentStoreOp)lua_tointeger(pLuaState, -1);
         lua_pop(pLuaState, 1);
-        
+
         lua_getfield(pLuaState, -1, "initialLayout");
         attachmentDescription.initialLayout = (VkImageLayout)lua_tointeger(pLuaState, -1);
         lua_pop(pLuaState, 1);
-        
+
         lua_getfield(pLuaState, -1, "finalLayout");
         attachmentDescription.finalLayout = (VkImageLayout)lua_tointeger(pLuaState, -1);
         lua_pop(pLuaState, 1);
-        
+
         vkAttachmentDescriptions[i] = attachmentDescription;
         lua_pop(pLuaState, 1);
     }
-    
+
     // Get inputAttachmentPtrs array
-    lua_len(pLuaState, -5);
+    lua_len(pLuaState, -6);
     uint32_t inputAttachmentCount = (uint32_t)lua_tointeger(pLuaState, -1);
     lua_pop(pLuaState, 1);
     Attachment **inputAttachmentPtrs = tknMalloc(sizeof(Attachment *) * inputAttachmentCount);
     for (uint32_t i = 0; i < inputAttachmentCount; i++)
     {
-        lua_rawgeti(pLuaState, -5, i + 1);
+        lua_rawgeti(pLuaState, -6, i + 1);
         inputAttachmentPtrs[i] = (Attachment *)lua_touserdata(pLuaState, -1);
         lua_pop(pLuaState, 1);
     }
-    
+
+    // Get VkClearValue array
+    lua_len(pLuaState, -5);
+    uint32_t clearValueCount = (uint32_t)lua_tointeger(pLuaState, -1);
+    lua_pop(pLuaState, 1);
+    VkClearValue *vkClearValues = tknMalloc(sizeof(VkClearValue) * clearValueCount);
+    for (uint32_t i = 0; i < clearValueCount; i++)
+    {
+        lua_rawgeti(pLuaState, -5, i + 1);
+        VkClearValue clearValue = {0};
+        
+        // Check if it's a depth/stencil clear value (has depth field)
+        lua_getfield(pLuaState, -1, "depth");
+        if (!lua_isnil(pLuaState, -1))
+        {
+            // This is a depth/stencil clear value
+            clearValue.depthStencil.depth = (float)lua_tonumber(pLuaState, -1);
+            lua_pop(pLuaState, 1);
+            
+            lua_getfield(pLuaState, -1, "stencil");
+            clearValue.depthStencil.stencil = (uint32_t)lua_tointeger(pLuaState, -1);
+            lua_pop(pLuaState, 1);
+        }
+        else
+        {
+            // This is a color clear value (array of 4 floats)
+            lua_pop(pLuaState, 1);
+            for (uint32_t j = 0; j < 4; j++)
+            {
+                lua_rawgeti(pLuaState, -1, j + 1);
+                clearValue.color.float32[j] = (float)lua_tonumber(pLuaState, -1);
+                lua_pop(pLuaState, 1);
+            }
+        }
+        
+        vkClearValues[i] = clearValue;
+        lua_pop(pLuaState, 1);
+    }
+
     // Get VkSubpassDescription array
-    lua_len(pLuaState, -4);
+    lua_len(pLuaState, -3);
     uint32_t subpassCount = (uint32_t)lua_tointeger(pLuaState, -1);
     lua_pop(pLuaState, 1);
     VkSubpassDescription *vkSubpassDescriptions = tknMalloc(sizeof(VkSubpassDescription) * subpassCount);
     for (uint32_t i = 0; i < subpassCount; i++)
     {
-        lua_rawgeti(pLuaState, -4, i + 1);
+        lua_rawgeti(pLuaState, -3, i + 1);
         VkSubpassDescription subpassDescription = {0};
-        
+
         lua_getfield(pLuaState, -1, "pipelineBindPoint");
         subpassDescription.pipelineBindPoint = (VkPipelineBindPoint)lua_tointeger(pLuaState, -1);
         lua_pop(pLuaState, 1);
-        
+
         // Handle pInputAttachments
         lua_getfield(pLuaState, -1, "pInputAttachments");
         lua_len(pLuaState, -1);
@@ -172,7 +210,7 @@ static int luaCreateRenderPassPtr(lua_State *pLuaState)
             subpassDescription.pInputAttachments = pInputAttachments;
         }
         lua_pop(pLuaState, 1);
-        
+
         // Handle pColorAttachments
         lua_getfield(pLuaState, -1, "pColorAttachments");
         lua_len(pLuaState, -1);
@@ -194,7 +232,7 @@ static int luaCreateRenderPassPtr(lua_State *pLuaState)
             subpassDescription.pColorAttachments = pColorAttachments;
         }
         lua_pop(pLuaState, 1);
-        
+
         // Handle pDepthStencilAttachment
         lua_getfield(pLuaState, -1, "pDepthStencilAttachment");
         if (!lua_isnil(pLuaState, -1))
@@ -209,24 +247,24 @@ static int luaCreateRenderPassPtr(lua_State *pLuaState)
             subpassDescription.pDepthStencilAttachment = pDepthStencilAttachment;
         }
         lua_pop(pLuaState, 1);
-        
+
         vkSubpassDescriptions[i] = subpassDescription;
         lua_pop(pLuaState, 1);
     }
-    
+
     // Get spvPaths array (2D array)
-    lua_len(pLuaState, -3);
+    lua_len(pLuaState, -2);
     uint32_t spvPathsArrayCount = (uint32_t)lua_tointeger(pLuaState, -1);
     lua_pop(pLuaState, 1);
     uint32_t *spvPathCounts = tknMalloc(sizeof(uint32_t) * spvPathsArrayCount);
     const char ***spvPathsArray = tknMalloc(sizeof(const char **) * spvPathsArrayCount);
     for (uint32_t i = 0; i < spvPathsArrayCount; i++)
     {
-        lua_rawgeti(pLuaState, -3, i + 1);
+        lua_rawgeti(pLuaState, -2, i + 1);
         lua_len(pLuaState, -1);
         spvPathCounts[i] = (uint32_t)lua_tointeger(pLuaState, -1);
         lua_pop(pLuaState, 1);
-        
+
         const char **spvPaths = tknMalloc(sizeof(const char *) * spvPathCounts[i]);
         for (uint32_t j = 0; j < spvPathCounts[i]; j++)
         {
@@ -237,7 +275,7 @@ static int luaCreateRenderPassPtr(lua_State *pLuaState)
         spvPathsArray[i] = spvPaths;
         lua_pop(pLuaState, 1);
     }
-    
+
     // Get VkSubpassDependency array
     lua_len(pLuaState, -2);
     uint32_t vkSubpassDependencyCount = (uint32_t)lua_tointeger(pLuaState, -1);
@@ -250,74 +288,75 @@ static int luaCreateRenderPassPtr(lua_State *pLuaState)
         {
             lua_rawgeti(pLuaState, -2, i + 1);
             VkSubpassDependency subpassDependency = {0};
-            
+
             lua_getfield(pLuaState, -1, "srcSubpass");
             subpassDependency.srcSubpass = (uint32_t)lua_tointeger(pLuaState, -1);
             lua_pop(pLuaState, 1);
-            
+
             lua_getfield(pLuaState, -1, "dstSubpass");
             subpassDependency.dstSubpass = (uint32_t)lua_tointeger(pLuaState, -1);
             lua_pop(pLuaState, 1);
-            
+
             lua_getfield(pLuaState, -1, "srcStageMask");
             subpassDependency.srcStageMask = (VkPipelineStageFlags)lua_tointeger(pLuaState, -1);
             lua_pop(pLuaState, 1);
-            
+
             lua_getfield(pLuaState, -1, "dstStageMask");
             subpassDependency.dstStageMask = (VkPipelineStageFlags)lua_tointeger(pLuaState, -1);
             lua_pop(pLuaState, 1);
-            
+
             lua_getfield(pLuaState, -1, "srcAccessMask");
             subpassDependency.srcAccessMask = (VkAccessFlags)lua_tointeger(pLuaState, -1);
             lua_pop(pLuaState, 1);
-            
+
             lua_getfield(pLuaState, -1, "dstAccessMask");
             subpassDependency.dstAccessMask = (VkAccessFlags)lua_tointeger(pLuaState, -1);
             lua_pop(pLuaState, 1);
-            
+
             lua_getfield(pLuaState, -1, "dependencyFlags");
             subpassDependency.dependencyFlags = (VkDependencyFlags)lua_tointeger(pLuaState, -1);
             lua_pop(pLuaState, 1);
-            
+
             vkSubpassDependencies[i] = subpassDependency;
             lua_pop(pLuaState, 1);
         }
     }
-    
+
     // Get renderPassIndex
     uint32_t renderPassIndex = (uint32_t)lua_tointeger(pLuaState, -1);
-    
+
     // Call the C function
-    RenderPass *pRenderPass = createRenderPassPtr(pGfxContext, attachmentCount, vkAttachmentDescriptions, 
-                                                  inputAttachmentPtrs, subpassCount, vkSubpassDescriptions, 
-                                                  spvPathCounts, spvPathsArray, vkSubpassDependencyCount, 
+    RenderPass *pRenderPass = createRenderPassPtr(pGfxContext, attachmentCount, vkAttachmentDescriptions,
+                                                  inputAttachmentPtrs, vkClearValues, subpassCount, vkSubpassDescriptions,
+                                                  spvPathCounts, spvPathsArray, vkSubpassDependencyCount,
                                                   vkSubpassDependencies);
-    
+
     // Clean up memory
     tknFree(vkAttachmentDescriptions);
     tknFree(inputAttachmentPtrs);
-    
+    tknFree(vkClearValues);
+
     for (uint32_t i = 0; i < subpassCount; i++)
     {
         if (vkSubpassDescriptions[i].pInputAttachments)
-            tknFree((void*)vkSubpassDescriptions[i].pInputAttachments);
+            tknFree((void *)vkSubpassDescriptions[i].pInputAttachments);
         if (vkSubpassDescriptions[i].pColorAttachments)
-            tknFree((void*)vkSubpassDescriptions[i].pColorAttachments);
+            tknFree((void *)vkSubpassDescriptions[i].pColorAttachments);
         if (vkSubpassDescriptions[i].pDepthStencilAttachment)
-            tknFree((void*)vkSubpassDescriptions[i].pDepthStencilAttachment);
+            tknFree((void *)vkSubpassDescriptions[i].pDepthStencilAttachment);
     }
     tknFree(vkSubpassDescriptions);
-    
+
     for (uint32_t i = 0; i < spvPathsArrayCount; i++)
     {
         tknFree(spvPathsArray[i]);
     }
     tknFree(spvPathCounts);
     tknFree(spvPathsArray);
-    
+
     if (vkSubpassDependencies)
         tknFree(vkSubpassDependencies);
-    
+
     // Return RenderPass as userdata
     lua_pushlightuserdata(pLuaState, pRenderPass);
     return 1;

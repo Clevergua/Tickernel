@@ -14,13 +14,8 @@ static uint32_t getMemoryTypeIndex(VkPhysicalDevice vkPhysicalDevice, uint32_t t
     tknError("Failed to get suitable memory type!");
     return UINT32_MAX;
 }
-static Buffer createBuffer(GfxContext *pGfxContext, VkDeviceSize bufferSize, VkBufferUsageFlags bufferUsageFlags, VkMemoryPropertyFlags msemoryPropertyFlags)
+static void createBuffer(GfxContext *pGfxContext, VkDeviceSize bufferSize, VkBufferUsageFlags bufferUsageFlags, VkMemoryPropertyFlags msemoryPropertyFlags, VkBuffer *pVkBuffer, VkDeviceMemory *pVkDeviceMemory)
 {
-    VkBuffer vkBuffer;
-    VkDeviceMemory vkDeviceMemory;
-    void *mapped;
-    TknHashSet bindingPtrHashSet = tknCreateHashSet(TKN_DEFAULT_COLLECTION_SIZE);
-
     VkDevice vkDevice = pGfxContext->vkDevice;
     VkPhysicalDevice vkPhysicalDevice = pGfxContext->vkPhysicalDevice;
     VkBufferCreateInfo bufferCreateInfo = {
@@ -33,9 +28,9 @@ static Buffer createBuffer(GfxContext *pGfxContext, VkDeviceSize bufferSize, VkB
         .queueFamilyIndexCount = 0,
         .pQueueFamilyIndices = 0,
     };
-    assertVkResult(vkCreateBuffer(vkDevice, &bufferCreateInfo, NULL, &vkBuffer));
+    assertVkResult(vkCreateBuffer(vkDevice, &bufferCreateInfo, NULL, pVkBuffer));
     VkMemoryRequirements memoryRequirements;
-    vkGetBufferMemoryRequirements(vkDevice, vkBuffer, &memoryRequirements);
+    vkGetBufferMemoryRequirements(vkDevice, *pVkBuffer, &memoryRequirements);
     uint32_t memoryTypeIndex = getMemoryTypeIndex(vkPhysicalDevice, memoryRequirements.memoryTypeBits, msemoryPropertyFlags);
     VkMemoryAllocateInfo memoryAllocateInfo = {
         .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
@@ -43,34 +38,16 @@ static Buffer createBuffer(GfxContext *pGfxContext, VkDeviceSize bufferSize, VkB
         .allocationSize = memoryRequirements.size,
         .memoryTypeIndex = memoryTypeIndex,
     };
-    assertVkResult(vkAllocateMemory(vkDevice, &memoryAllocateInfo, NULL, &vkDeviceMemory));
-    assertVkResult(vkBindBufferMemory(vkDevice, vkBuffer, vkDeviceMemory, 0));
-    Buffer buffer = {
-        .vkBuffer = vkBuffer,
-        .vkDeviceMemory = vkDeviceMemory,
-        .bindingPtrHashSet = bindingPtrHashSet,
-    };
-    return buffer;
+    assertVkResult(vkAllocateMemory(vkDevice, &memoryAllocateInfo, NULL, pVkDeviceMemory));
+    assertVkResult(vkBindBufferMemory(vkDevice, *pVkBuffer, *pVkDeviceMemory, 0));
 }
-static void destroyBuffer(GfxContext *pGfxContext, Buffer buffer)
+static void destroyBuffer(GfxContext *pGfxContext, VkBuffer vkBuffer, VkDeviceMemory vkDeviceMemory)
 {
-    for (uint32_t i = 0; i < buffer.bindingPtrHashSet.capacity; i++)
-    {
-        TknListNode *node = buffer.bindingPtrHashSet.nodePtrs[i];
-        while (node)
-        {
-            Binding *pBinding = (Binding *)node->pointer;
-            Binding binding = *pBinding;
-            binding.bindingUnion = getNullBindingUnion(pBinding->vkDescriptorType);
-            updateBindings(pGfxContext, 1, &binding);
-            node = node->nextNodePtr;
-        }
-    }
+
     VkDevice vkDevice = pGfxContext->vkDevice;
-    tknDestroyHashSet(buffer.bindingPtrHashSet);
-    vkUnmapMemory(vkDevice, buffer.vkDeviceMemory);
-    vkDestroyBuffer(vkDevice, buffer.vkBuffer, NULL);
-    vkFreeMemory(vkDevice, buffer.vkDeviceMemory, NULL);
+    vkUnmapMemory(vkDevice, vkDeviceMemory);
+    vkDestroyBuffer(vkDevice, vkBuffer, NULL);
+    vkFreeMemory(vkDevice, vkDeviceMemory, NULL);
 }
 static void createVkImage(GfxContext *pGfxContext, VkExtent3D vkExtent3D, VkFormat vkFormat, VkImageTiling vkImageTiling, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags, VkImage *pVkImage, VkDeviceMemory *pVkDeviceMemory, VkImageView *pVkImageView)
 {
@@ -290,32 +267,53 @@ void destroyImagePtr(GfxContext *pGfxContext, Image *pImage)
     tknFree(pImage);
 }
 
-MappedBuffer *createUniformBufferPtr(GfxContext *pGfxContext, VkDeviceSize size)
+UniformBuffer *createUniformBufferPtr(GfxContext *pGfxContext, VkDeviceSize vkDeviceSize)
 {
-    MappedBuffer *pMappedBuffer = tknMalloc(sizeof(MappedBuffer));
-    Buffer buffer = createBuffer(pGfxContext, size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-    VkDevice vkDevice = pGfxContext->vkDevice;
-    void *mapped;
-    assertVkResult(vkMapMemory(vkDevice, buffer.vkDeviceMemory, 0, size, 0, &mapped));
-    *pMappedBuffer = (MappedBuffer){
-        .buffer = buffer,
-        .mapped = mapped,
-    };
-    return pMappedBuffer;
-}
-void destroyMappedBufferPtr(GfxContext *pGfxContext, MappedBuffer *pMappedBuffer)
-{
-    Buffer buffer = pMappedBuffer->buffer;
-    VkDevice vkDevice = pGfxContext->vkDevice;
+    UniformBuffer *pUniformBuffer = tknMalloc(sizeof(UniformBuffer));
 
-    destroyBuffer(pGfxContext, buffer);
-    tknFree(pMappedBuffer);
+    VkBuffer vkBuffer = VK_NULL_HANDLE;
+    VkDeviceMemory vkDeviceMemory = VK_NULL_HANDLE;
+    void *mapped = NULL;
+    TknHashSet bindingPtrHashSet = tknCreateHashSet(TKN_DEFAULT_COLLECTION_SIZE);
+    VkDeviceSize size = vkDeviceSize;
+
+    createBuffer(pGfxContext, size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &vkBuffer, &vkDeviceMemory);
+    VkDevice vkDevice = pGfxContext->vkDevice;
+    assertVkResult(vkMapMemory(vkDevice, vkDeviceMemory, 0, size, 0, &mapped));
+    *pUniformBuffer = (UniformBuffer){
+        .vkBuffer = vkBuffer,
+        .vkDeviceMemory = vkDeviceMemory,
+        .mapped = mapped,
+        .bindingPtrHashSet = tknCreateHashSet(TKN_DEFAULT_COLLECTION_SIZE),
+        .size = size,
+    };
+
+    return pUniformBuffer;
 }
-void updateMappedBufferPtr(GfxContext *pGfxContext, MappedBuffer *pMappedBuffer, const void *data, VkDeviceSize size)
+void destroyUniformBufferPtr(GfxContext *pGfxContext, UniformBuffer *pUniformBuffer)
 {
-    tknAssert(pMappedBuffer->buffer.vkDeviceMemory != VK_NULL_HANDLE, "Mapped buffer memory is not allocated!");
-    tknAssert(size <= pMappedBuffer->buffer.size, "Data size exceeds mapped buffer size!");
-    memcpy(pMappedBuffer->mapped, data, size);
+    for (uint32_t i = 0; i < pUniformBuffer->bindingPtrHashSet.capacity; i++)
+    {
+        TknListNode *node = pUniformBuffer->bindingPtrHashSet.nodePtrs[i];
+        while (node)
+        {
+            Binding *pBinding = (Binding *)node->pointer;
+            Binding binding = *pBinding;
+            binding.bindingUnion = getNullBindingUnion(pBinding->vkDescriptorType);
+            updateBindings(pGfxContext, 1, &binding);
+            node = node->nextNodePtr;
+        }
+    }
+
+    tknDestroyHashSet(pUniformBuffer->bindingPtrHashSet);
+    destroyBuffer(pGfxContext, pUniformBuffer->vkBuffer, pUniformBuffer->vkDeviceMemory);
+    tknFree(pUniformBuffer);
+}
+void updateUniformBufferPtr(GfxContext *pGfxContext, UniformBuffer *pUniformBuffer, const void *data, VkDeviceSize vkDeviceSize)
+{
+    tknAssert(pUniformBuffer->vkDeviceMemory != VK_NULL_HANDLE, "Mapped buffer memory is not allocated!");
+    tknAssert(vkDeviceSize <= pUniformBuffer->size, "Data size exceeds mapped buffer size!");
+    memcpy(pUniformBuffer->mapped, data, vkDeviceSize);
 }
 
 Material *createMaterialPtr(GfxContext *pGfxContext, DescriptorSet *pDescriptorSet)
@@ -408,7 +406,7 @@ BindingUnion getNullBindingUnion(VkDescriptorType vkDescriptorType)
     // VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER = 6,
     if (VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER == vkDescriptorType)
     {
-        bindingUnion.uniformBufferBinding.pBuffer = NULL;
+        bindingUnion.uniformBufferBinding.pUniformBuffer = NULL;
     }
     // VK_DESCRIPTOR_TYPE_STORAGE_BUFFER = 7,
     // VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC = 8,

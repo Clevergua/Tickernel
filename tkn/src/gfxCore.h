@@ -18,7 +18,22 @@ struct Image
     TknHashSet bindingPtrHashSet;
 };
 
-struct Buffer
+struct MappedBuffer
+{
+    VkBuffer vkBuffer;
+    VkDeviceMemory vkDeviceMemory;
+    void *mapped;
+};
+
+struct UniformBuffer
+{
+    VkBuffer vkBuffer;
+    VkDeviceMemory vkDeviceMemory;
+    void *mapped;
+    TknHashSet bindingPtrHashSet;
+    VkDeviceSize size;
+};
+struct StorageBuffer
 {
     VkBuffer vkBuffer;
     VkDeviceMemory vkDeviceMemory;
@@ -26,10 +41,36 @@ struct Buffer
     VkDeviceSize size;
 };
 
-struct MappedBuffer
+struct UniformTexelBuffer
 {
-    Buffer buffer;
+    VkBuffer vkBuffer;
+    VkDeviceMemory vkDeviceMemory;
+    TknHashSet bindingPtrHashSet;
+    VkDeviceSize size;
+};
+struct StorageTexelBuffer
+{
+    VkBuffer vkBuffer;
+    VkDeviceMemory vkDeviceMemory;
+    TknHashSet bindingPtrHashSet;
+    VkDeviceSize size;
+};
+
+struct UniformDynamicBuffer
+{
+    VkBuffer vkBuffer;
+    VkDeviceMemory vkDeviceMemory;
     void *mapped;
+    TknHashSet bindingPtrHashSet;
+    VkDeviceSize size;
+};
+struct StorageDynamicBuffer
+{
+    VkBuffer vkBuffer;
+    VkDeviceMemory vkDeviceMemory;
+    void *mapped;
+    TknHashSet bindingPtrHashSet;
+    VkDeviceSize size;
 };
 
 typedef struct
@@ -91,7 +132,7 @@ typedef struct
 
 typedef struct
 {
-    Buffer *pBuffer;
+    UniformBuffer *pUniformBuffer;
 } UniformBufferBinding;
 
 typedef struct
@@ -134,6 +175,10 @@ typedef struct
     VkDescriptorType *vkDescriptorTypes;
 } DescriptorSet;
 
+typedef struct
+{
+
+} Mesh;
 struct Material
 {
     VkDescriptorSet vkDescriptorSet;
@@ -141,14 +186,15 @@ struct Material
     Binding *bindings;
     VkDescriptorPool vkDescriptorPool;
     DescriptorSet *pDescriptorSet;
+    TknDynamicArray meshPtrDynamicArray;
 };
 
 typedef enum
 {
-    TICKERNEL_GLOBAL_DESCRIPTOR_SET,
-    TICKERNEL_SUBPASS_DESCRIPTOR_SET,
-    TICKERNEL_PIPELINE_DESCRIPTOR_SET,
-    TICKERNEL_MAX_DESCRIPTOR_SET,
+    TKN_GLOBAL_DESCRIPTOR_SET,
+    TKN_SUBPASS_DESCRIPTOR_SET,
+    TKN_PIPELINE_DESCRIPTOR_SET,
+    TKN_MAX_DESCRIPTOR_SET,
 } TickernelDescriptorSet;
 
 struct Pipeline
@@ -169,8 +215,10 @@ struct RenderPass
     VkRenderPass vkRenderPass;
     uint32_t attachmentCount;
     Attachment **attachmentPtrs;
+    VkClearValue *vkClearValues;
     uint32_t vkFramebufferCount;
     VkFramebuffer *vkFramebuffers;
+    VkRect2D renderArea;
     uint32_t subpassCount;
     Subpass *subpasses;
 };

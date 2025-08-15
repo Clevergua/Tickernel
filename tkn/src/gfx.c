@@ -584,7 +584,67 @@ static void recordCommandBuffer(GfxContext *pGfxContext, uint32_t swapchainIndex
             .pInheritanceInfo = NULL,
         };
     assertVkResult(vkBeginCommandBuffer(vkCommandBuffer, &vkCommandBufferBeginInfo));
-    // TODO: Record rendering commands here
+    Material *pGlobalMaterial = *(Material **)tknGetFromDynamicArray(&pGfxContext->pGlobalDescriptorSet->materialPtrDynamicArray, 0);
+    for (uint32_t renderPassIndex = 0; renderPassIndex < pGfxContext->renderPassPtrDynamicArray.count; renderPassIndex++)
+    {
+        RenderPass *pRenderPass = *(RenderPass **)tknGetFromDynamicArray(&pGfxContext->renderPassPtrDynamicArray, renderPassIndex);
+        VkRenderPassBeginInfo renderPassBeginInfo = {
+            .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
+            .pNext = NULL,
+            .renderPass = pRenderPass->vkRenderPass,
+            .framebuffer = pRenderPass->vkFramebuffers[swapchainIndex],
+            .renderArea = pRenderPass->renderArea,
+            .clearValueCount = pRenderPass->attachmentCount,
+            .pClearValues = pRenderPass->vkClearValues,
+        };
+        vkCmdBeginRenderPass(vkCommandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+        VkViewport vkViewport = {
+            .x = 0.0f,
+            .y = 0.0f,
+            .width = pRenderPass->renderArea.extent.width,
+            .height = pRenderPass->renderArea.extent.height,
+            .minDepth = 0.0f,
+            .maxDepth = 1.0f,
+        };
+        vkCmdSetViewport(vkCommandBuffer, 0, 1, &vkViewport);
+
+        VkRect2D scissor = {
+            .offset = {0, 0},
+            .extent = pRenderPass->renderArea.extent,
+        };
+        vkCmdSetScissor(vkCommandBuffer, 0, 1, &scissor);
+        for (uint32_t subpassIndex = 0; subpassIndex < pRenderPass->subpassCount; subpassIndex++)
+        {
+            Subpass *pSubpass = &pRenderPass->subpasses[subpassIndex];
+            Material *pSubpassMaterial = *(Material **)tknGetFromDynamicArray(&pSubpass->pSubpassDescriptorSet->materialPtrDynamicArray, 0);
+            for (uint32_t pipelineIndex = 0; pipelineIndex < pSubpass->pipelinePtrDynamicArray.count; pipelineIndex++)
+            {
+                Pipeline *pPipeline = *(Pipeline **)tknGetFromDynamicArray(&pSubpass->pipelinePtrDynamicArray, pipelineIndex);
+                vkCmdBindPipeline(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pPipeline->vkPipeline);
+                for (uint32_t materialPtrIndex = 0; materialPtrIndex < pPipeline->pPipelineDescriptorSet->materialPtrDynamicArray.count; materialPtrIndex++)
+                {
+                    Material *pMaterial = *(Material **)tknGetFromDynamicArray(&pPipeline->pPipelineDescriptorSet->materialPtrDynamicArray, materialPtrIndex);
+                    VkDescriptorSet *vkDescriptorSets = tknMalloc(sizeof(VkDescriptorSet) * TKN_MAX_DESCRIPTOR_SET);
+                    vkDescriptorSets[TKN_GLOBAL_DESCRIPTOR_SET] = pGlobalMaterial->vkDescriptorSet;
+                    vkDescriptorSets[TKN_GLOBAL_DESCRIPTOR_SET] = pSubpassMaterial->vkDescriptorSet;
+                    vkDescriptorSets[TKN_GLOBAL_DESCRIPTOR_SET] = pMaterial->vkDescriptorSet;
+                    tknFree(vkDescriptorSets);
+                    vkCmdBindDescriptorSets(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pPipeline->vkPipelineLayout, 0, TKN_MAX_DESCRIPTOR_SET, vkDescriptorSets, 0, NULL);
+                    for (uint32_t meshPtrIndex = 0; meshPtrIndex < pMaterial->meshPtrDynamicArray.count; meshPtrIndex++)
+                    {
+                        Mesh *pMesh = *(Mesh **)tknGetFromDynamicArray(&pMaterial->meshPtrDynamicArray, meshPtrIndex);
+                        // TODO
+                        // vkCmdBindVertexBuffers(vkCommandBuffer, 0, 1, pMesh->VkBuffer, 0);
+                        // vkCmdBindIndexBuffer(vkCommandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT16);
+                        // vkCmdDrawIndexed(vkCommandBuffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
+                        
+                    }
+                }
+            }
+        }
+        vkCmdEndRenderPass(vkCommandBuffer);
+    }
+
     assertVkResult(vkEndCommandBuffer(vkCommandBuffer));
 }
 static void submitCommandBuffer(GfxContext *pGfxContext, uint32_t swapchainIndex)
@@ -650,7 +710,7 @@ static void setupRenderPipelineAndResources(GfxContext *pGfxContext, uint32_t sp
     {
         spvReflectShaderModules[spvPathIndex] = createSpvReflectShaderModule(spvPaths[spvPathIndex]);
     }
-    pGfxContext->pGlobalDescriptorSet = createDescriptorSetPtr(pGfxContext, spvPathCount, spvReflectShaderModules, TICKERNEL_GLOBAL_DESCRIPTOR_SET);
+    pGfxContext->pGlobalDescriptorSet = createDescriptorSetPtr(pGfxContext, spvPathCount, spvReflectShaderModules, TKN_GLOBAL_DESCRIPTOR_SET);
     for (uint32_t spvPathIndex = 0; spvPathIndex < spvPathCount; spvPathIndex++)
     {
         destroySpvReflectShaderModule(&spvReflectShaderModules[spvPathIndex]);

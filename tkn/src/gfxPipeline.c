@@ -21,7 +21,7 @@ static Subpass createSubpass(GfxContext *pGfxContext, uint32_t subpassIndex, uin
         const char *spvPath = spvPaths[spvPathIndex];
         spvReflectShaderModules[spvPathIndex] = createSpvReflectShaderModule(spvPath);
     }
-    DescriptorSet *pSubpassDescriptorSet = createDescriptorSetPtr(pGfxContext, spvPathCount, spvReflectShaderModules, TICKERNEL_SUBPASS_DESCRIPTOR_SET);
+    DescriptorSet *pSubpassDescriptorSet = createDescriptorSetPtr(pGfxContext, spvPathCount, spvReflectShaderModules, TKN_SUBPASS_DESCRIPTOR_SET);
     Material *pMaterial = createMaterialPtr(pGfxContext, pSubpassDescriptorSet);
     for (uint32_t spvPathIndex = 0; spvPathIndex < spvPathCount; spvPathIndex++)
     {
@@ -29,7 +29,7 @@ static Subpass createSubpass(GfxContext *pGfxContext, uint32_t subpassIndex, uin
         for (uint32_t setIndex = 0; setIndex < spvReflectShaderModule.descriptor_set_count; setIndex++)
         {
             SpvReflectDescriptorSet spvReflectDescriptorSet = spvReflectShaderModule.descriptor_sets[setIndex];
-            if (TICKERNEL_SUBPASS_DESCRIPTOR_SET == spvReflectDescriptorSet.set)
+            if (TKN_SUBPASS_DESCRIPTOR_SET == spvReflectDescriptorSet.set)
             {
                 for (uint32_t bindingIndex = 0; bindingIndex < spvReflectDescriptorSet.binding_count; bindingIndex++)
                 {
@@ -358,6 +358,11 @@ void populateFramebuffers(GfxContext *pGfxContext, RenderPass *pRenderPass)
         }
     }
 
+    tknAssert(UINT32_MAX != width && UINT32_MAX != height, "No valid attachment found to determine framebuffer size");
+    pRenderPass->renderArea = (VkRect2D){
+        .offset = {0, 0},
+        .extent = {width, height},
+    };
     Attachment *pSwapchainAttachment = getSwapchainAttachmentPtr(pGfxContext);
     if (tknContainsInHashSet(&pSwapchainAttachment->renderPassPtrHashSet, pRenderPass))
     {
@@ -427,6 +432,7 @@ void populateFramebuffers(GfxContext *pGfxContext, RenderPass *pRenderPass)
             .height = height,
             .layers = 1,
         };
+
         assertVkResult(vkCreateFramebuffer(vkDevice, &vkFramebufferCreateInfo, NULL, &pRenderPass->vkFramebuffers[0]));
         tknFree(attachmentVkImageViews);
     }
@@ -446,7 +452,7 @@ void repopulateFramebuffers(GfxContext *pGfxContext, RenderPass *pRenderPass)
     populateFramebuffers(pGfxContext, pRenderPass);
 }
 
-RenderPass *createRenderPassPtr(GfxContext *pGfxContext, uint32_t attachmentCount, VkAttachmentDescription *vkAttachmentDescriptions, Attachment **inputAttachmentPtrs, uint32_t subpassCount, VkSubpassDescription *vkSubpassDescriptions, uint32_t *spvPathCounts, const char ***spvPathsArray, uint32_t vkSubpassDependencyCount, VkSubpassDependency *vkSubpassDependencies)
+RenderPass *createRenderPassPtr(GfxContext *pGfxContext, uint32_t attachmentCount, VkAttachmentDescription *vkAttachmentDescriptions, Attachment **inputAttachmentPtrs, VkClearValue *vkClearValues, uint32_t subpassCount, VkSubpassDescription *vkSubpassDescriptions, uint32_t *spvPathCounts, const char ***spvPathsArray, uint32_t vkSubpassDependencyCount, VkSubpassDependency *vkSubpassDependencies)
 {
     RenderPass *pRenderPass = tknMalloc(sizeof(RenderPass));
     Attachment **attachmentPtrs = tknMalloc(sizeof(Attachment *) * attachmentCount);
@@ -479,6 +485,7 @@ RenderPass *createRenderPassPtr(GfxContext *pGfxContext, uint32_t attachmentCoun
         .vkFramebufferCount = 0,
         .attachmentCount = attachmentCount,
         .attachmentPtrs = attachmentPtrs,
+        .vkClearValues = vkClearValues,
         .subpassCount = subpassCount,
         .subpasses = subpasses,
     };
@@ -525,7 +532,7 @@ Pipeline *createPipelinePtr(GfxContext *pGfxContext, RenderPass *pRenderPass, ui
     {
         spvReflectShaderModules[spvPathIndex] = createSpvReflectShaderModule(spvPaths[spvPathIndex]);
     }
-    DescriptorSet *pPipelineDescriptorSet = createDescriptorSetPtr(pGfxContext, spvPathCount, spvReflectShaderModules, TICKERNEL_GLOBAL_DESCRIPTOR_SET);
+    DescriptorSet *pPipelineDescriptorSet = createDescriptorSetPtr(pGfxContext, spvPathCount, spvReflectShaderModules, TKN_GLOBAL_DESCRIPTOR_SET);
     for (uint32_t spvPathIndex = 0; spvPathIndex < spvPathCount; spvPathIndex++)
     {
         SpvReflectShaderModule spvReflectShaderModule = spvReflectShaderModules[spvPathIndex];
@@ -559,12 +566,16 @@ Pipeline *createPipelinePtr(GfxContext *pGfxContext, RenderPass *pRenderPass, ui
     }
     tknFree(spvReflectShaderModules);
     VkPipelineLayout vkPipelineLayout;
+    VkDescriptorSetLayout *vkDescriptorSetLayouts = tknMalloc(sizeof(VkDescriptorSetLayout) * TKN_MAX_DESCRIPTOR_SET);
+    vkDescriptorSetLayouts[TKN_GLOBAL_DESCRIPTOR_SET] = pGfxContext->pGlobalDescriptorSet->vkDescriptorSetLayout;
+    vkDescriptorSetLayouts[TKN_SUBPASS_DESCRIPTOR_SET] = pRenderPass->subpasses[subpassIndex].pSubpassDescriptorSet->vkDescriptorSetLayout;
+    vkDescriptorSetLayouts[TKN_PIPELINE_DESCRIPTOR_SET] = pPipelineDescriptorSet->vkDescriptorSetLayout;
     VkPipelineLayoutCreateInfo vkPipelineLayoutCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
         .pNext = NULL,
         .flags = 0,
-        .setLayoutCount = 1,
-        .pSetLayouts = &pPipelineDescriptorSet->vkDescriptorSetLayout,
+        .setLayoutCount = TKN_MAX_DESCRIPTOR_SET,
+        .pSetLayouts = vkDescriptorSetLayouts,
         .pushConstantRangeCount = 0,
         .pPushConstantRanges = NULL,
     };
@@ -595,6 +606,7 @@ Pipeline *createPipelinePtr(GfxContext *pGfxContext, RenderPass *pRenderPass, ui
     {
         vkDestroyShaderModule(vkDevice, pipelineShaderStageCreateInfos[pipelineShaderStageCreateInfoIndex].module, NULL);
     }
+    tknFree(vkDescriptorSetLayouts);
     tknFree(pipelineShaderStageCreateInfos);
     assertVkResult(vkCreateGraphicsPipelines(vkDevice, NULL, 1, &vkGraphicsPipelineCreateInfo, NULL, &vkPipeline));
     *pPipeline = (Pipeline){

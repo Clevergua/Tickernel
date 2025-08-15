@@ -12,8 +12,7 @@ typedef struct Material Material;
 typedef struct Attachment Attachment;
 typedef struct Image Image;
 typedef struct Sampler Sampler;
-typedef struct Buffer Buffer;
-typedef struct MappedBuffer MappedBuffer;
+typedef struct UniformBuffer UniformBuffer;
 
 VkFormat getSupportedFormat(GfxContext *pGfxContext, uint32_t candidateCount, VkFormat *candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
 
@@ -28,7 +27,7 @@ Attachment *createFixedAttachmentPtr(GfxContext *pGfxContext, VkFormat vkFormat,
 void destroyFixedAttachmentPtr(GfxContext *pGfxContext, Attachment *pAttachment);
 Attachment *getSwapchainAttachmentPtr(GfxContext *pGfxContext);
 
-RenderPass *createRenderPassPtr(GfxContext *pGfxContext, uint32_t attachmentCount, VkAttachmentDescription *vkAttachmentDescriptions, Attachment **inputAttachmentPtrs, uint32_t subpassCount, VkSubpassDescription *vkSubpassDescriptions, uint32_t *spvPathCounts, const char ***spvPathsArray, uint32_t vkSubpassDependencyCount, VkSubpassDependency *vkSubpassDependencies);
+RenderPass *createRenderPassPtr(GfxContext *pGfxContext, uint32_t attachmentCount, VkAttachmentDescription *vkAttachmentDescriptions, Attachment **inputAttachmentPtrs, VkClearValue *vkClearValues, uint32_t subpassCount, VkSubpassDescription *vkSubpassDescriptions, uint32_t *spvPathCounts, const char ***spvPathsArray, uint32_t vkSubpassDependencyCount, VkSubpassDependency *vkSubpassDependencies);
 void destroyRenderPassPtr(GfxContext *pGfxContext, RenderPass *pRenderPass);
 
 Pipeline *createPipelinePtr(GfxContext *pGfxContext, RenderPass *pRenderPass, uint32_t subpassIndex, uint32_t spvPathCount, const char **spvPaths, VkPipelineVertexInputStateCreateInfo vkPipelineVertexInputStateCreateInfo, VkPipelineInputAssemblyStateCreateInfo vkPipelineInputAssemblyStateCreateInfo, VkPipelineViewportStateCreateInfo vkPipelineViewportStateCreateInfo, VkPipelineRasterizationStateCreateInfo vkPipelineRasterizationStateCreateInfo, VkPipelineMultisampleStateCreateInfo vkPipelineMultisampleStateCreateInfo, VkPipelineDepthStencilStateCreateInfo vkPipelineDepthStencilStateCreateInfo, VkPipelineColorBlendStateCreateInfo vkPipelineColorBlendStateCreateInfo, VkPipelineDynamicStateCreateInfo vkPipelineDynamicStateCreateInfo);
@@ -37,9 +36,9 @@ void destroyPipelinePtr(GfxContext *pGfxContext, Pipeline *pPipeline);
 Image *createImagePtr(GfxContext *pGfxContext, VkExtent3D vkExtent3D, VkFormat vkFormat, VkImageTiling vkImageTiling, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags);
 void destroyImagePtr(GfxContext *pGfxContext, Image *pImage);
 
-MappedBuffer *createUniformBufferPtr(GfxContext *pGfxContext, VkDeviceSize size);
-void destroyMappedBufferPtr(GfxContext *pGfxContext, MappedBuffer *pMappedBuffer);
-void updateMappedBufferPtr(GfxContext *pGfxContext, MappedBuffer *pMappedBuffer, const void *data, VkDeviceSize size);
+UniformBuffer *createUniformBufferPtr(GfxContext *pGfxContext, VkDeviceSize vkDeviceSize);
+void destroyUniformBufferPtr(GfxContext *pGfxContext, UniformBuffer *pUniformBuffer);
+void updateUniformBufferPtr(GfxContext *pGfxContext, UniformBuffer *pUniformBuffer, const void *data, VkDeviceSize vkDeviceSize);
 
 void tknError(char const *const _Format, ...);
 void tknAssert(bool condition, char const *const _Format, ...);

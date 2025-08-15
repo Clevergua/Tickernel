@@ -12,13 +12,13 @@ class VoxModel:
 
 
 class TickernelVoxelPropertyType(Enum):
-    TICKERNEL_VOXEL_INT8 = 0
-    TICKERNEL_VOXEL_UINT8 = 1
-    TICKERNEL_VOXEL_INT16 = 2
-    TICKERNEL_VOXEL_UINT16 = 3
-    TICKERNEL_VOXEL_INT32 = 4
-    TICKERNEL_VOXEL_UINT32 = 5
-    TICKERNEL_VOXEL_FLOAT32 = 6
+    TKN_VOXEL_INT8 = 0
+    TKN_VOXEL_UINT8 = 1
+    TKN_VOXEL_INT16 = 2
+    TKN_VOXEL_UINT16 = 3
+    TKN_VOXEL_INT32 = 4
+    TKN_VOXEL_UINT32 = 5
+    TKN_VOXEL_FLOAT32 = 6
 
 class TickernelVoxelModel:
     def __init__(self):
@@ -147,19 +147,19 @@ def WriteTickernelVoxelModel(filePath, tickernelVoxelModel):
         
         for properties, t in zip(tickernelVoxelModel.indexToProperties, tickernelVoxelModel.types):
             for property in properties:
-                if t == TickernelVoxelPropertyType.TICKERNEL_VOXEL_INT8:
+                if t == TickernelVoxelPropertyType.TKN_VOXEL_INT8:
                     file.write(struct.pack('<b', int(property)))
-                elif t == TickernelVoxelPropertyType.TICKERNEL_VOXEL_UINT8:
+                elif t == TickernelVoxelPropertyType.TKN_VOXEL_UINT8:
                     file.write(struct.pack('<B', int(property)))
-                elif t == TickernelVoxelPropertyType.TICKERNEL_VOXEL_INT16:
+                elif t == TickernelVoxelPropertyType.TKN_VOXEL_INT16:
                     file.write(struct.pack('<h', int(property)))
-                elif t == TickernelVoxelPropertyType.TICKERNEL_VOXEL_UINT16:
+                elif t == TickernelVoxelPropertyType.TKN_VOXEL_UINT16:
                     file.write(struct.pack('<H', int(property)))
-                elif t == TickernelVoxelPropertyType.TICKERNEL_VOXEL_INT32:
+                elif t == TickernelVoxelPropertyType.TKN_VOXEL_INT32:
                     file.write(struct.pack('<i', int(property)))
-                elif t == TickernelVoxelPropertyType.TICKERNEL_VOXEL_UINT32:
+                elif t == TickernelVoxelPropertyType.TKN_VOXEL_UINT32:
                     file.write(struct.pack('<I', int(property)))
-                elif t == TickernelVoxelPropertyType.TICKERNEL_VOXEL_FLOAT32:
+                elif t == TickernelVoxelPropertyType.TKN_VOXEL_FLOAT32:
                     file.write(struct.pack('<f', float(property)))
                 else:
                     raise ValueError(f"Unsupported property type: {type(property)}")
@@ -237,16 +237,16 @@ def ParseVoxFile(filePath):
         tickernelVoxelModel.propertyCount = 10  # Including normals
         tickernelVoxelModel.names = ["px", "py", "pz", "r", "g", "b", "a", "nx", "ny", "nz"]
         tickernelVoxelModel.types = [
-            TickernelVoxelPropertyType.TICKERNEL_VOXEL_UINT8,
-            TickernelVoxelPropertyType.TICKERNEL_VOXEL_UINT8,
-            TickernelVoxelPropertyType.TICKERNEL_VOXEL_UINT8,
-            TickernelVoxelPropertyType.TICKERNEL_VOXEL_UINT8,
-            TickernelVoxelPropertyType.TICKERNEL_VOXEL_UINT8,
-            TickernelVoxelPropertyType.TICKERNEL_VOXEL_UINT8,
-            TickernelVoxelPropertyType.TICKERNEL_VOXEL_UINT8,
-            TickernelVoxelPropertyType.TICKERNEL_VOXEL_FLOAT32,
-            TickernelVoxelPropertyType.TICKERNEL_VOXEL_FLOAT32,
-            TickernelVoxelPropertyType.TICKERNEL_VOXEL_FLOAT32
+            TickernelVoxelPropertyType.TKN_VOXEL_UINT8,
+            TickernelVoxelPropertyType.TKN_VOXEL_UINT8,
+            TickernelVoxelPropertyType.TKN_VOXEL_UINT8,
+            TickernelVoxelPropertyType.TKN_VOXEL_UINT8,
+            TickernelVoxelPropertyType.TKN_VOXEL_UINT8,
+            TickernelVoxelPropertyType.TKN_VOXEL_UINT8,
+            TickernelVoxelPropertyType.TKN_VOXEL_UINT8,
+            TickernelVoxelPropertyType.TKN_VOXEL_FLOAT32,
+            TickernelVoxelPropertyType.TKN_VOXEL_FLOAT32,
+            TickernelVoxelPropertyType.TKN_VOXEL_FLOAT32
         ]
         tickernelVoxelModel.vertexCount = 0
         tickernelVoxelModel.indexToProperties = [[] for _ in range(tickernelVoxelModel.propertyCount)]

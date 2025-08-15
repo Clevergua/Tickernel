@@ -1,5 +1,4 @@
 local deferredRenderPass = {}
--- local geometryPipeline = require("geometryPipeline")
 
 function deferredRenderPass.createRenderPassPtr(pGfxContext, pAttachments, assetsPath)
     local colorAttachmentDescription = {
@@ -54,6 +53,14 @@ function deferredRenderPass.createRenderPassPtr(pGfxContext, pAttachments, asset
         albedoAttachmentDescription,
         normalAttachmentDescription,
         swapchainAttachmentDescription,
+    };
+
+    local vkClearValues = {
+        { 0.0, 0.0, 0.0, 1.0 },
+        { depth = 1.0, stencil = 0 },
+        { 0.0, 0.0, 0.0, 1.0 },
+        { 0.0, 0.0, 0.0, 1.0 },
+        { 0.0, 0.0, 0.0, 1.0 },
     };
 
     local geometrySubpassDescription = {
@@ -112,15 +119,9 @@ function deferredRenderPass.createRenderPassPtr(pGfxContext, pAttachments, asset
     }
 
     local spvPathsArray = {
-        {
-
-        },
-        {
-            assetsPath .. "/shaders/lighting.subpass.frag.spv"
-        },
-        {
-            assetsPath .. "/shaders/postProcess.subpass.frag.spv"
-        },
+        {},
+        {assetsPath .. "/shaders/lighting.subpass.frag.spv"},
+        {assetsPath .. "/shaders/postProcess.subpass.frag.spv"},
     }
 
     local vkSubpassDependencies = {
@@ -162,7 +163,7 @@ function deferredRenderPass.createRenderPassPtr(pGfxContext, pAttachments, asset
         }
     }
 
-    return gfx.createRenderPassPtr(pGfxContext, vkAttachmentDescriptions, pAttachments, vkSubpassDescriptions,
+    return gfx.createRenderPassPtr(pGfxContext, vkAttachmentDescriptions, pAttachments, vkClearValues,vkSubpassDescriptions,
         spvPathsArray, vkSubpassDependencies, 0)
 end
 
