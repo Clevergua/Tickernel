@@ -14,7 +14,7 @@ static uint32_t getMemoryTypeIndex(VkPhysicalDevice vkPhysicalDevice, uint32_t t
     tknError("Failed to get suitable memory type!");
     return UINT32_MAX;
 }
-static void createBuffer(GfxContext *pGfxContext, VkDeviceSize bufferSize, VkBufferUsageFlags bufferUsageFlags, VkMemoryPropertyFlags memoryPropertyFlags, VkBuffer *pVkBuffer, VkDeviceMemory *pVkDeviceMemory)
+static void createVkBuffer(GfxContext *pGfxContext, VkDeviceSize bufferSize, VkBufferUsageFlags bufferUsageFlags, VkMemoryPropertyFlags memoryPropertyFlags, VkBuffer *pVkBuffer, VkDeviceMemory *pVkDeviceMemory)
 {
     VkDevice vkDevice = pGfxContext->vkDevice;
     VkPhysicalDevice vkPhysicalDevice = pGfxContext->vkPhysicalDevice;
@@ -41,7 +41,7 @@ static void createBuffer(GfxContext *pGfxContext, VkDeviceSize bufferSize, VkBuf
     assertVkResult(vkAllocateMemory(vkDevice, &memoryAllocateInfo, NULL, pVkDeviceMemory));
     assertVkResult(vkBindBufferMemory(vkDevice, *pVkBuffer, *pVkDeviceMemory, 0));
 }
-static void destroyBuffer(GfxContext *pGfxContext, VkBuffer vkBuffer, VkDeviceMemory vkDeviceMemory)
+static void destroyVkBuffer(GfxContext *pGfxContext, VkBuffer vkBuffer, VkDeviceMemory vkDeviceMemory)
 {
     VkDevice vkDevice = pGfxContext->vkDevice;
     vkDestroyBuffer(vkDevice, vkBuffer, NULL);
@@ -112,6 +112,21 @@ static void destroyVkImage(GfxContext *pGfxContext, VkImage vkImage, VkDeviceMem
     vkDestroyImageView(vkDevice, vkImageView, NULL);
     vkDestroyImage(vkDevice, vkImage, NULL);
     vkFreeMemory(vkDevice, vkDeviceMemory, NULL);
+}
+static void clearBindingPtrHashSet(GfxContext *pGfxContext, TknHashSet bindingPtrHashSet)
+{
+    for (uint32_t i = 0; i < bindingPtrHashSet.capacity; i++)
+    {
+        TknListNode *node = bindingPtrHashSet.nodePtrs[i];
+        while (node)
+        {
+            Binding *pBinding = (Binding *)node->pointer;
+            Binding binding = *pBinding;
+            binding.bindingUnion = getNullBindingUnion(pBinding->vkDescriptorType);
+            updateBindings(pGfxContext, 1, &binding);
+            node = node->nextNodePtr;
+        }
+    }
 }
 
 Attachment *createDynamicAttachmentPtr(GfxContext *pGfxContext, VkFormat vkFormat, VkImageUsageFlags vkImageUsageFlags, VkImageAspectFlags vkImageAspectFlags, float scaler)
@@ -248,18 +263,7 @@ Image *createImagePtr(GfxContext *pGfxContext, VkExtent3D vkExtent3D, VkFormat v
 }
 void destroyImagePtr(GfxContext *pGfxContext, Image *pImage)
 {
-    for (uint32_t i = 0; i < pImage->bindingPtrHashSet.capacity; i++)
-    {
-        TknListNode *node = pImage->bindingPtrHashSet.nodePtrs[i];
-        while (node)
-        {
-            Binding *pBinding = (Binding *)node->pointer;
-            Binding binding = *pBinding;
-            binding.bindingUnion = getNullBindingUnion(pBinding->vkDescriptorType);
-            updateBindings(pGfxContext, 1, &binding);
-            node = node->nextNodePtr;
-        }
-    }
+    clearBindingPtrHashSet(pGfxContext, pImage->bindingPtrHashSet);
     tknDestroyHashSet(pImage->bindingPtrHashSet);
     destroyVkImage(pGfxContext, pImage->vkImage, pImage->vkDeviceMemory, pImage->vkImageView);
     tknFree(pImage);
@@ -275,7 +279,7 @@ UniformBuffer *createUniformBufferPtr(GfxContext *pGfxContext, VkDeviceSize vkDe
     TknHashSet bindingPtrHashSet = tknCreateHashSet(TKN_DEFAULT_COLLECTION_SIZE);
     VkDeviceSize size = vkDeviceSize;
 
-    createBuffer(pGfxContext, size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &vkBuffer, &vkDeviceMemory);
+    createVkBuffer(pGfxContext, size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &vkBuffer, &vkDeviceMemory);
     VkDevice vkDevice = pGfxContext->vkDevice;
     assertVkResult(vkMapMemory(vkDevice, vkDeviceMemory, 0, size, 0, &mapped));
     *pUniformBuffer = (UniformBuffer){
@@ -290,21 +294,10 @@ UniformBuffer *createUniformBufferPtr(GfxContext *pGfxContext, VkDeviceSize vkDe
 }
 void destroyUniformBufferPtr(GfxContext *pGfxContext, UniformBuffer *pUniformBuffer)
 {
-    for (uint32_t i = 0; i < pUniformBuffer->bindingPtrHashSet.capacity; i++)
-    {
-        TknListNode *node = pUniformBuffer->bindingPtrHashSet.nodePtrs[i];
-        while (node)
-        {
-            Binding *pBinding = (Binding *)node->pointer;
-            Binding binding = *pBinding;
-            binding.bindingUnion = getNullBindingUnion(pBinding->vkDescriptorType);
-            updateBindings(pGfxContext, 1, &binding);
-            node = node->nextNodePtr;
-        }
-    }
+    clearBindingPtrHashSet(pGfxContext, pUniformBuffer->bindingPtrHashSet);
 
     tknDestroyHashSet(pUniformBuffer->bindingPtrHashSet);
-    destroyBuffer(pGfxContext, pUniformBuffer->vkBuffer, pUniformBuffer->vkDeviceMemory);
+    destroyVkBuffer(pGfxContext, pUniformBuffer->vkBuffer, pUniformBuffer->vkDeviceMemory);
     tknFree(pUniformBuffer);
 }
 void updateUniformBufferPtr(GfxContext *pGfxContext, UniformBuffer *pUniformBuffer, const void *data, VkDeviceSize vkDeviceSize)

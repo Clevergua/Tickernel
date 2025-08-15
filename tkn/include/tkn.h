@@ -42,6 +42,5 @@ void updateUniformBufferPtr(GfxContext *pGfxContext, UniformBuffer *pUniformBuff
 
 void tknError(char const *const _Format, ...);
 void tknAssert(bool condition, char const *const _Format, ...);
-void tknSleep(uint32_t milliseconds);
 void *tknMalloc(size_t size);
 void tknFree(void *ptr);

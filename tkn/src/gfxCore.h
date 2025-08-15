@@ -18,13 +18,6 @@ struct Image
     TknHashSet bindingPtrHashSet;
 };
 
-struct MappedBuffer
-{
-    VkBuffer vkBuffer;
-    VkDeviceMemory vkDeviceMemory;
-    void *mapped;
-};
-
 struct UniformBuffer
 {
     VkBuffer vkBuffer;
@@ -177,7 +170,7 @@ typedef struct
 
 typedef struct
 {
-
+    TknHashSet materialPtrHashSet;
 } Mesh;
 struct Material
 {
