@@ -111,7 +111,7 @@ static void destroySubpass(GfxContext *pGfxContext, Subpass subpass)
             }
             else
             {
-                tknError("Input attachment is swapchian attachment");
+                tknError("Input attachment is swapchain attachment");
             }
         }
     }
