@@ -170,8 +170,22 @@ typedef struct
 
 typedef struct
 {
+    VkBuffer vertexVkBuffer;
+    VkDeviceMemory vertexVkDeviceMemory;
+    uint32_t vertexCount;
+
+    VkBuffer indexVkBuffer;
+    VkDeviceMemory indexVkDeviceMemory;
+    uint32_t indexCount;
+
+    VkBuffer instanceVkBuffer;
+    VkDeviceMemory instanceVkDeviceMemory;
+    void *instanceMappedBuffer;
+    uint32_t instanceCount;
+
     TknHashSet materialPtrHashSet;
 } Mesh;
+
 struct Material
 {
     VkDescriptorSet vkDescriptorSet;

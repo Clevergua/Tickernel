@@ -633,11 +633,28 @@ static void recordCommandBuffer(GfxContext *pGfxContext, uint32_t swapchainIndex
                     for (uint32_t meshPtrIndex = 0; meshPtrIndex < pMaterial->meshPtrDynamicArray.count; meshPtrIndex++)
                     {
                         Mesh *pMesh = *(Mesh **)tknGetFromDynamicArray(&pMaterial->meshPtrDynamicArray, meshPtrIndex);
-                        // TODO
-                        // vkCmdBindVertexBuffers(vkCommandBuffer, 0, 1, pMesh->VkBuffer, 0);
-                        // vkCmdBindIndexBuffer(vkCommandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT16);
-                        // vkCmdDrawIndexed(vkCommandBuffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
-                        
+                        if (pMesh->vertexCount > 0 && pMesh->instanceCount > 0)
+                        {
+                            VkBuffer vertexBuffers[] = {pMesh->vertexVkBuffer, pMesh->instanceMappedBuffer};
+                            if (pMesh->indexCount > 0)
+                            {
+                                VkDeviceSize offsets[] = {0, 0};
+                                vkCmdBindVertexBuffers(vkCommandBuffer, 0, 2, vertexBuffers, offsets);
+                                vkCmdBindIndexBuffer(vkCommandBuffer, pMesh->indexVkBuffer, 0, VK_INDEX_TYPE_UINT16);
+                                vkCmdDrawIndexed(vkCommandBuffer, pMesh->indexCount, pMesh->instanceCount, 0, 0, 0);
+                            }
+                            else
+                            {
+                                VkDeviceSize offsets[] = {0, 0};
+                                vkCmdBindVertexBuffers(vkCommandBuffer, 0, 2, vertexBuffers, offsets);
+                                vkCmdBindIndexBuffer(vkCommandBuffer, pMesh->indexVkBuffer, 0, VK_INDEX_TYPE_UINT16);
+                                vkCmdDraw(vkCommandBuffer, pMesh->vertexCount, pMesh->instanceCount, 0, 0);
+                            }
+                        }
+                        else
+                        {
+                            // skip
+                        }
                     }
                 }
             }
