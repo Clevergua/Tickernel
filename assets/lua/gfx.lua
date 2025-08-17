@@ -7,8 +7,9 @@ function gfx.getSupportedFormat(pGfxContext, candidateCount, candidates, tiling,
 end
 
 -- RenderPass *createRenderPassPtr(GfxContext *pGfxContext, uint32_t attachmentCount, VkAttachmentDescription *vkAttachmentDescriptions, Attachment **inputAttachmentPtrs, uint32_t subpassCount, VkSubpassDescription *vkSubpassDescriptions, uint32_t spvPathCount, const char **spvPaths, uint32_t vkSubpassDependencyCount, VkSubpassDependency *vkSubpassDependencies, uint32_t renderPassIndex);
-function gfx.createRenderPassPtr(pGfxContext, vkAttachmentDescriptions, pAttachments, vkSubpassDescriptions,
-                                 spvPathsArray, vkSubpassDependencies, renderPassIndex)
+function gfx.createRenderPassPtr(pGfxContext, vkAttachmentDescriptions, pAttachments, vkClearValues,
+                                 vkSubpassDescriptions,
+                                 spvPathsArray, vkSubpassDependencies)
     local pRenderPass
     return pRenderPass
 end

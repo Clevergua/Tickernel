@@ -12,6 +12,17 @@ static void tknInternalError(const char *prefix, const char *format, va_list arg
     abort();
 }
 
+void tknWarning(const char *format, ...)
+{
+    va_list args;
+    va_start(args, format);
+    fprintf(stderr, "WARNING: ");
+    vfprintf(stderr, format, args);
+    fprintf(stderr, "\n");
+    va_end(args);
+}
+
+
 void tknError(const char *format, ...)
 {
     va_list args;

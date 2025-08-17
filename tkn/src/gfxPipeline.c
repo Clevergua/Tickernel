@@ -180,7 +180,7 @@ DescriptorSet *createDescriptorSetPtr(GfxContext *pGfxContext, uint32_t spvRefle
             else
             {
                 // Skip
-                tknError("Descriptor set %d\n", spvReflectDescriptorSet.set);
+                tknError("Skipping descriptor set %d because of target set %d\n ", spvReflectDescriptorSet.set, set);
             }
         }
     }
@@ -264,7 +264,7 @@ DescriptorSet *createDescriptorSetPtr(GfxContext *pGfxContext, uint32_t spvRefle
             else
             {
                 // Skip
-                tknError("Descriptor set %d\n", spvReflectDescriptorSet.set);
+
             }
         }
     }

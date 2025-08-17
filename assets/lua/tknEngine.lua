@@ -6,7 +6,7 @@ local tknEngine = {
 function tknEngine.start(pGfxContext, assetsPath)
     print("Lua start")
     tknEngine.assetsPath = assetsPath
-    srp.setUp(pGfxContext, assetsPath)
+    srp.setup(pGfxContext, assetsPath)
 end
 
 function tknEngine.stop(pGfxContext)

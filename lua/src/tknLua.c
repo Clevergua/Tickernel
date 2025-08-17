@@ -1,4 +1,3 @@
-
 #include "tknLuaBinding.h"
 
 struct TknContext
@@ -9,15 +8,15 @@ struct TknContext
 
 static void assertLuaResult(lua_State *pLuaState, int result)
 {
-    if (LUA_OK == result)
+    if (LUA_OK != result)
     {
-        // nothing
-    }
-    else
-    {
-        printLuaStack(pLuaState);
         const char *err = lua_tostring(pLuaState, -1);
+        if (err == NULL) err = "unknown error";
+        luaL_traceback(pLuaState, pLuaState, err, 0);
+        const char *fullTraceback = lua_tostring(pLuaState, -1);
+        printf("Lua Error with Stack Trace:\n%s\n", fullTraceback);
         tknError("Lua error: %s (result: %d)", err, result);
+        lua_pop(pLuaState, 2);
     }
 }
 

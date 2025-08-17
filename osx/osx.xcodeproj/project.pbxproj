@@ -50,6 +50,12 @@
 			path = osx;
 			sourceTree = "<group>";
 		};
+		DEF6D0B72E521BCA00D7310A /* tkn */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			name = tkn;
+			path = ../tkn;
+			sourceTree = SOURCE_ROOT;
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -70,6 +76,7 @@
 		DE6CC08C2D39397000D80E9A = {
 			isa = PBXGroup;
 			children = (
+				DEF6D0B72E521BCA00D7310A /* tkn */,
 				DEE96E042E3FC89D003ED6AF /* assets */,
 				DE6CC0972D39397000D80E9A /* osx */,
 				DE6CC3392D3950F500D80E9A /* Frameworks */,
@@ -114,6 +121,7 @@
 			);
 			fileSystemSynchronizedGroups = (
 				DE6CC0972D39397000D80E9A /* osx */,
+				DEF6D0B72E521BCA00D7310A /* tkn */,
 			);
 			name = osx;
 			packageProductDependencies = (

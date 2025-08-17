@@ -424,10 +424,24 @@ void updateInputAttachmentBindings(GfxContext *pGfxContext, uint32_t inputAttach
         {
             Binding descriptor = inputAttachmentBindings[inputAttachmentBindingIndex];
             tknAssert(VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT == descriptor.vkDescriptorType, "Input attachment descriptor type mismatch!");
+            Attachment *pAttachment = descriptor.bindingUnion.inputAttachmentBinding.pAttachment;
+            VkImageView vkImageView;
+            if (ATTACHMENT_TYPE_DYNAMIC == pAttachment->attachmentType)
+            {
+                vkImageView = pAttachment->attachmentUnion.dynamicAttachment.vkImageView;
+            }
+            else if (ATTACHMENT_TYPE_FIXED == pAttachment->attachmentType)
+            {
+                vkImageView = pAttachment->attachmentUnion.fixedAttachment.vkImageView;
+            }
+            else
+            {
+                tknError("Swapchain attachment cannot be used as input attachment (attachment type: %d)", pAttachment->attachmentType);
+            }
 
             vkDescriptorImageInfos[inputAttachmentBindingIndex] = (VkDescriptorImageInfo){
                 .sampler = VK_NULL_HANDLE,
-                .imageView = VK_NULL_HANDLE,
+                .imageView = vkImageView,
                 .imageLayout = descriptor.bindingUnion.inputAttachmentBinding.vkImageLayout,
             };
             vkWriteDescriptorSets[inputAttachmentBindingIndex] = (VkWriteDescriptorSet){

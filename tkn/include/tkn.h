@@ -41,6 +41,7 @@ void destroyUniformBufferPtr(GfxContext *pGfxContext, UniformBuffer *pUniformBuf
 void updateUniformBufferPtr(GfxContext *pGfxContext, UniformBuffer *pUniformBuffer, const void *data, VkDeviceSize vkDeviceSize);
 
 void tknError(char const *const _Format, ...);
+void tknWarning(const char *format, ...);
 void tknAssert(bool condition, char const *const _Format, ...);
 void *tknMalloc(size_t size);
 void tknFree(void *ptr);
