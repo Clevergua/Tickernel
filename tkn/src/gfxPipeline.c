@@ -92,7 +92,7 @@ static void destroySubpass(GfxContext *pGfxContext, Subpass subpass)
     for (uint32_t pipelinePtrIndex = 0; pipelinePtrIndex < subpass.pipelinePtrDynamicArray.count; pipelinePtrIndex++)
     {
         Pipeline *pPipeline = *(Pipeline **)tknGetFromDynamicArray(&subpass.pipelinePtrDynamicArray, pipelinePtrIndex);
-        // destroyPipeline(pGfxContext, pPipeline);
+        destroyPipelinePtr(pGfxContext, pPipeline);
     }
     for (uint32_t descriptorIndex = 0; descriptorIndex < subpass.pSubpassDescriptorSet->descriptorCount; descriptorIndex++)
     {
@@ -620,8 +620,8 @@ Pipeline *createPipelinePtr(GfxContext *pGfxContext, RenderPass *pRenderPass, ui
 void destroyPipelinePtr(GfxContext *pGfxContext, Pipeline *pPipeline)
 {
     VkDevice vkDevice = pGfxContext->vkDevice;
+    destroyDescriptorSetPtr(pGfxContext, pPipeline->pPipelineDescriptorSet);
     vkDestroyPipeline(vkDevice, pPipeline->vkPipeline, NULL);
     vkDestroyPipelineLayout(vkDevice, pPipeline->vkPipelineLayout, NULL);
-    destroyDescriptorSetPtr(pGfxContext, pPipeline->pPipelineDescriptorSet);
     tknFree(pPipeline);
 }
