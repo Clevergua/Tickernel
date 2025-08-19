@@ -8,6 +8,7 @@ typedef struct GfxContext GfxContext;
 typedef struct RenderPass RenderPass;
 typedef struct Pipeline Pipeline;
 typedef struct Material Material;
+typedef struct Mesh Mesh;
 
 typedef struct Attachment Attachment;
 typedef struct Image Image;
@@ -40,7 +41,8 @@ UniformBuffer *createUniformBufferPtr(GfxContext *pGfxContext, VkDeviceSize vkDe
 void destroyUniformBufferPtr(GfxContext *pGfxContext, UniformBuffer *pUniformBuffer);
 void updateUniformBufferPtr(GfxContext *pGfxContext, UniformBuffer *pUniformBuffer, const void *data, VkDeviceSize vkDeviceSize);
 
-
+Mesh *createMeshPtr(GfxContext *pGfxContext, void *vertices, uint32_t vertexCount, VkDeviceSize vertexSize, void *indices, uint32_t indexCount, VkIndexType vkIndexType, void *instances, uint32_t maxInstanceCount, VkDeviceSize instanceSize);
+void destroyMeshPtr(GfxContext *pGfxContext, Mesh *pMesh);
 
 void tknError(char const *const _Format, ...);
 void tknWarning(const char *format, ...);

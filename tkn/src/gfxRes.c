@@ -659,3 +659,40 @@ void updateBindings(GfxContext *pGfxContext, uint32_t bindingCount, Binding *bin
         return;
     }
 }
+
+Mesh *createMeshPtr(GfxContext *pGfxContext, void *vertices, uint32_t vertexCount, VkDeviceSize vertexSize, void *indices, uint32_t indexCount, VkIndexType vkIndexType, void *instances, uint32_t maxInstanceCount, VkDeviceSize instanceSize)
+{
+    Mesh *pMesh = tknMalloc(sizeof(Mesh));
+    VkBuffer vertexVkBuffer = VK_NULL_HANDLE;
+    VkDeviceMemory vertexVkDeviceMemory = VK_NULL_HANDLE;
+
+    VkBuffer indexVkBuffer = VK_NULL_HANDLE;
+    VkDeviceMemory indexVkDeviceMemory = VK_NULL_HANDLE;
+
+    VkBuffer instanceVkBuffer = VK_NULL_HANDLE;
+    VkDeviceMemory instanceVkDeviceMemory = VK_NULL_HANDLE;
+    void *instanceMappedBuffer = NULL;
+    uint32_t instanceCount = 0;
+
+    TknHashSet materialPtrHashSet = tknCreateHashSet(TKN_DEFAULT_COLLECTION_SIZE);
+    createVkBuffer(pGfxContext, vertexCount * vertexSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &vertexVkBuffer, &vertexVkDeviceMemory);
+    *pMesh = (Mesh){
+        .vertexVkBuffer = vertexVkBuffer,
+        .vertexVkDeviceMemory = vertexVkDeviceMemory,
+        .vertexCount = vertexCount,
+        .indexVkBuffer = indexVkBuffer,
+        .indexVkDeviceMemory = indexVkDeviceMemory,
+        .indexCount = indexCount,
+        .instanceVkBuffer = instanceVkBuffer,
+        .instanceVkDeviceMemory = instanceVkDeviceMemory,
+        .instanceMappedBuffer = instanceMappedBuffer,
+        .instanceCount = instanceCount,
+        .maxInstanceCount = maxInstanceCount,
+        .materialPtrHashSet = materialPtrHashSet,
+    };
+    return pMesh;
+}
+
+void destroyMeshPtr(GfxContext *pGfxContext, Mesh *pMesh)
+{
+}

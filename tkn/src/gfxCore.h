@@ -168,7 +168,7 @@ typedef struct
     VkDescriptorType *vkDescriptorTypes;
 } DescriptorSet;
 
-typedef struct
+struct Mesh
 {
     VkBuffer vertexVkBuffer;
     VkDeviceMemory vertexVkDeviceMemory;
@@ -182,9 +182,10 @@ typedef struct
     VkDeviceMemory instanceVkDeviceMemory;
     void *instanceMappedBuffer;
     uint32_t instanceCount;
+    uint32_t maxInstanceCount;
 
     TknHashSet materialPtrHashSet;
-} Mesh;
+};
 
 struct Material
 {
