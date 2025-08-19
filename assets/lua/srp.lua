@@ -1,9 +1,6 @@
 require("vulkan")
 local srp = {}
 local deferredRenderPass = require("deferredRenderPass")
--- local geometryPipeline = require("geometryPipeline")
--- local lightingPipeline = require("lightingPipeline")
--- local postProgressPipeline = require("postProgressPipeline")
 
 function srp.setup(pGfxContext, assetsPath)
 

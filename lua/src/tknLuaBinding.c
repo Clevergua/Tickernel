@@ -146,7 +146,7 @@ static int luaCreateRenderPassPtr(lua_State *pLuaState)
     {
         lua_rawgeti(pLuaState, -4, i + 1);
         VkClearValue clearValue = {0};
-        
+
         // Check if it's a depth/stencil clear value (has depth field)
         lua_getfield(pLuaState, -1, "depth");
         if (!lua_isnil(pLuaState, -1))
@@ -154,7 +154,7 @@ static int luaCreateRenderPassPtr(lua_State *pLuaState)
             // This is a depth/stencil clear value
             clearValue.depthStencil.depth = (float)lua_tonumber(pLuaState, -1);
             lua_pop(pLuaState, 1);
-            
+
             lua_getfield(pLuaState, -1, "stencil");
             clearValue.depthStencil.stencil = (uint32_t)lua_tointeger(pLuaState, -1);
             lua_pop(pLuaState, 1);
@@ -170,7 +170,7 @@ static int luaCreateRenderPassPtr(lua_State *pLuaState)
                 lua_pop(pLuaState, 1);
             }
         }
-        
+
         vkClearValues[i] = clearValue;
         lua_pop(pLuaState, 1);
     }
@@ -370,6 +370,511 @@ static int luaDestroyRenderPassPtr(lua_State *pLuaState)
     return 0;
 }
 
+static int luaCreatePipelinePtr(lua_State *pLuaState)
+{
+    // Get parameters from Lua stack (12 parameters total)
+    GfxContext *pGfxContext = (GfxContext *)lua_touserdata(pLuaState, -12);
+    RenderPass *pRenderPass = (RenderPass *)lua_touserdata(pLuaState, -11);
+    uint32_t subpassIndex = (uint32_t)lua_tointeger(pLuaState, -10);
+
+    // Get spvPaths array (parameter 4 at index -9)
+    lua_len(pLuaState, -9);
+    uint32_t spvPathCount = (uint32_t)lua_tointeger(pLuaState, -1);
+    lua_pop(pLuaState, 1);
+    const char **spvPaths = tknMalloc(sizeof(const char *) * spvPathCount);
+    for (uint32_t i = 0; i < spvPathCount; i++)
+    {
+        lua_rawgeti(pLuaState, -9, i + 1);
+        spvPaths[i] = lua_tostring(pLuaState, -1);
+        lua_pop(pLuaState, 1);
+    }
+
+    // Parse VkPipelineVertexInputStateCreateInfo (parameter 5 at index -8)
+    VkPipelineVertexInputStateCreateInfo vkPipelineVertexInputStateCreateInfo = {0};
+    vkPipelineVertexInputStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+
+    // Get vertex binding descriptions
+    lua_getfield(pLuaState, -8, "pVertexBindingDescriptions");
+    lua_len(pLuaState, -1);
+    vkPipelineVertexInputStateCreateInfo.vertexBindingDescriptionCount = (uint32_t)lua_tointeger(pLuaState, -1);
+    lua_pop(pLuaState, 1);
+
+    VkVertexInputBindingDescription *pVertexBindingDescriptions = NULL;
+    if (vkPipelineVertexInputStateCreateInfo.vertexBindingDescriptionCount > 0)
+    {
+        pVertexBindingDescriptions = tknMalloc(sizeof(VkVertexInputBindingDescription) * vkPipelineVertexInputStateCreateInfo.vertexBindingDescriptionCount);
+        for (uint32_t i = 0; i < vkPipelineVertexInputStateCreateInfo.vertexBindingDescriptionCount; i++)
+        {
+            lua_rawgeti(pLuaState, -1, i + 1);
+
+            lua_getfield(pLuaState, -1, "binding");
+            pVertexBindingDescriptions[i].binding = (uint32_t)lua_tointeger(pLuaState, -1);
+            lua_pop(pLuaState, 1);
+
+            lua_getfield(pLuaState, -1, "stride");
+            pVertexBindingDescriptions[i].stride = (uint32_t)lua_tointeger(pLuaState, -1);
+            lua_pop(pLuaState, 1);
+
+            lua_getfield(pLuaState, -1, "inputRate");
+            pVertexBindingDescriptions[i].inputRate = (VkVertexInputRate)lua_tointeger(pLuaState, -1);
+            lua_pop(pLuaState, 1);
+
+            lua_pop(pLuaState, 1); // Pop the binding description table
+        }
+    }
+    vkPipelineVertexInputStateCreateInfo.pVertexBindingDescriptions = pVertexBindingDescriptions;
+    lua_pop(pLuaState, 1); // Pop pVertexBindingDescriptions
+
+    // Get vertex attribute descriptions
+    lua_getfield(pLuaState, -8, "pVertexAttributeDescriptions");
+    lua_len(pLuaState, -1);
+    vkPipelineVertexInputStateCreateInfo.vertexAttributeDescriptionCount = (uint32_t)lua_tointeger(pLuaState, -1);
+    lua_pop(pLuaState, 1);
+
+    VkVertexInputAttributeDescription *pVertexAttributeDescriptions = NULL;
+    if (vkPipelineVertexInputStateCreateInfo.vertexAttributeDescriptionCount > 0)
+    {
+        pVertexAttributeDescriptions = tknMalloc(sizeof(VkVertexInputAttributeDescription) * vkPipelineVertexInputStateCreateInfo.vertexAttributeDescriptionCount);
+        for (uint32_t i = 0; i < vkPipelineVertexInputStateCreateInfo.vertexAttributeDescriptionCount; i++)
+        {
+            lua_rawgeti(pLuaState, -1, i + 1);
+
+            lua_getfield(pLuaState, -1, "location");
+            pVertexAttributeDescriptions[i].location = (uint32_t)lua_tointeger(pLuaState, -1);
+            lua_pop(pLuaState, 1);
+
+            lua_getfield(pLuaState, -1, "binding");
+            pVertexAttributeDescriptions[i].binding = (uint32_t)lua_tointeger(pLuaState, -1);
+            lua_pop(pLuaState, 1);
+
+            lua_getfield(pLuaState, -1, "format");
+            pVertexAttributeDescriptions[i].format = (VkFormat)lua_tointeger(pLuaState, -1);
+            lua_pop(pLuaState, 1);
+
+            lua_getfield(pLuaState, -1, "offset");
+            pVertexAttributeDescriptions[i].offset = (uint32_t)lua_tointeger(pLuaState, -1);
+            lua_pop(pLuaState, 1);
+
+            lua_pop(pLuaState, 1); // Pop the attribute description table
+        }
+    }
+    vkPipelineVertexInputStateCreateInfo.pVertexAttributeDescriptions = pVertexAttributeDescriptions;
+    lua_pop(pLuaState, 1); // Pop pVertexAttributeDescriptions
+
+    // Parse VkPipelineInputAssemblyStateCreateInfo (parameter 6 at index -7)
+    VkPipelineInputAssemblyStateCreateInfo vkPipelineInputAssemblyStateCreateInfo = {0};
+    vkPipelineInputAssemblyStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+
+    lua_getfield(pLuaState, -7, "topology");
+    vkPipelineInputAssemblyStateCreateInfo.topology = (VkPrimitiveTopology)lua_tointeger(pLuaState, -1);
+    lua_pop(pLuaState, 1);
+
+    lua_getfield(pLuaState, -7, "primitiveRestartEnable");
+    vkPipelineInputAssemblyStateCreateInfo.primitiveRestartEnable = lua_toboolean(pLuaState, -1) ? VK_TRUE : VK_FALSE;
+    lua_pop(pLuaState, 1);
+
+    // Parse VkPipelineViewportStateCreateInfo (parameter 7 at index -6)
+    VkPipelineViewportStateCreateInfo vkPipelineViewportStateCreateInfo = {0};
+    vkPipelineViewportStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+
+    // Get viewports
+    lua_getfield(pLuaState, -6, "pViewports");
+    lua_len(pLuaState, -1);
+    vkPipelineViewportStateCreateInfo.viewportCount = (uint32_t)lua_tointeger(pLuaState, -1);
+    lua_pop(pLuaState, 1);
+
+    VkViewport *pViewports = NULL;
+    if (vkPipelineViewportStateCreateInfo.viewportCount > 0)
+    {
+        pViewports = tknMalloc(sizeof(VkViewport) * vkPipelineViewportStateCreateInfo.viewportCount);
+        for (uint32_t i = 0; i < vkPipelineViewportStateCreateInfo.viewportCount; i++)
+        {
+            lua_rawgeti(pLuaState, -1, i + 1);
+
+            lua_getfield(pLuaState, -1, "x");
+            pViewports[i].x = (float)lua_tonumber(pLuaState, -1);
+            lua_pop(pLuaState, 1);
+
+            lua_getfield(pLuaState, -1, "y");
+            pViewports[i].y = (float)lua_tonumber(pLuaState, -1);
+            lua_pop(pLuaState, 1);
+
+            lua_getfield(pLuaState, -1, "width");
+            pViewports[i].width = (float)lua_tonumber(pLuaState, -1);
+            lua_pop(pLuaState, 1);
+
+            lua_getfield(pLuaState, -1, "height");
+            pViewports[i].height = (float)lua_tonumber(pLuaState, -1);
+            lua_pop(pLuaState, 1);
+
+            lua_getfield(pLuaState, -1, "minDepth");
+            pViewports[i].minDepth = (float)lua_tonumber(pLuaState, -1);
+            lua_pop(pLuaState, 1);
+
+            lua_getfield(pLuaState, -1, "maxDepth");
+            pViewports[i].maxDepth = (float)lua_tonumber(pLuaState, -1);
+            lua_pop(pLuaState, 1);
+
+            lua_pop(pLuaState, 1); // Pop viewport table
+        }
+    }
+    vkPipelineViewportStateCreateInfo.pViewports = pViewports;
+    lua_pop(pLuaState, 1); // Pop pViewports
+
+    // Get scissors
+    lua_getfield(pLuaState, -6, "pScissors");
+    lua_len(pLuaState, -1);
+    vkPipelineViewportStateCreateInfo.scissorCount = (uint32_t)lua_tointeger(pLuaState, -1);
+    lua_pop(pLuaState, 1);
+
+    VkRect2D *pScissors = NULL;
+    if (vkPipelineViewportStateCreateInfo.scissorCount > 0)
+    {
+        pScissors = tknMalloc(sizeof(VkRect2D) * vkPipelineViewportStateCreateInfo.scissorCount);
+        for (uint32_t i = 0; i < vkPipelineViewportStateCreateInfo.scissorCount; i++)
+        {
+            lua_rawgeti(pLuaState, -1, i + 1);
+
+            lua_getfield(pLuaState, -1, "offset");
+            lua_rawgeti(pLuaState, -1, 1);
+            pScissors[i].offset.x = (int32_t)lua_tointeger(pLuaState, -1);
+            lua_pop(pLuaState, 1);
+            lua_rawgeti(pLuaState, -1, 2);
+            pScissors[i].offset.y = (int32_t)lua_tointeger(pLuaState, -1);
+            lua_pop(pLuaState, 2); // Pop y and offset
+
+            lua_getfield(pLuaState, -1, "extent");
+            lua_rawgeti(pLuaState, -1, 1);
+            pScissors[i].extent.width = (uint32_t)lua_tointeger(pLuaState, -1);
+            lua_pop(pLuaState, 1);
+            lua_rawgeti(pLuaState, -1, 2);
+            pScissors[i].extent.height = (uint32_t)lua_tointeger(pLuaState, -1);
+            lua_pop(pLuaState, 2); // Pop height and extent
+
+            lua_pop(pLuaState, 1); // Pop scissor table
+        }
+    }
+    vkPipelineViewportStateCreateInfo.pScissors = pScissors;
+    lua_pop(pLuaState, 1); // Pop pScissors
+
+    // Parse VkPipelineRasterizationStateCreateInfo (parameter 8 at index -5)
+    VkPipelineRasterizationStateCreateInfo vkPipelineRasterizationStateCreateInfo = {0};
+    vkPipelineRasterizationStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+
+    lua_getfield(pLuaState, -5, "depthClampEnable");
+    vkPipelineRasterizationStateCreateInfo.depthClampEnable = lua_toboolean(pLuaState, -1) ? VK_TRUE : VK_FALSE;
+    lua_pop(pLuaState, 1);
+
+    lua_getfield(pLuaState, -5, "rasterizerDiscardEnable");
+    vkPipelineRasterizationStateCreateInfo.rasterizerDiscardEnable = lua_toboolean(pLuaState, -1) ? VK_TRUE : VK_FALSE;
+    lua_pop(pLuaState, 1);
+
+    lua_getfield(pLuaState, -5, "polygonMode");
+    vkPipelineRasterizationStateCreateInfo.polygonMode = (VkPolygonMode)lua_tointeger(pLuaState, -1);
+    lua_pop(pLuaState, 1);
+
+    lua_getfield(pLuaState, -5, "cullMode");
+    vkPipelineRasterizationStateCreateInfo.cullMode = (VkCullModeFlags)lua_tointeger(pLuaState, -1);
+    lua_pop(pLuaState, 1);
+
+    lua_getfield(pLuaState, -5, "frontFace");
+    vkPipelineRasterizationStateCreateInfo.frontFace = (VkFrontFace)lua_tointeger(pLuaState, -1);
+    lua_pop(pLuaState, 1);
+
+    lua_getfield(pLuaState, -5, "depthBiasEnable");
+    vkPipelineRasterizationStateCreateInfo.depthBiasEnable = lua_toboolean(pLuaState, -1) ? VK_TRUE : VK_FALSE;
+    lua_pop(pLuaState, 1);
+
+    lua_getfield(pLuaState, -5, "depthBiasConstantFactor");
+    vkPipelineRasterizationStateCreateInfo.depthBiasConstantFactor = (float)lua_tonumber(pLuaState, -1);
+    lua_pop(pLuaState, 1);
+
+    lua_getfield(pLuaState, -5, "depthBiasClamp");
+    vkPipelineRasterizationStateCreateInfo.depthBiasClamp = (float)lua_tonumber(pLuaState, -1);
+    lua_pop(pLuaState, 1);
+
+    lua_getfield(pLuaState, -5, "depthBiasSlopeFactor");
+    vkPipelineRasterizationStateCreateInfo.depthBiasSlopeFactor = (float)lua_tonumber(pLuaState, -1);
+    lua_pop(pLuaState, 1);
+
+    lua_getfield(pLuaState, -5, "lineWidth");
+    vkPipelineRasterizationStateCreateInfo.lineWidth = (float)lua_tonumber(pLuaState, -1);
+    lua_pop(pLuaState, 1);
+
+    // Parse VkPipelineMultisampleStateCreateInfo (parameter 9 at index -4)
+    VkPipelineMultisampleStateCreateInfo vkPipelineMultisampleStateCreateInfo = {0};
+    vkPipelineMultisampleStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+
+    lua_getfield(pLuaState, -4, "rasterizationSamples");
+    vkPipelineMultisampleStateCreateInfo.rasterizationSamples = (VkSampleCountFlagBits)lua_tointeger(pLuaState, -1);
+    lua_pop(pLuaState, 1);
+
+    lua_getfield(pLuaState, -4, "sampleShadingEnable");
+    vkPipelineMultisampleStateCreateInfo.sampleShadingEnable = lua_toboolean(pLuaState, -1) ? VK_TRUE : VK_FALSE;
+    lua_pop(pLuaState, 1);
+
+    lua_getfield(pLuaState, -4, "minSampleShading");
+    vkPipelineMultisampleStateCreateInfo.minSampleShading = (float)lua_tonumber(pLuaState, -1);
+    lua_pop(pLuaState, 1);
+
+    lua_getfield(pLuaState, -4, "alphaToCoverageEnable");
+    vkPipelineMultisampleStateCreateInfo.alphaToCoverageEnable = lua_toboolean(pLuaState, -1) ? VK_TRUE : VK_FALSE;
+    lua_pop(pLuaState, 1);
+
+    lua_getfield(pLuaState, -4, "alphaToOneEnable");
+    vkPipelineMultisampleStateCreateInfo.alphaToOneEnable = lua_toboolean(pLuaState, -1) ? VK_TRUE : VK_FALSE;
+    lua_pop(pLuaState, 1);
+
+    // Handle pSampleMask array
+    VkSampleMask *pSampleMask;
+    lua_getfield(pLuaState, -4, "pSampleMask");
+    if (lua_isnil(pLuaState, -1))
+    {
+        pSampleMask = NULL;
+    }
+    else
+    {
+        lua_len(pLuaState, -1);
+        uint32_t sampleMaskCount = (uint32_t)lua_tointeger(pLuaState, -1);
+        lua_pop(pLuaState, 1);
+
+        if (sampleMaskCount > 0)
+        {
+            pSampleMask = tknMalloc(sizeof(VkSampleMask) * sampleMaskCount);
+            for (uint32_t i = 0; i < sampleMaskCount; i++)
+            {
+                lua_rawgeti(pLuaState, -1, i + 1);
+                pSampleMask[i] = (VkSampleMask)lua_tointeger(pLuaState, -1);
+                lua_pop(pLuaState, 1);
+            }
+            vkPipelineMultisampleStateCreateInfo.pSampleMask = pSampleMask;
+        }
+    }
+    lua_pop(pLuaState, 1);
+
+    // Parse VkPipelineDepthStencilStateCreateInfo (parameter 10 at index -3)
+    VkPipelineDepthStencilStateCreateInfo vkPipelineDepthStencilStateCreateInfo = {0};
+    vkPipelineDepthStencilStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+
+    lua_getfield(pLuaState, -3, "depthTestEnable");
+    vkPipelineDepthStencilStateCreateInfo.depthTestEnable = lua_toboolean(pLuaState, -1) ? VK_TRUE : VK_FALSE;
+    lua_pop(pLuaState, 1);
+
+    lua_getfield(pLuaState, -3, "depthWriteEnable");
+    vkPipelineDepthStencilStateCreateInfo.depthWriteEnable = lua_toboolean(pLuaState, -1) ? VK_TRUE : VK_FALSE;
+    lua_pop(pLuaState, 1);
+
+    lua_getfield(pLuaState, -3, "depthCompareOp");
+    vkPipelineDepthStencilStateCreateInfo.depthCompareOp = (VkCompareOp)lua_tointeger(pLuaState, -1);
+    lua_pop(pLuaState, 1);
+
+    lua_getfield(pLuaState, -3, "depthBoundsTestEnable");
+    vkPipelineDepthStencilStateCreateInfo.depthBoundsTestEnable = lua_toboolean(pLuaState, -1) ? VK_TRUE : VK_FALSE;
+    lua_pop(pLuaState, 1);
+
+    lua_getfield(pLuaState, -3, "stencilTestEnable");
+    vkPipelineDepthStencilStateCreateInfo.stencilTestEnable = lua_toboolean(pLuaState, -1) ? VK_TRUE : VK_FALSE;
+    lua_pop(pLuaState, 1);
+
+    // Handle front stencil state
+    lua_getfield(pLuaState, -3, "front");
+    lua_getfield(pLuaState, -1, "failOp");
+    vkPipelineDepthStencilStateCreateInfo.front.failOp = (VkStencilOp)lua_tointeger(pLuaState, -1);
+    lua_pop(pLuaState, 1);
+
+    lua_getfield(pLuaState, -1, "passOp");
+    vkPipelineDepthStencilStateCreateInfo.front.passOp = (VkStencilOp)lua_tointeger(pLuaState, -1);
+    lua_pop(pLuaState, 1);
+
+    lua_getfield(pLuaState, -1, "depthFailOp");
+    vkPipelineDepthStencilStateCreateInfo.front.depthFailOp = (VkStencilOp)lua_tointeger(pLuaState, -1);
+    lua_pop(pLuaState, 1);
+
+    lua_getfield(pLuaState, -1, "compareOp");
+    vkPipelineDepthStencilStateCreateInfo.front.compareOp = (VkCompareOp)lua_tointeger(pLuaState, -1);
+    lua_pop(pLuaState, 1);
+
+    lua_getfield(pLuaState, -1, "compareMask");
+    vkPipelineDepthStencilStateCreateInfo.front.compareMask = (uint32_t)lua_tointeger(pLuaState, -1);
+    lua_pop(pLuaState, 1);
+
+    lua_getfield(pLuaState, -1, "writeMask");
+    vkPipelineDepthStencilStateCreateInfo.front.writeMask = (uint32_t)lua_tointeger(pLuaState, -1);
+    lua_pop(pLuaState, 1);
+
+    lua_getfield(pLuaState, -1, "reference");
+    vkPipelineDepthStencilStateCreateInfo.front.reference = (uint32_t)lua_tointeger(pLuaState, -1);
+    lua_pop(pLuaState, 2); // Pop reference and front
+
+    // Handle back stencil state
+    lua_getfield(pLuaState, -3, "back");
+    lua_getfield(pLuaState, -1, "failOp");
+    vkPipelineDepthStencilStateCreateInfo.back.failOp = (VkStencilOp)lua_tointeger(pLuaState, -1);
+    lua_pop(pLuaState, 1);
+
+    lua_getfield(pLuaState, -1, "passOp");
+    vkPipelineDepthStencilStateCreateInfo.back.passOp = (VkStencilOp)lua_tointeger(pLuaState, -1);
+    lua_pop(pLuaState, 1);
+
+    lua_getfield(pLuaState, -1, "depthFailOp");
+    vkPipelineDepthStencilStateCreateInfo.back.depthFailOp = (VkStencilOp)lua_tointeger(pLuaState, -1);
+    lua_pop(pLuaState, 1);
+
+    lua_getfield(pLuaState, -1, "compareOp");
+    vkPipelineDepthStencilStateCreateInfo.back.compareOp = (VkCompareOp)lua_tointeger(pLuaState, -1);
+    lua_pop(pLuaState, 1);
+
+    lua_getfield(pLuaState, -1, "compareMask");
+    vkPipelineDepthStencilStateCreateInfo.back.compareMask = (uint32_t)lua_tointeger(pLuaState, -1);
+    lua_pop(pLuaState, 1);
+
+    lua_getfield(pLuaState, -1, "writeMask");
+    vkPipelineDepthStencilStateCreateInfo.back.writeMask = (uint32_t)lua_tointeger(pLuaState, -1);
+    lua_pop(pLuaState, 1);
+
+    lua_getfield(pLuaState, -1, "reference");
+    vkPipelineDepthStencilStateCreateInfo.back.reference = (uint32_t)lua_tointeger(pLuaState, -1);
+    lua_pop(pLuaState, 2); // Pop reference and back
+
+    lua_getfield(pLuaState, -3, "minDepthBounds");
+    vkPipelineDepthStencilStateCreateInfo.minDepthBounds = (float)lua_tonumber(pLuaState, -1);
+    lua_pop(pLuaState, 1);
+
+    lua_getfield(pLuaState, -3, "maxDepthBounds");
+    vkPipelineDepthStencilStateCreateInfo.maxDepthBounds = (float)lua_tonumber(pLuaState, -1);
+    lua_pop(pLuaState, 1);
+
+    // Parse VkPipelineColorBlendStateCreateInfo (parameter 11 at index -2)
+    VkPipelineColorBlendStateCreateInfo vkPipelineColorBlendStateCreateInfo = {0};
+    vkPipelineColorBlendStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+
+    lua_getfield(pLuaState, -2, "logicOpEnable");
+    vkPipelineColorBlendStateCreateInfo.logicOpEnable = lua_toboolean(pLuaState, -1) ? VK_TRUE : VK_FALSE;
+    lua_pop(pLuaState, 1);
+
+    lua_getfield(pLuaState, -2, "logicOp");
+    vkPipelineColorBlendStateCreateInfo.logicOp = (VkLogicOp)lua_tointeger(pLuaState, -1);
+    lua_pop(pLuaState, 1);
+
+    // Get attachments
+    lua_getfield(pLuaState, -2, "pAttachments");
+    lua_len(pLuaState, -1);
+    vkPipelineColorBlendStateCreateInfo.attachmentCount = (uint32_t)lua_tointeger(pLuaState, -1);
+    lua_pop(pLuaState, 1);
+
+    VkPipelineColorBlendAttachmentState *pColorBlendAttachments = NULL;
+    if (vkPipelineColorBlendStateCreateInfo.attachmentCount > 0)
+    {
+        pColorBlendAttachments = tknMalloc(sizeof(VkPipelineColorBlendAttachmentState) * vkPipelineColorBlendStateCreateInfo.attachmentCount);
+        for (uint32_t i = 0; i < vkPipelineColorBlendStateCreateInfo.attachmentCount; i++)
+        {
+            lua_rawgeti(pLuaState, -1, i + 1);
+
+            lua_getfield(pLuaState, -1, "blendEnable");
+            pColorBlendAttachments[i].blendEnable = lua_toboolean(pLuaState, -1) ? VK_TRUE : VK_FALSE;
+            lua_pop(pLuaState, 1);
+
+            lua_getfield(pLuaState, -1, "srcColorBlendFactor");
+            pColorBlendAttachments[i].srcColorBlendFactor = (VkBlendFactor)lua_tointeger(pLuaState, -1);
+            lua_pop(pLuaState, 1);
+
+            lua_getfield(pLuaState, -1, "dstColorBlendFactor");
+            pColorBlendAttachments[i].dstColorBlendFactor = (VkBlendFactor)lua_tointeger(pLuaState, -1);
+            lua_pop(pLuaState, 1);
+
+            lua_getfield(pLuaState, -1, "colorBlendOp");
+            pColorBlendAttachments[i].colorBlendOp = (VkBlendOp)lua_tointeger(pLuaState, -1);
+            lua_pop(pLuaState, 1);
+
+            lua_getfield(pLuaState, -1, "srcAlphaBlendFactor");
+            pColorBlendAttachments[i].srcAlphaBlendFactor = (VkBlendFactor)lua_tointeger(pLuaState, -1);
+            lua_pop(pLuaState, 1);
+
+            lua_getfield(pLuaState, -1, "dstAlphaBlendFactor");
+            pColorBlendAttachments[i].dstAlphaBlendFactor = (VkBlendFactor)lua_tointeger(pLuaState, -1);
+            lua_pop(pLuaState, 1);
+
+            lua_getfield(pLuaState, -1, "alphaBlendOp");
+            pColorBlendAttachments[i].alphaBlendOp = (VkBlendOp)lua_tointeger(pLuaState, -1);
+            lua_pop(pLuaState, 1);
+
+            lua_getfield(pLuaState, -1, "colorWriteMask");
+            pColorBlendAttachments[i].colorWriteMask = (VkColorComponentFlags)lua_tointeger(pLuaState, -1);
+            lua_pop(pLuaState, 1);
+
+            lua_pop(pLuaState, 1); // Pop attachment table
+        }
+    }
+    vkPipelineColorBlendStateCreateInfo.pAttachments = pColorBlendAttachments;
+    lua_pop(pLuaState, 1); // Pop pAttachments
+
+    // Get blend constants
+    lua_getfield(pLuaState, -2, "blendConstants");
+    for (int i = 0; i < 4; i++)
+    {
+        lua_rawgeti(pLuaState, -1, i + 1);
+        vkPipelineColorBlendStateCreateInfo.blendConstants[i] = (float)lua_tonumber(pLuaState, -1);
+        lua_pop(pLuaState, 1);
+    }
+    lua_pop(pLuaState, 1); // Pop blendConstants
+
+    // Parse VkPipelineDynamicStateCreateInfo (parameter 12 at index -1)
+    VkPipelineDynamicStateCreateInfo vkPipelineDynamicStateCreateInfo = {0};
+    vkPipelineDynamicStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+
+    lua_getfield(pLuaState, -1, "pDynamicStates");
+    lua_len(pLuaState, -1);
+    vkPipelineDynamicStateCreateInfo.dynamicStateCount = (uint32_t)lua_tointeger(pLuaState, -1);
+    lua_pop(pLuaState, 1);
+
+    VkDynamicState *pDynamicStates = NULL;
+    if (vkPipelineDynamicStateCreateInfo.dynamicStateCount > 0)
+    {
+        pDynamicStates = tknMalloc(sizeof(VkDynamicState) * vkPipelineDynamicStateCreateInfo.dynamicStateCount);
+        for (uint32_t i = 0; i < vkPipelineDynamicStateCreateInfo.dynamicStateCount; i++)
+        {
+            lua_rawgeti(pLuaState, -1, i + 1);
+            pDynamicStates[i] = (VkDynamicState)lua_tointeger(pLuaState, -1);
+            lua_pop(pLuaState, 1);
+        }
+    }
+    vkPipelineDynamicStateCreateInfo.pDynamicStates = pDynamicStates;
+    lua_pop(pLuaState, 1); // Pop pDynamicStates
+
+    // Call the C function
+    Pipeline *pPipeline = createPipelinePtr(pGfxContext, pRenderPass, subpassIndex, spvPathCount, spvPaths,
+                                            vkPipelineVertexInputStateCreateInfo,
+                                            vkPipelineInputAssemblyStateCreateInfo,
+                                            vkPipelineViewportStateCreateInfo,
+                                            vkPipelineRasterizationStateCreateInfo,
+                                            vkPipelineMultisampleStateCreateInfo,
+                                            vkPipelineDepthStencilStateCreateInfo,
+                                            vkPipelineColorBlendStateCreateInfo,
+                                            vkPipelineDynamicStateCreateInfo);
+
+    // Clean up memory
+    tknFree(spvPaths);
+    tknFree(pVertexBindingDescriptions);
+    tknFree(pVertexAttributeDescriptions);
+    tknFree(pViewports);
+    tknFree(pScissors);
+    tknFree(pSampleMask);
+    tknFree(pColorBlendAttachments);
+    tknFree(pDynamicStates);
+
+    // Return Pipeline as userdata
+    lua_pushlightuserdata(pLuaState, pPipeline);
+    return 1;
+}
+
+static int luaDestroyPipelinePtr(lua_State *pLuaState)
+{
+    GfxContext *pGfxContext = (GfxContext *)lua_touserdata(pLuaState, -2);
+    Pipeline *pPipeline = (Pipeline *)lua_touserdata(pLuaState, -1);
+    destroyPipelinePtr(pGfxContext, pPipeline);
+    return 0;
+}
+
 void bindFunctions(lua_State *pLuaState)
 {
     luaL_Reg regs[] = {
@@ -381,6 +886,8 @@ void bindFunctions(lua_State *pLuaState)
         {"destroyFixedAttachmentPtr", luaDestroyFixedAttachmentPtr},
         {"createRenderPassPtr", luaCreateRenderPassPtr},
         {"destroyRenderPassPtr", luaDestroyRenderPassPtr},
+        {"createPipelinePtr", luaCreatePipelinePtr},
+        {"destroyPipelinePtr", luaDestroyPipelinePtr},
         {NULL, NULL},
     };
     luaL_newlib(pLuaState, regs);

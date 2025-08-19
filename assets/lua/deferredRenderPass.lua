@@ -1,6 +1,9 @@
+local geometryPipeline = require("geometryPipeline")
+local lightingPipeline = require("lightingPipeline")
+local postProcessPipeline = require("postProcessPipeline")
 local deferredRenderPass = {}
 
-function deferredRenderPass.createRenderPassPtr(pGfxContext, pAttachments, assetsPath)
+function deferredRenderPass.createRenderPass(pGfxContext, pAttachments, assetsPath)
     local colorAttachmentDescription = {
         samples = VK_SAMPLE_COUNT_1_BIT,
         loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
@@ -163,13 +166,29 @@ function deferredRenderPass.createRenderPassPtr(pGfxContext, pAttachments, asset
         }
     }
 
-    return gfx.createRenderPassPtr(pGfxContext, vkAttachmentDescriptions, pAttachments, vkClearValues,
+    local pRenderPass = gfx.createRenderPassPtr(pGfxContext, vkAttachmentDescriptions, pAttachments, vkClearValues,
         vkSubpassDescriptions,
         spvPathsArray, vkSubpassDependencies)
+
+    local pGeometryPipeline = geometryPipeline.createPipelinePtr(pGfxContext, pRenderPass, 0, assetsPath)
+    local pLightingPipeline = lightingPipeline.createPipelinePtr(pGfxContext, pRenderPass, 1, assetsPath)
+    local pPostProcessPipeline = postProcessPipeline.createPipelinePtr(pGfxContext, pRenderPass, 2, assetsPath)
+    deferredRenderPass.pRenderPass = pRenderPass
+    deferredRenderPass.pGeometryPipeline = pGeometryPipeline
+    deferredRenderPass.pLightingPipeline = pLightingPipeline
+    deferredRenderPass.pPostProcessPipeline = pPostProcessPipeline
 end
 
-function deferredRenderPass.destroyRenderPassPtr(pGfxContext, pRenderPass)
-    gfx.destroyRenderPassPtr(pGfxContext, pRenderPass)
+function deferredRenderPass.destroyRenderPass(pGfxContext)
+    postProcessPipeline.destroyPipelinePtr(pGfxContext, deferredRenderPass.pGeometryPipeline)
+    lightingPipeline.destroyPipelinePtr(pGfxContext, deferredRenderPass.pLightingPipeline)
+    geometryPipeline.destroyPipelinePtr(pGfxContext, deferredRenderPass.pPostProcessPipeline)
+    gfx.destroyRenderPassPtr(pGfxContext, deferredRenderPass.pRenderPass)
+
+    deferredRenderPass.pRenderPass = nil
+    deferredRenderPass.pGeometryPipeline = nil
+    deferredRenderPass.pLightingPipeline = nil
+    deferredRenderPass.pPostProcessPipeline = nil
 end
 
 return deferredRenderPass
