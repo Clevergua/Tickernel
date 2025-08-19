@@ -40,6 +40,8 @@ UniformBuffer *createUniformBufferPtr(GfxContext *pGfxContext, VkDeviceSize vkDe
 void destroyUniformBufferPtr(GfxContext *pGfxContext, UniformBuffer *pUniformBuffer);
 void updateUniformBufferPtr(GfxContext *pGfxContext, UniformBuffer *pUniformBuffer, const void *data, VkDeviceSize vkDeviceSize);
 
+
+
 void tknError(char const *const _Format, ...);
 void tknWarning(const char *format, ...);
 void tknAssert(bool condition, char const *const _Format, ...);

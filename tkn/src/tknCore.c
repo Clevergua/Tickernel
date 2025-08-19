@@ -42,7 +42,7 @@ void tknAssert(bool condition, const char *format, ...)
     }
 }
 
-static int allocTimes = 0;
+//static int allocTimes = 0;
 
 void *tknMalloc(size_t size)
 {

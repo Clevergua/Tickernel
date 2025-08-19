@@ -232,7 +232,6 @@ void destroyFixedAttachmentPtr(GfxContext *pGfxContext, Attachment *pAttachment)
     tknAssert(ATTACHMENT_TYPE_FIXED == pAttachment->attachmentType, "Attachment type mismatch!");
     tknAssert(0 == pAttachment->renderPassPtrHashSet.count, "Cannot destroy fixed attachment with render passes attached!");
     tknDestroyHashSet(pAttachment->renderPassPtrHashSet);
-    VkDevice vkDevice = pGfxContext->vkDevice;
     FixedAttachment fixedAttachment = pAttachment->attachmentUnion.fixedAttachment;
     destroyVkImage(pGfxContext, fixedAttachment.vkImage, fixedAttachment.vkDeviceMemory, fixedAttachment.vkImageView);
     tknDestroyHashSet(fixedAttachment.bindingPtrHashSet);
@@ -286,7 +285,7 @@ UniformBuffer *createUniformBufferPtr(GfxContext *pGfxContext, VkDeviceSize vkDe
         .vkBuffer = vkBuffer,
         .vkDeviceMemory = vkDeviceMemory,
         .mapped = mapped,
-        .bindingPtrHashSet = tknCreateHashSet(TKN_DEFAULT_COLLECTION_SIZE),
+        .bindingPtrHashSet = bindingPtrHashSet,
         .size = size,
     };
 
@@ -375,9 +374,12 @@ void destroyMaterialPtr(GfxContext *pGfxContext, Material *pMaterial)
             // Skip
         }
     }
-    updateBindings(pGfxContext, descriptorCount, bindings);
+    if (descriptorCount > 0)
+    {
+        updateBindings(pGfxContext, descriptorCount, bindings);
+    }
+
     tknFree(pMaterial->bindings);
-    vkFreeDescriptorSets(vkDevice, pMaterial->vkDescriptorPool, 1, &pMaterial->vkDescriptorSet);
     vkDestroyDescriptorPool(vkDevice, pMaterial->vkDescriptorPool, NULL);
     tknFree(pMaterial);
 }
@@ -425,7 +427,7 @@ void updateInputAttachmentBindings(GfxContext *pGfxContext, uint32_t inputAttach
             Binding descriptor = inputAttachmentBindings[inputAttachmentBindingIndex];
             tknAssert(VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT == descriptor.vkDescriptorType, "Input attachment descriptor type mismatch!");
             Attachment *pAttachment = descriptor.bindingUnion.inputAttachmentBinding.pAttachment;
-            VkImageView vkImageView;
+            VkImageView vkImageView = VK_NULL_HANDLE;
             if (ATTACHMENT_TYPE_DYNAMIC == pAttachment->attachmentType)
             {
                 vkImageView = pAttachment->attachmentUnion.dynamicAttachment.vkImageView;
