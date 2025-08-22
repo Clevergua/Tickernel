@@ -175,9 +175,25 @@ typedef enum
     MAX_VERTEX_BINDING_DESCRIPTION
 } VertexBindingDescription;
 
+typedef struct
+{
+    const char *name;
+    VkFormat vkFormat;
+    uint32_t count;
+} AttributeLayout;
+
+struct MeshLayout
+{
+    uint32_t vertexAttributeLayoutCount;
+    AttributeLayout *vertexAttributeLayouts;
+    uint32_t instanceAttributeLayoutCount;
+    AttributeLayout *instanceAttributeLayouts;
+    VkIndexType vkIndexType;
+};
 
 struct Mesh
 {
+
     VkBuffer vertexVkBuffer;
     VkDeviceMemory vertexVkDeviceMemory;
     uint32_t vertexCount;

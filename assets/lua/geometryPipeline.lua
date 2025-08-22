@@ -9,15 +9,6 @@ function geometryPipeline.createPipelinePtr(pGfxContext, pRenderPass, subpassInd
         primitiveRestartEnable = false,
     }
 
-    local vkPipelineViewportStateCreateInfo = {
-        pViewports = {
-            gfx.defaultViewport
-        },
-        pScissors = {
-            gfx.defaultScissor
-        },
-    }
-
     local vkPipelineRasterizationStateCreateInfo = {
         depthClampEnable = false,
         rasterizerDiscardEnable = false,
@@ -45,24 +36,6 @@ function geometryPipeline.createPipelinePtr(pGfxContext, pRenderPass, subpassInd
         depthCompareOp = VK_COMPARE_OP_LESS,
         depthBoundsTestEnable = false,
         stencilTestEnable = false,
-        front = {
-            failOp = VK_STENCIL_OP_KEEP,
-            passOp = VK_STENCIL_OP_KEEP,
-            depthFailOp = VK_STENCIL_OP_KEEP,
-            compareOp = VK_COMPARE_OP_ALWAYS,
-            compareMask = 0xFF,
-            writeMask = 0xFF,
-            reference = 0,
-        },
-        back = {
-            failOp = VK_STENCIL_OP_KEEP,
-            passOp = VK_STENCIL_OP_KEEP,
-            depthFailOp = VK_STENCIL_OP_KEEP,
-            compareOp = VK_COMPARE_OP_ALWAYS,
-            compareMask = 0xFF,
-            writeMask = 0xFF,
-            reference = 0,
-        },
         minDepthBounds = 0.0,
         maxDepthBounds = 1.0,
     }
@@ -103,7 +76,7 @@ function geometryPipeline.createPipelinePtr(pGfxContext, pRenderPass, subpassInd
     }
 
     return gfx.createPipelinePtr(pGfxContext, pRenderPass, subpassIndex, geometryPipelineSpvPaths,
-        meshLayout, vkPipelineInputAssemblyStateCreateInfo, vkPipelineViewportStateCreateInfo,
+        meshLayout, vkPipelineInputAssemblyStateCreateInfo, gfx.defaultVkPipelineViewportStateCreateInfo,
         vkPipelineRasterizationStateCreateInfo, vkPipelineMultisampleStateCreateInfo,
         vkPipelineDepthStencilStateCreateInfo, vkPipelineColorBlendStateCreateInfo, vkPipelineDynamicStateCreateInfo)
 end

@@ -390,7 +390,7 @@ static int luaCreatePipelinePtr(lua_State *pLuaState)
     }
     // Get meshLayout array (parameter 5 at index -8)
     MeshLayout *pMeshLayout;
-    lua_getfield(pLuaState, -8, "vertexLayouts");
+    lua_getfield(pLuaState, -8, "vertexAttributeLayouts");
     if (lua_isnil(pLuaState, -1))
     {
         pMeshLayout = NULL;
@@ -399,26 +399,26 @@ static int luaCreatePipelinePtr(lua_State *pLuaState)
     else
     {
         lua_len(pLuaState, -1);
-        pMeshLayout->vertexLayoutCount = (uint32_t)lua_tointeger(pLuaState, -1);
+        pMeshLayout->vertexAttributeLayoutCount = (uint32_t)lua_tointeger(pLuaState, -1);
         lua_pop(pLuaState, 1);
-        if (pMeshLayout->vertexLayoutCount > 0)
+        if (pMeshLayout->vertexAttributeLayoutCount > 0)
         {
-            pMeshLayout->vertexLayouts = tknMalloc(sizeof(MeshAttributeLayout) * pMeshLayout->vertexLayoutCount);
+            pMeshLayout->vertexAttributeLayouts = tknMalloc(sizeof(AttributeLayout) * pMeshLayout->vertexAttributeLayoutCount);
 
-            for (uint32_t i = 0; i < pMeshLayout->vertexLayoutCount; i++)
+            for (uint32_t i = 0; i < pMeshLayout->vertexAttributeLayoutCount; i++)
             {
                 lua_rawgeti(pLuaState, -1, i + 1);
 
                 lua_getfield(pLuaState, -1, "name");
-                pMeshLayout->vertexLayouts[i].name = lua_tostring(pLuaState, -1);
+                pMeshLayout->vertexAttributeLayouts[i].name = lua_tostring(pLuaState, -1);
                 lua_pop(pLuaState, 1);
 
                 lua_getfield(pLuaState, -1, "vkFormat");
-                pMeshLayout->vertexLayouts[i].vkFormat = (VkFormat)lua_tointeger(pLuaState, -1);
+                pMeshLayout->vertexAttributeLayouts[i].vkFormat = (VkFormat)lua_tointeger(pLuaState, -1);
                 lua_pop(pLuaState, 1);
                 
                 lua_getfield(pLuaState, -1, "count");
-                pMeshLayout->vertexLayouts[i].count = (uint32_t)lua_tointeger(pLuaState, -1);
+                pMeshLayout->vertexAttributeLayouts[i].count = (uint32_t)lua_tointeger(pLuaState, -1);
                 lua_pop(pLuaState, 1);
 
                 lua_pop(pLuaState, 1);
@@ -426,36 +426,36 @@ static int luaCreatePipelinePtr(lua_State *pLuaState)
         }
         else
         {
-            pMeshLayout->vertexLayouts = NULL;
+            pMeshLayout->vertexAttributeLayouts = NULL;
         }
         lua_pop(pLuaState, 1);
     }
 
     if (pMeshLayout != NULL)
     {
-        lua_getfield(pLuaState, -8, "instanceLayouts");
+        lua_getfield(pLuaState, -8, "instanceAttributeLayouts");
         lua_len(pLuaState, -1);
-        pMeshLayout->instanceLayoutCount = (uint32_t)lua_tointeger(pLuaState, -1);
+        pMeshLayout->instanceAttributeLayoutCount = (uint32_t)lua_tointeger(pLuaState, -1);
         lua_pop(pLuaState, 1);
 
-        if (pMeshLayout->instanceLayoutCount > 0)
+        if (pMeshLayout->instanceAttributeLayoutCount > 0)
         {
-            pMeshLayout->instanceLayouts = tknMalloc(sizeof(MeshAttributeLayout) * pMeshLayout->instanceLayoutCount);
+            pMeshLayout->instanceAttributeLayouts = tknMalloc(sizeof(AttributeLayout) * pMeshLayout->instanceAttributeLayoutCount);
 
-            for (uint32_t i = 0; i < pMeshLayout->instanceLayoutCount; i++)
+            for (uint32_t i = 0; i < pMeshLayout->instanceAttributeLayoutCount; i++)
             {
                 lua_rawgeti(pLuaState, -1, i + 1);
 
                 lua_getfield(pLuaState, -1, "name");
-                pMeshLayout->instanceLayouts[i].name = lua_tostring(pLuaState, -1);
+                pMeshLayout->instanceAttributeLayouts[i].name = lua_tostring(pLuaState, -1);
                 lua_pop(pLuaState, 1);
 
                 lua_getfield(pLuaState, -1, "vkFormat");
-                pMeshLayout->instanceLayouts[i].vkFormat = (VkFormat)lua_tointeger(pLuaState, -1);
+                pMeshLayout->instanceAttributeLayouts[i].vkFormat = (VkFormat)lua_tointeger(pLuaState, -1);
                 lua_pop(pLuaState, 1);
 
                 lua_getfield(pLuaState, -1, "count");
-                pMeshLayout->instanceLayouts[i].count = (uint32_t)lua_tointeger(pLuaState, -1);
+                pMeshLayout->instanceAttributeLayouts[i].count = (uint32_t)lua_tointeger(pLuaState, -1);
                 lua_pop(pLuaState, 1);
 
                 lua_pop(pLuaState, 1);
@@ -463,7 +463,7 @@ static int luaCreatePipelinePtr(lua_State *pLuaState)
         }
         else
         {
-            pMeshLayout->instanceLayouts = NULL;
+            pMeshLayout->instanceAttributeLayouts = NULL;
         }
         lua_pop(pLuaState, 1);
 
@@ -874,13 +874,13 @@ static int luaCreatePipelinePtr(lua_State *pLuaState)
     tknFree(spvPaths);
     if (pMeshLayout != NULL)
     {
-        if (pMeshLayout->vertexLayouts != NULL)
+        if (pMeshLayout->vertexAttributeLayouts != NULL)
         {
-            tknFree(pMeshLayout->vertexLayouts);
+            tknFree(pMeshLayout->vertexAttributeLayouts);
         }
-        if (pMeshLayout->instanceLayouts != NULL)
+        if (pMeshLayout->instanceAttributeLayouts != NULL)
         {
-            tknFree(pMeshLayout->instanceLayouts);
+            tknFree(pMeshLayout->instanceAttributeLayouts);
         }
         tknFree(pMeshLayout);
     }

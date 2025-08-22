@@ -552,16 +552,16 @@ Pipeline *createPipelinePtr(GfxContext *pGfxContext, RenderPass *pRenderPass, ui
             else
             {
                 uint32_t vertexStride = 0;
-                for (uint32_t vertexLayoutIndex = 0; vertexLayoutIndex < pMeshLayout->vertexLayoutCount; vertexLayoutIndex++)
+                for (uint32_t vertexAttributeLayoutIndex = 0; vertexAttributeLayoutIndex < pMeshLayout->vertexAttributeLayoutCount; vertexAttributeLayoutIndex++)
                 {
-                    MeshAttributeLayout vertexLayout = pMeshLayout->vertexLayouts[vertexLayoutIndex];
-                    vertexStride += getSizeOfVkFormat(vertexLayout.vkFormat);
+                    AttributeLayout vertexAttributeLayout = pMeshLayout->vertexAttributeLayouts[vertexAttributeLayoutIndex];
+                    vertexStride += getSizeOfVkFormat(vertexAttributeLayout.vkFormat);
                 }
                 uint32_t instanceStride = 0;
-                for (uint32_t instanceLayoutIndex = 0; instanceLayoutIndex < pMeshLayout->instanceLayoutCount; instanceLayoutIndex++)
+                for (uint32_t instanceAttributeLayoutIndex = 0; instanceAttributeLayoutIndex < pMeshLayout->instanceAttributeLayoutCount; instanceAttributeLayoutIndex++)
                 {
-                    MeshAttributeLayout instanceLayout = pMeshLayout->instanceLayouts[instanceLayoutIndex];
-                    instanceStride += getSizeOfVkFormat(instanceLayout.vkFormat);
+                    AttributeLayout instanceAttributeLayout = pMeshLayout->instanceAttributeLayouts[instanceAttributeLayoutIndex];
+                    instanceStride += getSizeOfVkFormat(instanceAttributeLayout.vkFormat);
                 }
                 vertexBindingDescriptionCount = MAX_VERTEX_BINDING_DESCRIPTION;
                 vertexBindingDescriptions = tknMalloc(sizeof(VkVertexInputBindingDescription) * vertexBindingDescriptionCount);
@@ -582,40 +582,40 @@ Pipeline *createPipelinePtr(GfxContext *pGfxContext, RenderPass *pRenderPass, ui
                 {
                     SpvReflectInterfaceVariable *pSpvReflectInterfaceVariable = spvReflectShaderModule.input_variables[inputVariableIndex];
                     uint32_t offset = 0;
-                    uint32_t vertexLayoutIndex;
-                    for (vertexLayoutIndex = 0; vertexLayoutIndex < pMeshLayout->vertexLayoutCount; vertexLayoutIndex++)
+                    uint32_t vertexAttributeLayoutIndex;
+                    for (vertexAttributeLayoutIndex = 0; vertexAttributeLayoutIndex < pMeshLayout->vertexAttributeLayoutCount; vertexAttributeLayoutIndex++)
                     {
-                        MeshAttributeLayout vertexLayout = pMeshLayout->vertexLayouts[vertexLayoutIndex];
-                        if (pSpvReflectInterfaceVariable->name == vertexLayout.name)
+                        AttributeLayout vertexAttributeLayout = pMeshLayout->vertexAttributeLayouts[vertexAttributeLayoutIndex];
+                        if (pSpvReflectInterfaceVariable->name == vertexAttributeLayout.name)
                         {
                             vertexAttributeDescriptions[inputVariableIndex] = (VkVertexInputAttributeDescription){
                                 .binding = VERTEX_BINDING_DESCRIPTION,
                                 .location = pSpvReflectInterfaceVariable->location,
-                                .format = vertexLayout.vkFormat,
+                                .format = vertexAttributeLayout.vkFormat,
                                 .offset = offset,
                             };
                             break;
                         }
-                        offset += vertexLayout.count * getSizeOfVkFormat(vertexLayout.vkFormat);
+                        offset += vertexAttributeLayout.count * getSizeOfVkFormat(vertexAttributeLayout.vkFormat);
                     }
                     offset = 0;
-                    uint32_t instanceLayoutIndex;
-                    for (instanceLayoutIndex = 0; instanceLayoutIndex < pMeshLayout->instanceLayoutCount; instanceLayoutIndex++)
+                    uint32_t instanceAttributeLayoutIndex;
+                    for (instanceAttributeLayoutIndex = 0; instanceAttributeLayoutIndex < pMeshLayout->instanceAttributeLayoutCount; instanceAttributeLayoutIndex++)
                     {
-                        MeshAttributeLayout instanceLayout = pMeshLayout->instanceLayouts[instanceLayoutIndex];
-                        if (pSpvReflectInterfaceVariable->name == instanceLayout.name)
+                        AttributeLayout instanceAttributeLayout = pMeshLayout->instanceAttributeLayouts[instanceAttributeLayoutIndex];
+                        if (pSpvReflectInterfaceVariable->name == instanceAttributeLayout.name)
                         {
                             vertexAttributeDescriptions[inputVariableIndex] = (VkVertexInputAttributeDescription){
                                 .binding = VERTEX_BINDING_DESCRIPTION,
                                 .location = pSpvReflectInterfaceVariable->location,
-                                .format = instanceLayout.vkFormat,
+                                .format = instanceAttributeLayout.vkFormat,
                                 .offset = offset,
                             };
                             break;
                         }
-                        offset += instanceLayout.count * getSizeOfVkFormat(instanceLayout.vkFormat);
+                        offset += instanceAttributeLayout.count * getSizeOfVkFormat(instanceAttributeLayout.vkFormat);
                     }
-                    tknAssert(vertexLayoutIndex < pMeshLayout->vertexLayoutCount || instanceLayoutIndex < pMeshLayout->instanceLayoutCount, "Vertex layout not found");
+                    tknAssert(vertexAttributeLayoutIndex < pMeshLayout->vertexAttributeLayoutCount || instanceAttributeLayoutIndex < pMeshLayout->instanceAttributeLayoutCount, "Vertex layout not found");
                 }
             }
         }

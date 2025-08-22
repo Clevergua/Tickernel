@@ -23,12 +23,12 @@ function srp.setup(pGfxContext, assetsPath)
     srp.pSwapchainAttachment = gfx.getSwapchainAttachmentPtr(pGfxContext)
 
     srp.geometryMeshLayout = {
-        vertexLayouts = {
+        vertexAttributeLayouts = {
             { name = "position", vkFormat = VK_FORMAT_R32G32B32_SFLOAT, count = 1 },
             { name = "color",    vkFormat = VK_FORMAT_R8G8B8A8_UINT,    count = 1 },
             { name = "normal",   vkFormat = VK_FORMAT_R32G32B32_SFLOAT, count = 1 },
         },
-        instanceLayouts = {
+        instanceAttributeLayouts = {
             { name = "model", vkFormat = VK_FORMAT_R32G32B32A32_SFLOAT, count = 4 },
         },
         vkIndexType = VK_INDEX_TYPE_UINT16,

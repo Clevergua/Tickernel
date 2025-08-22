@@ -9,28 +9,15 @@ typedef struct RenderPass RenderPass;
 typedef struct Pipeline Pipeline;
 typedef struct Material Material;
 typedef struct Mesh Mesh;
-typedef struct
-{
-    const char *name;
-    VkFormat vkFormat;
-    uint32_t count;
-} MeshAttributeLayout;
-
-typedef struct
-{
-    uint32_t vertexLayoutCount;
-    MeshAttributeLayout *vertexLayouts;
-
-    uint32_t instanceLayoutCount;
-    MeshAttributeLayout *instanceLayouts;
-
-    VkIndexType vkIndexType;
-} MeshLayout;
 
 typedef struct Attachment Attachment;
 typedef struct Image Image;
 typedef struct Sampler Sampler;
 typedef struct UniformBuffer UniformBuffer;
+
+
+typedef struct MeshLayout MeshLayout;
+
 
 VkFormat getSupportedFormat(GfxContext *pGfxContext, uint32_t candidateCount, VkFormat *candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
 

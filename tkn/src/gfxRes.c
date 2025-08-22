@@ -696,3 +696,27 @@ Mesh *createMeshPtr(GfxContext *pGfxContext, void *vertices, uint32_t vertexCoun
 void destroyMeshPtr(GfxContext *pGfxContext, Mesh *pMesh)
 {
 }
+
+MeshLayout *createMeshLayoutPtr(uint32_t vertexAttributeLayoutCount, AttributeLayout *vertexAttributeLayouts, uint32_t instanceAttributeLayoutCount, AttributeLayout *instanceAttributeLayouts, VkIndexType vkIndexType)
+{
+    MeshLayout *pMeshLayout = tknMalloc(sizeof(MeshLayout));
+    AttributeLayout *vertexAttributeLayouts = tknMalloc(sizeof(AttributeLayout) * vertexAttributeLayoutCount);
+    AttributeLayout *instanceAttributeLayouts = tknMalloc(sizeof(AttributeLayout) * instanceAttributeLayoutCount);
+    *pMeshLayout = (MeshLayout){
+        .vertexAttributeLayoutCount = vertexAttributeLayoutCount,
+        .vertexAttributeLayouts = vertexAttributeLayouts,
+        .instanceAttributeLayoutCount = instanceAttributeLayoutCount,
+        .instanceAttributeLayouts = instanceAttributeLayouts,
+        .vkIndexType = vkIndexType,
+    };
+    return pMeshLayout;
+}
+void destroyMeshLayoutPtr(MeshLayout *pMeshLayout)
+{
+    if (pMeshLayout)
+    {
+        tknFree(pMeshLayout->vertexAttributeLayouts);
+        tknFree(pMeshLayout->instanceAttributeLayouts);
+        tknFree(pMeshLayout);
+    }
+}

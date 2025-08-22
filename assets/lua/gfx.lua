@@ -55,15 +55,21 @@ end
 function gfx.destroyMeshPtr(pGfxContext, pMesh)
 end
 
-gfx.defaultViewport = {
-    x = 0.0,
-    y = 0.0,
-    width = 0.0,
-    height = 0.0,
-    minDepth = 0.0,
-    maxDepth = 1.0,
-}
-gfx.defaultScissor = {
-    offset = { x = 0, y = 0, },
-    extent = { width = 0, height = 0, },
+gfx.defaultVkPipelineViewportStateCreateInfo = {
+    pViewports = {
+        {
+            x = 0.0,
+            y = 0.0,
+            width = 0.0,
+            height = 0.0,
+            minDepth = 0.0,
+            maxDepth = 1.0,
+        }
+    },
+    pScissors = {
+        {
+            offset = { x = 0, y = 0, },
+            extent = { width = 0, height = 0, },
+        }
+    },
 }
