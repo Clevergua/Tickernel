@@ -264,7 +264,6 @@ DescriptorSet *createDescriptorSetPtr(GfxContext *pGfxContext, uint32_t spvRefle
             else
             {
                 // Skip
-
             }
         }
     }
@@ -520,13 +519,17 @@ void destroyRenderPassPtr(GfxContext *pGfxContext, RenderPass *pRenderPass)
     tknFree(pRenderPass);
 }
 
-Pipeline *createPipelinePtr(GfxContext *pGfxContext, RenderPass *pRenderPass, uint32_t subpassIndex, uint32_t spvPathCount, const char **spvPaths, VkPipelineVertexInputStateCreateInfo vkPipelineVertexInputStateCreateInfo, VkPipelineInputAssemblyStateCreateInfo vkPipelineInputAssemblyStateCreateInfo, VkPipelineViewportStateCreateInfo vkPipelineViewportStateCreateInfo, VkPipelineRasterizationStateCreateInfo vkPipelineRasterizationStateCreateInfo, VkPipelineMultisampleStateCreateInfo vkPipelineMultisampleStateCreateInfo, VkPipelineDepthStencilStateCreateInfo vkPipelineDepthStencilStateCreateInfo, VkPipelineColorBlendStateCreateInfo vkPipelineColorBlendStateCreateInfo, VkPipelineDynamicStateCreateInfo vkPipelineDynamicStateCreateInfo)
+Pipeline *createPipelinePtr(GfxContext *pGfxContext, RenderPass *pRenderPass, uint32_t subpassIndex, uint32_t spvPathCount, const char **spvPaths, const MeshLayout *pMeshLayout, VkPipelineInputAssemblyStateCreateInfo vkPipelineInputAssemblyStateCreateInfo, VkPipelineViewportStateCreateInfo vkPipelineViewportStateCreateInfo, VkPipelineRasterizationStateCreateInfo vkPipelineRasterizationStateCreateInfo, VkPipelineMultisampleStateCreateInfo vkPipelineMultisampleStateCreateInfo, VkPipelineDepthStencilStateCreateInfo vkPipelineDepthStencilStateCreateInfo, VkPipelineColorBlendStateCreateInfo vkPipelineColorBlendStateCreateInfo, VkPipelineDynamicStateCreateInfo vkPipelineDynamicStateCreateInfo)
 {
     Pipeline *pPipeline = tknMalloc(sizeof(Pipeline));
 
     SpvReflectShaderModule *spvReflectShaderModules = tknMalloc(sizeof(SpvReflectShaderModule) * spvPathCount);
     VkShaderStageFlagBits vkShaderStageFlagBits = 0;
     VkPipelineShaderStageCreateInfo *pipelineShaderStageCreateInfos = tknMalloc(sizeof(VkPipelineShaderStageCreateInfo) * spvPathCount);
+    uint32_t vertexBindingDescriptionCount;
+    VkVertexInputBindingDescription *vertexBindingDescriptions;
+    uint32_t vertexAttributeDescriptionCount;
+    VkVertexInputAttributeDescription *vertexAttributeDescriptions;
     VkDevice vkDevice = pGfxContext->vkDevice;
     for (uint32_t spvPathIndex = 0; spvPathIndex < spvPathCount; spvPathIndex++)
     {
@@ -535,7 +538,88 @@ Pipeline *createPipelinePtr(GfxContext *pGfxContext, RenderPass *pRenderPass, ui
     DescriptorSet *pPipelineDescriptorSet = createDescriptorSetPtr(pGfxContext, spvPathCount, spvReflectShaderModules, TKN_GLOBAL_DESCRIPTOR_SET);
     for (uint32_t spvPathIndex = 0; spvPathIndex < spvPathCount; spvPathIndex++)
     {
+
         SpvReflectShaderModule spvReflectShaderModule = spvReflectShaderModules[spvPathIndex];
+        if (VK_SHADER_STAGE_VERTEX_BIT == spvReflectShaderModule.shader_stage)
+        {
+            if (NULL == pMeshLayout)
+            {
+                vertexBindingDescriptionCount = 0;
+                vertexBindingDescriptions = NULL;
+                vertexAttributeDescriptionCount = 0;
+                vertexAttributeDescriptions = NULL;
+            }
+            else
+            {
+                uint32_t vertexStride = 0;
+                for (uint32_t vertexLayoutIndex = 0; vertexLayoutIndex < pMeshLayout->vertexLayoutCount; vertexLayoutIndex++)
+                {
+                    MeshAttributeLayout vertexLayout = pMeshLayout->vertexLayouts[vertexLayoutIndex];
+                    vertexStride += getSizeOfVkFormat(vertexLayout.vkFormat);
+                }
+                uint32_t instanceStride = 0;
+                for (uint32_t instanceLayoutIndex = 0; instanceLayoutIndex < pMeshLayout->instanceLayoutCount; instanceLayoutIndex++)
+                {
+                    MeshAttributeLayout instanceLayout = pMeshLayout->instanceLayouts[instanceLayoutIndex];
+                    instanceStride += getSizeOfVkFormat(instanceLayout.vkFormat);
+                }
+                vertexBindingDescriptionCount = MAX_VERTEX_BINDING_DESCRIPTION;
+                vertexBindingDescriptions = tknMalloc(sizeof(VkVertexInputBindingDescription) * vertexBindingDescriptionCount);
+                vertexBindingDescriptions[VERTEX_BINDING_DESCRIPTION] = (VkVertexInputBindingDescription){
+                    .binding = VERTEX_BINDING_DESCRIPTION,
+                    .stride = vertexStride,
+                    .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
+                };
+                vertexBindingDescriptions[INSTANCE_BINDING_DESCRIPTION] = (VkVertexInputBindingDescription){
+                    .binding = INSTANCE_BINDING_DESCRIPTION,
+                    .stride = instanceStride,
+                    .inputRate = VK_VERTEX_INPUT_RATE_INSTANCE,
+                };
+
+                vertexAttributeDescriptionCount = spvReflectShaderModule.input_variable_count;
+                vertexAttributeDescriptions = tknMalloc(sizeof(VkVertexInputAttributeDescription) * vertexAttributeDescriptionCount);
+                for (uint32_t inputVariableIndex = 0; inputVariableIndex < spvReflectShaderModule.input_variable_count; inputVariableIndex++)
+                {
+                    SpvReflectInterfaceVariable *pSpvReflectInterfaceVariable = spvReflectShaderModule.input_variables[inputVariableIndex];
+                    uint32_t offset = 0;
+                    uint32_t vertexLayoutIndex;
+                    for (vertexLayoutIndex = 0; vertexLayoutIndex < pMeshLayout->vertexLayoutCount; vertexLayoutIndex++)
+                    {
+                        MeshAttributeLayout vertexLayout = pMeshLayout->vertexLayouts[vertexLayoutIndex];
+                        if (pSpvReflectInterfaceVariable->name == vertexLayout.name)
+                        {
+                            vertexAttributeDescriptions[inputVariableIndex] = (VkVertexInputAttributeDescription){
+                                .binding = VERTEX_BINDING_DESCRIPTION,
+                                .location = pSpvReflectInterfaceVariable->location,
+                                .format = vertexLayout.vkFormat,
+                                .offset = offset,
+                            };
+                            break;
+                        }
+                        offset += vertexLayout.count * getSizeOfVkFormat(vertexLayout.vkFormat);
+                    }
+                    offset = 0;
+                    uint32_t instanceLayoutIndex;
+                    for (instanceLayoutIndex = 0; instanceLayoutIndex < pMeshLayout->instanceLayoutCount; instanceLayoutIndex++)
+                    {
+                        MeshAttributeLayout instanceLayout = pMeshLayout->instanceLayouts[instanceLayoutIndex];
+                        if (pSpvReflectInterfaceVariable->name == instanceLayout.name)
+                        {
+                            vertexAttributeDescriptions[inputVariableIndex] = (VkVertexInputAttributeDescription){
+                                .binding = VERTEX_BINDING_DESCRIPTION,
+                                .location = pSpvReflectInterfaceVariable->location,
+                                .format = instanceLayout.vkFormat,
+                                .offset = offset,
+                            };
+                            break;
+                        }
+                        offset += instanceLayout.count * getSizeOfVkFormat(instanceLayout.vkFormat);
+                    }
+                    tknAssert(vertexLayoutIndex < pMeshLayout->vertexLayoutCount || instanceLayoutIndex < pMeshLayout->instanceLayoutCount, "Vertex layout not found");
+                }
+            }
+        }
+
         if ((vkShaderStageFlagBits & spvReflectShaderModule.shader_stage) == 0)
         {
             tknError("Incompatible shader stage");
@@ -564,6 +648,16 @@ Pipeline *createPipelinePtr(GfxContext *pGfxContext, RenderPass *pRenderPass, ui
         }
         destroySpvReflectShaderModule(&spvReflectShaderModules[spvPathIndex]);
     }
+    VkPipelineVertexInputStateCreateInfo vkPipelineVertexInputStateCreateInfo = {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
+        .pNext = NULL,
+        .flags = 0,
+        .vertexBindingDescriptionCount = vertexBindingDescriptionCount,
+        .pVertexBindingDescriptions = vertexBindingDescriptions,
+        .vertexAttributeDescriptionCount = vertexAttributeDescriptionCount,
+        .pVertexAttributeDescriptions = vertexAttributeDescriptions,
+    };
+
     tknFree(spvReflectShaderModules);
     VkPipelineLayout vkPipelineLayout;
     VkDescriptorSetLayout *vkDescriptorSetLayouts = tknMalloc(sizeof(VkDescriptorSetLayout) * TKN_MAX_DESCRIPTOR_SET);
@@ -609,6 +703,7 @@ Pipeline *createPipelinePtr(GfxContext *pGfxContext, RenderPass *pRenderPass, ui
     tknFree(vkDescriptorSetLayouts);
     tknFree(pipelineShaderStageCreateInfos);
     assertVkResult(vkCreateGraphicsPipelines(vkDevice, NULL, 1, &vkGraphicsPipelineCreateInfo, NULL, &vkPipeline));
+    tknFree(vertexAttributeDescriptions);
     *pPipeline = (Pipeline){
         .pPipelineDescriptorSet = pPipelineDescriptorSet,
         .vkPipeline = vkPipeline,

@@ -168,6 +168,14 @@ typedef struct
     VkDescriptorType *vkDescriptorTypes;
 } DescriptorSet;
 
+typedef enum
+{
+    VERTEX_BINDING_DESCRIPTION,
+    INSTANCE_BINDING_DESCRIPTION,
+    MAX_VERTEX_BINDING_DESCRIPTION
+} VertexBindingDescription;
+
+
 struct Mesh
 {
     VkBuffer vertexVkBuffer;
@@ -267,3 +275,4 @@ struct GfxContext
 void assertVkResult(VkResult vkResult);
 SpvReflectShaderModule createSpvReflectShaderModule(const char *filePath);
 void destroySpvReflectShaderModule(SpvReflectShaderModule *pSpvReflectShaderModule);
+size_t getSizeOfVkFormat(VkFormat format);

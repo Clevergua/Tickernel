@@ -388,78 +388,89 @@ static int luaCreatePipelinePtr(lua_State *pLuaState)
         spvPaths[i] = lua_tostring(pLuaState, -1);
         lua_pop(pLuaState, 1);
     }
-
-    // Parse VkPipelineVertexInputStateCreateInfo (parameter 5 at index -8)
-    VkPipelineVertexInputStateCreateInfo vkPipelineVertexInputStateCreateInfo = {0};
-    vkPipelineVertexInputStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-
-    // Get vertex binding descriptions
-    lua_getfield(pLuaState, -8, "pVertexBindingDescriptions");
-    lua_len(pLuaState, -1);
-    vkPipelineVertexInputStateCreateInfo.vertexBindingDescriptionCount = (uint32_t)lua_tointeger(pLuaState, -1);
-    lua_pop(pLuaState, 1);
-
-    VkVertexInputBindingDescription *pVertexBindingDescriptions = NULL;
-    if (vkPipelineVertexInputStateCreateInfo.vertexBindingDescriptionCount > 0)
+    // Get meshLayout array (parameter 5 at index -8)
+    MeshLayout *pMeshLayout;
+    lua_getfield(pLuaState, -8, "vertexLayouts");
+    if (lua_isnil(pLuaState, -1))
     {
-        pVertexBindingDescriptions = tknMalloc(sizeof(VkVertexInputBindingDescription) * vkPipelineVertexInputStateCreateInfo.vertexBindingDescriptionCount);
-        for (uint32_t i = 0; i < vkPipelineVertexInputStateCreateInfo.vertexBindingDescriptionCount; i++)
-        {
-            lua_rawgeti(pLuaState, -1, i + 1);
-
-            lua_getfield(pLuaState, -1, "binding");
-            pVertexBindingDescriptions[i].binding = (uint32_t)lua_tointeger(pLuaState, -1);
-            lua_pop(pLuaState, 1);
-
-            lua_getfield(pLuaState, -1, "stride");
-            pVertexBindingDescriptions[i].stride = (uint32_t)lua_tointeger(pLuaState, -1);
-            lua_pop(pLuaState, 1);
-
-            lua_getfield(pLuaState, -1, "inputRate");
-            pVertexBindingDescriptions[i].inputRate = (VkVertexInputRate)lua_tointeger(pLuaState, -1);
-            lua_pop(pLuaState, 1);
-
-            lua_pop(pLuaState, 1); // Pop the binding description table
-        }
+        pMeshLayout = NULL;
+        lua_pop(pLuaState, 1);
     }
-    vkPipelineVertexInputStateCreateInfo.pVertexBindingDescriptions = pVertexBindingDescriptions;
-    lua_pop(pLuaState, 1); // Pop pVertexBindingDescriptions
-
-    // Get vertex attribute descriptions
-    lua_getfield(pLuaState, -8, "pVertexAttributeDescriptions");
-    lua_len(pLuaState, -1);
-    vkPipelineVertexInputStateCreateInfo.vertexAttributeDescriptionCount = (uint32_t)lua_tointeger(pLuaState, -1);
-    lua_pop(pLuaState, 1);
-
-    VkVertexInputAttributeDescription *pVertexAttributeDescriptions = NULL;
-    if (vkPipelineVertexInputStateCreateInfo.vertexAttributeDescriptionCount > 0)
+    else
     {
-        pVertexAttributeDescriptions = tknMalloc(sizeof(VkVertexInputAttributeDescription) * vkPipelineVertexInputStateCreateInfo.vertexAttributeDescriptionCount);
-        for (uint32_t i = 0; i < vkPipelineVertexInputStateCreateInfo.vertexAttributeDescriptionCount; i++)
+        lua_len(pLuaState, -1);
+        pMeshLayout->vertexLayoutCount = (uint32_t)lua_tointeger(pLuaState, -1);
+        lua_pop(pLuaState, 1);
+        if (pMeshLayout->vertexLayoutCount > 0)
         {
-            lua_rawgeti(pLuaState, -1, i + 1);
+            pMeshLayout->vertexLayouts = tknMalloc(sizeof(MeshAttributeLayout) * pMeshLayout->vertexLayoutCount);
 
-            lua_getfield(pLuaState, -1, "location");
-            pVertexAttributeDescriptions[i].location = (uint32_t)lua_tointeger(pLuaState, -1);
-            lua_pop(pLuaState, 1);
+            for (uint32_t i = 0; i < pMeshLayout->vertexLayoutCount; i++)
+            {
+                lua_rawgeti(pLuaState, -1, i + 1);
 
-            lua_getfield(pLuaState, -1, "binding");
-            pVertexAttributeDescriptions[i].binding = (uint32_t)lua_tointeger(pLuaState, -1);
-            lua_pop(pLuaState, 1);
+                lua_getfield(pLuaState, -1, "name");
+                pMeshLayout->vertexLayouts[i].name = lua_tostring(pLuaState, -1);
+                lua_pop(pLuaState, 1);
 
-            lua_getfield(pLuaState, -1, "format");
-            pVertexAttributeDescriptions[i].format = (VkFormat)lua_tointeger(pLuaState, -1);
-            lua_pop(pLuaState, 1);
+                lua_getfield(pLuaState, -1, "vkFormat");
+                pMeshLayout->vertexLayouts[i].vkFormat = (VkFormat)lua_tointeger(pLuaState, -1);
+                lua_pop(pLuaState, 1);
+                
+                lua_getfield(pLuaState, -1, "count");
+                pMeshLayout->vertexLayouts[i].count = (uint32_t)lua_tointeger(pLuaState, -1);
+                lua_pop(pLuaState, 1);
 
-            lua_getfield(pLuaState, -1, "offset");
-            pVertexAttributeDescriptions[i].offset = (uint32_t)lua_tointeger(pLuaState, -1);
-            lua_pop(pLuaState, 1);
-
-            lua_pop(pLuaState, 1); // Pop the attribute description table
+                lua_pop(pLuaState, 1);
+            }
         }
+        else
+        {
+            pMeshLayout->vertexLayouts = NULL;
+        }
+        lua_pop(pLuaState, 1);
     }
-    vkPipelineVertexInputStateCreateInfo.pVertexAttributeDescriptions = pVertexAttributeDescriptions;
-    lua_pop(pLuaState, 1); // Pop pVertexAttributeDescriptions
+
+    if (pMeshLayout != NULL)
+    {
+        lua_getfield(pLuaState, -8, "instanceLayouts");
+        lua_len(pLuaState, -1);
+        pMeshLayout->instanceLayoutCount = (uint32_t)lua_tointeger(pLuaState, -1);
+        lua_pop(pLuaState, 1);
+
+        if (pMeshLayout->instanceLayoutCount > 0)
+        {
+            pMeshLayout->instanceLayouts = tknMalloc(sizeof(MeshAttributeLayout) * pMeshLayout->instanceLayoutCount);
+
+            for (uint32_t i = 0; i < pMeshLayout->instanceLayoutCount; i++)
+            {
+                lua_rawgeti(pLuaState, -1, i + 1);
+
+                lua_getfield(pLuaState, -1, "name");
+                pMeshLayout->instanceLayouts[i].name = lua_tostring(pLuaState, -1);
+                lua_pop(pLuaState, 1);
+
+                lua_getfield(pLuaState, -1, "vkFormat");
+                pMeshLayout->instanceLayouts[i].vkFormat = (VkFormat)lua_tointeger(pLuaState, -1);
+                lua_pop(pLuaState, 1);
+
+                lua_getfield(pLuaState, -1, "count");
+                pMeshLayout->instanceLayouts[i].count = (uint32_t)lua_tointeger(pLuaState, -1);
+                lua_pop(pLuaState, 1);
+
+                lua_pop(pLuaState, 1);
+            }
+        }
+        else
+        {
+            pMeshLayout->instanceLayouts = NULL;
+        }
+        lua_pop(pLuaState, 1);
+
+        lua_getfield(pLuaState, -8, "vkIndexType");
+        pMeshLayout->vkIndexType = (VkIndexType)lua_tointeger(pLuaState, -1);
+        lua_pop(pLuaState, 1);
+    }
 
     // Parse VkPipelineInputAssemblyStateCreateInfo (parameter 6 at index -7)
     VkPipelineInputAssemblyStateCreateInfo vkPipelineInputAssemblyStateCreateInfo = {0};
@@ -675,66 +686,73 @@ static int luaCreatePipelinePtr(lua_State *pLuaState)
     lua_getfield(pLuaState, -3, "stencilTestEnable");
     vkPipelineDepthStencilStateCreateInfo.stencilTestEnable = lua_toboolean(pLuaState, -1) ? VK_TRUE : VK_FALSE;
     lua_pop(pLuaState, 1);
+    if (vkPipelineDepthStencilStateCreateInfo.stencilTestEnable)
+    {
+        // Handle front stencil state
+        lua_getfield(pLuaState, -3, "front");
+        lua_getfield(pLuaState, -1, "failOp");
+        vkPipelineDepthStencilStateCreateInfo.front.failOp = (VkStencilOp)lua_tointeger(pLuaState, -1);
+        lua_pop(pLuaState, 1);
 
-    // Handle front stencil state
-    lua_getfield(pLuaState, -3, "front");
-    lua_getfield(pLuaState, -1, "failOp");
-    vkPipelineDepthStencilStateCreateInfo.front.failOp = (VkStencilOp)lua_tointeger(pLuaState, -1);
-    lua_pop(pLuaState, 1);
+        lua_getfield(pLuaState, -1, "passOp");
+        vkPipelineDepthStencilStateCreateInfo.front.passOp = (VkStencilOp)lua_tointeger(pLuaState, -1);
+        lua_pop(pLuaState, 1);
 
-    lua_getfield(pLuaState, -1, "passOp");
-    vkPipelineDepthStencilStateCreateInfo.front.passOp = (VkStencilOp)lua_tointeger(pLuaState, -1);
-    lua_pop(pLuaState, 1);
+        lua_getfield(pLuaState, -1, "depthFailOp");
+        vkPipelineDepthStencilStateCreateInfo.front.depthFailOp = (VkStencilOp)lua_tointeger(pLuaState, -1);
+        lua_pop(pLuaState, 1);
 
-    lua_getfield(pLuaState, -1, "depthFailOp");
-    vkPipelineDepthStencilStateCreateInfo.front.depthFailOp = (VkStencilOp)lua_tointeger(pLuaState, -1);
-    lua_pop(pLuaState, 1);
+        lua_getfield(pLuaState, -1, "compareOp");
+        vkPipelineDepthStencilStateCreateInfo.front.compareOp = (VkCompareOp)lua_tointeger(pLuaState, -1);
+        lua_pop(pLuaState, 1);
 
-    lua_getfield(pLuaState, -1, "compareOp");
-    vkPipelineDepthStencilStateCreateInfo.front.compareOp = (VkCompareOp)lua_tointeger(pLuaState, -1);
-    lua_pop(pLuaState, 1);
+        lua_getfield(pLuaState, -1, "compareMask");
+        vkPipelineDepthStencilStateCreateInfo.front.compareMask = (uint32_t)lua_tointeger(pLuaState, -1);
+        lua_pop(pLuaState, 1);
 
-    lua_getfield(pLuaState, -1, "compareMask");
-    vkPipelineDepthStencilStateCreateInfo.front.compareMask = (uint32_t)lua_tointeger(pLuaState, -1);
-    lua_pop(pLuaState, 1);
+        lua_getfield(pLuaState, -1, "writeMask");
+        vkPipelineDepthStencilStateCreateInfo.front.writeMask = (uint32_t)lua_tointeger(pLuaState, -1);
+        lua_pop(pLuaState, 1);
 
-    lua_getfield(pLuaState, -1, "writeMask");
-    vkPipelineDepthStencilStateCreateInfo.front.writeMask = (uint32_t)lua_tointeger(pLuaState, -1);
-    lua_pop(pLuaState, 1);
+        lua_getfield(pLuaState, -1, "reference");
+        vkPipelineDepthStencilStateCreateInfo.front.reference = (uint32_t)lua_tointeger(pLuaState, -1);
+        lua_pop(pLuaState, 2); // Pop reference and front
 
-    lua_getfield(pLuaState, -1, "reference");
-    vkPipelineDepthStencilStateCreateInfo.front.reference = (uint32_t)lua_tointeger(pLuaState, -1);
-    lua_pop(pLuaState, 2); // Pop reference and front
+        // Handle back stencil state
+        lua_getfield(pLuaState, -3, "back");
+        lua_getfield(pLuaState, -1, "failOp");
+        vkPipelineDepthStencilStateCreateInfo.back.failOp = (VkStencilOp)lua_tointeger(pLuaState, -1);
+        lua_pop(pLuaState, 1);
 
-    // Handle back stencil state
-    lua_getfield(pLuaState, -3, "back");
-    lua_getfield(pLuaState, -1, "failOp");
-    vkPipelineDepthStencilStateCreateInfo.back.failOp = (VkStencilOp)lua_tointeger(pLuaState, -1);
-    lua_pop(pLuaState, 1);
+        lua_getfield(pLuaState, -1, "passOp");
+        vkPipelineDepthStencilStateCreateInfo.back.passOp = (VkStencilOp)lua_tointeger(pLuaState, -1);
+        lua_pop(pLuaState, 1);
 
-    lua_getfield(pLuaState, -1, "passOp");
-    vkPipelineDepthStencilStateCreateInfo.back.passOp = (VkStencilOp)lua_tointeger(pLuaState, -1);
-    lua_pop(pLuaState, 1);
+        lua_getfield(pLuaState, -1, "depthFailOp");
+        vkPipelineDepthStencilStateCreateInfo.back.depthFailOp = (VkStencilOp)lua_tointeger(pLuaState, -1);
+        lua_pop(pLuaState, 1);
 
-    lua_getfield(pLuaState, -1, "depthFailOp");
-    vkPipelineDepthStencilStateCreateInfo.back.depthFailOp = (VkStencilOp)lua_tointeger(pLuaState, -1);
-    lua_pop(pLuaState, 1);
+        lua_getfield(pLuaState, -1, "compareOp");
+        vkPipelineDepthStencilStateCreateInfo.back.compareOp = (VkCompareOp)lua_tointeger(pLuaState, -1);
+        lua_pop(pLuaState, 1);
 
-    lua_getfield(pLuaState, -1, "compareOp");
-    vkPipelineDepthStencilStateCreateInfo.back.compareOp = (VkCompareOp)lua_tointeger(pLuaState, -1);
-    lua_pop(pLuaState, 1);
+        lua_getfield(pLuaState, -1, "compareMask");
+        vkPipelineDepthStencilStateCreateInfo.back.compareMask = (uint32_t)lua_tointeger(pLuaState, -1);
+        lua_pop(pLuaState, 1);
 
-    lua_getfield(pLuaState, -1, "compareMask");
-    vkPipelineDepthStencilStateCreateInfo.back.compareMask = (uint32_t)lua_tointeger(pLuaState, -1);
-    lua_pop(pLuaState, 1);
+        lua_getfield(pLuaState, -1, "writeMask");
+        vkPipelineDepthStencilStateCreateInfo.back.writeMask = (uint32_t)lua_tointeger(pLuaState, -1);
+        lua_pop(pLuaState, 1);
 
-    lua_getfield(pLuaState, -1, "writeMask");
-    vkPipelineDepthStencilStateCreateInfo.back.writeMask = (uint32_t)lua_tointeger(pLuaState, -1);
-    lua_pop(pLuaState, 1);
-
-    lua_getfield(pLuaState, -1, "reference");
-    vkPipelineDepthStencilStateCreateInfo.back.reference = (uint32_t)lua_tointeger(pLuaState, -1);
-    lua_pop(pLuaState, 2); // Pop reference and back
+        lua_getfield(pLuaState, -1, "reference");
+        vkPipelineDepthStencilStateCreateInfo.back.reference = (uint32_t)lua_tointeger(pLuaState, -1);
+        lua_pop(pLuaState, 2); // Pop reference and back
+    }
+    else
+    {
+        vkPipelineDepthStencilStateCreateInfo.front = (VkStencilOpState){0};
+        vkPipelineDepthStencilStateCreateInfo.back = (VkStencilOpState){0};
+    }
 
     lua_getfield(pLuaState, -3, "minDepthBounds");
     vkPipelineDepthStencilStateCreateInfo.minDepthBounds = (float)lua_tonumber(pLuaState, -1);
@@ -843,7 +861,7 @@ static int luaCreatePipelinePtr(lua_State *pLuaState)
 
     // Call the C function
     Pipeline *pPipeline = createPipelinePtr(pGfxContext, pRenderPass, subpassIndex, spvPathCount, spvPaths,
-                                            vkPipelineVertexInputStateCreateInfo,
+                                            pMeshLayout,
                                             vkPipelineInputAssemblyStateCreateInfo,
                                             vkPipelineViewportStateCreateInfo,
                                             vkPipelineRasterizationStateCreateInfo,
@@ -854,8 +872,18 @@ static int luaCreatePipelinePtr(lua_State *pLuaState)
 
     // Clean up memory
     tknFree(spvPaths);
-    tknFree(pVertexBindingDescriptions);
-    tknFree(pVertexAttributeDescriptions);
+    if (pMeshLayout != NULL)
+    {
+        if (pMeshLayout->vertexLayouts != NULL)
+        {
+            tknFree(pMeshLayout->vertexLayouts);
+        }
+        if (pMeshLayout->instanceLayouts != NULL)
+        {
+            tknFree(pMeshLayout->instanceLayouts);
+        }
+        tknFree(pMeshLayout);
+    }
     tknFree(pViewports);
     tknFree(pScissors);
     tknFree(pSampleMask);

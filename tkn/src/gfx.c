@@ -758,7 +758,6 @@ GfxContext *createGfxContextPtr(int targetSwapchainImageCount, VkSurfaceFormatKH
     setupRenderPipelineAndResources(pGfxContext, spvPathCount, spvPaths);
     return pGfxContext;
 }
-
 void destroyGfxContextPtr(GfxContext *pGfxContext)
 {
     teardownRenderPipelineAndResources(pGfxContext);

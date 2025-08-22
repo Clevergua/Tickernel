@@ -1,66 +1,8 @@
 local geometryPipeline = {}
-function geometryPipeline.createPipelinePtr(pGfxContext, pRenderPass, subpassIndex, assetsPath)
+function geometryPipeline.createPipelinePtr(pGfxContext, pRenderPass, subpassIndex, assetsPath, meshLayout)
     local geometryPipelineSpvPaths = {
         assetsPath .. "/shaders/spv/geometry.vert.spv",
         assetsPath .. "/shaders/spv/geometry.frag.spv",
-    }
-    local vkPipelineVertexInputStateCreateInfo = {
-        pVertexBindingDescriptions = {
-            {
-                binding = 0,
-                stride = 40,
-                inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
-            },
-            {
-                binding = 1,
-                stride = 64,
-                inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
-            },
-        },
-        pVertexAttributeDescriptions = {
-            {
-                location = 0,
-                binding = 0,
-                format = VK_FORMAT_R32G32B32_SFLOAT,
-                offset = 0,
-            },
-            {
-                location = 1,
-                binding = 0,
-                format = VK_FORMAT_R32G32B32A32_SFLOAT,
-                offset = 12,
-            },
-            {
-                location = 2,
-                binding = 0,
-                format = VK_FORMAT_R32G32B32_SFLOAT,
-                offset = 28,
-            },
-            {
-                location = 3,
-                binding = 1,
-                format = VK_FORMAT_R32G32B32A32_SFLOAT,
-                offset = 0,
-            },
-            {
-                location = 4,
-                binding = 1,
-                format = VK_FORMAT_R32G32B32A32_SFLOAT,
-                offset = 16,
-            },
-            {
-                location = 5,
-                binding = 1,
-                format = VK_FORMAT_R32G32B32A32_SFLOAT,
-                offset = 32,
-            },
-            {
-                location = 6,
-                binding = 1,
-                format = VK_FORMAT_R32G32B32A32_SFLOAT,
-                offset = 48,
-            },
-        },
     }
     local vkPipelineInputAssemblyStateCreateInfo = {
         topology = VK_PRIMITIVE_TOPOLOGY_POINT_LIST,
@@ -69,20 +11,10 @@ function geometryPipeline.createPipelinePtr(pGfxContext, pRenderPass, subpassInd
 
     local vkPipelineViewportStateCreateInfo = {
         pViewports = {
-            {
-                x = 0.0,
-                y = 0.0,
-                width = 0.0,
-                height = 0.0,
-                minDepth = 0.0,
-                maxDepth = 1.0,
-            },
+            gfx.defaultViewport
         },
         pScissors = {
-            {
-                offset = { 0, 0 },
-                extent = { 0, 0 },
-            },
+            gfx.defaultScissor
         },
     }
 
@@ -147,7 +79,7 @@ function geometryPipeline.createPipelinePtr(pGfxContext, pRenderPass, subpassInd
                 dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
                 alphaBlendOp = VK_BLEND_OP_ADD,
                 colorWriteMask = VK_COLOR_COMPONENT_A_BIT | VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
-                VK_COLOR_COMPONENT_B_BIT,
+                    VK_COLOR_COMPONENT_B_BIT,
             },
             {
                 blendEnable = true,
@@ -157,7 +89,8 @@ function geometryPipeline.createPipelinePtr(pGfxContext, pRenderPass, subpassInd
                 srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE,
                 dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
                 alphaBlendOp = VK_BLEND_OP_ADD,
-                colorWriteMask = VK_COLOR_COMPONENT_A_BIT | VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT,
+                colorWriteMask = VK_COLOR_COMPONENT_A_BIT | VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
+                    VK_COLOR_COMPONENT_B_BIT,
             }
         },
         blendConstants = { 0.0, 0.0, 0.0, 0.0 },
@@ -170,7 +103,7 @@ function geometryPipeline.createPipelinePtr(pGfxContext, pRenderPass, subpassInd
     }
 
     return gfx.createPipelinePtr(pGfxContext, pRenderPass, subpassIndex, geometryPipelineSpvPaths,
-        vkPipelineVertexInputStateCreateInfo, vkPipelineInputAssemblyStateCreateInfo, vkPipelineViewportStateCreateInfo,
+        meshLayout, vkPipelineInputAssemblyStateCreateInfo, vkPipelineViewportStateCreateInfo,
         vkPipelineRasterizationStateCreateInfo, vkPipelineMultisampleStateCreateInfo,
         vkPipelineDepthStencilStateCreateInfo, vkPipelineColorBlendStateCreateInfo, vkPipelineDynamicStateCreateInfo)
 end

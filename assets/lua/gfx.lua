@@ -34,7 +34,11 @@ end
 
 
 -- Pipeline *createPipelinePtr(GfxContext *pGfxContext, RenderPass *pRenderPass, uint32_t subpassIndex, uint32_t spvPathCount, const char **spvPaths, VkPipelineVertexInputStateCreateInfo vkPipelineVertexInputStateCreateInfo, VkPipelineInputAssemblyStateCreateInfo vkPipelineInputAssemblyStateCreateInfo, VkPipelineViewportStateCreateInfo vkPipelineViewportStateCreateInfo, VkPipelineRasterizationStateCreateInfo vkPipelineRasterizationStateCreateInfo, VkPipelineMultisampleStateCreateInfo vkPipelineMultisampleStateCreateInfo, VkPipelineDepthStencilStateCreateInfo vkPipelineDepthStencilStateCreateInfo, VkPipelineColorBlendStateCreateInfo vkPipelineColorBlendStateCreateInfo, VkPipelineDynamicStateCreateInfo vkPipelineDynamicStateCreateInfo)
-function gfx.createPipelinePtr(pGfxContext, pRenderPass, subpassIndex, spvPaths, vkPipelineVertexInputStateCreateInfo, vkPipelineInputAssemblyStateCreateInfo, vkPipelineViewportStateCreateInfo, vkPipelineRasterizationStateCreateInfo, vkPipelineMultisampleStateCreateInfo, vkPipelineDepthStencilStateCreateInfo, vkPipelineColorBlendStateCreateInfo, vkPipelineDynamicStateCreateInfo)
+function gfx.createPipelinePtr(pGfxContext, pRenderPass, subpassIndex, spvPaths, vkPipelineVertexInputStateCreateInfo,
+                               vkPipelineInputAssemblyStateCreateInfo, vkPipelineViewportStateCreateInfo,
+                               vkPipelineRasterizationStateCreateInfo, vkPipelineMultisampleStateCreateInfo,
+                               vkPipelineDepthStencilStateCreateInfo, vkPipelineColorBlendStateCreateInfo,
+                               vkPipelineDynamicStateCreateInfo)
     local pPipeline
     return pPipeline
 end
@@ -42,3 +46,24 @@ end
 -- void destroyPipelinePtr(GfxContext *pGfxContext, Pipeline *pPipeline);
 function gfx.destroyPipelinePtr(pGfxContext, pPipeline)
 end
+
+function gfx.createMeshPtr(pGfxContext, vertices, indices)
+    local pMesh
+    return pMesh
+end
+
+function gfx.destroyMeshPtr(pGfxContext, pMesh)
+end
+
+gfx.defaultViewport = {
+    x = 0.0,
+    y = 0.0,
+    width = 0.0,
+    height = 0.0,
+    minDepth = 0.0,
+    maxDepth = 1.0,
+}
+gfx.defaultScissor = {
+    offset = { x = 0, y = 0, },
+    extent = { width = 0, height = 0, },
+}

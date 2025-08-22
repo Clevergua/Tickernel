@@ -4,10 +4,7 @@ function postprocessPipeline.createPipelinePtr(pGfxContext, pRenderPass, subpass
         assetsPath .. "/shaders/spv/postprocess.vert.spv",
         assetsPath .. "/shaders/spv/postprocess.frag.spv",
     }
-    local vkPipelineVertexInputStateCreateInfo = {
-        pVertexBindingDescriptions = nil,
-        pVertexAttributeDescriptions = nil,
-    }
+
     local vkPipelineInputAssemblyStateCreateInfo = {
         topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
         primitiveRestartEnable = false,
@@ -105,7 +102,7 @@ function postprocessPipeline.createPipelinePtr(pGfxContext, pRenderPass, subpass
     }
 
     return gfx.createPipelinePtr(pGfxContext, pRenderPass, subpassIndex, postprocessPipelineSpvPaths,
-        vkPipelineVertexInputStateCreateInfo, vkPipelineInputAssemblyStateCreateInfo, vkPipelineViewportStateCreateInfo,
+        nil, vkPipelineInputAssemblyStateCreateInfo, vkPipelineViewportStateCreateInfo,
         vkPipelineRasterizationStateCreateInfo, vkPipelineMultisampleStateCreateInfo,
         vkPipelineDepthStencilStateCreateInfo, vkPipelineColorBlendStateCreateInfo, vkPipelineDynamicStateCreateInfo)
 end
