@@ -193,7 +193,6 @@ struct MeshLayout
 
 struct Mesh
 {
-
     VkBuffer vertexVkBuffer;
     VkDeviceMemory vertexVkDeviceMemory;
     uint32_t vertexCount;
@@ -209,6 +208,7 @@ struct Mesh
     uint32_t maxInstanceCount;
 
     TknHashSet materialPtrHashSet;
+    MeshLayout *pMeshLayout;
 };
 
 struct Material

@@ -47,6 +47,14 @@ end
 function gfx.destroyPipelinePtr(pGfxContext, pPipeline)
 end
 
+function gfx.createMeshLayoutPtr(meshLayout)
+    local pMeshLayout
+    return pMeshLayout
+end
+
+function gfx.destroyMeshLayoutPtr(pMeshLayout)
+end
+
 function gfx.createMeshPtr(pGfxContext, vertices, indices)
     local pMesh
     return pMesh

@@ -370,6 +370,79 @@ static int luaDestroyRenderPassPtr(lua_State *pLuaState)
     return 0;
 }
 
+static int luaCreateMeshLayoutPtr(lua_State *pLuaState)
+{
+    lua_getfield(pLuaState, -1, "vertexAttributeLayouts");
+    lua_len(pLuaState, -1);
+    uint32_t vertexAttributeLayoutCount = (uint32_t)lua_tointeger(pLuaState, -1);
+    lua_pop(pLuaState, 1);
+
+    const char **vertexNames = tknMalloc(sizeof(const char *) * vertexAttributeLayoutCount);
+    VkFormat *vertexVkFormats = tknMalloc(sizeof(VkFormat) * vertexAttributeLayoutCount);
+    uint32_t *vertexCounts = tknMalloc(sizeof(uint32_t) * vertexAttributeLayoutCount);
+
+    for (uint32_t i = 0; i < vertexAttributeLayoutCount; i++)
+    {
+        lua_rawgeti(pLuaState, -1, i + 1);
+        lua_getfield(pLuaState, -1, "name");
+        vertexNames[i] = lua_tostring(pLuaState, -1);
+        lua_pop(pLuaState, 1);
+        lua_getfield(pLuaState, -1, "vkFormat");
+        vertexVkFormats[i] = (VkFormat)lua_tointeger(pLuaState, -1);
+        lua_pop(pLuaState, 1);
+        lua_getfield(pLuaState, -1, "count");
+        vertexCounts[i] = (uint32_t)lua_tointeger(pLuaState, -1);
+        lua_pop(pLuaState, 1);
+        lua_pop(pLuaState, 1);
+    }
+    lua_pop(pLuaState, 1);
+
+    lua_getfield(pLuaState, -1, "instanceAttributeLayouts");
+    lua_len(pLuaState, -1);
+    uint32_t instanceAttributeLayoutCount = (uint32_t)lua_tointeger(pLuaState, -1);
+    lua_pop(pLuaState, 1);
+    const char **instanceNames = tknMalloc(sizeof(const char *) * instanceAttributeLayoutCount);
+    VkFormat *instanceVkFormats = tknMalloc(sizeof(VkFormat) * instanceAttributeLayoutCount);
+    uint32_t *instanceCounts = tknMalloc(sizeof(uint32_t) * instanceAttributeLayoutCount);
+
+    for (uint32_t i = 0; i < instanceAttributeLayoutCount; i++)
+    {
+        lua_rawgeti(pLuaState, -1, i + 1);
+        lua_getfield(pLuaState, -1, "name");
+        instanceNames[i] = lua_tostring(pLuaState, -1);
+        lua_pop(pLuaState, 1);
+        lua_getfield(pLuaState, -1, "vkFormat");
+        instanceVkFormats[i] = (VkFormat)lua_tointeger(pLuaState, -1);
+        lua_pop(pLuaState, 1);
+        lua_getfield(pLuaState, -1, "count");
+        instanceCounts[i] = (uint32_t)lua_tointeger(pLuaState, -1);
+        lua_pop(pLuaState, 1);
+        lua_pop(pLuaState, 1);
+    }
+    lua_pop(pLuaState, 1);
+
+    lua_getfield(pLuaState, -1, "vkIndexType");
+    VkIndexType vkIndexType = (VkIndexType)lua_tointeger(pLuaState, -1);
+    lua_pop(pLuaState, 1);
+
+    MeshLayout *pMeshLayout = createMeshLayoutPtr(vertexAttributeLayoutCount, vertexNames, vertexVkFormats, vertexCounts, instanceAttributeLayoutCount, instanceNames, instanceVkFormats, instanceCounts, vkIndexType);
+    tknFree(vertexNames);
+    tknFree(vertexVkFormats);
+    tknFree(vertexCounts);
+    tknFree(instanceNames);
+    tknFree(instanceVkFormats);
+    tknFree(instanceCounts);
+    lua_pushlightuserdata(pLuaState, pMeshLayout);
+    return 1;
+}
+
+static int luaDestroyMeshLayoutPtr(lua_State *pLuaState)
+{
+    MeshLayout *pMeshLayout = (MeshLayout *)lua_touserdata(pLuaState, -1);
+    destroyMeshLayoutPtr(pMeshLayout);
+    return 0;
+}
+
 static int luaCreatePipelinePtr(lua_State *pLuaState)
 {
     // Get parameters from Lua stack (12 parameters total)
@@ -389,89 +462,7 @@ static int luaCreatePipelinePtr(lua_State *pLuaState)
         lua_pop(pLuaState, 1);
     }
     // Get meshLayout array (parameter 5 at index -8)
-    MeshLayout *pMeshLayout;
-    lua_getfield(pLuaState, -8, "vertexAttributeLayouts");
-    if (lua_isnil(pLuaState, -1))
-    {
-        pMeshLayout = NULL;
-        lua_pop(pLuaState, 1);
-    }
-    else
-    {
-        lua_len(pLuaState, -1);
-        pMeshLayout->vertexAttributeLayoutCount = (uint32_t)lua_tointeger(pLuaState, -1);
-        lua_pop(pLuaState, 1);
-        if (pMeshLayout->vertexAttributeLayoutCount > 0)
-        {
-            pMeshLayout->vertexAttributeLayouts = tknMalloc(sizeof(AttributeLayout) * pMeshLayout->vertexAttributeLayoutCount);
-
-            for (uint32_t i = 0; i < pMeshLayout->vertexAttributeLayoutCount; i++)
-            {
-                lua_rawgeti(pLuaState, -1, i + 1);
-
-                lua_getfield(pLuaState, -1, "name");
-                pMeshLayout->vertexAttributeLayouts[i].name = lua_tostring(pLuaState, -1);
-                lua_pop(pLuaState, 1);
-
-                lua_getfield(pLuaState, -1, "vkFormat");
-                pMeshLayout->vertexAttributeLayouts[i].vkFormat = (VkFormat)lua_tointeger(pLuaState, -1);
-                lua_pop(pLuaState, 1);
-                
-                lua_getfield(pLuaState, -1, "count");
-                pMeshLayout->vertexAttributeLayouts[i].count = (uint32_t)lua_tointeger(pLuaState, -1);
-                lua_pop(pLuaState, 1);
-
-                lua_pop(pLuaState, 1);
-            }
-        }
-        else
-        {
-            pMeshLayout->vertexAttributeLayouts = NULL;
-        }
-        lua_pop(pLuaState, 1);
-    }
-
-    if (pMeshLayout != NULL)
-    {
-        lua_getfield(pLuaState, -8, "instanceAttributeLayouts");
-        lua_len(pLuaState, -1);
-        pMeshLayout->instanceAttributeLayoutCount = (uint32_t)lua_tointeger(pLuaState, -1);
-        lua_pop(pLuaState, 1);
-
-        if (pMeshLayout->instanceAttributeLayoutCount > 0)
-        {
-            pMeshLayout->instanceAttributeLayouts = tknMalloc(sizeof(AttributeLayout) * pMeshLayout->instanceAttributeLayoutCount);
-
-            for (uint32_t i = 0; i < pMeshLayout->instanceAttributeLayoutCount; i++)
-            {
-                lua_rawgeti(pLuaState, -1, i + 1);
-
-                lua_getfield(pLuaState, -1, "name");
-                pMeshLayout->instanceAttributeLayouts[i].name = lua_tostring(pLuaState, -1);
-                lua_pop(pLuaState, 1);
-
-                lua_getfield(pLuaState, -1, "vkFormat");
-                pMeshLayout->instanceAttributeLayouts[i].vkFormat = (VkFormat)lua_tointeger(pLuaState, -1);
-                lua_pop(pLuaState, 1);
-
-                lua_getfield(pLuaState, -1, "count");
-                pMeshLayout->instanceAttributeLayouts[i].count = (uint32_t)lua_tointeger(pLuaState, -1);
-                lua_pop(pLuaState, 1);
-
-                lua_pop(pLuaState, 1);
-            }
-        }
-        else
-        {
-            pMeshLayout->instanceAttributeLayouts = NULL;
-        }
-        lua_pop(pLuaState, 1);
-
-        lua_getfield(pLuaState, -8, "vkIndexType");
-        pMeshLayout->vkIndexType = (VkIndexType)lua_tointeger(pLuaState, -1);
-        lua_pop(pLuaState, 1);
-    }
-
+    MeshLayout *pMeshLayout = (MeshLayout *)lua_touserdata(pLuaState, -8);
     // Parse VkPipelineInputAssemblyStateCreateInfo (parameter 6 at index -7)
     VkPipelineInputAssemblyStateCreateInfo vkPipelineInputAssemblyStateCreateInfo = {0};
     vkPipelineInputAssemblyStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
@@ -872,18 +863,6 @@ static int luaCreatePipelinePtr(lua_State *pLuaState)
 
     // Clean up memory
     tknFree(spvPaths);
-    if (pMeshLayout != NULL)
-    {
-        if (pMeshLayout->vertexAttributeLayouts != NULL)
-        {
-            tknFree(pMeshLayout->vertexAttributeLayouts);
-        }
-        if (pMeshLayout->instanceAttributeLayouts != NULL)
-        {
-            tknFree(pMeshLayout->instanceAttributeLayouts);
-        }
-        tknFree(pMeshLayout);
-    }
     tknFree(pViewports);
     tknFree(pScissors);
     tknFree(pSampleMask);
@@ -916,6 +895,8 @@ void bindFunctions(lua_State *pLuaState)
         {"destroyRenderPassPtr", luaDestroyRenderPassPtr},
         {"createPipelinePtr", luaCreatePipelinePtr},
         {"destroyPipelinePtr", luaDestroyPipelinePtr},
+        {"createMeshLayoutPtr", luaCreateMeshLayoutPtr},
+        {"destroyMeshLayoutPtr", luaDestroyMeshLayoutPtr},
         {NULL, NULL},
     };
     luaL_newlib(pLuaState, regs);

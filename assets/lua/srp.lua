@@ -22,7 +22,7 @@ function srp.setup(pGfxContext, assetsPath)
         VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT, VK_IMAGE_ASPECT_COLOR_BIT, 1)
     srp.pSwapchainAttachment = gfx.getSwapchainAttachmentPtr(pGfxContext)
 
-    srp.geometryMeshLayout = {
+    srp.pGeometryMeshLayout = gfx.createMeshLayoutPtr({
         vertexAttributeLayouts = {
             { name = "position", vkFormat = VK_FORMAT_R32G32B32_SFLOAT, count = 1 },
             { name = "color",    vkFormat = VK_FORMAT_R8G8B8A8_UINT,    count = 1 },
@@ -32,7 +32,9 @@ function srp.setup(pGfxContext, assetsPath)
             { name = "model", vkFormat = VK_FORMAT_R32G32B32A32_SFLOAT, count = 4 },
         },
         vkIndexType = VK_INDEX_TYPE_UINT16,
-    }
+    })
+
+
 
     srp.pDeferredRenderPass = deferredRenderPass.createRenderPassPtr(pGfxContext, {
         srp.pColorAttachment,
@@ -40,7 +42,7 @@ function srp.setup(pGfxContext, assetsPath)
         srp.pAlbedoAttachment,
         srp.pNormalAttachment,
         srp.pSwapchainAttachment
-    }, assetsPath, srp.geometryMeshLayout)
+    }, assetsPath, srp.pGeometryMeshLayout)
 end
 
 function srp.tearDown(pGfxContext)

@@ -697,11 +697,29 @@ void destroyMeshPtr(GfxContext *pGfxContext, Mesh *pMesh)
 {
 }
 
-MeshLayout *createMeshLayoutPtr(uint32_t vertexAttributeLayoutCount, AttributeLayout *vertexAttributeLayouts, uint32_t instanceAttributeLayoutCount, AttributeLayout *instanceAttributeLayouts, VkIndexType vkIndexType)
+MeshLayout *createMeshLayoutPtr(uint32_t vertexAttributeLayoutCount, const char **vertexNames, VkFormat *vertexVkFormats, uint32_t *vertexCounts, uint32_t instanceAttributeLayoutCount, const char **instanceNames, VkFormat *instanceVkFormats, uint32_t *instanceCounts, VkIndexType vkIndexType)
 {
     MeshLayout *pMeshLayout = tknMalloc(sizeof(MeshLayout));
     AttributeLayout *vertexAttributeLayouts = tknMalloc(sizeof(AttributeLayout) * vertexAttributeLayoutCount);
+    for (uint32_t vertexAttributeLayoutIndex = 0; vertexAttributeLayoutIndex < vertexAttributeLayoutCount; vertexAttributeLayoutIndex++)
+    {
+        vertexAttributeLayouts[vertexAttributeLayoutIndex] = (AttributeLayout){
+            .name = vertexNames[vertexAttributeLayoutIndex],
+            .vkFormat = vertexVkFormats[vertexAttributeLayoutIndex],
+            .count = vertexCounts[vertexAttributeLayoutIndex],
+        };
+    }
+
     AttributeLayout *instanceAttributeLayouts = tknMalloc(sizeof(AttributeLayout) * instanceAttributeLayoutCount);
+    for (uint32_t instanceAttributeLayoutIndex = 0; instanceAttributeLayoutIndex < instanceAttributeLayoutCount; instanceAttributeLayoutIndex++)
+    {
+        instanceAttributeLayouts[instanceAttributeLayoutIndex] = (AttributeLayout){
+            .name = instanceNames[instanceAttributeLayoutIndex],
+            .vkFormat = instanceVkFormats[instanceAttributeLayoutIndex],
+            .count = instanceCounts[instanceAttributeLayoutIndex],
+        };
+    }
+
     *pMeshLayout = (MeshLayout){
         .vertexAttributeLayoutCount = vertexAttributeLayoutCount,
         .vertexAttributeLayouts = vertexAttributeLayouts,

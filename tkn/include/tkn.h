@@ -4,19 +4,18 @@
 
 #define TKN_ARRAY_COUNT(array) (NULL == array) ? 0 : (sizeof(array) / sizeof(array[0]))
 
+
 typedef struct GfxContext GfxContext;
 typedef struct RenderPass RenderPass;
 typedef struct Pipeline Pipeline;
 typedef struct Material Material;
 typedef struct Mesh Mesh;
+typedef struct MeshLayout MeshLayout;
 
 typedef struct Attachment Attachment;
 typedef struct Image Image;
 typedef struct Sampler Sampler;
 typedef struct UniformBuffer UniformBuffer;
-
-
-typedef struct MeshLayout MeshLayout;
 
 
 VkFormat getSupportedFormat(GfxContext *pGfxContext, uint32_t candidateCount, VkFormat *candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
@@ -47,6 +46,9 @@ void updateUniformBufferPtr(GfxContext *pGfxContext, UniformBuffer *pUniformBuff
 
 Mesh *createMeshPtr(GfxContext *pGfxContext, void *vertices, uint32_t vertexCount, VkDeviceSize vertexSize, void *indices, uint32_t indexCount, VkIndexType vkIndexType, void *instances, uint32_t maxInstanceCount, VkDeviceSize instanceSize);
 void destroyMeshPtr(GfxContext *pGfxContext, Mesh *pMesh);
+
+MeshLayout *createMeshLayoutPtr(uint32_t vertexAttributeLayoutCount, const char **vertexNames, VkFormat *vertexVkFormats, uint32_t *vertexCounts, uint32_t instanceAttributeLayoutCount, const char **instanceNames, VkFormat *instanceVkFormats, uint32_t *instanceCounts, VkIndexType vkIndexType);
+void destroyMeshLayoutPtr(MeshLayout *pMeshLayout);
 
 void tknError(char const *const _Format, ...);
 void tknWarning(const char *format, ...);
