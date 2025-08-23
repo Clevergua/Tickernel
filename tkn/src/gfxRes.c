@@ -712,7 +712,7 @@ Mesh *createMeshPtr(GfxContext *pGfxContext, MeshLayout *pMeshLayout, void *vert
     // void *instanceMappedBuffer = NULL;
     // uint32_t instanceCount = 0;
 
-    TknHashSet drawPtrHashSet = tknCreateHashSet(TKN_DEFAULT_COLLECTION_SIZE);
+    TknHashSet instancePtrHashSet = tknCreateHashSet(TKN_DEFAULT_COLLECTION_SIZE);
 
     VkBuffer vertexStagingBuffer;
     VkDeviceMemory vertexStagingBufferMemory;
@@ -755,7 +755,6 @@ Mesh *createMeshPtr(GfxContext *pGfxContext, MeshLayout *pMeshLayout, void *vert
         .indexVkBuffer = indexVkBuffer,
         .indexVkDeviceMemory = indexVkDeviceMemory,
         .indexCount = indexCount,
-        .drawPtrHashSet = drawPtrHashSet,
         .pMeshLayout = pMeshLayout,
     };
     tknAddToHashSet(&pMeshLayout->meshPtrHashSet, pMesh);
@@ -764,9 +763,6 @@ Mesh *createMeshPtr(GfxContext *pGfxContext, MeshLayout *pMeshLayout, void *vert
 
 void destroyMeshPtr(GfxContext *pGfxContext, Mesh *pMesh)
 {
-    tknAssert(pMesh->drawPtrHashSet.count == 0, "Draw pointer hash set not fully cleaned up (count != 0)");
-    tknDestroyHashSet(pMesh->drawPtrHashSet);
-
     tknRemoveFromHashSet(&pMesh->pMeshLayout->meshPtrHashSet, pMesh);
     destroyVkBuffer(pGfxContext, pMesh->vertexVkBuffer, pMesh->vertexVkDeviceMemory);
     destroyVkBuffer(pGfxContext, pMesh->indexVkBuffer, pMesh->indexVkDeviceMemory);
@@ -774,34 +770,14 @@ void destroyMeshPtr(GfxContext *pGfxContext, Mesh *pMesh)
     tknFree(pMesh);
 }
 
-MeshLayout *createMeshLayoutPtr(uint32_t vertexAttributeLayoutCount, const char **vertexNames, VkFormat *vertexVkFormats, uint32_t *vertexCounts, uint32_t instanceAttributeLayoutCount, const char **instanceNames, VkFormat *instanceVkFormats, uint32_t *instanceCounts, VkIndexType vkIndexType)
+MeshLayout *createMeshLayoutPtr(uint32_t vertexAttributeLayoutCount, AttributeLayout *vertexAttributeLayouts, VkIndexType vkIndexType)
 {
     MeshLayout *pMeshLayout = tknMalloc(sizeof(MeshLayout));
-    AttributeLayout *vertexAttributeLayouts = tknMalloc(sizeof(AttributeLayout) * vertexAttributeLayoutCount);
-    for (uint32_t vertexAttributeLayoutIndex = 0; vertexAttributeLayoutIndex < vertexAttributeLayoutCount; vertexAttributeLayoutIndex++)
-    {
-        vertexAttributeLayouts[vertexAttributeLayoutIndex] = (AttributeLayout){
-            .name = vertexNames[vertexAttributeLayoutIndex],
-            .vkFormat = vertexVkFormats[vertexAttributeLayoutIndex],
-            .count = vertexCounts[vertexAttributeLayoutIndex],
-        };
-    }
-
-    AttributeLayout *instanceAttributeLayouts = tknMalloc(sizeof(AttributeLayout) * instanceAttributeLayoutCount);
-    for (uint32_t instanceAttributeLayoutIndex = 0; instanceAttributeLayoutIndex < instanceAttributeLayoutCount; instanceAttributeLayoutIndex++)
-    {
-        instanceAttributeLayouts[instanceAttributeLayoutIndex] = (AttributeLayout){
-            .name = instanceNames[instanceAttributeLayoutIndex],
-            .vkFormat = instanceVkFormats[instanceAttributeLayoutIndex],
-            .count = instanceCounts[instanceAttributeLayoutIndex],
-        };
-    }
-
+    AttributeLayout *vertexAttributeLayoutsCopy = tknMalloc(sizeof(AttributeLayout) * vertexAttributeLayoutCount);
+    memcpy(vertexAttributeLayoutsCopy, vertexAttributeLayouts, sizeof(AttributeLayout) * vertexAttributeLayoutCount);
     *pMeshLayout = (MeshLayout){
         .vertexAttributeLayoutCount = vertexAttributeLayoutCount,
-        .vertexAttributeLayouts = vertexAttributeLayouts,
-        .instanceAttributeLayoutCount = instanceAttributeLayoutCount,
-        .instanceAttributeLayouts = instanceAttributeLayouts,
+        .vertexAttributeLayouts = vertexAttributeLayoutsCopy,
         .vkIndexType = vkIndexType,
         .meshPtrHashSet = tknCreateHashSet(TKN_DEFAULT_COLLECTION_SIZE),
         .pipelinePtrHashSet = tknCreateHashSet(TKN_DEFAULT_COLLECTION_SIZE),
@@ -815,6 +791,5 @@ void destroyMeshLayoutPtr(MeshLayout *pMeshLayout)
     tknDestroyHashSet(pMeshLayout->meshPtrHashSet);
     tknDestroyHashSet(pMeshLayout->pipelinePtrHashSet);
     tknFree(pMeshLayout->vertexAttributeLayouts);
-    tknFree(pMeshLayout->instanceAttributeLayouts);
     tknFree(pMeshLayout);
 }

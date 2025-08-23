@@ -519,7 +519,7 @@ void destroyRenderPassPtr(GfxContext *pGfxContext, RenderPass *pRenderPass)
     tknFree(pRenderPass);
 }
 
-Pipeline *createPipelinePtr(GfxContext *pGfxContext, RenderPass *pRenderPass, uint32_t subpassIndex, uint32_t spvPathCount, const char **spvPaths, MeshLayout *pMeshLayout, VkPipelineInputAssemblyStateCreateInfo vkPipelineInputAssemblyStateCreateInfo, VkPipelineViewportStateCreateInfo vkPipelineViewportStateCreateInfo, VkPipelineRasterizationStateCreateInfo vkPipelineRasterizationStateCreateInfo, VkPipelineMultisampleStateCreateInfo vkPipelineMultisampleStateCreateInfo, VkPipelineDepthStencilStateCreateInfo vkPipelineDepthStencilStateCreateInfo, VkPipelineColorBlendStateCreateInfo vkPipelineColorBlendStateCreateInfo, VkPipelineDynamicStateCreateInfo vkPipelineDynamicStateCreateInfo)
+Pipeline *createPipelinePtr(GfxContext *pGfxContext, RenderPass *pRenderPass, uint32_t subpassIndex, uint32_t spvPathCount, const char **spvPaths, MeshLayout *pMeshLayout, uint32_t instanceAttributeLayoutCount, AttributeLayout *instanceAttributeLayouts, VkPipelineInputAssemblyStateCreateInfo vkPipelineInputAssemblyStateCreateInfo, VkPipelineViewportStateCreateInfo vkPipelineViewportStateCreateInfo, VkPipelineRasterizationStateCreateInfo vkPipelineRasterizationStateCreateInfo, VkPipelineMultisampleStateCreateInfo vkPipelineMultisampleStateCreateInfo, VkPipelineDepthStencilStateCreateInfo vkPipelineDepthStencilStateCreateInfo, VkPipelineColorBlendStateCreateInfo vkPipelineColorBlendStateCreateInfo, VkPipelineDynamicStateCreateInfo vkPipelineDynamicStateCreateInfo)
 {
     Pipeline *pPipeline = tknMalloc(sizeof(Pipeline));
 
@@ -558,9 +558,9 @@ Pipeline *createPipelinePtr(GfxContext *pGfxContext, RenderPass *pRenderPass, ui
                     vertexStride += getSizeOfVkFormat(vertexAttributeLayout.vkFormat);
                 }
                 uint32_t instanceStride = 0;
-                for (uint32_t instanceAttributeLayoutIndex = 0; instanceAttributeLayoutIndex < pMeshLayout->instanceAttributeLayoutCount; instanceAttributeLayoutIndex++)
+                for (uint32_t instanceAttributeLayoutIndex = 0; instanceAttributeLayoutIndex < instanceAttributeLayoutCount; instanceAttributeLayoutIndex++)
                 {
-                    AttributeLayout instanceAttributeLayout = pMeshLayout->instanceAttributeLayouts[instanceAttributeLayoutIndex];
+                    AttributeLayout instanceAttributeLayout = instanceAttributeLayouts[instanceAttributeLayoutIndex];
                     instanceStride += getSizeOfVkFormat(instanceAttributeLayout.vkFormat);
                 }
                 vertexBindingDescriptionCount = MAX_VERTEX_BINDING_DESCRIPTION;
@@ -600,9 +600,9 @@ Pipeline *createPipelinePtr(GfxContext *pGfxContext, RenderPass *pRenderPass, ui
                     }
                     offset = 0;
                     uint32_t instanceAttributeLayoutIndex;
-                    for (instanceAttributeLayoutIndex = 0; instanceAttributeLayoutIndex < pMeshLayout->instanceAttributeLayoutCount; instanceAttributeLayoutIndex++)
+                    for (instanceAttributeLayoutIndex = 0; instanceAttributeLayoutIndex < instanceAttributeLayoutCount; instanceAttributeLayoutIndex++)
                     {
-                        AttributeLayout instanceAttributeLayout = pMeshLayout->instanceAttributeLayouts[instanceAttributeLayoutIndex];
+                        AttributeLayout instanceAttributeLayout = instanceAttributeLayouts[instanceAttributeLayoutIndex];
                         if (pSpvReflectInterfaceVariable->name == instanceAttributeLayout.name)
                         {
                             vertexAttributeDescriptions[inputVariableIndex] = (VkVertexInputAttributeDescription){
@@ -615,7 +615,7 @@ Pipeline *createPipelinePtr(GfxContext *pGfxContext, RenderPass *pRenderPass, ui
                         }
                         offset += instanceAttributeLayout.count * getSizeOfVkFormat(instanceAttributeLayout.vkFormat);
                     }
-                    tknAssert(vertexAttributeLayoutIndex < pMeshLayout->vertexAttributeLayoutCount || instanceAttributeLayoutIndex < pMeshLayout->instanceAttributeLayoutCount, "Vertex layout not found");
+                    tknAssert(vertexAttributeLayoutIndex < pMeshLayout->vertexAttributeLayoutCount || instanceAttributeLayoutIndex < instanceAttributeLayoutCount, "Vertex layout not found");
                 }
             }
         }

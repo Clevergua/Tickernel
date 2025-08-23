@@ -28,11 +28,13 @@ function srp.setup(pGfxContext, assetsPath)
             { name = "color",    vkFormat = VK_FORMAT_R8G8B8A8_UINT,    count = 1 },
             { name = "normal",   vkFormat = VK_FORMAT_R32G32B32_SFLOAT, count = 1 },
         },
-        instanceAttributeLayouts = {
-            { name = "model", vkFormat = VK_FORMAT_R32G32B32A32_SFLOAT, count = 4 },
-        },
         vkIndexType = VK_INDEX_TYPE_UINT16,
     })
+    srp.pGeometryInstanceLayout = gfx.createInstanceLayoutPtr({
+        instanceAttributeLayouts = {
+            { name = "model", vkFormat = VK_FORMAT_R32G32B32A32_SFLOAT, count = 4 },
+        }
+    });
 
     srp.pDeferredRenderPass = deferredRenderPass.createRenderPassPtr(pGfxContext, {
         srp.pColorAttachment,
@@ -40,12 +42,14 @@ function srp.setup(pGfxContext, assetsPath)
         srp.pAlbedoAttachment,
         srp.pNormalAttachment,
         srp.pSwapchainAttachment
-    }, assetsPath, srp.pGeometryMeshLayout)
+    }, assetsPath, srp.pGeometryMeshLayout, srp.pGeometryInstanceLayout)
 end
 
 function srp.tearDown(pGfxContext)
     srp.pDeferredRenderPass = nil
+
     deferredRenderPass.destroyRenderPassPtr(pGfxContext, srp.pDeferredRenderPass)
+    gfx.destroyInstanceLayoutPtr(srp.pGeometryInstanceLayout)
     gfx.destroyMeshLayoutPtr(srp.pGeometryMeshLayout)
     gfx.destroyDynamicAttachmentPtr(pGfxContext, srp.pNormalAttachment)
     gfx.destroyDynamicAttachmentPtr(pGfxContext, srp.pAlbedoAttachment)

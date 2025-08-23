@@ -3,7 +3,7 @@ local lightingPipeline = require("lightingPipeline")
 local postProcessPipeline = require("postProcessPipeline")
 local deferredRenderPass = {}
 
-function deferredRenderPass.createRenderPassPtr(pGfxContext, pAttachments, assetsPath, pGeometryMeshLayout)
+function deferredRenderPass.createRenderPassPtr(pGfxContext, pAttachments, assetsPath, pGeometryMeshLayout, pGeometryInstanceLayout)
     local colorAttachmentDescription = {
         samples = VK_SAMPLE_COUNT_1_BIT,
         loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
@@ -171,7 +171,7 @@ function deferredRenderPass.createRenderPassPtr(pGfxContext, pAttachments, asset
         spvPathsArray, vkSubpassDependencies)
 
 
-    local pGeometryPipeline = geometryPipeline.createPipelinePtr(pGfxContext, pRenderPass, 0, assetsPath, pGeometryMeshLayout)
+    local pGeometryPipeline = geometryPipeline.createPipelinePtr(pGfxContext, pRenderPass, 0, assetsPath, pGeometryMeshLayout, pGeometryInstanceLayout)
     local pLightingPipeline = lightingPipeline.createPipelinePtr(pGfxContext, pRenderPass, 1, assetsPath)
     local pPostProcessPipeline = postProcessPipeline.createPipelinePtr(pGfxContext, pRenderPass, 2, assetsPath)
     deferredRenderPass.pRenderPass = pRenderPass

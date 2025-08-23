@@ -377,46 +377,25 @@ static int luaCreateMeshLayoutPtr(lua_State *pLuaState)
     uint32_t vertexAttributeLayoutCount = (uint32_t)lua_tointeger(pLuaState, -1);
     lua_pop(pLuaState, 1);
 
-    const char **vertexNames = tknMalloc(sizeof(const char *) * vertexAttributeLayoutCount);
-    VkFormat *vertexVkFormats = tknMalloc(sizeof(VkFormat) * vertexAttributeLayoutCount);
-    uint32_t *vertexCounts = tknMalloc(sizeof(uint32_t) * vertexAttributeLayoutCount);
+    AttributeLayout *vertexAttributeLayouts = tknMalloc(sizeof(AttributeLayout) * vertexAttributeLayoutCount);
 
     for (uint32_t i = 0; i < vertexAttributeLayoutCount; i++)
     {
         lua_rawgeti(pLuaState, -1, i + 1);
         lua_getfield(pLuaState, -1, "name");
-        vertexNames[i] = lua_tostring(pLuaState, -1);
+        const char *name = lua_tostring(pLuaState, -1);
         lua_pop(pLuaState, 1);
         lua_getfield(pLuaState, -1, "vkFormat");
-        vertexVkFormats[i] = (VkFormat)lua_tointeger(pLuaState, -1);
+        VkFormat vkFormat = (VkFormat)lua_tointeger(pLuaState, -1);
         lua_pop(pLuaState, 1);
         lua_getfield(pLuaState, -1, "count");
-        vertexCounts[i] = (uint32_t)lua_tointeger(pLuaState, -1);
+        uint32_t count = (uint32_t)lua_tointeger(pLuaState, -1);
         lua_pop(pLuaState, 1);
-        lua_pop(pLuaState, 1);
-    }
-    lua_pop(pLuaState, 1);
-
-    lua_getfield(pLuaState, -1, "instanceAttributeLayouts");
-    lua_len(pLuaState, -1);
-    uint32_t instanceAttributeLayoutCount = (uint32_t)lua_tointeger(pLuaState, -1);
-    lua_pop(pLuaState, 1);
-    const char **instanceNames = tknMalloc(sizeof(const char *) * instanceAttributeLayoutCount);
-    VkFormat *instanceVkFormats = tknMalloc(sizeof(VkFormat) * instanceAttributeLayoutCount);
-    uint32_t *instanceCounts = tknMalloc(sizeof(uint32_t) * instanceAttributeLayoutCount);
-
-    for (uint32_t i = 0; i < instanceAttributeLayoutCount; i++)
-    {
-        lua_rawgeti(pLuaState, -1, i + 1);
-        lua_getfield(pLuaState, -1, "name");
-        instanceNames[i] = lua_tostring(pLuaState, -1);
-        lua_pop(pLuaState, 1);
-        lua_getfield(pLuaState, -1, "vkFormat");
-        instanceVkFormats[i] = (VkFormat)lua_tointeger(pLuaState, -1);
-        lua_pop(pLuaState, 1);
-        lua_getfield(pLuaState, -1, "count");
-        instanceCounts[i] = (uint32_t)lua_tointeger(pLuaState, -1);
-        lua_pop(pLuaState, 1);
+        vertexAttributeLayouts[i] = (AttributeLayout){
+            .name = name,
+            .vkFormat = vkFormat,
+            .count = count,
+        };
         lua_pop(pLuaState, 1);
     }
     lua_pop(pLuaState, 1);
@@ -425,13 +404,8 @@ static int luaCreateMeshLayoutPtr(lua_State *pLuaState)
     VkIndexType vkIndexType = (VkIndexType)lua_tointeger(pLuaState, -1);
     lua_pop(pLuaState, 1);
 
-    MeshLayout *pMeshLayout = createMeshLayoutPtr(vertexAttributeLayoutCount, vertexNames, vertexVkFormats, vertexCounts, instanceAttributeLayoutCount, instanceNames, instanceVkFormats, instanceCounts, vkIndexType);
-    tknFree(vertexNames);
-    tknFree(vertexVkFormats);
-    tknFree(vertexCounts);
-    tknFree(instanceNames);
-    tknFree(instanceVkFormats);
-    tknFree(instanceCounts);
+    MeshLayout *pMeshLayout = createMeshLayoutPtr(vertexAttributeLayoutCount, vertexAttributeLayouts, vkIndexType);
+    tknFree(vertexAttributeLayouts);
     lua_pushlightuserdata(pLuaState, pMeshLayout);
     return 1;
 }
@@ -850,9 +824,12 @@ static int luaCreatePipelinePtr(lua_State *pLuaState)
     vkPipelineDynamicStateCreateInfo.pDynamicStates = pDynamicStates;
     lua_pop(pLuaState, 1); // Pop pDynamicStates
 
+    // TODO: create pInstanceLayout
+    uint32_t instanceAttributeLayoutCount;
+    AttributeLayout *instanceAttributeLayouts;
     // Call the C function
     Pipeline *pPipeline = createPipelinePtr(pGfxContext, pRenderPass, subpassIndex, spvPathCount, spvPaths,
-                                            pMeshLayout,
+                                            pMeshLayout, instanceAttributeLayoutCount, instanceAttributeLayouts,
                                             vkPipelineInputAssemblyStateCreateInfo,
                                             vkPipelineViewportStateCreateInfo,
                                             vkPipelineRasterizationStateCreateInfo,
