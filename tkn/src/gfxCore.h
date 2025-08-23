@@ -189,6 +189,8 @@ struct MeshLayout
     uint32_t instanceAttributeLayoutCount;
     AttributeLayout *instanceAttributeLayouts;
     VkIndexType vkIndexType;
+    TknHashSet meshPtrHashSet;
+    TknHashSet pipelinePtrHashSet;
 };
 
 struct Mesh
@@ -234,6 +236,7 @@ struct Pipeline
     VkPipeline vkPipeline;
     DescriptorSet *pPipelineDescriptorSet;
     VkPipelineLayout vkPipelineLayout;
+    MeshLayout *pMeshLayout;
 };
 
 typedef struct

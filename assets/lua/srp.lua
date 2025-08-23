@@ -34,8 +34,6 @@ function srp.setup(pGfxContext, assetsPath)
         vkIndexType = VK_INDEX_TYPE_UINT16,
     })
 
-
-
     srp.pDeferredRenderPass = deferredRenderPass.createRenderPassPtr(pGfxContext, {
         srp.pColorAttachment,
         srp.pDepthAttachment,
@@ -48,6 +46,7 @@ end
 function srp.tearDown(pGfxContext)
     srp.pDeferredRenderPass = nil
     deferredRenderPass.destroyRenderPassPtr(pGfxContext, srp.pDeferredRenderPass)
+    gfx.destroyMeshLayoutPtr(srp.pGeometryMeshLayout)
     gfx.destroyDynamicAttachmentPtr(pGfxContext, srp.pNormalAttachment)
     gfx.destroyDynamicAttachmentPtr(pGfxContext, srp.pAlbedoAttachment)
     gfx.destroyDynamicAttachmentPtr(pGfxContext, srp.pDepthAttachment)

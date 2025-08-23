@@ -660,7 +660,45 @@ void updateBindings(GfxContext *pGfxContext, uint32_t bindingCount, Binding *bin
     }
 }
 
-Mesh *createMeshPtr(GfxContext *pGfxContext, void *vertices, uint32_t vertexCount, VkDeviceSize vertexSize, void *indices, uint32_t indexCount, VkIndexType vkIndexType, void *instances, uint32_t maxInstanceCount, VkDeviceSize instanceSize)
+static void copyBuffer(GfxContext *pGfxContext, VkBuffer srcVkBuffer, VkBuffer dstVkBuffer, VkDeviceSize size)
+{
+    VkDevice vkDevice = pGfxContext->vkDevice;
+
+    VkCommandBufferAllocateInfo vkCommandBufferAllocateInfo = {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+        .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+        .commandPool = pGfxContext->gfxVkCommandPool,
+        .commandBufferCount = 1};
+
+    VkCommandBuffer vkCommandBuffer;
+    assertVkResult(vkAllocateCommandBuffers(vkDevice, &vkCommandBufferAllocateInfo, &vkCommandBuffer));
+
+    VkCommandBufferBeginInfo vkCommandBufferBeginInfo = {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+        .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
+    };
+
+    assertVkResult(vkBeginCommandBuffer(vkCommandBuffer, &vkCommandBufferBeginInfo));
+
+    VkBufferCopy vkBufferCopy = {
+        .srcOffset = 0,
+        .dstOffset = 0,
+        .size = size};
+    vkCmdCopyBuffer(vkCommandBuffer, srcVkBuffer, dstVkBuffer, 1, &vkBufferCopy);
+    assertVkResult(vkEndCommandBuffer(vkCommandBuffer));
+
+    VkSubmitInfo submitInfo = {
+        .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+        .commandBufferCount = 1,
+        .pCommandBuffers = &vkCommandBuffer};
+
+    assertVkResult(vkQueueSubmit(pGfxContext->vkGfxQueue, 1, &submitInfo, VK_NULL_HANDLE));
+    assertVkResult(vkQueueWaitIdle(pGfxContext->vkGfxQueue));
+
+    vkFreeCommandBuffers(vkDevice, pGfxContext->gfxVkCommandPool, 1, &vkCommandBuffer);
+}
+
+Mesh *createMeshPtr(GfxContext *pGfxContext, MeshLayout *pMeshLayout, void *vertices, uint32_t vertexCount, VkDeviceSize vertexSize, void *indices, uint32_t indexCount, VkIndexType vkIndexType, uint32_t maxInstanceCount, VkDeviceSize instanceSize)
 {
     Mesh *pMesh = tknMalloc(sizeof(Mesh));
     VkBuffer vertexVkBuffer = VK_NULL_HANDLE;
@@ -675,7 +713,41 @@ Mesh *createMeshPtr(GfxContext *pGfxContext, void *vertices, uint32_t vertexCoun
     uint32_t instanceCount = 0;
 
     TknHashSet materialPtrHashSet = tknCreateHashSet(TKN_DEFAULT_COLLECTION_SIZE);
+
+    VkBuffer vertexStagingBuffer;
+    VkDeviceMemory vertexStagingBufferMemory;
+    createVkBuffer(pGfxContext, vertexCount * vertexSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &vertexStagingBuffer, &vertexStagingBufferMemory);
+    void *data;
+    VkDevice vkDevice = pGfxContext->vkDevice;
+    vkMapMemory(vkDevice, vertexStagingBufferMemory, 0, vertexCount * vertexSize, 0, &data);
+    memcpy(data, vertices, (size_t)vertexCount * vertexSize);
+    vkUnmapMemory(vkDevice, vertexStagingBufferMemory);
     createVkBuffer(pGfxContext, vertexCount * vertexSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &vertexVkBuffer, &vertexVkDeviceMemory);
+    copyBuffer(pGfxContext, vertexStagingBuffer, vertexVkBuffer, vertexCount * vertexSize);
+    destroyVkBuffer(pGfxContext, vertexStagingBuffer, vertexStagingBufferMemory);
+
+    if (indexCount > 0)
+    {
+        VkBuffer indexStagingBuffer;
+        VkDeviceMemory indexStagingBufferMemory;
+        createVkBuffer(pGfxContext, indexCount * sizeof(uint32_t), VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &indexStagingBuffer, &indexStagingBufferMemory);
+        void *data;
+        VkDevice vkDevice = pGfxContext->vkDevice;
+        vkMapMemory(vkDevice, indexStagingBufferMemory, 0, indexCount * sizeof(uint32_t), 0, &data);
+        memcpy(data, indices, (size_t)indexCount * sizeof(uint32_t));
+        vkUnmapMemory(vkDevice, indexStagingBufferMemory);
+        createVkBuffer(pGfxContext, indexCount * sizeof(uint32_t), VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &indexVkBuffer, &indexVkDeviceMemory);
+        copyBuffer(pGfxContext, indexStagingBuffer, indexVkBuffer, indexCount * sizeof(uint32_t));
+        destroyVkBuffer(pGfxContext, indexStagingBuffer, indexStagingBufferMemory);
+    }
+    else
+    {
+        // Keep NULL
+    }
+
+    createVkBuffer(pGfxContext, maxInstanceCount * instanceSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &instanceVkBuffer, &instanceVkDeviceMemory);
+    vkMapMemory(vkDevice, instanceVkDeviceMemory, 0, maxInstanceCount * instanceSize, 0, &instanceMappedBuffer);
+
     *pMesh = (Mesh){
         .vertexVkBuffer = vertexVkBuffer,
         .vertexVkDeviceMemory = vertexVkDeviceMemory,
@@ -689,12 +761,22 @@ Mesh *createMeshPtr(GfxContext *pGfxContext, void *vertices, uint32_t vertexCoun
         .instanceCount = instanceCount,
         .maxInstanceCount = maxInstanceCount,
         .materialPtrHashSet = materialPtrHashSet,
+        .pMeshLayout = pMeshLayout,
     };
+    tknAddToHashSet(&pMeshLayout->meshPtrHashSet, pMesh);
     return pMesh;
 }
 
 void destroyMeshPtr(GfxContext *pGfxContext, Mesh *pMesh)
 {
+    tknAssert(pMesh->materialPtrHashSet.count == 0, "Material pointer hash set not fully cleaned up (count != 0)");
+    tknDestroyHashSet(pMesh->materialPtrHashSet);
+
+    tknRemoveFromHashSet(&pMesh->pMeshLayout->meshPtrHashSet, pMesh);
+    destroyVkBuffer(pGfxContext, pMesh->vertexVkBuffer, pMesh->vertexVkDeviceMemory);
+    destroyVkBuffer(pGfxContext, pMesh->indexVkBuffer, pMesh->indexVkDeviceMemory);
+    destroyVkBuffer(pGfxContext, pMesh->instanceVkBuffer, pMesh->instanceVkDeviceMemory);
+    tknFree(pMesh);
 }
 
 MeshLayout *createMeshLayoutPtr(uint32_t vertexAttributeLayoutCount, const char **vertexNames, VkFormat *vertexVkFormats, uint32_t *vertexCounts, uint32_t instanceAttributeLayoutCount, const char **instanceNames, VkFormat *instanceVkFormats, uint32_t *instanceCounts, VkIndexType vkIndexType)
@@ -726,15 +808,18 @@ MeshLayout *createMeshLayoutPtr(uint32_t vertexAttributeLayoutCount, const char 
         .instanceAttributeLayoutCount = instanceAttributeLayoutCount,
         .instanceAttributeLayouts = instanceAttributeLayouts,
         .vkIndexType = vkIndexType,
+        .meshPtrHashSet = tknCreateHashSet(TKN_DEFAULT_COLLECTION_SIZE),
+        .pipelinePtrHashSet = tknCreateHashSet(TKN_DEFAULT_COLLECTION_SIZE),
     };
     return pMeshLayout;
 }
 void destroyMeshLayoutPtr(MeshLayout *pMeshLayout)
 {
-    if (pMeshLayout)
-    {
-        tknFree(pMeshLayout->vertexAttributeLayouts);
-        tknFree(pMeshLayout->instanceAttributeLayouts);
-        tknFree(pMeshLayout);
-    }
+    tknAssert(pMeshLayout->meshPtrHashSet.count == 0, "Mesh pointer hash set not fully cleaned up (count != 0)");
+    tknAssert(pMeshLayout->pipelinePtrHashSet.count == 0, "Pipeline pointer hash set not fully cleaned up (count != 0)");
+    tknDestroyHashSet(pMeshLayout->meshPtrHashSet);
+    tknDestroyHashSet(pMeshLayout->pipelinePtrHashSet);
+    tknFree(pMeshLayout->vertexAttributeLayouts);
+    tknFree(pMeshLayout->instanceAttributeLayouts);
+    tknFree(pMeshLayout);
 }

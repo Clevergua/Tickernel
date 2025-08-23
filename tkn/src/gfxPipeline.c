@@ -519,7 +519,7 @@ void destroyRenderPassPtr(GfxContext *pGfxContext, RenderPass *pRenderPass)
     tknFree(pRenderPass);
 }
 
-Pipeline *createPipelinePtr(GfxContext *pGfxContext, RenderPass *pRenderPass, uint32_t subpassIndex, uint32_t spvPathCount, const char **spvPaths, const MeshLayout *pMeshLayout, VkPipelineInputAssemblyStateCreateInfo vkPipelineInputAssemblyStateCreateInfo, VkPipelineViewportStateCreateInfo vkPipelineViewportStateCreateInfo, VkPipelineRasterizationStateCreateInfo vkPipelineRasterizationStateCreateInfo, VkPipelineMultisampleStateCreateInfo vkPipelineMultisampleStateCreateInfo, VkPipelineDepthStencilStateCreateInfo vkPipelineDepthStencilStateCreateInfo, VkPipelineColorBlendStateCreateInfo vkPipelineColorBlendStateCreateInfo, VkPipelineDynamicStateCreateInfo vkPipelineDynamicStateCreateInfo)
+Pipeline *createPipelinePtr(GfxContext *pGfxContext, RenderPass *pRenderPass, uint32_t subpassIndex, uint32_t spvPathCount, const char **spvPaths, MeshLayout *pMeshLayout, VkPipelineInputAssemblyStateCreateInfo vkPipelineInputAssemblyStateCreateInfo, VkPipelineViewportStateCreateInfo vkPipelineViewportStateCreateInfo, VkPipelineRasterizationStateCreateInfo vkPipelineRasterizationStateCreateInfo, VkPipelineMultisampleStateCreateInfo vkPipelineMultisampleStateCreateInfo, VkPipelineDepthStencilStateCreateInfo vkPipelineDepthStencilStateCreateInfo, VkPipelineColorBlendStateCreateInfo vkPipelineColorBlendStateCreateInfo, VkPipelineDynamicStateCreateInfo vkPipelineDynamicStateCreateInfo)
 {
     Pipeline *pPipeline = tknMalloc(sizeof(Pipeline));
 
@@ -708,12 +708,15 @@ Pipeline *createPipelinePtr(GfxContext *pGfxContext, RenderPass *pRenderPass, ui
         .pPipelineDescriptorSet = pPipelineDescriptorSet,
         .vkPipeline = vkPipeline,
         .vkPipelineLayout = vkPipelineLayout,
+        .pMeshLayout = pMeshLayout,
     };
+    tknAddToHashSet(&pMeshLayout->pipelinePtrHashSet, pPipeline);
     return pPipeline;
 }
 void destroyPipelinePtr(GfxContext *pGfxContext, Pipeline *pPipeline)
 {
     VkDevice vkDevice = pGfxContext->vkDevice;
+    tknRemoveFromHashSet(&pPipeline->pMeshLayout->pipelinePtrHashSet, pPipeline);
     destroyDescriptorSetPtr(pGfxContext, pPipeline->pPipelineDescriptorSet);
     vkDestroyPipeline(vkDevice, pPipeline->vkPipeline, NULL);
     vkDestroyPipelineLayout(vkDevice, pPipeline->vkPipelineLayout, NULL);
