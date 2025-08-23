@@ -186,11 +186,24 @@ struct MeshLayout
 {
     uint32_t vertexAttributeLayoutCount;
     AttributeLayout *vertexAttributeLayouts;
+
     uint32_t instanceAttributeLayoutCount;
     AttributeLayout *instanceAttributeLayouts;
     VkIndexType vkIndexType;
+    
     TknHashSet meshPtrHashSet;
     TknHashSet pipelinePtrHashSet;
+};
+
+struct Draw
+{
+    VkBuffer instanceVkBuffer;
+    VkDeviceMemory instanceVkDeviceMemory;
+    void *instanceMappedBuffer;
+    uint32_t instanceCount;
+    uint32_t maxInstanceCount;
+
+    Mesh *pMesh;
 };
 
 struct Mesh
@@ -203,13 +216,7 @@ struct Mesh
     VkDeviceMemory indexVkDeviceMemory;
     uint32_t indexCount;
 
-    VkBuffer instanceVkBuffer;
-    VkDeviceMemory instanceVkDeviceMemory;
-    void *instanceMappedBuffer;
-    uint32_t instanceCount;
-    uint32_t maxInstanceCount;
-
-    TknHashSet materialPtrHashSet;
+    TknHashSet drawPtrHashSet;
     MeshLayout *pMeshLayout;
 };
 
@@ -220,7 +227,7 @@ struct Material
     Binding *bindings;
     VkDescriptorPool vkDescriptorPool;
     DescriptorSet *pDescriptorSet;
-    TknDynamicArray meshPtrDynamicArray;
+    TknDynamicArray drawPtrDynamicArray;
 };
 
 typedef enum

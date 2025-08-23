@@ -8,6 +8,7 @@ typedef struct GfxContext GfxContext;
 typedef struct RenderPass RenderPass;
 typedef struct Pipeline Pipeline;
 typedef struct Material Material;
+typedef struct Draw Draw;
 typedef struct Mesh Mesh;
 typedef struct MeshLayout MeshLayout;
 

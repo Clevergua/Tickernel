@@ -630,25 +630,27 @@ static void recordCommandBuffer(GfxContext *pGfxContext, uint32_t swapchainIndex
                     vkDescriptorSets[TKN_GLOBAL_DESCRIPTOR_SET] = pMaterial->vkDescriptorSet;
                     tknFree(vkDescriptorSets);
                     vkCmdBindDescriptorSets(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pPipeline->vkPipelineLayout, 0, TKN_MAX_DESCRIPTOR_SET, vkDescriptorSets, 0, NULL);
-                    for (uint32_t meshPtrIndex = 0; meshPtrIndex < pMaterial->meshPtrDynamicArray.count; meshPtrIndex++)
+                    for (uint32_t drawIndex = 0; drawIndex < pMaterial->drawPtrDynamicArray.count; drawIndex++)
                     {
-                        Mesh *pMesh = *(Mesh **)tknGetFromDynamicArray(&pMaterial->meshPtrDynamicArray, meshPtrIndex);
-                        if (pMesh->vertexCount > 0 && pMesh->instanceCount > 0)
+                        Draw *pDraw = *(Draw **)tknGetFromDynamicArray(&pMaterial->drawPtrDynamicArray, drawIndex);
+                        if (pDraw->instanceCount > 0)
                         {
-                            VkBuffer vertexBuffers[] = {pMesh->vertexVkBuffer, pMesh->instanceMappedBuffer};
+                            Mesh *pMesh = pDraw->pMesh;
+                            tknAssert(pMesh->vertexCount > 0, "Mesh has no vertices");
+                            VkBuffer vertexBuffers[] = {pMesh->vertexVkBuffer, pDraw->instanceMappedBuffer};
                             if (pMesh->indexCount > 0)
                             {
                                 VkDeviceSize offsets[] = {0, 0};
                                 vkCmdBindVertexBuffers(vkCommandBuffer, 0, 2, vertexBuffers, offsets);
                                 vkCmdBindIndexBuffer(vkCommandBuffer, pMesh->indexVkBuffer, 0, VK_INDEX_TYPE_UINT16);
-                                vkCmdDrawIndexed(vkCommandBuffer, pMesh->indexCount, pMesh->instanceCount, 0, 0, 0);
+                                vkCmdDrawIndexed(vkCommandBuffer, pMesh->indexCount, pDraw->instanceCount, 0, 0, 0);
                             }
                             else
                             {
                                 VkDeviceSize offsets[] = {0, 0};
                                 vkCmdBindVertexBuffers(vkCommandBuffer, 0, 2, vertexBuffers, offsets);
                                 vkCmdBindIndexBuffer(vkCommandBuffer, pMesh->indexVkBuffer, 0, VK_INDEX_TYPE_UINT16);
-                                vkCmdDraw(vkCommandBuffer, pMesh->vertexCount, pMesh->instanceCount, 0, 0);
+                                vkCmdDraw(vkCommandBuffer, pMesh->vertexCount, pDraw->instanceCount, 0, 0);
                             }
                         }
                         else
