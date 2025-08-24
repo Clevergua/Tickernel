@@ -22,27 +22,24 @@ function srp.setup(pGfxContext, assetsPath)
         VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT, VK_IMAGE_ASPECT_COLOR_BIT, 1)
     srp.pSwapchainAttachment = gfx.getSwapchainAttachmentPtr(pGfxContext)
 
-    srp.pGeometryMeshLayout = gfx.createMeshLayoutPtr({
-        vertexAttributeLayouts = {
-            { name = "position", vkFormat = VK_FORMAT_R32G32B32_SFLOAT, count = 1 },
-            { name = "color",    vkFormat = VK_FORMAT_R8G8B8A8_UINT,    count = 1 },
-            { name = "normal",   vkFormat = VK_FORMAT_R32G32B32_SFLOAT, count = 1 },
-        },
-        vkIndexType = VK_INDEX_TYPE_UINT16,
-    })
-    srp.pGeometryInstanceLayout = gfx.createInstanceLayoutPtr({
-        instanceAttributeLayouts = {
+    local vertexAttributeDescriptions = {
+        { name = "position", vkFormat = VK_FORMAT_R32G32B32_SFLOAT, count = 1 },
+        { name = "color",    vkFormat = VK_FORMAT_R8G8B8A8_UINT,    count = 1 },
+        { name = "normal",   vkFormat = VK_FORMAT_R32G32B32_SFLOAT, count = 1 },
+    }
+
+    local indexAttributeDescriptions = gfx.createInstanceLayoutPtr({
+        instanceAttributeDescription = {
             { name = "model", vkFormat = VK_FORMAT_R32G32B32A32_SFLOAT, count = 4 },
         }
     });
-
     srp.pDeferredRenderPass = deferredRenderPass.createRenderPassPtr(pGfxContext, {
         srp.pColorAttachment,
         srp.pDepthAttachment,
         srp.pAlbedoAttachment,
         srp.pNormalAttachment,
         srp.pSwapchainAttachment
-    }, assetsPath, srp.pGeometryMeshLayout, srp.pGeometryInstanceLayout)
+    }, assetsPath, vertexAttributeDescriptions, indexAttributeDescriptions)
 end
 
 function srp.tearDown(pGfxContext)

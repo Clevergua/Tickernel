@@ -1,6 +1,6 @@
 local geometryPipeline = {}
-function geometryPipeline.createPipelinePtr(pGfxContext, pRenderPass, subpassIndex, assetsPath, pGeometryMeshLayout,
-                                            pGeometryInstanceLayout)
+function geometryPipeline.createPipelinePtr(pGfxContext, pRenderPass, subpassIndex, assetsPath,
+                                            vertexAttributeDescriptions, indexAttributeDescriptions)
     local geometryPipelineSpvPaths = {
         assetsPath .. "/shaders/spv/geometry.vert.spv",
         assetsPath .. "/shaders/spv/geometry.frag.spv",
@@ -77,7 +77,7 @@ function geometryPipeline.createPipelinePtr(pGfxContext, pRenderPass, subpassInd
     }
 
     return gfx.createPipelinePtr(pGfxContext, pRenderPass, subpassIndex, geometryPipelineSpvPaths,
-    pGeometryMeshLayout, pGeometryInstanceLayout, vkPipelineInputAssemblyStateCreateInfo,
+        vertexAttributeDescriptions, indexAttributeDescriptions, vkPipelineInputAssemblyStateCreateInfo,
         gfx.defaultVkPipelineViewportStateCreateInfo,
         vkPipelineRasterizationStateCreateInfo, vkPipelineMultisampleStateCreateInfo,
         vkPipelineDepthStencilStateCreateInfo, vkPipelineColorBlendStateCreateInfo, vkPipelineDynamicStateCreateInfo)

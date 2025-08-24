@@ -370,53 +370,6 @@ static int luaDestroyRenderPassPtr(lua_State *pLuaState)
     return 0;
 }
 
-static int luaCreateMeshLayoutPtr(lua_State *pLuaState)
-{
-    lua_getfield(pLuaState, -1, "vertexAttributeLayouts");
-    lua_len(pLuaState, -1);
-    uint32_t vertexAttributeLayoutCount = (uint32_t)lua_tointeger(pLuaState, -1);
-    lua_pop(pLuaState, 1);
-
-    AttributeLayout *vertexAttributeLayouts = tknMalloc(sizeof(AttributeLayout) * vertexAttributeLayoutCount);
-
-    for (uint32_t i = 0; i < vertexAttributeLayoutCount; i++)
-    {
-        lua_rawgeti(pLuaState, -1, i + 1);
-        lua_getfield(pLuaState, -1, "name");
-        const char *name = lua_tostring(pLuaState, -1);
-        lua_pop(pLuaState, 1);
-        lua_getfield(pLuaState, -1, "vkFormat");
-        VkFormat vkFormat = (VkFormat)lua_tointeger(pLuaState, -1);
-        lua_pop(pLuaState, 1);
-        lua_getfield(pLuaState, -1, "count");
-        uint32_t count = (uint32_t)lua_tointeger(pLuaState, -1);
-        lua_pop(pLuaState, 1);
-        vertexAttributeLayouts[i] = (AttributeLayout){
-            .name = name,
-            .vkFormat = vkFormat,
-            .count = count,
-        };
-        lua_pop(pLuaState, 1);
-    }
-    lua_pop(pLuaState, 1);
-
-    lua_getfield(pLuaState, -1, "vkIndexType");
-    VkIndexType vkIndexType = (VkIndexType)lua_tointeger(pLuaState, -1);
-    lua_pop(pLuaState, 1);
-
-    MeshLayout *pMeshLayout = createMeshLayoutPtr(vertexAttributeLayoutCount, vertexAttributeLayouts, vkIndexType);
-    tknFree(vertexAttributeLayouts);
-    lua_pushlightuserdata(pLuaState, pMeshLayout);
-    return 1;
-}
-
-static int luaDestroyMeshLayoutPtr(lua_State *pLuaState)
-{
-    MeshLayout *pMeshLayout = (MeshLayout *)lua_touserdata(pLuaState, -1);
-    destroyMeshLayoutPtr(pMeshLayout);
-    return 0;
-}
-
 static int luaCreatePipelinePtr(lua_State *pLuaState)
 {
     // Get parameters from Lua stack (12 parameters total)
@@ -436,7 +389,7 @@ static int luaCreatePipelinePtr(lua_State *pLuaState)
         lua_pop(pLuaState, 1);
     }
     // Get meshLayout array (parameter 5 at index -8)
-    MeshLayout *pMeshLayout = (MeshLayout *)lua_touserdata(pLuaState, -8);
+
     // Parse VkPipelineInputAssemblyStateCreateInfo (parameter 6 at index -7)
     VkPipelineInputAssemblyStateCreateInfo vkPipelineInputAssemblyStateCreateInfo = {0};
     vkPipelineInputAssemblyStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
@@ -824,12 +777,14 @@ static int luaCreatePipelinePtr(lua_State *pLuaState)
     vkPipelineDynamicStateCreateInfo.pDynamicStates = pDynamicStates;
     lua_pop(pLuaState, 1); // Pop pDynamicStates
 
-    // TODO: create pInstanceLayout
-    uint32_t instanceAttributeLayoutCount;
-    AttributeLayout *instanceAttributeLayouts;
+    uint32_t vertexAttributeDescriptionCount;
+    AttributeDescription *vertexAttributeDescriptions;
+    uint32_t instanceAttributeDescriptionCount;
+    AttributeDescription *instanceAttributeDescriptions;
     // Call the C function
     Pipeline *pPipeline = createPipelinePtr(pGfxContext, pRenderPass, subpassIndex, spvPathCount, spvPaths,
-                                            pMeshLayout, instanceAttributeLayoutCount, instanceAttributeLayouts,
+                                            vertexAttributeDescriptionCount, vertexAttributeDescriptions,
+                                            instanceAttributeDescriptionCount, instanceAttributeDescriptions,
                                             vkPipelineInputAssemblyStateCreateInfo,
                                             vkPipelineViewportStateCreateInfo,
                                             vkPipelineRasterizationStateCreateInfo,
@@ -872,8 +827,6 @@ void bindFunctions(lua_State *pLuaState)
         {"destroyRenderPassPtr", luaDestroyRenderPassPtr},
         {"createPipelinePtr", luaCreatePipelinePtr},
         {"destroyPipelinePtr", luaDestroyPipelinePtr},
-        {"createMeshLayoutPtr", luaCreateMeshLayoutPtr},
-        {"destroyMeshLayoutPtr", luaDestroyMeshLayoutPtr},
         {NULL, NULL},
     };
     luaL_newlib(pLuaState, regs);

@@ -175,18 +175,6 @@ typedef enum
     MAX_VERTEX_BINDING_DESCRIPTION
 } VertexBindingDescription;
 
-
-
-struct MeshLayout
-{
-    uint32_t vertexAttributeLayoutCount;
-    AttributeLayout *vertexAttributeLayouts;
-    VkIndexType vkIndexType;
-
-    TknHashSet meshPtrHashSet;
-    TknHashSet pipelinePtrHashSet;
-};
-
 struct Instance
 {
     VkBuffer instanceVkBuffer;
@@ -194,6 +182,7 @@ struct Instance
     void *instanceMappedBuffer;
     uint32_t instanceCount;
     uint32_t maxInstanceCount;
+    Mesh *pMesh;
 };
 
 struct Mesh
@@ -206,7 +195,9 @@ struct Mesh
     VkDeviceMemory indexVkDeviceMemory;
     uint32_t indexCount;
 
-    MeshLayout *pMeshLayout;
+    uint32_t vertexAttributeDescriptionCount;
+    AttributeDescription *vertexAttributeDescriptions;
+    VkIndexType vkIndexType;
 };
 
 struct Material
@@ -217,7 +208,6 @@ struct Material
     VkDescriptorPool vkDescriptorPool;
     DescriptorSet *pDescriptorSet;
     TknDynamicArray instancePtrDynamicArray;
-    TknDynamicArray meshPtrDynamicArray;
 };
 
 typedef enum
@@ -233,8 +223,11 @@ struct Pipeline
     VkPipeline vkPipeline;
     DescriptorSet *pPipelineDescriptorSet;
     VkPipelineLayout vkPipelineLayout;
+    RenderPass *pRenderPass;
+    uint32_t subpassIndex;
 
-    MeshLayout *pMeshLayout;
+    uint32_t vertexAttributeDescriptionCount;
+    AttributeDescription *vertexAttributeDescriptions;
 };
 
 typedef struct

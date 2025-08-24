@@ -633,23 +633,23 @@ static void recordCommandBuffer(GfxContext *pGfxContext, uint32_t swapchainIndex
                     for (uint32_t instanceIndex = 0; instanceIndex < pMaterial->instancePtrDynamicArray.count; instanceIndex++)
                     {
                         Instance *pInstance = *(Instance **)tknGetFromDynamicArray(&pMaterial->instancePtrDynamicArray, instanceIndex);
-                        Mesh *pMesh = *(Mesh **)tknGetFromDynamicArray(&pMaterial->meshPtrDynamicArray, instanceIndex);
                         if (pInstance->instanceCount > 0)
                         {
+                            Mesh *pMesh = pInstance->pMesh;
                             tknAssert(pMesh->vertexCount > 0, "Mesh has no vertices");
                             VkBuffer vertexBuffers[] = {pMesh->vertexVkBuffer, pInstance->instanceMappedBuffer};
                             if (pMesh->indexCount > 0)
                             {
                                 VkDeviceSize offsets[] = {0, 0};
                                 vkCmdBindVertexBuffers(vkCommandBuffer, 0, 2, vertexBuffers, offsets);
-                                vkCmdBindIndexBuffer(vkCommandBuffer, pMesh->indexVkBuffer, 0, pMesh->pMeshLayout->vkIndexType);
+                                vkCmdBindIndexBuffer(vkCommandBuffer, pMesh->indexVkBuffer, 0, pMesh->vkIndexType);
                                 vkCmdDrawIndexed(vkCommandBuffer, pMesh->indexCount, pInstance->instanceCount, 0, 0, 0);
                             }
                             else
                             {
                                 VkDeviceSize offsets[] = {0, 0};
                                 vkCmdBindVertexBuffers(vkCommandBuffer, 0, 2, vertexBuffers, offsets);
-                                vkCmdBindIndexBuffer(vkCommandBuffer, pMesh->indexVkBuffer, 0, pMesh->pMeshLayout->vkIndexType);
+                                vkCmdBindIndexBuffer(vkCommandBuffer, pMesh->indexVkBuffer, 0, pMesh->vkIndexType);
                                 vkCmdDraw(vkCommandBuffer, pMesh->vertexCount, pInstance->instanceCount, 0, 0);
                             }
                         }

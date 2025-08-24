@@ -9,7 +9,6 @@ typedef struct RenderPass RenderPass;
 typedef struct Pipeline Pipeline;
 typedef struct Material Material;
 typedef struct Instance Instance;
-typedef struct MeshLayout MeshLayout;
 typedef struct Mesh Mesh;
 
 typedef struct Attachment Attachment;
@@ -22,7 +21,7 @@ typedef struct
     const char *name;
     VkFormat vkFormat;
     uint32_t count;
-} AttributeLayout;
+} AttributeDescription;
 
 VkFormat getSupportedFormat(GfxContext *pGfxContext, uint32_t candidateCount, VkFormat *candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
 
@@ -40,7 +39,7 @@ Attachment *getSwapchainAttachmentPtr(GfxContext *pGfxContext);
 RenderPass *createRenderPassPtr(GfxContext *pGfxContext, uint32_t attachmentCount, VkAttachmentDescription *vkAttachmentDescriptions, Attachment **inputAttachmentPtrs, VkClearValue *vkClearValues, uint32_t subpassCount, VkSubpassDescription *vkSubpassDescriptions, uint32_t *spvPathCounts, const char ***spvPathsArray, uint32_t vkSubpassDependencyCount, VkSubpassDependency *vkSubpassDependencies);
 void destroyRenderPassPtr(GfxContext *pGfxContext, RenderPass *pRenderPass);
 
-Pipeline *createPipelinePtr(GfxContext *pGfxContext, RenderPass *pRenderPass, uint32_t subpassIndex, uint32_t spvPathCount, const char **spvPaths, MeshLayout *pMeshLayout, uint32_t instanceAttributeLayoutCount, AttributeLayout *instanceAttributeLayouts, VkPipelineInputAssemblyStateCreateInfo vkPipelineInputAssemblyStateCreateInfo, VkPipelineViewportStateCreateInfo vkPipelineViewportStateCreateInfo, VkPipelineRasterizationStateCreateInfo vkPipelineRasterizationStateCreateInfo, VkPipelineMultisampleStateCreateInfo vkPipelineMultisampleStateCreateInfo, VkPipelineDepthStencilStateCreateInfo vkPipelineDepthStencilStateCreateInfo, VkPipelineColorBlendStateCreateInfo vkPipelineColorBlendStateCreateInfo, VkPipelineDynamicStateCreateInfo vkPipelineDynamicStateCreateInfo);
+Pipeline *createPipelinePtr(GfxContext *pGfxContext, RenderPass *pRenderPass, uint32_t subpassIndex, uint32_t spvPathCount, const char **spvPaths, uint32_t vertexAttributeDescriptionCount, AttributeDescription *vertexAttributeDescriptions, uint32_t instanceAttributeDescriptionCount, AttributeDescription *instanceAttributeDescriptions, VkPipelineInputAssemblyStateCreateInfo vkPipelineInputAssemblyStateCreateInfo, VkPipelineViewportStateCreateInfo vkPipelineViewportStateCreateInfo, VkPipelineRasterizationStateCreateInfo vkPipelineRasterizationStateCreateInfo, VkPipelineMultisampleStateCreateInfo vkPipelineMultisampleStateCreateInfo, VkPipelineDepthStencilStateCreateInfo vkPipelineDepthStencilStateCreateInfo, VkPipelineColorBlendStateCreateInfo vkPipelineColorBlendStateCreateInfo, VkPipelineDynamicStateCreateInfo vkPipelineDynamicStateCreateInfo);
 void destroyPipelinePtr(GfxContext *pGfxContext, Pipeline *pPipeline);
 
 Image *createImagePtr(GfxContext *pGfxContext, VkExtent3D vkExtent3D, VkFormat vkFormat, VkImageTiling vkImageTiling, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags);
@@ -50,11 +49,8 @@ UniformBuffer *createUniformBufferPtr(GfxContext *pGfxContext, VkDeviceSize vkDe
 void destroyUniformBufferPtr(GfxContext *pGfxContext, UniformBuffer *pUniformBuffer);
 void updateUniformBufferPtr(GfxContext *pGfxContext, UniformBuffer *pUniformBuffer, const void *data, VkDeviceSize vkDeviceSize);
 
-Mesh *createMeshPtr(GfxContext *pGfxContext, MeshLayout *pMeshLayout, void *vertices, uint32_t vertexCount, VkDeviceSize vertexSize, void *indices, uint32_t indexCount, VkIndexType vkIndexType, uint32_t maxInstanceCount, VkDeviceSize instanceSize);
+Mesh *createMeshPtr(GfxContext *pGfxContext, uint32_t vertexAttributeDescriptionCount, AttributeDescription *vertexAttributeDescriptions, void *vertices, uint32_t vertexCount, VkIndexType vkIndexType, VkDeviceSize vertexSize, void *indices, uint32_t indexCount);
 void destroyMeshPtr(GfxContext *pGfxContext, Mesh *pMesh);
-
-MeshLayout *createMeshLayoutPtr(uint32_t vertexAttributeLayoutCount, AttributeLayout *vertexAttributeLayouts, VkIndexType vkIndexType);
-void destroyMeshLayoutPtr(MeshLayout *pMeshLayout);
 
 void tknError(char const *const _Format, ...);
 void tknWarning(const char *format, ...);

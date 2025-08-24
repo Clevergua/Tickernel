@@ -35,7 +35,7 @@ end
 
 -- Pipeline *createPipelinePtr(GfxContext *pGfxContext, RenderPass *pRenderPass, uint32_t subpassIndex, uint32_t spvPathCount, const char **spvPaths, VkPipelineVertexInputStateCreateInfo vkPipelineVertexInputStateCreateInfo, VkPipelineInputAssemblyStateCreateInfo vkPipelineInputAssemblyStateCreateInfo, VkPipelineViewportStateCreateInfo vkPipelineViewportStateCreateInfo, VkPipelineRasterizationStateCreateInfo vkPipelineRasterizationStateCreateInfo, VkPipelineMultisampleStateCreateInfo vkPipelineMultisampleStateCreateInfo, VkPipelineDepthStencilStateCreateInfo vkPipelineDepthStencilStateCreateInfo, VkPipelineColorBlendStateCreateInfo vkPipelineColorBlendStateCreateInfo, VkPipelineDynamicStateCreateInfo vkPipelineDynamicStateCreateInfo)
 function gfx.createPipelinePtr(pGfxContext, pRenderPass, subpassIndex, spvPaths, pGeometryMeshLayout,
-                               pGeometryInstanceLayout,
+                               vertexAttributeDescriptions, indexAttributeDescriptions,
                                vkPipelineInputAssemblyStateCreateInfo, vkPipelineViewportStateCreateInfo,
                                vkPipelineRasterizationStateCreateInfo, vkPipelineMultisampleStateCreateInfo,
                                vkPipelineDepthStencilStateCreateInfo, vkPipelineColorBlendStateCreateInfo,
