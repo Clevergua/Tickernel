@@ -707,11 +707,6 @@ Mesh *createMeshPtr(GfxContext *pGfxContext, uint32_t vertexAttributeDescription
     VkBuffer indexVkBuffer = VK_NULL_HANDLE;
     VkDeviceMemory indexVkDeviceMemory = VK_NULL_HANDLE;
 
-    // VkBuffer instanceVkBuffer = VK_NULL_HANDLE;
-    // VkDeviceMemory instanceVkDeviceMemory = VK_NULL_HANDLE;
-    // void *instanceMappedBuffer = NULL;
-    // uint32_t instanceCount = 0;
-
     TknHashSet instancePtrHashSet = tknCreateHashSet(TKN_DEFAULT_COLLECTION_SIZE);
 
     VkBuffer vertexStagingBuffer;
@@ -744,9 +739,6 @@ Mesh *createMeshPtr(GfxContext *pGfxContext, uint32_t vertexAttributeDescription
     {
         // Keep NULL
     }
-
-    // createVkBuffer(pGfxContext, maxInstanceCount * instanceSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &instanceVkBuffer, &instanceVkDeviceMemory);
-    // vkMapMemory(vkDevice, instanceVkDeviceMemory, 0, maxInstanceCount * instanceSize, 0, &instanceMappedBuffer);
 
     *pMesh = (Mesh)
     {

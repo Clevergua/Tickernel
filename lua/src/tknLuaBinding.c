@@ -372,23 +372,61 @@ static int luaDestroyRenderPassPtr(lua_State *pLuaState)
 
 static int luaCreatePipelinePtr(lua_State *pLuaState)
 {
-    // Get parameters from Lua stack (12 parameters total)
-    GfxContext *pGfxContext = (GfxContext *)lua_touserdata(pLuaState, -12);
-    RenderPass *pRenderPass = (RenderPass *)lua_touserdata(pLuaState, -11);
-    uint32_t subpassIndex = (uint32_t)lua_tointeger(pLuaState, -10);
+    // Get parameters from Lua stack (13 parameters total)
+    GfxContext *pGfxContext = (GfxContext *)lua_touserdata(pLuaState, -13);
+    RenderPass *pRenderPass = (RenderPass *)lua_touserdata(pLuaState, -12);
+    uint32_t subpassIndex = (uint32_t)lua_tointeger(pLuaState, -11);
 
-    // Get spvPaths array (parameter 4 at index -9)
-    lua_len(pLuaState, -9);
+    // Get spvPaths array (parameter 4 at index -10)
+    lua_len(pLuaState, -10);
     uint32_t spvPathCount = (uint32_t)lua_tointeger(pLuaState, -1);
     lua_pop(pLuaState, 1);
     const char **spvPaths = tknMalloc(sizeof(const char *) * spvPathCount);
     for (uint32_t i = 0; i < spvPathCount; i++)
     {
-        lua_rawgeti(pLuaState, -9, i + 1);
+        lua_rawgeti(pLuaState, -10, i + 1);
         spvPaths[i] = lua_tostring(pLuaState, -1);
         lua_pop(pLuaState, 1);
     }
-    // Get meshLayout array (parameter 5 at index -8)
+    // Get vertexAttributeDescriptions (parameter 5 at index -9)
+    lua_len(pLuaState, -9);
+    uint32_t vertexAttributeDescriptionCount = (uint32_t)lua_tointeger(pLuaState, -1);
+    lua_pop(pLuaState, 1);
+    AttributeDescription *vertexAttributeDescriptions = tknMalloc(sizeof(AttributeDescription) * vertexAttributeDescriptionCount);
+    for (uint32_t i = 0; i < vertexAttributeDescriptionCount; i++)
+    {
+        lua_rawgeti(pLuaState, -9, i + 1);
+        vertexAttributeDescriptions[i].name = lua_tostring(pLuaState, -1);
+        lua_pop(pLuaState, 1);
+
+        lua_rawgeti(pLuaState, -9, i + 1);
+        vertexAttributeDescriptions[i].vkFormat = (VkFormat)lua_tointeger(pLuaState, -1);
+        lua_pop(pLuaState, 1);
+
+        lua_rawgeti(pLuaState, -9, i + 1);
+        vertexAttributeDescriptions[i].count = (uint32_t)lua_tointeger(pLuaState, -1);
+        lua_pop(pLuaState, 1);
+    }
+
+    // Get instanceAttributeDescriptions (parameter 6 at index -8)
+    lua_len(pLuaState, -8);
+    uint32_t instanceAttributeDescriptionCount = (uint32_t)lua_tointeger(pLuaState, -1);
+    lua_pop(pLuaState, 1);
+    AttributeDescription *instanceAttributeDescriptions = tknMalloc(sizeof(AttributeDescription) * instanceAttributeDescriptionCount);
+    for (uint32_t i = 0; i < instanceAttributeDescriptionCount; i++)
+    {
+        lua_rawgeti(pLuaState, -8, i + 1);
+        instanceAttributeDescriptions[i].name = lua_tostring(pLuaState, -1);
+        lua_pop(pLuaState, 1);
+
+        lua_rawgeti(pLuaState, -8, i + 1);
+        instanceAttributeDescriptions[i].vkFormat = (VkFormat)lua_tointeger(pLuaState, -1);
+        lua_pop(pLuaState, 1);
+
+        lua_rawgeti(pLuaState, -8, i + 1);
+        instanceAttributeDescriptions[i].count = (uint32_t)lua_tointeger(pLuaState, -1);
+        lua_pop(pLuaState, 1);
+    }
 
     // Parse VkPipelineInputAssemblyStateCreateInfo (parameter 6 at index -7)
     VkPipelineInputAssemblyStateCreateInfo vkPipelineInputAssemblyStateCreateInfo = {0};
@@ -777,10 +815,6 @@ static int luaCreatePipelinePtr(lua_State *pLuaState)
     vkPipelineDynamicStateCreateInfo.pDynamicStates = pDynamicStates;
     lua_pop(pLuaState, 1); // Pop pDynamicStates
 
-    uint32_t vertexAttributeDescriptionCount;
-    AttributeDescription *vertexAttributeDescriptions;
-    uint32_t instanceAttributeDescriptionCount;
-    AttributeDescription *instanceAttributeDescriptions;
     // Call the C function
     Pipeline *pPipeline = createPipelinePtr(pGfxContext, pRenderPass, subpassIndex, spvPathCount, spvPaths,
                                             vertexAttributeDescriptionCount, vertexAttributeDescriptions,

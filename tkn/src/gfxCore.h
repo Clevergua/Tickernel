@@ -228,6 +228,8 @@ struct Pipeline
 
     uint32_t vertexAttributeDescriptionCount;
     AttributeDescription *vertexAttributeDescriptions;
+    uint32_t instanceAttributeDescriptionCount;
+    AttributeDescription *instanceAttributeDescriptions;
 };
 
 typedef struct

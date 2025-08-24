@@ -529,7 +529,6 @@ Pipeline *createPipelinePtr(GfxContext *pGfxContext, RenderPass *pRenderPass, ui
     VkVertexInputBindingDescription *vkVertexInputBindingDescriptions;
     uint32_t vkVertexInputAttributeDescriptionCount;
     VkVertexInputAttributeDescription *vkVertexInputAttributeDescriptions;
-
     VkDevice vkDevice = pGfxContext->vkDevice;
     for (uint32_t spvPathIndex = 0; spvPathIndex < spvPathCount; spvPathIndex++)
     {
@@ -652,7 +651,8 @@ Pipeline *createPipelinePtr(GfxContext *pGfxContext, RenderPass *pRenderPass, ui
         .vertexAttributeDescriptionCount = vkVertexInputAttributeDescriptionCount,
         .pVertexAttributeDescriptions = vkVertexInputAttributeDescriptions,
     };
-
+    tknFree(vkVertexInputBindingDescriptions);
+    tknFree(vkVertexInputAttributeDescriptions);
     tknFree(spvReflectShaderModules);
     VkPipelineLayout vkPipelineLayout;
     VkDescriptorSetLayout *vkDescriptorSetLayouts = tknMalloc(sizeof(VkDescriptorSetLayout) * TKN_MAX_DESCRIPTOR_SET);
@@ -698,7 +698,13 @@ Pipeline *createPipelinePtr(GfxContext *pGfxContext, RenderPass *pRenderPass, ui
     tknFree(vkDescriptorSetLayouts);
     tknFree(pipelineShaderStageCreateInfos);
     assertVkResult(vkCreateGraphicsPipelines(vkDevice, NULL, 1, &vkGraphicsPipelineCreateInfo, NULL, &vkPipeline));
-    tknFree(vertexAttributeDescriptions);
+
+    AttributeDescription *vertexAttributeDescriptionsCopy = tknMalloc(sizeof(AttributeDescription) * vertexAttributeDescriptionCount);
+    memcpy(vertexAttributeDescriptionsCopy, vertexAttributeDescriptions, sizeof(AttributeDescription) * vertexAttributeDescriptionCount);
+
+    AttributeDescription *instanceAttributeDescriptionsCopy = tknMalloc(sizeof(AttributeDescription) * instanceAttributeDescriptionCount);
+    memcpy(instanceAttributeDescriptionsCopy, instanceAttributeDescriptions, sizeof(AttributeDescription) * instanceAttributeDescriptionCount);
+
     *pPipeline = (Pipeline){
         .pPipelineDescriptorSet = pPipelineDescriptorSet,
         .vkPipeline = vkPipeline,
@@ -706,7 +712,9 @@ Pipeline *createPipelinePtr(GfxContext *pGfxContext, RenderPass *pRenderPass, ui
         .pRenderPass = pRenderPass,
         .subpassIndex = subpassIndex,
         .vertexAttributeDescriptionCount = vertexAttributeDescriptionCount,
-        .vertexAttributeDescriptions = vertexAttributeDescriptions,
+        .vertexAttributeDescriptions = vertexAttributeDescriptionsCopy,
+        .instanceAttributeDescriptionCount = instanceAttributeDescriptionCount,
+        .instanceAttributeDescriptions = instanceAttributeDescriptionsCopy,
     };
     tknAddToDynamicArray(&pRenderPass->subpasses[subpassIndex].pipelinePtrDynamicArray, pPipeline);
     return pPipeline;
@@ -715,6 +723,8 @@ void destroyPipelinePtr(GfxContext *pGfxContext, Pipeline *pPipeline)
 {
     VkDevice vkDevice = pGfxContext->vkDevice;
     tknRemoveFromDynamicArray(&pPipeline->pRenderPass->subpasses[pPipeline->subpassIndex].pipelinePtrDynamicArray, pPipeline);
+    tknFree(pPipeline->vertexAttributeDescriptions);
+    tknFree(pPipeline->instanceAttributeDescriptions);
     destroyDescriptorSetPtr(pGfxContext, pPipeline->pPipelineDescriptorSet);
     vkDestroyPipeline(vkDevice, pPipeline->vkPipeline, NULL);
     vkDestroyPipelineLayout(vkDevice, pPipeline->vkPipelineLayout, NULL);
