@@ -389,44 +389,10 @@ static int luaCreatePipelinePtr(lua_State *pLuaState)
         lua_pop(pLuaState, 1);
     }
     // Get vertexAttributeDescriptions (parameter 5 at index -9)
-    lua_len(pLuaState, -9);
-    uint32_t vertexAttributeDescriptionCount = (uint32_t)lua_tointeger(pLuaState, -1);
-    lua_pop(pLuaState, 1);
-    AttributeDescription *vertexAttributeDescriptions = tknMalloc(sizeof(AttributeDescription) * vertexAttributeDescriptionCount);
-    for (uint32_t i = 0; i < vertexAttributeDescriptionCount; i++)
-    {
-        lua_rawgeti(pLuaState, -9, i + 1);
-        vertexAttributeDescriptions[i].name = lua_tostring(pLuaState, -1);
-        lua_pop(pLuaState, 1);
-
-        lua_rawgeti(pLuaState, -9, i + 1);
-        vertexAttributeDescriptions[i].vkFormat = (VkFormat)lua_tointeger(pLuaState, -1);
-        lua_pop(pLuaState, 1);
-
-        lua_rawgeti(pLuaState, -9, i + 1);
-        vertexAttributeDescriptions[i].count = (uint32_t)lua_tointeger(pLuaState, -1);
-        lua_pop(pLuaState, 1);
-    }
+    VertexInputLayout *pMeshVertexInputLayout = lua_touserdata(pLuaState, -9);
 
     // Get instanceAttributeDescriptions (parameter 6 at index -8)
-    lua_len(pLuaState, -8);
-    uint32_t instanceAttributeDescriptionCount = (uint32_t)lua_tointeger(pLuaState, -1);
-    lua_pop(pLuaState, 1);
-    AttributeDescription *instanceAttributeDescriptions = tknMalloc(sizeof(AttributeDescription) * instanceAttributeDescriptionCount);
-    for (uint32_t i = 0; i < instanceAttributeDescriptionCount; i++)
-    {
-        lua_rawgeti(pLuaState, -8, i + 1);
-        instanceAttributeDescriptions[i].name = lua_tostring(pLuaState, -1);
-        lua_pop(pLuaState, 1);
-
-        lua_rawgeti(pLuaState, -8, i + 1);
-        instanceAttributeDescriptions[i].vkFormat = (VkFormat)lua_tointeger(pLuaState, -1);
-        lua_pop(pLuaState, 1);
-
-        lua_rawgeti(pLuaState, -8, i + 1);
-        instanceAttributeDescriptions[i].count = (uint32_t)lua_tointeger(pLuaState, -1);
-        lua_pop(pLuaState, 1);
-    }
+    VertexInputLayout *pInstanceVertexInputLayout = lua_touserdata(pLuaState, -8);
 
     // Parse VkPipelineInputAssemblyStateCreateInfo (parameter 6 at index -7)
     VkPipelineInputAssemblyStateCreateInfo vkPipelineInputAssemblyStateCreateInfo = {0};
@@ -817,8 +783,8 @@ static int luaCreatePipelinePtr(lua_State *pLuaState)
 
     // Call the C function
     Pipeline *pPipeline = createPipelinePtr(pGfxContext, pRenderPass, subpassIndex, spvPathCount, spvPaths,
-                                            vertexAttributeDescriptionCount, vertexAttributeDescriptions,
-                                            instanceAttributeDescriptionCount, instanceAttributeDescriptions,
+                                            pMeshVertexInputLayout,
+                                            pInstanceVertexInputLayout,
                                             vkPipelineInputAssemblyStateCreateInfo,
                                             vkPipelineViewportStateCreateInfo,
                                             vkPipelineRasterizationStateCreateInfo,
