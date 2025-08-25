@@ -698,67 +698,98 @@ static void copyBuffer(GfxContext *pGfxContext, VkBuffer srcVkBuffer, VkBuffer d
     vkFreeCommandBuffers(vkDevice, pGfxContext->gfxVkCommandPool, 1, &vkCommandBuffer);
 }
 
-Mesh *createMeshPtr(GfxContext *pGfxContext, uint32_t vertexAttributeDescriptionCount, AttributeDescription *vertexAttributeDescriptions, void *vertices, uint32_t vertexCount, VkIndexType vkIndexType, VkDeviceSize vertexSize, void *indices, uint32_t indexCount)
+VertexInputLayout *createVertexInputLayoutPtr(uint32_t attributeCount, const char **names, uint32_t *sizes)
 {
-    Mesh *pMesh = tknMalloc(sizeof(Mesh));
-    VkBuffer vertexVkBuffer = VK_NULL_HANDLE;
-    VkDeviceMemory vertexVkDeviceMemory = VK_NULL_HANDLE;
-
-    VkBuffer indexVkBuffer = VK_NULL_HANDLE;
-    VkDeviceMemory indexVkDeviceMemory = VK_NULL_HANDLE;
-
-    TknHashSet instancePtrHashSet = tknCreateHashSet(TKN_DEFAULT_COLLECTION_SIZE);
-
-    VkBuffer vertexStagingBuffer;
-    VkDeviceMemory vertexStagingBufferMemory;
-    createVkBuffer(pGfxContext, vertexCount * vertexSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &vertexStagingBuffer, &vertexStagingBufferMemory);
-    void *data;
-    VkDevice vkDevice = pGfxContext->vkDevice;
-    vkMapMemory(vkDevice, vertexStagingBufferMemory, 0, vertexCount * vertexSize, 0, &data);
-    memcpy(data, vertices, (size_t)vertexCount * vertexSize);
-    vkUnmapMemory(vkDevice, vertexStagingBufferMemory);
-    createVkBuffer(pGfxContext, vertexCount * vertexSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &vertexVkBuffer, &vertexVkDeviceMemory);
-    copyBuffer(pGfxContext, vertexStagingBuffer, vertexVkBuffer, vertexCount * vertexSize);
-    destroyVkBuffer(pGfxContext, vertexStagingBuffer, vertexStagingBufferMemory);
-
-    if (indexCount > 0)
+    VertexInputLayout *pVertexInputLayout = tknMalloc(sizeof(VertexInputLayout));
+    const char **namesCopy = tknMalloc(sizeof(char *) * attributeCount);
+    memcpy(namesCopy, names, sizeof(char *) * attributeCount);
+    uint32_t *sizesCopy = tknMalloc(sizeof(uint32_t) * attributeCount);
+    memcpy(sizesCopy, sizes, sizeof(uint32_t) * attributeCount);
+    uint32_t *offsets = tknMalloc(sizeof(uint32_t) * attributeCount);
+    uint32_t stride = 0;
+    for (uint32_t i = 0; i < attributeCount; i++)
     {
-        VkBuffer indexStagingBuffer;
-        VkDeviceMemory indexStagingBufferMemory;
-        createVkBuffer(pGfxContext, indexCount * sizeof(uint32_t), VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &indexStagingBuffer, &indexStagingBufferMemory);
-        void *data;
-        VkDevice vkDevice = pGfxContext->vkDevice;
-        vkMapMemory(vkDevice, indexStagingBufferMemory, 0, indexCount * sizeof(uint32_t), 0, &data);
-        memcpy(data, indices, (size_t)indexCount * sizeof(uint32_t));
-        vkUnmapMemory(vkDevice, indexStagingBufferMemory);
-        createVkBuffer(pGfxContext, indexCount * sizeof(uint32_t), VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &indexVkBuffer, &indexVkDeviceMemory);
-        copyBuffer(pGfxContext, indexStagingBuffer, indexVkBuffer, indexCount * sizeof(uint32_t));
-        destroyVkBuffer(pGfxContext, indexStagingBuffer, indexStagingBufferMemory);
+        offsets[i] = stride;
+        stride += sizes[i];
     }
-    else
-    {
-        // Keep NULL
-    }
-
-    *pMesh = (Mesh)
-    {
-        .vertexVkBuffer = vertexVkBuffer,
-        .vertexVkDeviceMemory = vertexVkDeviceMemory,
-        .vertexCount = vertexCount,
-        .indexVkBuffer = indexVkBuffer,
-        .indexVkDeviceMemory = indexVkDeviceMemory,
-        .indexCount = indexCount,
-        .vertexAttributeDescriptionCount = vertexAttributeDescriptionCount,
-        .vertexAttributeDescriptions = vertexAttributeDescriptions,
-        .vkIndexType = vkIndexType
+    *pVertexInputLayout = (VertexInputLayout){
+        .attributeCount = attributeCount,
+        .names = namesCopy,
+        .sizes = sizesCopy,
+        .offsets = offsets,
+        .stride = stride,
+        .referencePtrHashSet = tknCreateHashSet(TKN_DEFAULT_COLLECTION_SIZE),
     };
-    return pMesh;
+    return pVertexInputLayout;
+}
+void destroyVertexInputLayoutPtr(VertexInputLayout *pVertexInputLayout)
+{
+    tknAssert(pVertexInputLayout->referencePtrHashSet.count == 0, "Cannot destroy vertex input layout with meshes | instance attached!");
+    tknDestroyHashSet(pVertexInputLayout->referencePtrHashSet);
+    tknFree(pVertexInputLayout->names);
+    tknFree(pVertexInputLayout->sizes);
+    tknFree(pVertexInputLayout->offsets);
+    tknFree(pVertexInputLayout);
 }
 
-void destroyMeshPtr(GfxContext *pGfxContext, Mesh *pMesh)
-{
-    destroyVkBuffer(pGfxContext, pMesh->vertexVkBuffer, pMesh->vertexVkDeviceMemory);
-    destroyVkBuffer(pGfxContext, pMesh->indexVkBuffer, pMesh->indexVkDeviceMemory);
-    // destroyVkBuffer(pGfxContext, pMesh->instanceVkBuffer, pMesh->instanceVkDeviceMemory);
-    tknFree(pMesh);
-}
+// Mesh *createMeshPtr(GfxContext *pGfxContext, VertexInputLayout *pMeshVertexInputLayout, void *vertices, uint32_t vertexCount, VkIndexType vkIndexType, void *indices, uint32_t indexCount)
+// {
+//     Mesh *pMesh = tknMalloc(sizeof(Mesh));
+//     VkBuffer vertexVkBuffer = VK_NULL_HANDLE;
+//     VkDeviceMemory vertexVkDeviceMemory = VK_NULL_HANDLE;
+
+//     VkBuffer indexVkBuffer = VK_NULL_HANDLE;
+//     VkDeviceMemory indexVkDeviceMemory = VK_NULL_HANDLE;
+
+//     TknHashSet instancePtrHashSet = tknCreateHashSet(TKN_DEFAULT_COLLECTION_SIZE);
+
+//     VkBuffer vertexStagingBuffer;
+//     VkDeviceMemory vertexStagingBufferMemory;
+//     createVkBuffer(pGfxContext, vertexCount * vertexSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &vertexStagingBuffer, &vertexStagingBufferMemory);
+//     void *data;
+//     VkDevice vkDevice = pGfxContext->vkDevice;
+//     vkMapMemory(vkDevice, vertexStagingBufferMemory, 0, vertexCount * vertexSize, 0, &data);
+//     memcpy(data, vertices, (size_t)vertexCount * vertexSize);
+//     vkUnmapMemory(vkDevice, vertexStagingBufferMemory);
+//     createVkBuffer(pGfxContext, vertexCount * vertexSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &vertexVkBuffer, &vertexVkDeviceMemory);
+//     copyBuffer(pGfxContext, vertexStagingBuffer, vertexVkBuffer, vertexCount * vertexSize);
+//     destroyVkBuffer(pGfxContext, vertexStagingBuffer, vertexStagingBufferMemory);
+
+//     if (indexCount > 0)
+//     {
+//         VkBuffer indexStagingBuffer;
+//         VkDeviceMemory indexStagingBufferMemory;
+//         createVkBuffer(pGfxContext, indexCount * sizeof(uint32_t), VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &indexStagingBuffer, &indexStagingBufferMemory);
+//         void *data;
+//         VkDevice vkDevice = pGfxContext->vkDevice;
+//         vkMapMemory(vkDevice, indexStagingBufferMemory, 0, indexCount * sizeof(uint32_t), 0, &data);
+//         memcpy(data, indices, (size_t)indexCount * sizeof(uint32_t));
+//         vkUnmapMemory(vkDevice, indexStagingBufferMemory);
+//         createVkBuffer(pGfxContext, indexCount * sizeof(uint32_t), VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &indexVkBuffer, &indexVkDeviceMemory);
+//         copyBuffer(pGfxContext, indexStagingBuffer, indexVkBuffer, indexCount * sizeof(uint32_t));
+//         destroyVkBuffer(pGfxContext, indexStagingBuffer, indexStagingBufferMemory);
+//     }
+//     else
+//     {
+//         // Keep NULL
+//     }
+
+//     *pMesh = (Mesh){
+//         .vertexVkBuffer = vertexVkBuffer,
+//         .vertexVkDeviceMemory = vertexVkDeviceMemory,
+//         .vertexCount = vertexCount,
+//         .indexVkBuffer = indexVkBuffer,
+//         .indexVkDeviceMemory = indexVkDeviceMemory,
+//         .indexCount = indexCount,
+//         .vertexAttributeDescriptionCount = vertexAttributeDescriptionCount,
+//         .vertexAttributeDescriptions = vertexAttributeDescriptions,
+//         .vkIndexType = vkIndexType};
+//     return pMesh;
+// }
+// void destroyMeshPtr(GfxContext *pGfxContext, Mesh *pMesh)
+// {
+//     destroyVkBuffer(pGfxContext, pMesh->vertexVkBuffer, pMesh->vertexVkDeviceMemory);
+//     destroyVkBuffer(pGfxContext, pMesh->indexVkBuffer, pMesh->indexVkDeviceMemory);
+//     // destroyVkBuffer(pGfxContext, pMesh->instanceVkBuffer, pMesh->instanceVkDeviceMemory);
+//     tknFree(pMesh);
+// }

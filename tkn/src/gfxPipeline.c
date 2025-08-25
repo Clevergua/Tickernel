@@ -519,16 +519,85 @@ void destroyRenderPassPtr(GfxContext *pGfxContext, RenderPass *pRenderPass)
     tknFree(pRenderPass);
 }
 
-Pipeline *createPipelinePtr(GfxContext *pGfxContext, RenderPass *pRenderPass, uint32_t subpassIndex, uint32_t spvPathCount, const char **spvPaths, uint32_t vertexAttributeDescriptionCount, AttributeDescription *vertexAttributeDescriptions, uint32_t instanceAttributeDescriptionCount, AttributeDescription *instanceAttributeDescriptions, VkPipelineInputAssemblyStateCreateInfo vkPipelineInputAssemblyStateCreateInfo, VkPipelineViewportStateCreateInfo vkPipelineViewportStateCreateInfo, VkPipelineRasterizationStateCreateInfo vkPipelineRasterizationStateCreateInfo, VkPipelineMultisampleStateCreateInfo vkPipelineMultisampleStateCreateInfo, VkPipelineDepthStencilStateCreateInfo vkPipelineDepthStencilStateCreateInfo, VkPipelineColorBlendStateCreateInfo vkPipelineColorBlendStateCreateInfo, VkPipelineDynamicStateCreateInfo vkPipelineDynamicStateCreateInfo)
+static void updateVkVertexInputAttributeDescriptions(VertexInputLayout vertexInputLayout, uint32_t attributeIndex, SpvReflectInterfaceVariable spvReflectInterfaceVariable, uint32_t binding, VkVertexInputAttributeDescription *vkVertexInputAttributeDescriptions, uint32_t *pVkVertexInputAttributeDescriptionCount)
+{
+    SpvReflectTypeFlagBits typeFlags = spvReflectInterfaceVariable.type_description->type_flags;
+    uint32_t location = spvReflectInterfaceVariable.location;
+    VkFormat vkFormat = (VkFormat)spvReflectInterfaceVariable.format;
+    if (typeFlags & SPV_REFLECT_TYPE_FLAG_ARRAY)
+    {
+        uint32_t itemCount = 1;
+        for (uint32_t dimIndex = 0; dimIndex < spvReflectInterfaceVariable.array.dims_count; dimIndex++)
+        {
+            itemCount *= spvReflectInterfaceVariable.array.dims[dimIndex];
+        }
+        if (typeFlags & SPV_REFLECT_TYPE_FLAG_MATRIX)
+        {
+            uint32_t vectorCount = spvReflectInterfaceVariable.numeric.matrix.column_count * itemCount;
+            for (uint32_t vectorIndex = 0; vectorIndex < vectorCount; vectorIndex++)
+            {
+                vkVertexInputAttributeDescriptions[*pVkVertexInputAttributeDescriptionCount] = (VkVertexInputAttributeDescription){
+                    .location = location + vectorIndex,
+                    .binding = binding,
+                    .format = vkFormat,
+                    .offset = vertexInputLayout.offsets[attributeIndex] + vectorIndex * getSizeOfVkFormat(vkFormat),
+                };
+                (*pVkVertexInputAttributeDescriptionCount)++;
+            }
+        }
+        else
+        {
+            for (uint32_t itemIndex = 0; itemIndex < itemCount; itemIndex++)
+            {
+                vkVertexInputAttributeDescriptions[*pVkVertexInputAttributeDescriptionCount] = (VkVertexInputAttributeDescription){
+                    .location = location + itemIndex,
+                    .binding = binding,
+                    .format = vkFormat,
+                    .offset = vertexInputLayout.offsets[attributeIndex] + itemIndex * getSizeOfVkFormat(vkFormat),
+                };
+                (*pVkVertexInputAttributeDescriptionCount)++;
+            }
+        }
+    }
+    else
+    {
+        if (typeFlags & SPV_REFLECT_TYPE_FLAG_MATRIX)
+        {
+            uint32_t vectorCount = spvReflectInterfaceVariable.numeric.matrix.column_count;
+            for (uint32_t vectorIndex = 0; vectorIndex < vectorCount; vectorIndex++)
+            {
+                vkVertexInputAttributeDescriptions[*pVkVertexInputAttributeDescriptionCount] = (VkVertexInputAttributeDescription){
+                    .location = location + vectorIndex,
+                    .binding = binding,
+                    .format = vkFormat,
+                    .offset = vertexInputLayout.offsets[attributeIndex] + vectorIndex * getSizeOfVkFormat(vkFormat),
+                };
+                (*pVkVertexInputAttributeDescriptionCount)++;
+            }
+        }
+        else
+        {
+            vkVertexInputAttributeDescriptions[*pVkVertexInputAttributeDescriptionCount] = (VkVertexInputAttributeDescription){
+                .location = location,
+                .binding = binding,
+                .format = vkFormat,
+                .offset = vertexInputLayout.offsets[attributeIndex],
+            };
+            (*pVkVertexInputAttributeDescriptionCount)++;
+        }
+    }
+}
+
+Pipeline *createPipelinePtr(GfxContext *pGfxContext, RenderPass *pRenderPass, uint32_t subpassIndex, uint32_t spvPathCount, const char **spvPaths, VertexInputLayout *pMeshVertexInputLayout, VertexInputLayout *pInstanceVertexInputLayout, VkPipelineInputAssemblyStateCreateInfo vkPipelineInputAssemblyStateCreateInfo, VkPipelineViewportStateCreateInfo vkPipelineViewportStateCreateInfo, VkPipelineRasterizationStateCreateInfo vkPipelineRasterizationStateCreateInfo, VkPipelineMultisampleStateCreateInfo vkPipelineMultisampleStateCreateInfo, VkPipelineDepthStencilStateCreateInfo vkPipelineDepthStencilStateCreateInfo, VkPipelineColorBlendStateCreateInfo vkPipelineColorBlendStateCreateInfo, VkPipelineDynamicStateCreateInfo vkPipelineDynamicStateCreateInfo)
 {
     Pipeline *pPipeline = tknMalloc(sizeof(Pipeline));
     SpvReflectShaderModule *spvReflectShaderModules = tknMalloc(sizeof(SpvReflectShaderModule) * spvPathCount);
     VkShaderStageFlagBits vkShaderStageFlagBits = 0;
     VkPipelineShaderStageCreateInfo *pipelineShaderStageCreateInfos = tknMalloc(sizeof(VkPipelineShaderStageCreateInfo) * spvPathCount);
-    uint32_t vkVertexInputBindingDescriptionCount;
-    VkVertexInputBindingDescription *vkVertexInputBindingDescriptions;
-    uint32_t vkVertexInputAttributeDescriptionCount;
-    VkVertexInputAttributeDescription *vkVertexInputAttributeDescriptions;
+    uint32_t vkVertexInputBindingDescriptionCount = 0;
+    VkVertexInputBindingDescription *vkVertexInputBindingDescriptions = NULL;
+    uint32_t vkVertexInputAttributeDescriptionCount = 0;
+    VkVertexInputAttributeDescription *vkVertexInputAttributeDescriptions = NULL;
     VkDevice vkDevice = pGfxContext->vkDevice;
     for (uint32_t spvPathIndex = 0; spvPathIndex < spvPathCount; spvPathIndex++)
     {
@@ -540,78 +609,54 @@ Pipeline *createPipelinePtr(GfxContext *pGfxContext, RenderPass *pRenderPass, ui
         SpvReflectShaderModule spvReflectShaderModule = spvReflectShaderModules[spvPathIndex];
         if (VK_SHADER_STAGE_VERTEX_BIT == spvReflectShaderModule.shader_stage)
         {
-            if (vertexAttributeDescriptionCount > 0 && instanceAttributeDescriptionCount > 0)
+            if (pMeshVertexInputLayout->attributeCount > 0 || pInstanceVertexInputLayout->attributeCount > 0)
             {
-                uint32_t vertexStride = 0;
-                for (uint32_t vertexAttributeDescriptionIndex = 0; vertexAttributeDescriptionIndex < vertexAttributeDescriptionCount; vertexAttributeDescriptionIndex++)
-                {
-                    AttributeDescription vertexAttributeDescription = vertexAttributeDescriptions[vertexAttributeDescriptionIndex];
-                    vertexStride += getSizeOfVkFormat(vertexAttributeDescription.vkFormat);
-                }
-                uint32_t instanceStride = 0;
-                for (uint32_t instanceAttributeDescriptionIndex = 0; instanceAttributeDescriptionIndex < instanceAttributeDescriptionCount; instanceAttributeDescriptionIndex++)
-                {
-                    AttributeDescription instanceAttributeDescription = instanceAttributeDescriptions[instanceAttributeDescriptionIndex];
-                    instanceStride += getSizeOfVkFormat(instanceAttributeDescription.vkFormat);
-                }
                 vkVertexInputBindingDescriptionCount = MAX_VERTEX_BINDING_DESCRIPTION;
                 vkVertexInputBindingDescriptions = tknMalloc(sizeof(VkVertexInputBindingDescription) * vkVertexInputBindingDescriptionCount);
                 vkVertexInputBindingDescriptions[VERTEX_BINDING_DESCRIPTION] = (VkVertexInputBindingDescription){
                     .binding = VERTEX_BINDING_DESCRIPTION,
-                    .stride = vertexStride,
+                    .stride = pMeshVertexInputLayout->stride,
                     .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
                 };
                 vkVertexInputBindingDescriptions[INSTANCE_BINDING_DESCRIPTION] = (VkVertexInputBindingDescription){
                     .binding = INSTANCE_BINDING_DESCRIPTION,
-                    .stride = instanceStride,
+                    .stride = pInstanceVertexInputLayout->stride,
                     .inputRate = VK_VERTEX_INPUT_RATE_INSTANCE,
                 };
-                vkVertexInputAttributeDescriptionCount = spvReflectShaderModule.input_variable_count;
-                VkVertexInputAttributeDescription *vkVertexInputAttributeDescriptions = tknMalloc(sizeof(VkVertexInputAttributeDescription) * vkVertexInputAttributeDescriptionCount);
+                uint32_t vkVertexInputAttributeDescriptionCount = 0;
+                VkVertexInputAttributeDescription *vkVertexInputAttributeDescriptions = tknMalloc(sizeof(VkVertexInputAttributeDescription) * pGfxContext->vkPhysicalDeviceProperties.limits.maxVertexInputAttributes);
                 for (uint32_t inputVariableIndex = 0; inputVariableIndex < spvReflectShaderModule.input_variable_count; inputVariableIndex++)
                 {
                     SpvReflectInterfaceVariable *pSpvReflectInterfaceVariable = spvReflectShaderModule.input_variables[inputVariableIndex];
-                    uint32_t offset = 0;
-                    uint32_t vertexAttributeDescriptionIndex;
-                    for (vertexAttributeDescriptionIndex = 0; vertexAttributeDescriptionIndex < vertexAttributeDescriptionCount; vertexAttributeDescriptionIndex++)
+
+                    uint32_t attributeIndex;
+                    for (attributeIndex = 0; attributeIndex < pMeshVertexInputLayout->attributeCount; attributeIndex++)
                     {
-                        AttributeDescription vertexAttributeDescription = vertexAttributeDescriptions[vertexAttributeDescriptionIndex];
-                        if (pSpvReflectInterfaceVariable->name == vertexAttributeDescription.name)
+                        if (0 == strcmp(pSpvReflectInterfaceVariable->name, pMeshVertexInputLayout->names[attributeIndex]))
                         {
-                            vkVertexInputAttributeDescriptions[inputVariableIndex] = (VkVertexInputAttributeDescription){
-                                .binding = VERTEX_BINDING_DESCRIPTION,
-                                .location = pSpvReflectInterfaceVariable->location,
-                                .format = vertexAttributeDescription.vkFormat,
-                                .offset = offset,
-                            };
+                            updateVkVertexInputAttributeDescriptions(*pMeshVertexInputLayout, attributeIndex, *pSpvReflectInterfaceVariable, VERTEX_BINDING_DESCRIPTION, vkVertexInputAttributeDescriptions, &vkVertexInputAttributeDescriptionCount);
                             break;
                         }
-                        offset += vertexAttributeDescription.count * getSizeOfVkFormat(vertexAttributeDescription.vkFormat);
                     }
-                    offset = 0;
-                    uint32_t instanceAttributeDescriptionIndex;
-                    for (instanceAttributeDescriptionIndex = 0; instanceAttributeDescriptionIndex < instanceAttributeDescriptionCount; instanceAttributeDescriptionIndex++)
+                    if (attributeIndex < pMeshVertexInputLayout->attributeCount)
                     {
-                        AttributeDescription instanceAttributeDescription = instanceAttributeDescriptions[instanceAttributeDescriptionIndex];
-                        if (pSpvReflectInterfaceVariable->name == instanceAttributeDescription.name)
+                        continue;
+                    }
+                    else
+                    {
+                        attributeIndex = 0;
+                        for (attributeIndex = 0; attributeIndex < pInstanceVertexInputLayout->attributeCount; attributeIndex++)
                         {
-                            vkVertexInputAttributeDescriptions[inputVariableIndex] = (VkVertexInputAttributeDescription){
-                                .binding = VERTEX_BINDING_DESCRIPTION,
-                                .location = pSpvReflectInterfaceVariable->location,
-                                .format = instanceAttributeDescription.vkFormat,
-                                .offset = offset,
-                            };
+                            updateVkVertexInputAttributeDescriptions(*pInstanceVertexInputLayout, attributeIndex, *pSpvReflectInterfaceVariable, INSTANCE_BINDING_DESCRIPTION, vkVertexInputAttributeDescriptions, &vkVertexInputAttributeDescriptionCount);
                             break;
                         }
-                        offset += instanceAttributeDescription.count * getSizeOfVkFormat(instanceAttributeDescription.vkFormat);
+                        tknAssert(attributeIndex < pInstanceVertexInputLayout->attributeCount, "Attribute not found");
                     }
-                    tknAssert(vertexAttributeDescriptionIndex < vertexAttributeDescriptionCount || instanceAttributeDescriptionIndex < instanceAttributeDescriptionCount, "Vertex layout not found");
                 }
             }
             else
             {
-                vkVertexInputBindingDescriptionCount = 0;
-                vkVertexInputBindingDescriptions = NULL;
+                // Skip
             }
         }
         if ((vkShaderStageFlagBits & spvReflectShaderModule.shader_stage) == 0)
@@ -642,6 +687,7 @@ Pipeline *createPipelinePtr(GfxContext *pGfxContext, RenderPass *pRenderPass, ui
         }
         destroySpvReflectShaderModule(&spvReflectShaderModules[spvPathIndex]);
     }
+    tknFree(spvReflectShaderModules);
     VkPipelineVertexInputStateCreateInfo vkPipelineVertexInputStateCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
         .pNext = NULL,
@@ -651,9 +697,6 @@ Pipeline *createPipelinePtr(GfxContext *pGfxContext, RenderPass *pRenderPass, ui
         .vertexAttributeDescriptionCount = vkVertexInputAttributeDescriptionCount,
         .pVertexAttributeDescriptions = vkVertexInputAttributeDescriptions,
     };
-    tknFree(vkVertexInputBindingDescriptions);
-    tknFree(vkVertexInputAttributeDescriptions);
-    tknFree(spvReflectShaderModules);
     VkPipelineLayout vkPipelineLayout;
     VkDescriptorSetLayout *vkDescriptorSetLayouts = tknMalloc(sizeof(VkDescriptorSetLayout) * TKN_MAX_DESCRIPTOR_SET);
     vkDescriptorSetLayouts[TKN_GLOBAL_DESCRIPTOR_SET] = pGfxContext->pGlobalDescriptorSet->vkDescriptorSetLayout;
@@ -691,6 +734,8 @@ Pipeline *createPipelinePtr(GfxContext *pGfxContext, RenderPass *pRenderPass, ui
         .basePipelineHandle = VK_NULL_HANDLE,
         .basePipelineIndex = 0,
     };
+    tknFree(vkVertexInputBindingDescriptions);
+    tknFree(vkVertexInputAttributeDescriptions);
     for (uint32_t pipelineShaderStageCreateInfoIndex = 0; pipelineShaderStageCreateInfoIndex < spvPathCount; pipelineShaderStageCreateInfoIndex++)
     {
         vkDestroyShaderModule(vkDevice, pipelineShaderStageCreateInfos[pipelineShaderStageCreateInfoIndex].module, NULL);
@@ -699,32 +744,26 @@ Pipeline *createPipelinePtr(GfxContext *pGfxContext, RenderPass *pRenderPass, ui
     tknFree(pipelineShaderStageCreateInfos);
     assertVkResult(vkCreateGraphicsPipelines(vkDevice, NULL, 1, &vkGraphicsPipelineCreateInfo, NULL, &vkPipeline));
 
-    AttributeDescription *vertexAttributeDescriptionsCopy = tknMalloc(sizeof(AttributeDescription) * vertexAttributeDescriptionCount);
-    memcpy(vertexAttributeDescriptionsCopy, vertexAttributeDescriptions, sizeof(AttributeDescription) * vertexAttributeDescriptionCount);
-
-    AttributeDescription *instanceAttributeDescriptionsCopy = tknMalloc(sizeof(AttributeDescription) * instanceAttributeDescriptionCount);
-    memcpy(instanceAttributeDescriptionsCopy, instanceAttributeDescriptions, sizeof(AttributeDescription) * instanceAttributeDescriptionCount);
-
     *pPipeline = (Pipeline){
         .pPipelineDescriptorSet = pPipelineDescriptorSet,
         .vkPipeline = vkPipeline,
         .vkPipelineLayout = vkPipelineLayout,
         .pRenderPass = pRenderPass,
         .subpassIndex = subpassIndex,
-        .vertexAttributeDescriptionCount = vertexAttributeDescriptionCount,
-        .vertexAttributeDescriptions = vertexAttributeDescriptionsCopy,
-        .instanceAttributeDescriptionCount = instanceAttributeDescriptionCount,
-        .instanceAttributeDescriptions = instanceAttributeDescriptionsCopy,
+        .pMeshVertexInputLayout = pMeshVertexInputLayout,
+        .pInstanceVertexInputLayout = pInstanceVertexInputLayout,
     };
     tknAddToDynamicArray(&pRenderPass->subpasses[subpassIndex].pipelinePtrDynamicArray, pPipeline);
+    tknAddToHashSet(&pMeshVertexInputLayout->referencePtrHashSet, pPipeline);
+    tknAddToHashSet(&pInstanceVertexInputLayout->referencePtrHashSet, pPipeline);
     return pPipeline;
 }
 void destroyPipelinePtr(GfxContext *pGfxContext, Pipeline *pPipeline)
 {
     VkDevice vkDevice = pGfxContext->vkDevice;
     tknRemoveFromDynamicArray(&pPipeline->pRenderPass->subpasses[pPipeline->subpassIndex].pipelinePtrDynamicArray, pPipeline);
-    tknFree(pPipeline->vertexAttributeDescriptions);
-    tknFree(pPipeline->instanceAttributeDescriptions);
+    tknRemoveFromHashSet(&pPipeline->pMeshVertexInputLayout->referencePtrHashSet, pPipeline);
+    tknRemoveFromHashSet(&pPipeline->pInstanceVertexInputLayout->referencePtrHashSet, pPipeline);
     destroyDescriptorSetPtr(pGfxContext, pPipeline->pPipelineDescriptorSet);
     vkDestroyPipeline(vkDevice, pPipeline->vkPipeline, NULL);
     vkDestroyPipelineLayout(vkDevice, pPipeline->vkPipelineLayout, NULL);
