@@ -195,6 +195,7 @@ struct Instance
     uint32_t maxInstanceCount;
 
     Mesh *pMesh;
+    TknHashSet materialPtrHashSet;
 };
 
 struct Mesh
@@ -208,6 +209,8 @@ struct Mesh
     VkBuffer indexVkBuffer;
     VkDeviceMemory indexVkDeviceMemory;
     uint32_t indexCount;
+
+    TknHashSet instancePtrHashSet;
 };
 
 struct Material
