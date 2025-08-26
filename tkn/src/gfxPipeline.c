@@ -118,6 +118,74 @@ static void destroySubpass(GfxContext *pGfxContext, Subpass subpass)
     destroyDescriptorSetPtr(pGfxContext, subpass.pSubpassDescriptorSet);
     tknDestroyDynamicArray(subpass.pipelinePtrDynamicArray);
 }
+static void updateVkVertexInputAttributeDescriptions(VertexInputLayout vertexInputLayout, uint32_t attributeIndex, SpvReflectInterfaceVariable spvReflectInterfaceVariable, uint32_t binding, VkVertexInputAttributeDescription *vkVertexInputAttributeDescriptions, uint32_t *pVkVertexInputAttributeDescriptionCount)
+{
+    SpvReflectTypeFlagBits typeFlags = spvReflectInterfaceVariable.type_description->type_flags;
+    uint32_t location = spvReflectInterfaceVariable.location;
+    VkFormat vkFormat = (VkFormat)spvReflectInterfaceVariable.format;
+    if (typeFlags & SPV_REFLECT_TYPE_FLAG_ARRAY)
+    {
+        uint32_t itemCount = 1;
+        for (uint32_t dimIndex = 0; dimIndex < spvReflectInterfaceVariable.array.dims_count; dimIndex++)
+        {
+            itemCount *= spvReflectInterfaceVariable.array.dims[dimIndex];
+        }
+        if (typeFlags & SPV_REFLECT_TYPE_FLAG_MATRIX)
+        {
+            uint32_t vectorCount = spvReflectInterfaceVariable.numeric.matrix.column_count * itemCount;
+            for (uint32_t vectorIndex = 0; vectorIndex < vectorCount; vectorIndex++)
+            {
+                vkVertexInputAttributeDescriptions[*pVkVertexInputAttributeDescriptionCount] = (VkVertexInputAttributeDescription){
+                    .location = location + vectorIndex,
+                    .binding = binding,
+                    .format = vkFormat,
+                    .offset = vertexInputLayout.offsets[attributeIndex] + vectorIndex * getSizeOfVkFormat(vkFormat),
+                };
+                (*pVkVertexInputAttributeDescriptionCount)++;
+            }
+        }
+        else
+        {
+            for (uint32_t itemIndex = 0; itemIndex < itemCount; itemIndex++)
+            {
+                vkVertexInputAttributeDescriptions[*pVkVertexInputAttributeDescriptionCount] = (VkVertexInputAttributeDescription){
+                    .location = location + itemIndex,
+                    .binding = binding,
+                    .format = vkFormat,
+                    .offset = vertexInputLayout.offsets[attributeIndex] + itemIndex * getSizeOfVkFormat(vkFormat),
+                };
+                (*pVkVertexInputAttributeDescriptionCount)++;
+            }
+        }
+    }
+    else
+    {
+        if (typeFlags & SPV_REFLECT_TYPE_FLAG_MATRIX)
+        {
+            uint32_t vectorCount = spvReflectInterfaceVariable.numeric.matrix.column_count;
+            for (uint32_t vectorIndex = 0; vectorIndex < vectorCount; vectorIndex++)
+            {
+                vkVertexInputAttributeDescriptions[*pVkVertexInputAttributeDescriptionCount] = (VkVertexInputAttributeDescription){
+                    .location = location + vectorIndex,
+                    .binding = binding,
+                    .format = vkFormat,
+                    .offset = vertexInputLayout.offsets[attributeIndex] + vectorIndex * getSizeOfVkFormat(vkFormat),
+                };
+                (*pVkVertexInputAttributeDescriptionCount)++;
+            }
+        }
+        else
+        {
+            vkVertexInputAttributeDescriptions[*pVkVertexInputAttributeDescriptionCount] = (VkVertexInputAttributeDescription){
+                .location = location,
+                .binding = binding,
+                .format = vkFormat,
+                .offset = vertexInputLayout.offsets[attributeIndex],
+            };
+            (*pVkVertexInputAttributeDescriptionCount)++;
+        }
+    }
+}
 
 VkFormat getSupportedFormat(GfxContext *pGfxContext, uint32_t candidateCount, VkFormat *candidates, VkImageTiling tiling, VkFormatFeatureFlags features)
 {
@@ -517,75 +585,6 @@ void destroyRenderPassPtr(GfxContext *pGfxContext, RenderPass *pRenderPass)
     }
     tknFree(pRenderPass->attachmentPtrs);
     tknFree(pRenderPass);
-}
-
-static void updateVkVertexInputAttributeDescriptions(VertexInputLayout vertexInputLayout, uint32_t attributeIndex, SpvReflectInterfaceVariable spvReflectInterfaceVariable, uint32_t binding, VkVertexInputAttributeDescription *vkVertexInputAttributeDescriptions, uint32_t *pVkVertexInputAttributeDescriptionCount)
-{
-    SpvReflectTypeFlagBits typeFlags = spvReflectInterfaceVariable.type_description->type_flags;
-    uint32_t location = spvReflectInterfaceVariable.location;
-    VkFormat vkFormat = (VkFormat)spvReflectInterfaceVariable.format;
-    if (typeFlags & SPV_REFLECT_TYPE_FLAG_ARRAY)
-    {
-        uint32_t itemCount = 1;
-        for (uint32_t dimIndex = 0; dimIndex < spvReflectInterfaceVariable.array.dims_count; dimIndex++)
-        {
-            itemCount *= spvReflectInterfaceVariable.array.dims[dimIndex];
-        }
-        if (typeFlags & SPV_REFLECT_TYPE_FLAG_MATRIX)
-        {
-            uint32_t vectorCount = spvReflectInterfaceVariable.numeric.matrix.column_count * itemCount;
-            for (uint32_t vectorIndex = 0; vectorIndex < vectorCount; vectorIndex++)
-            {
-                vkVertexInputAttributeDescriptions[*pVkVertexInputAttributeDescriptionCount] = (VkVertexInputAttributeDescription){
-                    .location = location + vectorIndex,
-                    .binding = binding,
-                    .format = vkFormat,
-                    .offset = vertexInputLayout.offsets[attributeIndex] + vectorIndex * getSizeOfVkFormat(vkFormat),
-                };
-                (*pVkVertexInputAttributeDescriptionCount)++;
-            }
-        }
-        else
-        {
-            for (uint32_t itemIndex = 0; itemIndex < itemCount; itemIndex++)
-            {
-                vkVertexInputAttributeDescriptions[*pVkVertexInputAttributeDescriptionCount] = (VkVertexInputAttributeDescription){
-                    .location = location + itemIndex,
-                    .binding = binding,
-                    .format = vkFormat,
-                    .offset = vertexInputLayout.offsets[attributeIndex] + itemIndex * getSizeOfVkFormat(vkFormat),
-                };
-                (*pVkVertexInputAttributeDescriptionCount)++;
-            }
-        }
-    }
-    else
-    {
-        if (typeFlags & SPV_REFLECT_TYPE_FLAG_MATRIX)
-        {
-            uint32_t vectorCount = spvReflectInterfaceVariable.numeric.matrix.column_count;
-            for (uint32_t vectorIndex = 0; vectorIndex < vectorCount; vectorIndex++)
-            {
-                vkVertexInputAttributeDescriptions[*pVkVertexInputAttributeDescriptionCount] = (VkVertexInputAttributeDescription){
-                    .location = location + vectorIndex,
-                    .binding = binding,
-                    .format = vkFormat,
-                    .offset = vertexInputLayout.offsets[attributeIndex] + vectorIndex * getSizeOfVkFormat(vkFormat),
-                };
-                (*pVkVertexInputAttributeDescriptionCount)++;
-            }
-        }
-        else
-        {
-            vkVertexInputAttributeDescriptions[*pVkVertexInputAttributeDescriptionCount] = (VkVertexInputAttributeDescription){
-                .location = location,
-                .binding = binding,
-                .format = vkFormat,
-                .offset = vertexInputLayout.offsets[attributeIndex],
-            };
-            (*pVkVertexInputAttributeDescriptionCount)++;
-        }
-    }
 }
 
 Pipeline *createPipelinePtr(GfxContext *pGfxContext, RenderPass *pRenderPass, uint32_t subpassIndex, uint32_t spvPathCount, const char **spvPaths, VertexInputLayout *pMeshVertexInputLayout, VertexInputLayout *pInstanceVertexInputLayout, VkPipelineInputAssemblyStateCreateInfo vkPipelineInputAssemblyStateCreateInfo, VkPipelineViewportStateCreateInfo vkPipelineViewportStateCreateInfo, VkPipelineRasterizationStateCreateInfo vkPipelineRasterizationStateCreateInfo, VkPipelineMultisampleStateCreateInfo vkPipelineMultisampleStateCreateInfo, VkPipelineDepthStencilStateCreateInfo vkPipelineDepthStencilStateCreateInfo, VkPipelineColorBlendStateCreateInfo vkPipelineColorBlendStateCreateInfo, VkPipelineDynamicStateCreateInfo vkPipelineDynamicStateCreateInfo)

@@ -1,37 +1,5 @@
 #include "gfx.h"
-static void initializeGfxContext(GfxContext *pGfxContext, VkInstance vkInstance, VkSurfaceKHR vkSurface)
-{
-    *pGfxContext = (GfxContext){
-        .frameCount = 0,
-        .vkInstance = vkInstance,
-        .vkSurface = vkSurface,
 
-        .vkPhysicalDevice = VK_NULL_HANDLE,
-        .vkPhysicalDeviceProperties = {},
-        .gfxQueueFamilyIndex = UINT32_MAX,
-        .presentQueueFamilyIndex = UINT32_MAX,
-
-        .surfaceFormat = {},
-        .presentMode = VK_PRESENT_MODE_IMMEDIATE_KHR,
-
-        .vkDevice = VK_NULL_HANDLE,
-        .vkGfxQueue = VK_NULL_HANDLE,
-        .vkPresentQueue = VK_NULL_HANDLE,
-
-        .pSwapchainAttachment = NULL,
-
-        .imageAvailableSemaphore = VK_NULL_HANDLE,
-        .renderFinishedSemaphore = VK_NULL_HANDLE,
-        .renderFinishedFence = VK_NULL_HANDLE,
-
-        .gfxVkCommandPool = VK_NULL_HANDLE,
-        .gfxVkCommandBuffers = NULL,
-
-        .dynamicAttachmentPtrDynamicArray = {},
-        .renderPassPtrDynamicArray = {},
-        .pGlobalDescriptorSet = NULL,
-    };
-}
 static void getGfxAndPresentQueueFamilyIndices(GfxContext *pGfxContext, VkPhysicalDevice vkPhysicalDevice, uint32_t *pGfxQueueFamilyIndex, uint32_t *pPresentQueueFamilyIndex)
 {
     VkSurfaceKHR vkSurface = pGfxContext->vkSurface;
@@ -750,7 +718,36 @@ static void teardownRenderPipelineAndResources(GfxContext *pGfxContext)
 GfxContext *createGfxContextPtr(int targetSwapchainImageCount, VkSurfaceFormatKHR targetVkSurfaceFormat, VkPresentModeKHR targetVkPresentMode, VkInstance vkInstance, VkSurfaceKHR vkSurface, VkExtent2D swapchainExtent, uint32_t spvPathCount, const char **spvPaths)
 {
     GfxContext *pGfxContext = tknMalloc(sizeof(GfxContext));
-    initializeGfxContext(pGfxContext, vkInstance, vkSurface);
+    *pGfxContext = (GfxContext){
+        .frameCount = 0,
+        .vkInstance = vkInstance,
+        .vkSurface = vkSurface,
+
+        .vkPhysicalDevice = VK_NULL_HANDLE,
+        .vkPhysicalDeviceProperties = {},
+        .gfxQueueFamilyIndex = UINT32_MAX,
+        .presentQueueFamilyIndex = UINT32_MAX,
+
+        .surfaceFormat = {},
+        .presentMode = VK_PRESENT_MODE_IMMEDIATE_KHR,
+
+        .vkDevice = VK_NULL_HANDLE,
+        .vkGfxQueue = VK_NULL_HANDLE,
+        .vkPresentQueue = VK_NULL_HANDLE,
+
+        .pSwapchainAttachment = NULL,
+
+        .imageAvailableSemaphore = VK_NULL_HANDLE,
+        .renderFinishedSemaphore = VK_NULL_HANDLE,
+        .renderFinishedFence = VK_NULL_HANDLE,
+
+        .gfxVkCommandPool = VK_NULL_HANDLE,
+        .gfxVkCommandBuffers = NULL,
+
+        .dynamicAttachmentPtrDynamicArray = {},
+        .renderPassPtrDynamicArray = {},
+        .pGlobalDescriptorSet = NULL,
+    };
     pickPhysicalDevice(pGfxContext, targetVkSurfaceFormat, targetVkPresentMode);
     populateLogicalDevice(pGfxContext);
     createSwapchainAttachmentPtr(pGfxContext, swapchainExtent, targetSwapchainImageCount);

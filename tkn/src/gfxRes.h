@@ -75,7 +75,6 @@ typedef struct
     uint32_t height;
     TknHashSet bindingPtrHashSet;
 } FixedAttachment;
-
 typedef struct
 {
     VkImage vkImage;
@@ -86,7 +85,6 @@ typedef struct
     VkImageAspectFlags vkImageAspectFlags;
     TknHashSet bindingPtrHashSet;
 } DynamicAttachment;
-
 typedef struct
 {
     VkExtent2D swapchainExtent;
@@ -95,21 +93,18 @@ typedef struct
     VkImage *swapchainImages;
     VkImageView *swapchainImageViews;
 } SwapchainAttachment;
-
 typedef union
 {
     FixedAttachment fixedAttachment;
     DynamicAttachment dynamicAttachment;
     SwapchainAttachment swapchainAttachment;
 } AttachmentUnion;
-
 typedef enum
 {
     ATTACHMENT_TYPE_DYNAMIC,
     ATTACHMENT_TYPE_FIXED,
     ATTACHMENT_TYPE_SWAPCHAIN,
 } AttachmentType;
-
 struct Attachment
 {
     AttachmentType attachmentType;
