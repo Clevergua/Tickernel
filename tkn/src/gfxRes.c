@@ -891,13 +891,28 @@ void updateInstancePtr(GfxContext *pGfxContext, Instance *pInstance, void *newDa
     }
 }
 
-
-void addInstanceToPipeline(GfxContext *pGfxContext, Instance *pInstance, Pipeline *pPipeline)
+void addInstanceToPipeline(GfxContext *pGfxContext, Instance *pInstance, Material *pMaterial)
 {
-    
+    if (pMaterial->pPipeline->pInstanceVertexInputLayout == pInstance->pVertexInputLayout && pMaterial->pPipeline->pMeshVertexInputLayout == pInstance->pMesh->pVertexInputLayout)
+    {
+        tknAddToDynamicArray(&pMaterial->instancePtrDynamicArray, pInstance);
+        tknAddToHashSet(&pInstance->materialPtrHashSet, pMaterial);
+    }
+    else
+    {
+        printf("Instance does not match pipeline layouts\n");
+    }
 }
 
-void removeInstanceFromPipeline(GfxContext *pGfxContext, Instance *pInstance, Pipeline *pPipeline)
+void removeInstanceFromPipeline(GfxContext *pGfxContext, Instance *pInstance, Material *pMaterial)
 {
-    
+    if (tknContainsInHashSet(&pInstance->materialPtrHashSet, pMaterial))
+    {
+        tknRemoveFromDynamicArray(&pMaterial->instancePtrDynamicArray, pInstance);
+        tknRemoveFromHashSet(&pInstance->materialPtrHashSet, pMaterial);
+    }
+    else
+    {
+        printf("Instance is not part of the material\n");
+    }
 }

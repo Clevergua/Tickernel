@@ -221,6 +221,7 @@ struct Material
     VkDescriptorPool vkDescriptorPool;
     DescriptorSet *pDescriptorSet;
     TknDynamicArray instancePtrDynamicArray;
+    Pipeline *pPipeline;
 };
 
 typedef enum
