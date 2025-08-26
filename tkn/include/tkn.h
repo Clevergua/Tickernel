@@ -47,6 +47,11 @@ void destroyVertexInputLayoutPtr(VertexInputLayout *pVertexInputLayout);
 Mesh *createMeshPtr(GfxContext *pGfxContext, VertexInputLayout *pMeshVertexInputLayout, void *vertices, uint32_t vertexCount, VkIndexType vkIndexType, void *indices, uint32_t indexCount);
 void destroyMeshPtr(GfxContext *pGfxContext, Mesh *pMesh);
 
+Instance *createInstancePtr(GfxContext *pGfxContext, VertexInputLayout *pVertexInputLayout, uint32_t instanceCount, void *instances, Mesh *pMesh);
+void destroyInstancePtr(GfxContext *pGfxContext, Instance *pInstance);
+void addInstanceToPipeline(GfxContext *pGfxContext, Instance *pInstance, Material *pMaterial);
+void removeInstanceFromPipeline(GfxContext *pGfxContext, Instance *pInstance, Material *pMaterial);
+
 void tknError(char const *const _Format, ...);
 void tknWarning(const char *format, ...);
 void tknAssert(bool condition, char const *const _Format, ...);

@@ -1,5 +1,131 @@
 #include "gfxRes.h"
 
+void assertVkResult(VkResult vkResult)
+{
+    tknAssert(vkResult == VK_SUCCESS, "Vulkan error: %d", vkResult);
+}
+
+SpvReflectShaderModule createSpvReflectShaderModule(const char *filePath)
+{
+    FILE *file = fopen(filePath, "rb");
+    if (!file)
+    {
+        tknError("Failed to open file: %s\n", filePath);
+    }
+    fseek(file, 0, SEEK_END);
+    size_t shaderSize = ftell(file);
+    fseek(file, 0, SEEK_SET);
+
+    if (shaderSize % 4 != 0)
+    {
+        fclose(file);
+        tknError("Invalid SPIR-V file size: %s\n", filePath);
+    }
+    void *shaderCode = tknMalloc(shaderSize);
+    size_t bytesRead = fread(shaderCode, 1, shaderSize, file);
+
+    fclose(file);
+
+    if (bytesRead != shaderSize)
+    {
+        tknError("Failed to read entire file: %s\n", filePath);
+    }
+    SpvReflectShaderModule spvReflectShaderModule;
+    SpvReflectResult spvReflectResult = spvReflectCreateShaderModule(shaderSize, shaderCode, &spvReflectShaderModule);
+    tknAssert(spvReflectResult == SPV_REFLECT_RESULT_SUCCESS, "Failed to reflect shader module: %s", filePath);
+    tknFree(shaderCode);
+
+    return spvReflectShaderModule;
+}
+void destroySpvReflectShaderModule(SpvReflectShaderModule *pSpvReflectShaderModule)
+{
+    spvReflectDestroyShaderModule(pSpvReflectShaderModule);
+}
+
+size_t getSizeOfVkFormat(VkFormat format)
+{
+    switch (format)
+    {
+    case VK_FORMAT_UNDEFINED:
+        return 0;
+    case VK_FORMAT_R16_UINT:
+        return 2;
+    case VK_FORMAT_R16_SINT:
+        return 2;
+    case VK_FORMAT_R16_SFLOAT:
+        return 2;
+    case VK_FORMAT_R16G16_UINT:
+        return 4;
+    case VK_FORMAT_R16G16_SINT:
+        return 4;
+    case VK_FORMAT_R16G16_SFLOAT:
+        return 4;
+    case VK_FORMAT_R16G16B16_UINT:
+        return 6;
+    case VK_FORMAT_R16G16B16_SINT:
+        return 6;
+    case VK_FORMAT_R16G16B16_SFLOAT:
+        return 6;
+    case VK_FORMAT_R16G16B16A16_UINT:
+        return 8;
+    case VK_FORMAT_R16G16B16A16_SINT:
+        return 8;
+    case VK_FORMAT_R16G16B16A16_SFLOAT:
+        return 8;
+    case VK_FORMAT_R32_UINT:
+        return 4;
+    case VK_FORMAT_R32_SINT:
+        return 4;
+    case VK_FORMAT_R32_SFLOAT:
+        return 4;
+    case VK_FORMAT_R32G32_UINT:
+        return 8;
+    case VK_FORMAT_R32G32_SINT:
+        return 8;
+    case VK_FORMAT_R32G32_SFLOAT:
+        return 8;
+    case VK_FORMAT_R32G32B32_UINT:
+        return 12;
+    case VK_FORMAT_R32G32B32_SINT:
+        return 12;
+    case VK_FORMAT_R32G32B32_SFLOAT:
+        return 12;
+    case VK_FORMAT_R32G32B32A32_UINT:
+        return 16;
+    case VK_FORMAT_R32G32B32A32_SINT:
+        return 16;
+    case VK_FORMAT_R32G32B32A32_SFLOAT:
+        return 16;
+    case VK_FORMAT_R64_UINT:
+        return 8;
+    case VK_FORMAT_R64_SINT:
+        return 8;
+    case VK_FORMAT_R64_SFLOAT:
+        return 8;
+    case VK_FORMAT_R64G64_UINT:
+        return 16;
+    case VK_FORMAT_R64G64_SINT:
+        return 16;
+    case VK_FORMAT_R64G64_SFLOAT:
+        return 16;
+    case VK_FORMAT_R64G64B64_UINT:
+        return 24;
+    case VK_FORMAT_R64G64B64_SINT:
+        return 24;
+    case VK_FORMAT_R64G64B64_SFLOAT:
+        return 24;
+    case VK_FORMAT_R64G64B64A64_UINT:
+        return 32;
+    case VK_FORMAT_R64G64B64A64_SINT:
+        return 32;
+    case VK_FORMAT_R64G64B64A64_SFLOAT:
+        return 32;
+    default:
+        tknError("getSizeOfVkFormat: unsupported VkFormat %d", format);
+        return 0;
+    }
+}
+
 static uint32_t getMemoryTypeIndex(VkPhysicalDevice vkPhysicalDevice, uint32_t typeFilter, VkMemoryPropertyFlags memoryPropertyFlags)
 {
     VkPhysicalDeviceMemoryProperties physicalDeviceMemoryProperties;
@@ -839,7 +965,6 @@ Instance *createInstancePtr(GfxContext *pGfxContext, VertexInputLayout *pVertexI
 
     return pInstance;
 }
-
 void destroyInstancePtr(GfxContext *pGfxContext, Instance *pInstance)
 {
     tknAssert(0 == pInstance->materialPtrHashSet.count, "Cannot destroy instance with materials attached!");
@@ -890,7 +1015,6 @@ void updateInstancePtr(GfxContext *pGfxContext, Instance *pInstance, void *newDa
         }
     }
 }
-
 void addInstanceToPipeline(GfxContext *pGfxContext, Instance *pInstance, Material *pMaterial)
 {
     if (pMaterial->pPipeline->pInstanceVertexInputLayout == pInstance->pVertexInputLayout && pMaterial->pPipeline->pMeshVertexInputLayout == pInstance->pMesh->pVertexInputLayout)
@@ -903,7 +1027,6 @@ void addInstanceToPipeline(GfxContext *pGfxContext, Instance *pInstance, Materia
         printf("Instance does not match pipeline layouts\n");
     }
 }
-
 void removeInstanceFromPipeline(GfxContext *pGfxContext, Instance *pInstance, Material *pMaterial)
 {
     if (tknContainsInHashSet(&pInstance->materialPtrHashSet, pMaterial))
