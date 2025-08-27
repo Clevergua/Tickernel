@@ -987,7 +987,7 @@ void updateInstancePtr(GfxContext *pGfxContext, Instance *pInstance, void *newDa
         }
     }
 }
-void addInstanceToPipeline(GfxContext *pGfxContext, Instance *pInstance, Material *pMaterial)
+void addInstanceToMaterial(GfxContext *pGfxContext, Instance *pInstance, Material *pMaterial)
 {
     if (pMaterial->pPipeline->pInstanceVertexInputLayout == pInstance->pVertexInputLayout && pMaterial->pPipeline->pMeshVertexInputLayout == pInstance->pMesh->pVertexInputLayout)
     {
@@ -999,7 +999,7 @@ void addInstanceToPipeline(GfxContext *pGfxContext, Instance *pInstance, Materia
         printf("Instance does not match pipeline layouts\n");
     }
 }
-void removeInstanceFromPipeline(GfxContext *pGfxContext, Instance *pInstance, Material *pMaterial)
+void removeInstanceFromMaterial(GfxContext *pGfxContext, Instance *pInstance, Material *pMaterial)
 {
     if (tknContainsInHashSet(&pInstance->materialPtrHashSet, pMaterial))
     {
@@ -1010,4 +1010,30 @@ void removeInstanceFromPipeline(GfxContext *pGfxContext, Instance *pInstance, Ma
     {
         printf("Instance is not part of the material\n");
     }
+}
+
+Material *getGlobalMaterialPtr(GfxContext *pGfxContext)
+{
+    tknAssert(pGfxContext->pGlobalDescriptorSet != NULL, "Global descriptor set is NULL");
+    tknAssert(pGfxContext->pGlobalDescriptorSet->materialPtrDynamicArray.count == 1, "Material pointer dynamic array count is not 1");
+    Material *pMaterial = *(Material **)tknGetFromDynamicArray(&pGfxContext->pGlobalDescriptorSet->materialPtrDynamicArray, 0);
+    return pMaterial;
+}
+Material *getSubpassMaterialPtr(GfxContext *pGfxContext, RenderPass *pRenderPass, uint32_t subpassIndex)
+{
+    tknAssert(pRenderPass != NULL, "Render pass is NULL");
+    tknAssert(subpassIndex < pRenderPass->subpassCount, "Subpass index is out of bounds");
+    tknAssert(pRenderPass->subpasses[subpassIndex].pSubpassDescriptorSet != NULL, "Subpass descriptor set is NULL");
+    tknAssert(pRenderPass->subpasses[subpassIndex].pSubpassDescriptorSet->materialPtrDynamicArray.count == 1, "Material pointer dynamic array count is not 1");
+    Material *pMaterial = *(Material **)tknGetFromDynamicArray(&pRenderPass->subpasses[subpassIndex].pSubpassDescriptorSet->materialPtrDynamicArray, 0);
+    return pMaterial;
+}
+Material *createPipelineMaterialPtr(GfxContext *pGfxContext, Pipeline *pPipeline)
+{
+   Material * pMaterial = createMaterialPtr(pGfxContext, pPipeline->pPipelineDescriptorSet);
+   return pMaterial;
+}
+void destroyPipelineMaterialPtr(GfxContext *pGfxContext, Material *pMaterial)
+{
+    destroyMaterialPtr(pGfxContext, pMaterial);
 }

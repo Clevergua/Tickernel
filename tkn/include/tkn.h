@@ -49,8 +49,13 @@ void destroyMeshPtr(GfxContext *pGfxContext, Mesh *pMesh);
 
 Instance *createInstancePtr(GfxContext *pGfxContext, VertexInputLayout *pVertexInputLayout, uint32_t instanceCount, void *instances, Mesh *pMesh);
 void destroyInstancePtr(GfxContext *pGfxContext, Instance *pInstance);
-void addInstanceToPipeline(GfxContext *pGfxContext, Instance *pInstance, Material *pMaterial);
-void removeInstanceFromPipeline(GfxContext *pGfxContext, Instance *pInstance, Material *pMaterial);
+void addInstanceToMaterial(GfxContext *pGfxContext, Instance *pInstance, Material *pMaterial);
+void removeInstanceFromMaterial(GfxContext *pGfxContext, Instance *pInstance, Material *pMaterial);
+
+Material *getGlobalMaterialPtr(GfxContext *pGfxContext);
+Material *getSubpassMaterialPtr(GfxContext *pGfxContext, RenderPass *pRenderPass, uint32_t subpassIndex);
+Material *createPipelineMaterialPtr(GfxContext *pGfxContext, Pipeline *pPipeline);
+void destroyPipelineMaterialPtr(GfxContext *pGfxContext, Material *pMaterial);
 
 void tknError(char const *const _Format, ...);
 void tknWarning(const char *format, ...);

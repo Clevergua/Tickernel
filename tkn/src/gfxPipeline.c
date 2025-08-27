@@ -23,6 +23,8 @@ static Subpass createSubpass(GfxContext *pGfxContext, uint32_t subpassIndex, uin
     }
     DescriptorSet *pSubpassDescriptorSet = createDescriptorSetPtr(pGfxContext, spvPathCount, spvReflectShaderModules, TKN_SUBPASS_DESCRIPTOR_SET);
     Material *pMaterial = createMaterialPtr(pGfxContext, pSubpassDescriptorSet);
+    // Bind attachments
+    // TODO bind others
     for (uint32_t spvPathIndex = 0; spvPathIndex < spvPathCount; spvPathIndex++)
     {
         SpvReflectShaderModule spvReflectShaderModule = spvReflectShaderModules[spvPathIndex];
@@ -38,7 +40,6 @@ static Subpass createSubpass(GfxContext *pGfxContext, uint32_t subpassIndex, uin
                     {
                         uint32_t binding = pSpvReflectDescriptorBinding->binding;
                         uint32_t inputAttachmentIndex = pSpvReflectDescriptorBinding->input_attachment_index;
-
                         Binding *pBinding = &pMaterial->bindings[binding];
                         if (NULL == pBinding->bindingUnion.inputAttachmentBinding.pAttachment)
                         {
@@ -94,9 +95,10 @@ static void destroySubpass(GfxContext *pGfxContext, Subpass subpass)
         Pipeline *pPipeline = *(Pipeline **)tknGetFromDynamicArray(&subpass.pipelinePtrDynamicArray, pipelinePtrIndex);
         destroyPipelinePtr(pGfxContext, pPipeline);
     }
+    tknAssert(subpass.pSubpassDescriptorSet->materialPtrDynamicArray.count == 1, "Subpass must have exactly one material");
+    Material *pMaterial = *(Material **)tknGetFromDynamicArray(&subpass.pSubpassDescriptorSet->materialPtrDynamicArray, 0);
     for (uint32_t descriptorIndex = 0; descriptorIndex < subpass.pSubpassDescriptorSet->descriptorCount; descriptorIndex++)
     {
-        Material *pMaterial = *(Material **)tknGetFromDynamicArray(&subpass.pSubpassDescriptorSet->materialPtrDynamicArray, 0);
         Binding *pBinding = &pMaterial->bindings[descriptorIndex];
         if (VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT == pBinding->vkDescriptorType)
         {
@@ -113,6 +115,10 @@ static void destroySubpass(GfxContext *pGfxContext, Subpass subpass)
             {
                 tknError("Input attachment is swapchain attachment");
             }
+        }
+        else
+        {
+            
         }
     }
     destroyDescriptorSetPtr(pGfxContext, subpass.pSubpassDescriptorSet);
@@ -369,7 +375,6 @@ void destroyDescriptorSetPtr(GfxContext *pGfxContext, DescriptorSet *pDescriptor
     tknFree(pDescriptorSet->vkDescriptorTypes);
     tknFree(pDescriptorSet);
 }
-
 void populateFramebuffers(GfxContext *pGfxContext, RenderPass *pRenderPass)
 {
     VkDevice vkDevice = pGfxContext->vkDevice;
