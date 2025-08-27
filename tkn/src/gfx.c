@@ -1,4 +1,4 @@
-#include "gfx.h"
+#include "gfxCore.h"
 
 static void getGfxAndPresentQueueFamilyIndices(GfxContext *pGfxContext, VkPhysicalDevice vkPhysicalDevice, uint32_t *pGfxQueueFamilyIndex, uint32_t *pPresentQueueFamilyIndex)
 {

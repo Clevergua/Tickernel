@@ -284,3 +284,4 @@ void tknClearHashSet(TknHashSet *pTknHashSet)
     }
     pTknHashSet->count = 0;
 }
+
