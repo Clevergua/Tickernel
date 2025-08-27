@@ -23,14 +23,14 @@ function srp.setup(pGfxContext, assetsPath)
     srp.pSwapchainAttachment = gfx.getSwapchainAttachmentPtr(pGfxContext)
 
     local vertexAttributeDescriptions = {
-        { name = "position", vkFormat = VK_FORMAT_R32G32B32_SFLOAT, count = 1 },
-        { name = "color",    vkFormat = VK_FORMAT_R8G8B8A8_UINT,    count = 1 },
-        { name = "normal",   vkFormat = VK_FORMAT_R32G32B32_SFLOAT, count = 1 },
+        { name = "position", size = 64, },
+        { name = "color",    size = 64, },
+        { name = "normal",   size = 64, },
     }
 
     local indexAttributeDescriptions = gfx.createInstanceLayoutPtr({
         instanceAttributeDescription = {
-            { name = "model", vkFormat = VK_FORMAT_R32G32B32A32_SFLOAT, count = 4 },
+            { name = "model", size = 4, },
         }
     });
     srp.pDeferredRenderPass = deferredRenderPass.createRenderPassPtr(pGfxContext, {
