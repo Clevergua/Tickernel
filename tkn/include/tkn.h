@@ -29,6 +29,9 @@ Attachment *createFixedAttachmentPtr(GfxContext *pGfxContext, VkFormat vkFormat,
 void destroyFixedAttachmentPtr(GfxContext *pGfxContext, Attachment *pAttachment);
 Attachment *getSwapchainAttachmentPtr(GfxContext *pGfxContext);
 
+VertexInputLayout *createVertexInputLayoutPtr(uint32_t attributeCount, const char **names, uint32_t *sizes);
+void destroyVertexInputLayoutPtr(VertexInputLayout *pVertexInputLayout);
+
 RenderPass *createRenderPassPtr(GfxContext *pGfxContext, uint32_t attachmentCount, VkAttachmentDescription *vkAttachmentDescriptions, Attachment **inputAttachmentPtrs, VkClearValue *vkClearValues, uint32_t subpassCount, VkSubpassDescription *vkSubpassDescriptions, uint32_t *spvPathCounts, const char ***spvPathsArray, uint32_t vkSubpassDependencyCount, VkSubpassDependency *vkSubpassDependencies);
 void destroyRenderPassPtr(GfxContext *pGfxContext, RenderPass *pRenderPass);
 
@@ -41,8 +44,6 @@ void destroyImagePtr(GfxContext *pGfxContext, Image *pImage);
 UniformBuffer *createUniformBufferPtr(GfxContext *pGfxContext, VkDeviceSize vkDeviceSize);
 void destroyUniformBufferPtr(GfxContext *pGfxContext, UniformBuffer *pUniformBuffer);
 void updateUniformBufferPtr(GfxContext *pGfxContext, UniformBuffer *pUniformBuffer, const void *data, VkDeviceSize vkDeviceSize);
-VertexInputLayout *createVertexInputLayoutPtr(uint32_t attributeCount, const char **names, uint32_t *sizes);
-void destroyVertexInputLayoutPtr(VertexInputLayout *pVertexInputLayout);
 
 Mesh *createMeshPtr(GfxContext *pGfxContext, VertexInputLayout *pMeshVertexInputLayout, void *vertices, uint32_t vertexCount, VkIndexType vkIndexType, void *indices, uint32_t indexCount);
 void destroyMeshPtr(GfxContext *pGfxContext, Mesh *pMesh);

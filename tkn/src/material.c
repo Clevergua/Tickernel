@@ -1,4 +1,48 @@
 #include "gfxCore.h"
+Material *createMaterialPtr(GfxContext *pGfxContext, DescriptorSet *pDescriptorSet)
+{
+    Material *pMaterial = tknMalloc(sizeof(Material));
+    VkDescriptorSet vkDescriptorSet = VK_NULL_HANDLE;
+    uint32_t descriptorCount = pDescriptorSet->descriptorCount;
+    Binding *bindings = tknMalloc(sizeof(Binding) * descriptorCount);
+    VkDescriptorPool vkDescriptorPool = VK_NULL_HANDLE;
+
+    for (uint32_t descriptorIndex = 0; descriptorIndex < descriptorCount; descriptorIndex++)
+    {
+        VkDescriptorType vkDescriptorType = pDescriptorSet->vkDescriptorTypes[descriptorIndex];
+        bindings[descriptorIndex] = (Binding){
+            .vkDescriptorType = vkDescriptorType,
+            .bindingUnion = getNullBindingUnion(vkDescriptorType),
+            .pMaterial = pMaterial,
+            .binding = descriptorIndex,
+        };
+    }
+    VkDescriptorPoolCreateInfo vkDescriptorPoolCreateInfo = {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+        .poolSizeCount = pDescriptorSet->vkDescriptorPoolSizeDynamicArray.count,
+        .pPoolSizes = pDescriptorSet->vkDescriptorPoolSizeDynamicArray.array,
+        .maxSets = 1,
+    };
+    VkDevice vkDevice = pGfxContext->vkDevice;
+    assertVkResult(vkCreateDescriptorPool(vkDevice, &vkDescriptorPoolCreateInfo, NULL, &vkDescriptorPool));
+
+    VkDescriptorSetAllocateInfo vkDescriptorSetAllocateInfo = {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+        .descriptorPool = vkDescriptorPool,
+        .descriptorSetCount = 1,
+        .pSetLayouts = &pDescriptorSet->vkDescriptorSetLayout,
+    };
+    assertVkResult(vkAllocateDescriptorSets(vkDevice, &vkDescriptorSetAllocateInfo, &vkDescriptorSet));
+    *pMaterial = (Material){
+        .vkDescriptorSet = vkDescriptorSet,
+        .bindingCount = descriptorCount,
+        .bindings = bindings,
+        .vkDescriptorPool = vkDescriptorPool,
+        .pDescriptorSet = pDescriptorSet,
+    };
+    tknAddToDynamicArray(&pDescriptorSet->materialPtrDynamicArray, &pMaterial);
+    return pMaterial;
+}
 void destroyMaterialPtr(GfxContext *pGfxContext, Material *pMaterial)
 {
     tknRemoveFromDynamicArray(&pMaterial->pDescriptorSet->materialPtrDynamicArray, &pMaterial);
@@ -32,6 +76,7 @@ void destroyMaterialPtr(GfxContext *pGfxContext, Material *pMaterial)
     vkDestroyDescriptorPool(vkDevice, pMaterial->vkDescriptorPool, NULL);
     tknFree(pMaterial);
 }
+
 BindingUnion getNullBindingUnion(VkDescriptorType vkDescriptorType)
 {
     BindingUnion bindingUnion = {0};

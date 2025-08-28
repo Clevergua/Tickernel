@@ -42,62 +42,6 @@ void destroySpvReflectShaderModule(SpvReflectShaderModule *pSpvReflectShaderModu
     spvReflectDestroyShaderModule(pSpvReflectShaderModule);
 }
 
-size_t getSizeOfVkFormat(VkFormat format)
-{
-    switch (format)
-    {
-    case VK_FORMAT_UNDEFINED:
-        return 0;
-    case VK_FORMAT_R16_UINT:
-    case VK_FORMAT_R16_SINT:
-    case VK_FORMAT_R16_SFLOAT:
-        return 2;
-    case VK_FORMAT_R16G16_UINT:
-    case VK_FORMAT_R16G16_SINT:
-    case VK_FORMAT_R16G16_SFLOAT:
-    case VK_FORMAT_R32_UINT:
-    case VK_FORMAT_R32_SINT:
-    case VK_FORMAT_R32_SFLOAT:
-        return 4;
-    case VK_FORMAT_R16G16B16_UINT:
-    case VK_FORMAT_R16G16B16_SINT:
-    case VK_FORMAT_R16G16B16_SFLOAT:
-        return 6;
-    case VK_FORMAT_R16G16B16A16_UINT:
-    case VK_FORMAT_R16G16B16A16_SINT:
-    case VK_FORMAT_R16G16B16A16_SFLOAT:
-    case VK_FORMAT_R32G32_UINT:
-    case VK_FORMAT_R32G32_SINT:
-    case VK_FORMAT_R32G32_SFLOAT:
-    case VK_FORMAT_R64_UINT:
-    case VK_FORMAT_R64_SINT:
-    case VK_FORMAT_R64_SFLOAT:
-        return 8;
-    case VK_FORMAT_R32G32B32_UINT:
-    case VK_FORMAT_R32G32B32_SINT:
-    case VK_FORMAT_R32G32B32_SFLOAT:
-        return 12;
-    case VK_FORMAT_R32G32B32A32_UINT:
-    case VK_FORMAT_R32G32B32A32_SINT:
-    case VK_FORMAT_R32G32B32A32_SFLOAT:
-    case VK_FORMAT_R64G64_UINT:
-    case VK_FORMAT_R64G64_SINT:
-    case VK_FORMAT_R64G64_SFLOAT:
-        return 16;
-    case VK_FORMAT_R64G64B64_UINT:
-    case VK_FORMAT_R64G64B64_SINT:
-    case VK_FORMAT_R64G64B64_SFLOAT:
-        return 24;
-    case VK_FORMAT_R64G64B64A64_UINT:
-    case VK_FORMAT_R64G64B64A64_SINT:
-    case VK_FORMAT_R64G64B64A64_SFLOAT:
-        return 32;
-    default:
-        tknError("getSizeOfVkFormat: unsupported VkFormat %d", format);
-        return 0;
-    }
-}
-
 static uint32_t getMemoryTypeIndex(VkPhysicalDevice vkPhysicalDevice, uint32_t typeFilter, VkMemoryPropertyFlags memoryPropertyFlags)
 {
     VkPhysicalDeviceMemoryProperties physicalDeviceMemoryProperties;
@@ -113,7 +57,23 @@ static uint32_t getMemoryTypeIndex(VkPhysicalDevice vkPhysicalDevice, uint32_t t
     return UINT32_MAX;
 }
 
-static void createVkImage(GfxContext *pGfxContext, VkExtent3D vkExtent3D, VkFormat vkFormat, VkImageTiling vkImageTiling, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags, VkImage *pVkImage, VkDeviceMemory *pVkDeviceMemory, VkImageView *pVkImageView)
+void clearBindingPtrHashSet(GfxContext *pGfxContext, TknHashSet bindingPtrHashSet)
+{
+    for (uint32_t i = 0; i < bindingPtrHashSet.capacity; i++)
+    {
+        TknListNode *node = bindingPtrHashSet.nodePtrs[i];
+        while (node)
+        {
+            Binding *pBinding = (Binding *)node->pointer;
+            Binding binding = *pBinding;
+            binding.bindingUnion = getNullBindingUnion(pBinding->vkDescriptorType);
+            updateBindings(pGfxContext, 1, &binding);
+            node = node->nextNodePtr;
+        }
+    }
+}
+
+void createVkImage(GfxContext *pGfxContext, VkExtent3D vkExtent3D, VkFormat vkFormat, VkImageTiling vkImageTiling, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags, VkImage *pVkImage, VkDeviceMemory *pVkDeviceMemory, VkImageView *pVkImageView)
 {
     VkDevice vkDevice = pGfxContext->vkDevice;
     VkPhysicalDevice vkPhysicalDevice = pGfxContext->vkPhysicalDevice;
@@ -172,64 +132,12 @@ static void createVkImage(GfxContext *pGfxContext, VkExtent3D vkExtent3D, VkForm
     };
     assertVkResult(vkCreateImageView(vkDevice, &imageViewCreateInfo, NULL, pVkImageView));
 }
-static void destroyVkImage(GfxContext *pGfxContext, VkImage vkImage, VkDeviceMemory vkDeviceMemory, VkImageView vkImageView)
+void destroyVkImage(GfxContext *pGfxContext, VkImage vkImage, VkDeviceMemory vkDeviceMemory, VkImageView vkImageView)
 {
     VkDevice vkDevice = pGfxContext->vkDevice;
     vkDestroyImageView(vkDevice, vkImageView, NULL);
     vkDestroyImage(vkDevice, vkImage, NULL);
     vkFreeMemory(vkDevice, vkDeviceMemory, NULL);
-}
-static void clearBindingPtrHashSet(GfxContext *pGfxContext, TknHashSet bindingPtrHashSet)
-{
-    for (uint32_t i = 0; i < bindingPtrHashSet.capacity; i++)
-    {
-        TknListNode *node = bindingPtrHashSet.nodePtrs[i];
-        while (node)
-        {
-            Binding *pBinding = (Binding *)node->pointer;
-            Binding binding = *pBinding;
-            binding.bindingUnion = getNullBindingUnion(pBinding->vkDescriptorType);
-            updateBindings(pGfxContext, 1, &binding);
-            node = node->nextNodePtr;
-        }
-    }
-}
-static void copyBuffer(GfxContext *pGfxContext, VkBuffer srcVkBuffer, VkBuffer dstVkBuffer, VkDeviceSize size)
-{
-    VkDevice vkDevice = pGfxContext->vkDevice;
-
-    VkCommandBufferAllocateInfo vkCommandBufferAllocateInfo = {
-        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
-        .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
-        .commandPool = pGfxContext->gfxVkCommandPool,
-        .commandBufferCount = 1};
-
-    VkCommandBuffer vkCommandBuffer;
-    assertVkResult(vkAllocateCommandBuffers(vkDevice, &vkCommandBufferAllocateInfo, &vkCommandBuffer));
-
-    VkCommandBufferBeginInfo vkCommandBufferBeginInfo = {
-        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
-        .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
-    };
-
-    assertVkResult(vkBeginCommandBuffer(vkCommandBuffer, &vkCommandBufferBeginInfo));
-
-    VkBufferCopy vkBufferCopy = {
-        .srcOffset = 0,
-        .dstOffset = 0,
-        .size = size};
-    vkCmdCopyBuffer(vkCommandBuffer, srcVkBuffer, dstVkBuffer, 1, &vkBufferCopy);
-    assertVkResult(vkEndCommandBuffer(vkCommandBuffer));
-
-    VkSubmitInfo submitInfo = {
-        .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
-        .commandBufferCount = 1,
-        .pCommandBuffers = &vkCommandBuffer};
-
-    assertVkResult(vkQueueSubmit(pGfxContext->vkGfxQueue, 1, &submitInfo, VK_NULL_HANDLE));
-    assertVkResult(vkQueueWaitIdle(pGfxContext->vkGfxQueue));
-
-    vkFreeCommandBuffers(vkDevice, pGfxContext->gfxVkCommandPool, 1, &vkCommandBuffer);
 }
 
 void createVkBuffer(GfxContext *pGfxContext, VkDeviceSize bufferSize, VkBufferUsageFlags bufferUsageFlags, VkMemoryPropertyFlags memoryPropertyFlags, VkBuffer *pVkBuffer, VkDeviceMemory *pVkDeviceMemory)
@@ -264,228 +172,6 @@ void destroyVkBuffer(GfxContext *pGfxContext, VkBuffer vkBuffer, VkDeviceMemory 
     VkDevice vkDevice = pGfxContext->vkDevice;
     vkDestroyBuffer(vkDevice, vkBuffer, NULL);
     vkFreeMemory(vkDevice, vkDeviceMemory, NULL);
-}
-
-Attachment *createDynamicAttachmentPtr(GfxContext *pGfxContext, VkFormat vkFormat, VkImageUsageFlags vkImageUsageFlags, VkImageAspectFlags vkImageAspectFlags, float scaler)
-{
-    SwapchainAttachment *pswapchainAttachment = &pGfxContext->pSwapchainAttachment->attachmentUnion.swapchainAttachment;
-    Attachment *pAttachment = tknMalloc(sizeof(Attachment));
-    VkExtent3D vkExtent3D = {
-        .width = (uint32_t)(pswapchainAttachment->swapchainExtent.width * scaler),
-        .height = (uint32_t)(pswapchainAttachment->swapchainExtent.height * scaler),
-        .depth = 1,
-    };
-
-    VkImage vkImage;
-    VkDeviceMemory vkDeviceMemory;
-    VkImageView vkImageView;
-    createVkImage(pGfxContext, vkExtent3D, vkFormat, VK_IMAGE_TILING_OPTIMAL, vkImageUsageFlags, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vkImageAspectFlags, &vkImage, &vkDeviceMemory, &vkImageView);
-    DynamicAttachment dynamicAttachment = {
-        .vkImage = vkImage,
-        .vkDeviceMemory = vkDeviceMemory,
-        .vkImageView = vkImageView,
-        .vkImageUsageFlags = vkImageUsageFlags,
-        .vkImageAspectFlags = vkImageAspectFlags,
-        .scaler = scaler,
-        .bindingPtrHashSet = tknCreateHashSet(TKN_DEFAULT_COLLECTION_SIZE),
-    };
-    *pAttachment = (Attachment){
-        .attachmentType = ATTACHMENT_TYPE_DYNAMIC,
-        .attachmentUnion.dynamicAttachment = dynamicAttachment,
-        .vkFormat = vkFormat,
-        .renderPassPtrHashSet = tknCreateHashSet(TKN_DEFAULT_COLLECTION_SIZE),
-    };
-    tknAddToDynamicArray(&pGfxContext->dynamicAttachmentPtrDynamicArray, &pAttachment);
-    return pAttachment;
-}
-void destroyDynamicAttachmentPtr(GfxContext *pGfxContext, Attachment *pAttachment)
-{
-    tknAssert(ATTACHMENT_TYPE_DYNAMIC == pAttachment->attachmentType, "Attachment type mismatch!");
-    tknAssert(0 == pAttachment->renderPassPtrHashSet.count, "Cannot destroy dynamic attachment with render passes attached!");
-    tknRemoveFromDynamicArray(&pGfxContext->dynamicAttachmentPtrDynamicArray, &pAttachment);
-    tknDestroyHashSet(pAttachment->attachmentUnion.dynamicAttachment.bindingPtrHashSet);
-    tknDestroyHashSet(pAttachment->renderPassPtrHashSet);
-    DynamicAttachment dynamicAttachment = pAttachment->attachmentUnion.dynamicAttachment;
-    destroyVkImage(pGfxContext, dynamicAttachment.vkImage, dynamicAttachment.vkDeviceMemory, dynamicAttachment.vkImageView);
-    tknFree(pAttachment);
-}
-void resizeDynamicAttachmentPtr(GfxContext *pGfxContext, Attachment *pAttachment)
-{
-    tknAssert(ATTACHMENT_TYPE_DYNAMIC == pAttachment->attachmentType, "Attachment type mismatch!");
-    DynamicAttachment dynamicAttachment = pAttachment->attachmentUnion.dynamicAttachment;
-    SwapchainAttachment *pswapchainAttachment = &pGfxContext->pSwapchainAttachment->attachmentUnion.swapchainAttachment;
-    VkExtent3D vkExtent3D = {
-        .width = (uint32_t)(pswapchainAttachment->swapchainExtent.width * dynamicAttachment.scaler),
-        .height = (uint32_t)(pswapchainAttachment->swapchainExtent.height * dynamicAttachment.scaler),
-        .depth = 1,
-    };
-    destroyVkImage(pGfxContext, dynamicAttachment.vkImage, dynamicAttachment.vkDeviceMemory, dynamicAttachment.vkImageView);
-    createVkImage(pGfxContext, vkExtent3D, pAttachment->vkFormat, VK_IMAGE_TILING_OPTIMAL, dynamicAttachment.vkImageUsageFlags, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, dynamicAttachment.vkImageAspectFlags, &dynamicAttachment.vkImage, &dynamicAttachment.vkDeviceMemory, &dynamicAttachment.vkImageView);
-
-    for (uint32_t i = 0; i < pAttachment->attachmentUnion.dynamicAttachment.bindingPtrHashSet.capacity; i++)
-    {
-        TknListNode *node = pAttachment->attachmentUnion.dynamicAttachment.bindingPtrHashSet.nodePtrs[i];
-        while (node)
-        {
-            Binding *pBinding = (Binding *)node->pointer;
-            updateInputAttachmentBindings(pGfxContext, 1, pBinding);
-            node = node->nextNodePtr;
-        }
-    }
-}
-Attachment *createFixedAttachmentPtr(GfxContext *pGfxContext, VkFormat vkFormat, VkImageUsageFlags vkImageUsageFlags, VkImageAspectFlags vkImageAspectFlags, uint32_t width, uint32_t height)
-{
-    Attachment *pAttachment = tknMalloc(sizeof(Attachment));
-    VkExtent3D vkExtent3D = {
-        .width = width,
-        .height = height,
-        .depth = 1,
-    };
-
-    VkImage vkImage;
-    VkDeviceMemory vkDeviceMemory;
-    VkImageView vkImageView;
-    createVkImage(pGfxContext, vkExtent3D, vkFormat, VK_IMAGE_TILING_OPTIMAL, vkImageUsageFlags, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vkImageAspectFlags, &vkImage, &vkDeviceMemory, &vkImageView);
-
-    FixedAttachment fixedAttachment = {
-        .vkImage = vkImage,
-        .vkDeviceMemory = vkDeviceMemory,
-        .vkImageView = vkImageView,
-        .width = width,
-        .height = height,
-        .bindingPtrHashSet = tknCreateHashSet(TKN_DEFAULT_COLLECTION_SIZE),
-    };
-
-    *pAttachment = (Attachment){
-        .attachmentType = ATTACHMENT_TYPE_FIXED,
-        .attachmentUnion.fixedAttachment = fixedAttachment,
-        .vkFormat = vkFormat,
-        .renderPassPtrHashSet = tknCreateHashSet(TKN_DEFAULT_COLLECTION_SIZE),
-    };
-    return pAttachment;
-}
-void destroyFixedAttachmentPtr(GfxContext *pGfxContext, Attachment *pAttachment)
-{
-    tknAssert(ATTACHMENT_TYPE_FIXED == pAttachment->attachmentType, "Attachment type mismatch!");
-    tknAssert(0 == pAttachment->renderPassPtrHashSet.count, "Cannot destroy fixed attachment with render passes attached!");
-    tknDestroyHashSet(pAttachment->renderPassPtrHashSet);
-    FixedAttachment fixedAttachment = pAttachment->attachmentUnion.fixedAttachment;
-    destroyVkImage(pGfxContext, fixedAttachment.vkImage, fixedAttachment.vkDeviceMemory, fixedAttachment.vkImageView);
-    tknDestroyHashSet(fixedAttachment.bindingPtrHashSet);
-    tknFree(pAttachment);
-}
-Attachment *getSwapchainAttachmentPtr(GfxContext *pGfxContext)
-{
-    return pGfxContext->pSwapchainAttachment;
-}
-
-Image *createImagePtr(GfxContext *pGfxContext, VkExtent3D vkExtent3D, VkFormat vkFormat, VkImageTiling vkImageTiling, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags)
-{
-    Image *pImage = tknMalloc(sizeof(Image));
-
-    VkImage vkImage;
-    VkImageView vkImageView;
-    VkDeviceMemory vkDeviceMemory;
-    createVkImage(pGfxContext, vkExtent3D, vkFormat, vkImageTiling, vkImageUsageFlags, vkMemoryPropertyFlags, vkImageAspectFlags, &vkImage, &vkDeviceMemory, &vkImageView);
-    Image image = {
-        .vkImage = vkImage,
-        .vkDeviceMemory = vkDeviceMemory,
-        .vkImageView = vkImageView,
-        .bindingPtrHashSet = tknCreateHashSet(TKN_DEFAULT_COLLECTION_SIZE),
-    };
-    *pImage = image;
-
-    return pImage;
-}
-void destroyImagePtr(GfxContext *pGfxContext, Image *pImage)
-{
-    clearBindingPtrHashSet(pGfxContext, pImage->bindingPtrHashSet);
-    tknDestroyHashSet(pImage->bindingPtrHashSet);
-    destroyVkImage(pGfxContext, pImage->vkImage, pImage->vkDeviceMemory, pImage->vkImageView);
-    tknFree(pImage);
-}
-
-UniformBuffer *createUniformBufferPtr(GfxContext *pGfxContext, VkDeviceSize vkDeviceSize)
-{
-    UniformBuffer *pUniformBuffer = tknMalloc(sizeof(UniformBuffer));
-
-    VkBuffer vkBuffer = VK_NULL_HANDLE;
-    VkDeviceMemory vkDeviceMemory = VK_NULL_HANDLE;
-    void *mapped = NULL;
-    TknHashSet bindingPtrHashSet = tknCreateHashSet(TKN_DEFAULT_COLLECTION_SIZE);
-    VkDeviceSize size = vkDeviceSize;
-
-    createVkBuffer(pGfxContext, size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &vkBuffer, &vkDeviceMemory);
-    VkDevice vkDevice = pGfxContext->vkDevice;
-    assertVkResult(vkMapMemory(vkDevice, vkDeviceMemory, 0, size, 0, &mapped));
-    *pUniformBuffer = (UniformBuffer){
-        .vkBuffer = vkBuffer,
-        .vkDeviceMemory = vkDeviceMemory,
-        .mapped = mapped,
-        .bindingPtrHashSet = bindingPtrHashSet,
-        .size = size,
-    };
-
-    return pUniformBuffer;
-}
-void destroyUniformBufferPtr(GfxContext *pGfxContext, UniformBuffer *pUniformBuffer)
-{
-    clearBindingPtrHashSet(pGfxContext, pUniformBuffer->bindingPtrHashSet);
-
-    tknDestroyHashSet(pUniformBuffer->bindingPtrHashSet);
-    destroyVkBuffer(pGfxContext, pUniformBuffer->vkBuffer, pUniformBuffer->vkDeviceMemory);
-    tknFree(pUniformBuffer);
-}
-void updateUniformBufferPtr(GfxContext *pGfxContext, UniformBuffer *pUniformBuffer, const void *data, VkDeviceSize vkDeviceSize)
-{
-    tknAssert(pUniformBuffer->vkDeviceMemory != VK_NULL_HANDLE, "Mapped buffer memory is not allocated!");
-    tknAssert(vkDeviceSize <= pUniformBuffer->size, "Data size exceeds mapped buffer size!");
-    memcpy(pUniformBuffer->mapped, data, vkDeviceSize);
-}
-
-Material *createMaterialPtr(GfxContext *pGfxContext, DescriptorSet *pDescriptorSet)
-{
-    Material *pMaterial = tknMalloc(sizeof(Material));
-    VkDescriptorSet vkDescriptorSet = VK_NULL_HANDLE;
-    uint32_t descriptorCount = pDescriptorSet->descriptorCount;
-    Binding *bindings = tknMalloc(sizeof(Binding) * descriptorCount);
-    VkDescriptorPool vkDescriptorPool = VK_NULL_HANDLE;
-
-    for (uint32_t descriptorIndex = 0; descriptorIndex < descriptorCount; descriptorIndex++)
-    {
-        VkDescriptorType vkDescriptorType = pDescriptorSet->vkDescriptorTypes[descriptorIndex];
-        bindings[descriptorIndex] = (Binding){
-            .vkDescriptorType = vkDescriptorType,
-            .bindingUnion = getNullBindingUnion(vkDescriptorType),
-            .pMaterial = pMaterial,
-            .binding = descriptorIndex,
-        };
-    }
-    VkDescriptorPoolCreateInfo vkDescriptorPoolCreateInfo = {
-        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
-        .poolSizeCount = pDescriptorSet->vkDescriptorPoolSizeDynamicArray.count,
-        .pPoolSizes = pDescriptorSet->vkDescriptorPoolSizeDynamicArray.array,
-        .maxSets = 1,
-    };
-    VkDevice vkDevice = pGfxContext->vkDevice;
-    assertVkResult(vkCreateDescriptorPool(vkDevice, &vkDescriptorPoolCreateInfo, NULL, &vkDescriptorPool));
-
-    VkDescriptorSetAllocateInfo vkDescriptorSetAllocateInfo = {
-        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-        .descriptorPool = vkDescriptorPool,
-        .descriptorSetCount = 1,
-        .pSetLayouts = &pDescriptorSet->vkDescriptorSetLayout,
-    };
-    assertVkResult(vkAllocateDescriptorSets(vkDevice, &vkDescriptorSetAllocateInfo, &vkDescriptorSet));
-    *pMaterial = (Material){
-        .vkDescriptorSet = vkDescriptorSet,
-        .bindingCount = descriptorCount,
-        .bindings = bindings,
-        .vkDescriptorPool = vkDescriptorPool,
-        .pDescriptorSet = pDescriptorSet,
-    };
-    tknAddToDynamicArray(&pDescriptorSet->materialPtrDynamicArray, &pMaterial);
-    return pMaterial;
 }
 
 VertexInputLayout *createVertexInputLayoutPtr(uint32_t attributeCount, const char **names, uint32_t *sizes)
@@ -704,151 +390,3 @@ VkFormat getSupportedFormat(GfxContext *pGfxContext, uint32_t candidateCount, Vk
     return VK_FORMAT_MAX_ENUM;
 }
 
-void populateFramebuffers(GfxContext *pGfxContext, RenderPass *pRenderPass)
-{
-    VkDevice vkDevice = pGfxContext->vkDevice;
-    uint32_t width = UINT32_MAX;
-    uint32_t height = UINT32_MAX;
-    uint32_t attachmentCount = pRenderPass->attachmentCount;
-    Attachment **attachmentPtrs = pRenderPass->attachmentPtrs;
-    SwapchainAttachment *pSwapchainUnion = &pGfxContext->pSwapchainAttachment->attachmentUnion.swapchainAttachment;
-    uint32_t swapchainWidth = pSwapchainUnion->swapchainExtent.width;
-    uint32_t swapchainHeight = pSwapchainUnion->swapchainExtent.height;
-    for (uint32_t attachmentIndex = 0; attachmentIndex < attachmentCount; attachmentIndex++)
-    {
-        Attachment *pAttachment = attachmentPtrs[attachmentIndex];
-        if (ATTACHMENT_TYPE_SWAPCHAIN == pAttachment->attachmentType)
-        {
-            if (UINT32_MAX == width && UINT32_MAX == height)
-            {
-                width = swapchainWidth;
-                height = swapchainHeight;
-            }
-            else
-            {
-                tknAssert(width == swapchainWidth && height == swapchainHeight, "Swapchain attachment size mismatch!");
-            }
-        }
-        else if (ATTACHMENT_TYPE_DYNAMIC == pAttachment->attachmentType)
-        {
-            DynamicAttachment dynamicUnion = pAttachment->attachmentUnion.dynamicAttachment;
-            uint32_t dynamicWidth = swapchainWidth * dynamicUnion.scaler;
-            uint32_t dynamicHeight = swapchainHeight * dynamicUnion.scaler;
-            if (UINT32_MAX == width && UINT32_MAX == height)
-            {
-                width = dynamicWidth;
-                height = dynamicHeight;
-            }
-            else
-            {
-                tknAssert(width == dynamicWidth && height == dynamicHeight, "Dynamic attachment size mismatch!");
-            }
-        }
-        else
-        {
-            FixedAttachment fixedUnion = pAttachment->attachmentUnion.fixedAttachment;
-            if (UINT32_MAX == width && UINT32_MAX == height)
-            {
-                width = fixedUnion.width;
-                height = fixedUnion.height;
-            }
-            else
-            {
-                tknAssert(width == fixedUnion.width && height == fixedUnion.height, "Fixed attachment size mismatch!");
-            }
-        }
-    }
-
-    tknAssert(UINT32_MAX != width && UINT32_MAX != height, "No valid attachment found to determine framebuffer size");
-    pRenderPass->renderArea = (VkRect2D){
-        .offset = {0, 0},
-        .extent = {width, height},
-    };
-    Attachment *pSwapchainAttachment = getSwapchainAttachmentPtr(pGfxContext);
-    if (tknContainsInHashSet(&pSwapchainAttachment->renderPassPtrHashSet, pRenderPass))
-    {
-        uint32_t swapchainImageCount = pSwapchainUnion->swapchainImageCount;
-        pRenderPass->vkFramebufferCount = swapchainImageCount;
-        pRenderPass->vkFramebuffers = tknMalloc(sizeof(VkFramebuffer) * swapchainImageCount);
-        VkImageView *attachmentVkImageViews = tknMalloc(sizeof(VkImageView) * attachmentCount);
-        for (uint32_t swapchainIndex = 0; swapchainIndex < swapchainImageCount; swapchainIndex++)
-        {
-            for (uint32_t attachmentIndex = 0; attachmentIndex < attachmentCount; attachmentIndex++)
-            {
-                Attachment *pAttachment = attachmentPtrs[attachmentIndex];
-                if (ATTACHMENT_TYPE_SWAPCHAIN == pAttachment->attachmentType)
-                {
-                    attachmentVkImageViews[attachmentIndex] = pSwapchainUnion->swapchainImageViews[swapchainIndex];
-                }
-                else if (ATTACHMENT_TYPE_DYNAMIC == pAttachment->attachmentType)
-                {
-                    attachmentVkImageViews[attachmentIndex] = pAttachment->attachmentUnion.dynamicAttachment.vkImageView;
-                }
-                else
-                {
-                    attachmentVkImageViews[attachmentIndex] = pAttachment->attachmentUnion.fixedAttachment.vkImageView;
-                }
-            }
-            VkFramebufferCreateInfo vkFramebufferCreateInfo = {
-                .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
-                .pNext = NULL,
-                .flags = 0,
-                .renderPass = pRenderPass->vkRenderPass,
-                .attachmentCount = attachmentCount,
-                .pAttachments = attachmentVkImageViews,
-                .width = width,
-                .height = height,
-                .layers = 1,
-            };
-            assertVkResult(vkCreateFramebuffer(vkDevice, &vkFramebufferCreateInfo, NULL, &pRenderPass->vkFramebuffers[swapchainIndex]));
-        }
-        tknFree(attachmentVkImageViews);
-    }
-    else
-    {
-        pRenderPass->vkFramebufferCount = 1;
-        pRenderPass->vkFramebuffers = tknMalloc(sizeof(VkFramebuffer));
-        VkImageView *attachmentVkImageViews = tknMalloc(sizeof(VkImageView) * attachmentCount);
-        for (uint32_t attachmentIndex = 0; attachmentIndex < attachmentCount; attachmentIndex++)
-        {
-            Attachment *pAttachment = attachmentPtrs[attachmentIndex];
-            if (ATTACHMENT_TYPE_DYNAMIC == pAttachment->attachmentType)
-            {
-                attachmentVkImageViews[attachmentIndex] = pAttachment->attachmentUnion.dynamicAttachment.vkImageView;
-            }
-            else
-            {
-                // ATTACHMENT_TYPE_FIXED == pAttachment->attachmentType
-                attachmentVkImageViews[attachmentIndex] = pAttachment->attachmentUnion.fixedAttachment.vkImageView;
-            }
-        }
-        VkFramebufferCreateInfo vkFramebufferCreateInfo = {
-            .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
-            .pNext = NULL,
-            .flags = 0,
-            .renderPass = pRenderPass->vkRenderPass,
-            .attachmentCount = attachmentCount,
-            .pAttachments = attachmentVkImageViews,
-            .width = width,
-            .height = height,
-            .layers = 1,
-        };
-
-        assertVkResult(vkCreateFramebuffer(vkDevice, &vkFramebufferCreateInfo, NULL, &pRenderPass->vkFramebuffers[0]));
-        tknFree(attachmentVkImageViews);
-    }
-}
-void cleanupFramebuffers(GfxContext *pGfxContext, RenderPass *pRenderPass)
-{
-    VkDevice vkDevice = pGfxContext->vkDevice;
-    for (uint32_t i = 0; i < pRenderPass->vkFramebufferCount; i++)
-    {
-        vkDestroyFramebuffer(vkDevice, pRenderPass->vkFramebuffers[i], NULL);
-    }
-    tknFree(pRenderPass->vkFramebuffers);
-}
-void repopulateFramebuffers(GfxContext *pGfxContext, RenderPass *pRenderPass)
-{
-    cleanupFramebuffers(pGfxContext, pRenderPass);
-    populateFramebuffers(pGfxContext, pRenderPass);
-}

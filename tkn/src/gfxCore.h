@@ -299,12 +299,8 @@ void destroySpvReflectShaderModule(SpvReflectShaderModule *pSpvReflectShaderModu
 void createVkBuffer(GfxContext *pGfxContext, VkDeviceSize bufferSize, VkBufferUsageFlags bufferUsageFlags, VkMemoryPropertyFlags memoryPropertyFlags, VkBuffer *pVkBuffer, VkDeviceMemory *pVkDeviceMemory);
 void destroyVkBuffer(GfxContext *pGfxContext, VkBuffer vkBuffer, VkDeviceMemory vkDeviceMemory);
 
-size_t getSizeOfVkFormat(VkFormat format);
-
 DescriptorSet *createDescriptorSetPtr(GfxContext *pGfxContext, uint32_t spvReflectShaderModuleCount, SpvReflectShaderModule *spvReflectShaderModules, uint32_t set);
 void destroyDescriptorSetPtr(GfxContext *pGfxContext, DescriptorSet *pDescriptorSet);
-
-void resizeDynamicAttachmentPtr(GfxContext *pGfxContext, Attachment *pAttachment);
 
 void populateFramebuffers(GfxContext *pGfxContext, RenderPass *pRenderPass);
 void cleanupFramebuffers(GfxContext *pGfxContext, RenderPass *pRenderPass);
@@ -313,10 +309,12 @@ void repopulateFramebuffers(GfxContext *pGfxContext, RenderPass *pRenderPass);
 Material *createMaterialPtr(GfxContext *pGfxContext, DescriptorSet *pDescriptorSet);
 void destroyMaterialPtr(GfxContext *pGfxContext, Material *pMaterial);
 
+void resizeDynamicAttachmentPtr(GfxContext *pGfxContext, Attachment *pAttachment);
 BindingUnion getNullBindingUnion(VkDescriptorType vkDescriptorType);
 void updateInputAttachmentBindings(GfxContext *pGfxContext, uint32_t inputAttachmentBindingCount, Binding *inputAttachmentBindings);
 void updateBindings(GfxContext *pGfxContext, uint32_t bindingCount, Binding *bindings);
 
-void populateFramebuffers(GfxContext *pGfxContext, RenderPass *pRenderPass);
-void cleanupFramebuffers(GfxContext *pGfxContext, RenderPass *pRenderPass);
-void repopulateFramebuffers(GfxContext *pGfxContext, RenderPass *pRenderPass);
+void clearBindingPtrHashSet(GfxContext *pGfxContext, TknHashSet bindingPtrHashSet);
+
+void createVkImage(GfxContext *pGfxContext, VkExtent3D vkExtent3D, VkFormat vkFormat, VkImageTiling vkImageTiling, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags, VkImage *pVkImage, VkDeviceMemory *pVkDeviceMemory, VkImageView *pVkImageView);
+void destroyVkImage(GfxContext *pGfxContext, VkImage vkImage, VkDeviceMemory vkDeviceMemory, VkImageView vkImageView);

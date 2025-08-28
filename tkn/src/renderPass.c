@@ -1,4 +1,5 @@
 #include "gfxCore.h"
+
 static Subpass createSubpass(GfxContext *pGfxContext, uint32_t subpassIndex, uint32_t attachmentCount, Attachment **attachmentPtrs, uint32_t inputVkAttachmentReferenceCount, const VkAttachmentReference *inputVkAttachmentReferences, uint32_t spvPathCount, const char **spvPaths)
 {
     uint32_t inputAttachmentBindingCount = 0;
