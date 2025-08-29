@@ -7,7 +7,7 @@ UniformBuffer *createUniformBufferPtr(GfxContext *pGfxContext, VkDeviceSize vkDe
     VkBuffer vkBuffer = VK_NULL_HANDLE;
     VkDeviceMemory vkDeviceMemory = VK_NULL_HANDLE;
     void *mapped = NULL;
-    TknHashSet bindingPtrHashSet = tknCreateHashSet(TKN_DEFAULT_COLLECTION_SIZE);
+    TknHashSet bindingPtrHashSet = tknCreateHashSet(sizeof(Binding*));
     VkDeviceSize size = vkDeviceSize;
 
     createVkBuffer(pGfxContext, size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &vkBuffer, &vkDeviceMemory);

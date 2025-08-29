@@ -22,7 +22,6 @@ void tknWarning(const char *format, ...)
     va_end(args);
 }
 
-
 void tknError(const char *format, ...)
 {
     va_list args;
@@ -42,7 +41,7 @@ void tknAssert(bool condition, const char *format, ...)
     }
 }
 
-//static int allocTimes = 0;
+// static int allocTimes = 0;
 
 void *tknMalloc(size_t size)
 {
@@ -168,95 +167,84 @@ bool tknContainsInDynamicArray(TknDynamicArray *pDynamicArray, void *pData)
     return false;
 }
 
-TknHashSet tknCreateHashSet(uint32_t capacity)
+TknHashSet tknCreateHashSet(size_t dataSize)
 {
+    uint32_t capacity = 1u << TKN_DEFAULT_COLLECTION_POWER_OF_TWO;
     TknHashSet tknHashSet = {
         .capacity = capacity,
         .count = 0,
+        .dataSize = dataSize,
         .nodePtrs = tknMalloc(sizeof(TknListNode *) * capacity),
     };
     memset(tknHashSet.nodePtrs, 0, sizeof(TknListNode *) * capacity);
     return tknHashSet;
 }
+
 void tknDestroyHashSet(TknHashSet tknHashSet)
 {
     tknClearHashSet(&tknHashSet);
     tknFree(tknHashSet.nodePtrs);
+    tknHashSet.nodePtrs = NULL;
+    tknHashSet.capacity = 0;
+    tknHashSet.count = 0;
+    tknHashSet.dataSize = 0;
 }
-bool tknAddToHashSet(TknHashSet *pTknHashSet, void *pointer)
+
+bool tknAddToHashSet(TknHashSet *pTknHashSet, const void *pData)
 {
-    if (tknContainsInHashSet(pTknHashSet, pointer))
-    {
-        return false;
-    }
-    else
-    {
-        if (pTknHashSet->count * 10 >= pTknHashSet->capacity * 8)
-        {
-            // Resize the hash set
-            uint32_t newCapacity = pTknHashSet->capacity * 2;
-            TknListNode **newNodePtrs = tknMalloc(sizeof(TknListNode *) * newCapacity);
-            memset(newNodePtrs, 0, sizeof(TknListNode *) * newCapacity);
-            for (size_t i = 0; i < pTknHashSet->capacity; i++)
-            {
-                TknListNode *node = pTknHashSet->nodePtrs[i];
-                while (node)
-                {
-                    size_t newIndex = (size_t)node->pointer % newCapacity;
-                    TknListNode *nextNode = node->nextNodePtr;
-                    node->nextNodePtr = newNodePtrs[newIndex];
-                    newNodePtrs[newIndex] = node;
-                    node = nextNode;
-                }
-            }
-            tknFree(pTknHashSet->nodePtrs);
-            pTknHashSet->nodePtrs = newNodePtrs;
-            pTknHashSet->capacity = newCapacity;
-        }
-        else
-        {
-            // nothing
-        }
-        size_t index = (size_t)pointer % pTknHashSet->capacity;
-        TknListNode *newNode = tknMalloc(sizeof(TknListNode));
-        newNode->pointer = pointer;
-        newNode->nextNodePtr = pTknHashSet->nodePtrs[index];
-        pTknHashSet->nodePtrs[index] = newNode;
-        pTknHashSet->count++;
-        return true;
-    }
-}
-bool tknContainsInHashSet(TknHashSet *pTknHashSet, void *pointer)
-{
-    size_t index = (size_t)pointer % pTknHashSet->capacity;
+    size_t index = 0;
+    memcpy(&index, pData, sizeof(index) < pTknHashSet->dataSize ? sizeof(index) : pTknHashSet->dataSize);
+    index &= (pTknHashSet->capacity - 1);
+
     TknListNode *node = pTknHashSet->nodePtrs[index];
     while (node)
     {
-        if (node->pointer == pointer)
-        {
+        if (memcmp(node->data, pData, pTknHashSet->dataSize) == 0)
+            return false;
+        node = node->nextNodePtr;
+    }
+    TknListNode *newNode = tknMalloc(sizeof(TknListNode));
+    newNode->data = tknMalloc(pTknHashSet->dataSize);
+    memcpy(newNode->data, pData, pTknHashSet->dataSize);
+    newNode->nextNodePtr = pTknHashSet->nodePtrs[index];
+    pTknHashSet->nodePtrs[index] = newNode;
+    pTknHashSet->count++;
+    return true;
+}
+
+bool tknContainsInHashSet(TknHashSet *pTknHashSet, const void *pData)
+{
+    size_t index = 0;
+    memcpy(&index, pData, sizeof(index) < pTknHashSet->dataSize ? sizeof(index) : pTknHashSet->dataSize);
+    index &= (pTknHashSet->capacity - 1);
+
+    TknListNode *node = pTknHashSet->nodePtrs[index];
+    while (node)
+    {
+        if (memcmp(node->data, pData, pTknHashSet->dataSize) == 0)
             return true;
-        }
         node = node->nextNodePtr;
     }
     return false;
 }
-void tknRemoveFromHashSet(TknHashSet *pTknHashSet, void *pointer)
+
+void tknRemoveFromHashSet(TknHashSet *pTknHashSet, const void *pData)
 {
-    size_t index = (size_t)pointer % pTknHashSet->capacity;
+    size_t index = 0;
+    memcpy(&index, pData, sizeof(index) < pTknHashSet->dataSize ? sizeof(index) : pTknHashSet->dataSize);
+    index &= (pTknHashSet->capacity - 1);
+
     TknListNode *node = pTknHashSet->nodePtrs[index];
     TknListNode *prevNode = NULL;
     while (node)
     {
-        if (node->pointer == pointer)
+        if (memcmp(node->data, pData, pTknHashSet->dataSize) == 0)
         {
             if (prevNode)
-            {
                 prevNode->nextNodePtr = node->nextNodePtr;
-            }
             else
-            {
                 pTknHashSet->nodePtrs[index] = node->nextNodePtr;
-            }
+            tknFree(node->data);
             tknFree(node);
             pTknHashSet->count--;
             return;
@@ -265,6 +253,7 @@ void tknRemoveFromHashSet(TknHashSet *pTknHashSet, void *pointer)
         node = node->nextNodePtr;
     }
 }
+
 void tknClearHashSet(TknHashSet *pTknHashSet)
 {
     for (size_t i = 0; i < pTknHashSet->capacity; i++)
@@ -273,6 +262,7 @@ void tknClearHashSet(TknHashSet *pTknHashSet)
         while (node)
         {
             TknListNode *nextNode = node->nextNodePtr;
+            tknFree(node->data);
             tknFree(node);
             node = nextNode;
         }
@@ -280,4 +270,3 @@ void tknClearHashSet(TknHashSet *pTknHashSet)
     }
     pTknHashSet->count = 0;
 }
-

@@ -64,7 +64,7 @@ void clearBindingPtrHashSet(GfxContext *pGfxContext, TknHashSet bindingPtrHashSe
         TknListNode *node = bindingPtrHashSet.nodePtrs[i];
         while (node)
         {
-            Binding *pBinding = (Binding *)node->pointer;
+            Binding *pBinding = *(Binding **)node->data;
             Binding binding = *pBinding;
             binding.bindingUnion = getNullBindingUnion(pBinding->vkDescriptorType);
             updateBindings(pGfxContext, 1, &binding);

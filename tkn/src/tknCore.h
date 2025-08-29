@@ -13,6 +13,7 @@
     ((x) < (min) ? (min) : ((x) > (max) ? (max) : (x)))
 
 #define TKN_DEFAULT_COLLECTION_SIZE 8
+#define TKN_DEFAULT_COLLECTION_POWER_OF_TWO 3
 #define TKN_MIN_COLLECTION_SIZE 1
 
 typedef struct
@@ -25,16 +26,25 @@ typedef struct
 
 typedef struct TknListNode
 {
-    void *pointer;
+    void *data;
     struct TknListNode *nextNodePtr;
 } TknListNode;
 
 typedef struct
 {
+    uint32_t powerOfTwo;
     uint32_t capacity;
     uint32_t count;
+    size_t dataSize;
     TknListNode **nodePtrs;
 } TknHashSet;
+
+TknHashSet tknCreateHashSet(size_t dataSize);
+void tknDestroyHashSet(TknHashSet tknHashSet);
+bool tknAddToHashSet(TknHashSet *pTknHashSet, const void *pData);
+bool tknContainsInHashSet(TknHashSet *pTknHashSet, const void *pData);
+void tknRemoveFromHashSet(TknHashSet *pTknHashSet, const void *pData);
+void tknClearHashSet(TknHashSet *pTknHashSet);
 
 TknDynamicArray tknCreateDynamicArray(size_t dataSize, uint32_t maxCount);
 void tknDestroyDynamicArray(TknDynamicArray dynamicArray);
@@ -45,10 +55,3 @@ void tknRemoveAtIndexFromDynamicArray(TknDynamicArray *pDynamicArray, uint32_t i
 void tknClearDynamicArray(TknDynamicArray *pDynamicArray);
 void *tknGetFromDynamicArray(TknDynamicArray *pDynamicArray, uint32_t index);
 bool tknContainsInDynamicArray(TknDynamicArray *pDynamicArray, void *pData);
-
-TknHashSet tknCreateHashSet(uint32_t capacity);
-void tknDestroyHashSet(TknHashSet tknHashSet);
-bool tknAddToHashSet(TknHashSet *pTknHashSet, void *pointer);
-bool tknContainsInHashSet(TknHashSet *pTknHashSet, void *pointer);
-void tknRemoveFromHashSet(TknHashSet *pTknHashSet, void *pointer);
-void tknClearHashSet(TknHashSet *pTknHashSet);

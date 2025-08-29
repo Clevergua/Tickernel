@@ -21,13 +21,13 @@ Attachment *createDynamicAttachmentPtr(GfxContext *pGfxContext, VkFormat vkForma
         .vkImageUsageFlags = vkImageUsageFlags,
         .vkImageAspectFlags = vkImageAspectFlags,
         .scaler = scaler,
-        .bindingPtrHashSet = tknCreateHashSet(TKN_DEFAULT_COLLECTION_SIZE),
+        .bindingPtrHashSet = tknCreateHashSet(sizeof(Binding*)),
     };
     *pAttachment = (Attachment){
         .attachmentType = ATTACHMENT_TYPE_DYNAMIC,
         .attachmentUnion.dynamicAttachment = dynamicAttachment,
         .vkFormat = vkFormat,
-        .renderPassPtrHashSet = tknCreateHashSet(TKN_DEFAULT_COLLECTION_SIZE),
+        .renderPassPtrHashSet = tknCreateHashSet(sizeof(RenderPass*)),
     };
     tknAddToHashSet(&pGfxContext->dynamicAttachmentPtrHashSet, pAttachment);
     return pAttachment;
@@ -61,7 +61,7 @@ void resizeDynamicAttachmentPtr(GfxContext *pGfxContext, Attachment *pAttachment
         TknListNode *node = pAttachment->attachmentUnion.dynamicAttachment.bindingPtrHashSet.nodePtrs[i];
         while (node)
         {
-            Binding *pBinding = (Binding *)node->pointer;
+            Binding *pBinding = *(Binding **)node->data;
             updateInputAttachmentBindings(pGfxContext, 1, pBinding);
             node = node->nextNodePtr;
         }
@@ -87,14 +87,14 @@ Attachment *createFixedAttachmentPtr(GfxContext *pGfxContext, VkFormat vkFormat,
         .vkImageView = vkImageView,
         .width = width,
         .height = height,
-        .bindingPtrHashSet = tknCreateHashSet(TKN_DEFAULT_COLLECTION_SIZE),
+        .bindingPtrHashSet = tknCreateHashSet(sizeof(Binding*)),
     };
 
     *pAttachment = (Attachment){
         .attachmentType = ATTACHMENT_TYPE_FIXED,
         .attachmentUnion.fixedAttachment = fixedAttachment,
         .vkFormat = vkFormat,
-        .renderPassPtrHashSet = tknCreateHashSet(TKN_DEFAULT_COLLECTION_SIZE),
+        .renderPassPtrHashSet = tknCreateHashSet(sizeof(RenderPass*)),
     };
     return pAttachment;
 }
