@@ -95,7 +95,7 @@ void addInstanceToMaterial(GfxContext *pGfxContext, Instance *pInstance, Materia
 {
     if (pMaterial->pPipeline->pInstanceVertexInputLayout == pInstance->pVertexInputLayout && pMaterial->pPipeline->pMeshVertexInputLayout == pInstance->pMesh->pVertexInputLayout)
     {
-        tknAddToDynamicArray(&pMaterial->instancePtrDynamicArray, pInstance);
+        tknAddToDynamicArray(&pMaterial->instancePtrDynamicArray, &pInstance);
         tknAddToHashSet(&pInstance->materialPtrHashSet, pMaterial);
     }
     else

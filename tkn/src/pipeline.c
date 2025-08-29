@@ -289,7 +289,7 @@ Pipeline *createPipelinePtr(GfxContext *pGfxContext, RenderPass *pRenderPass, ui
         .pMeshVertexInputLayout = pMeshVertexInputLayout,
         .pInstanceVertexInputLayout = pInstanceVertexInputLayout,
     };
-    tknAddToDynamicArray(&pRenderPass->subpasses[subpassIndex].pipelinePtrDynamicArray, pPipeline);
+    tknAddToDynamicArray(&pRenderPass->subpasses[subpassIndex].pipelinePtrDynamicArray, &pPipeline);
     tknAddToHashSet(&pMeshVertexInputLayout->referencePtrHashSet, pPipeline);
     tknAddToHashSet(&pInstanceVertexInputLayout->referencePtrHashSet, pPipeline);
     return pPipeline;
