@@ -62,7 +62,7 @@ void resizeDynamicAttachmentPtr(GfxContext *pGfxContext, Attachment *pAttachment
         while (node)
         {
             Binding *pBinding = *(Binding **)node->data;
-            updateInputAttachmentBindings(pGfxContext, 1, pBinding);
+            updateBindings(pGfxContext, 1, pBinding);
             node = node->nextNodePtr;
         }
     }

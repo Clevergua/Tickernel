@@ -110,58 +110,7 @@ BindingUnion getNullBindingUnion(VkDescriptorType vkDescriptorType)
     }
     return bindingUnion;
 }
-void updateInputAttachmentBindings(GfxContext *pGfxContext, uint32_t inputAttachmentBindingCount, Binding *inputAttachmentBindings)
-{
-    if (inputAttachmentBindingCount > 0)
-    {
-        VkWriteDescriptorSet *vkWriteDescriptorSets = tknMalloc(sizeof(VkWriteDescriptorSet) * inputAttachmentBindingCount);
-        VkDescriptorImageInfo *vkDescriptorImageInfos = tknMalloc(sizeof(VkDescriptorImageInfo) * inputAttachmentBindingCount);
-        for (uint32_t inputAttachmentBindingIndex = 0; inputAttachmentBindingIndex < inputAttachmentBindingCount; inputAttachmentBindingIndex++)
-        {
-            Binding descriptor = inputAttachmentBindings[inputAttachmentBindingIndex];
-            tknAssert(VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT == descriptor.vkDescriptorType, "Input attachment descriptor type mismatch!");
-            Attachment *pAttachment = descriptor.bindingUnion.inputAttachmentBinding.pAttachment;
-            VkImageView vkImageView = VK_NULL_HANDLE;
-            if (ATTACHMENT_TYPE_DYNAMIC == pAttachment->attachmentType)
-            {
-                vkImageView = pAttachment->attachmentUnion.dynamicAttachment.vkImageView;
-            }
-            else if (ATTACHMENT_TYPE_FIXED == pAttachment->attachmentType)
-            {
-                vkImageView = pAttachment->attachmentUnion.fixedAttachment.vkImageView;
-            }
-            else
-            {
-                tknError("Swapchain attachment cannot be used as input attachment (attachment type: %d)", pAttachment->attachmentType);
-            }
 
-            vkDescriptorImageInfos[inputAttachmentBindingIndex] = (VkDescriptorImageInfo){
-                .sampler = VK_NULL_HANDLE,
-                .imageView = vkImageView,
-                .imageLayout = descriptor.bindingUnion.inputAttachmentBinding.vkImageLayout,
-            };
-            vkWriteDescriptorSets[inputAttachmentBindingIndex] = (VkWriteDescriptorSet){
-                .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-                .dstSet = descriptor.pMaterial->vkDescriptorSet,
-                .dstBinding = descriptor.binding,
-                .dstArrayElement = 0,
-                .descriptorCount = 1,
-                .descriptorType = descriptor.vkDescriptorType,
-                .pImageInfo = &vkDescriptorImageInfos[inputAttachmentBindingIndex],
-                .pBufferInfo = VK_NULL_HANDLE,
-                .pTexelBufferView = VK_NULL_HANDLE,
-            };
-        }
-        VkDevice vkDevice = pGfxContext->vkDevice;
-        vkUpdateDescriptorSets(vkDevice, inputAttachmentBindingCount, vkWriteDescriptorSets, 0, NULL);
-        tknFree(vkDescriptorImageInfos);
-        tknFree(vkWriteDescriptorSets);
-    }
-    else
-    {
-        printf("No input attachments to update");
-    }
-}
 void updateBindings(GfxContext *pGfxContext, uint32_t bindingCount, Binding *bindings)
 {
     if (bindingCount > 0)
@@ -180,6 +129,7 @@ void updateBindings(GfxContext *pGfxContext, uint32_t bindingCount, Binding *bin
             tknAssert(binding < pMaterial->bindingCount, "Invalid binding index");
             VkDescriptorType vkDescriptorType = pMaterial->bindings[binding].vkDescriptorType;
             tknAssert(vkDescriptorType == newBinding.vkDescriptorType, "Incompatible descriptor type");
+            Binding *pOldBinding = &pMaterial->bindings[binding];
             // VK_DESCRIPTOR_TYPE_SAMPLER = 0,
             // VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER = 1,
             // VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE = 2,
@@ -190,11 +140,11 @@ void updateBindings(GfxContext *pGfxContext, uint32_t bindingCount, Binding *bin
             // VK_DESCRIPTOR_TYPE_STORAGE_BUFFER = 7,
             // VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC = 8,
             // VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC = 9,
+            // VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT = 10
             if (VK_DESCRIPTOR_TYPE_SAMPLER == vkDescriptorType)
             {
                 Sampler *pNewSampler = newBinding.bindingUnion.samplerBinding.pSampler;
-                Binding *pCurrentBinding = &pMaterial->bindings[binding];
-                Sampler *pCurrentSampler = pCurrentBinding->bindingUnion.samplerBinding.pSampler;
+                Sampler *pCurrentSampler = pOldBinding->bindingUnion.samplerBinding.pSampler;
                 if (pNewSampler == pCurrentSampler)
                 {
                     // No change, skip
@@ -208,10 +158,10 @@ void updateBindings(GfxContext *pGfxContext, uint32_t bindingCount, Binding *bin
                     else
                     {
                         // Current sampler deref descriptor
-                        tknRemoveFromHashSet(&pCurrentSampler->bindingPtrHashSet, pCurrentBinding);
+                        tknRemoveFromHashSet(&pCurrentSampler->bindingPtrHashSet, pOldBinding);
                     }
 
-                    pCurrentBinding->bindingUnion.samplerBinding.pSampler = pNewSampler;
+                    pOldBinding->bindingUnion.samplerBinding.pSampler = pNewSampler;
                     if (NULL == pNewSampler)
                     {
                         vkDescriptorImageInfos[vkWriteDescriptorSetCount] = (VkDescriptorImageInfo){
@@ -223,7 +173,7 @@ void updateBindings(GfxContext *pGfxContext, uint32_t bindingCount, Binding *bin
                     else
                     {
                         // New sampler ref descriptor
-                        tknAddToHashSet(&pNewSampler->bindingPtrHashSet, pCurrentBinding);
+                        tknAddToHashSet(&pNewSampler->bindingPtrHashSet, pOldBinding);
                         vkDescriptorImageInfos[vkWriteDescriptorSetCount] = (VkDescriptorImageInfo){
                             .sampler = pNewSampler->vkSampler,
                             .imageView = VK_NULL_HANDLE,
@@ -332,12 +282,99 @@ void updateBindings(GfxContext *pGfxContext, uint32_t bindingCount, Binding *bin
             {
                 tknError("Storage buffer dynamic not yet implemented");
             }
+            else if (VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT == vkDescriptorType)
+            {
+                Attachment *pOldAttachment = pOldBinding->bindingUnion.inputAttachmentBinding.pAttachment;
+                Attachment *pNewAttachment = newBinding.bindingUnion.inputAttachmentBinding.pAttachment;
+                if (pOldAttachment == pNewAttachment)
+                {
+                    // Skip
+                }
+                else
+                {
+                    if (pOldAttachment == NULL)
+                    {
+                        // Skip
+                    }
+                    else
+                    {
+                        if (ATTACHMENT_TYPE_DYNAMIC == pOldAttachment->attachmentType)
+                        {
+                            tknRemoveFromHashSet(&pOldAttachment->attachmentUnion.dynamicAttachment.bindingPtrHashSet, pOldBinding);
+                        }
+                        else if (ATTACHMENT_TYPE_FIXED == pOldAttachment->attachmentType)
+                        {
+                            tknRemoveFromHashSet(&pOldAttachment->attachmentUnion.fixedAttachment.bindingPtrHashSet, pOldBinding);
+                        }
+                        else
+                        {
+                            tknError("Swapchain attachment cannot be used as input attachment (attachment type: %d)", pOldAttachment->attachmentType);
+                        }
+                    }
+
+                    if (pNewAttachment == NULL)
+                    {
+                        VkImageView vkImageView = VK_NULL_HANDLE;
+                        vkDescriptorImageInfos[bindingIndex] = (VkDescriptorImageInfo){
+                            .sampler = VK_NULL_HANDLE,
+                            .imageView = vkImageView,
+                            .imageLayout = pOldBinding->bindingUnion.inputAttachmentBinding.vkImageLayout,
+                        };
+                        vkWriteDescriptorSets[bindingIndex] = (VkWriteDescriptorSet){
+                            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+                            .dstSet = pMaterial->vkDescriptorSet,
+                            .dstBinding = binding,
+                            .dstArrayElement = 0,
+                            .descriptorCount = 1,
+                            .descriptorType = vkDescriptorType,
+                            .pImageInfo = &vkDescriptorImageInfos[bindingIndex],
+                            .pBufferInfo = VK_NULL_HANDLE,
+                            .pTexelBufferView = VK_NULL_HANDLE,
+                        };
+                    }
+                    else
+                    {
+                        VkImageView vkImageView = VK_NULL_HANDLE;
+                        if (ATTACHMENT_TYPE_DYNAMIC == pNewAttachment->attachmentType)
+                        {
+                            vkImageView = pNewAttachment->attachmentUnion.dynamicAttachment.vkImageView;
+                            tknAddToHashSet(&pNewAttachment->attachmentUnion.dynamicAttachment.bindingPtrHashSet, pOldBinding);
+                        }
+                        else if (ATTACHMENT_TYPE_FIXED == pNewAttachment->attachmentType)
+                        {
+                            vkImageView = pNewAttachment->attachmentUnion.fixedAttachment.vkImageView;
+                            tknAddToHashSet(&pNewAttachment->attachmentUnion.fixedAttachment.bindingPtrHashSet, pOldBinding);
+                        }
+                        else
+                        {
+                            tknError("Swapchain attachment cannot be used as input attachment (attachment type: %d)", pNewAttachment->attachmentType);
+                        }
+
+                        vkDescriptorImageInfos[bindingIndex] = (VkDescriptorImageInfo){
+                            .sampler = VK_NULL_HANDLE,
+                            .imageView = vkImageView,
+                            .imageLayout = pOldBinding->bindingUnion.inputAttachmentBinding.vkImageLayout,
+                        };
+                        vkWriteDescriptorSets[bindingIndex] = (VkWriteDescriptorSet){
+                            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+                            .dstSet = pMaterial->vkDescriptorSet,
+                            .dstBinding = binding,
+                            .dstArrayElement = 0,
+                            .descriptorCount = 1,
+                            .descriptorType = vkDescriptorType,
+                            .pImageInfo = &vkDescriptorImageInfos[bindingIndex],
+                            .pBufferInfo = VK_NULL_HANDLE,
+                            .pTexelBufferView = VK_NULL_HANDLE,
+                        };
+                    }
+                    pOldBinding->bindingUnion.inputAttachmentBinding.pAttachment = pNewAttachment;
+                }
+            }
             else
             {
                 tknError("Unsupported descriptor type: %d", vkDescriptorType);
             }
         }
-
         if (vkWriteDescriptorSetCount > 0)
         {
             VkDevice vkDevice = pGfxContext->vkDevice;

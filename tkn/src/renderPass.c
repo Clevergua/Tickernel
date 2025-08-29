@@ -39,30 +39,19 @@ static Subpass createSubpass(GfxContext *pGfxContext, uint32_t subpassIndex, uin
                     {
                         uint32_t binding = pSpvReflectDescriptorBinding->binding;
                         uint32_t inputAttachmentIndex = pSpvReflectDescriptorBinding->input_attachment_index;
-                        Binding *pBinding = &pMaterial->bindings[binding];
-                        if (NULL == pBinding->bindingUnion.inputAttachmentBinding.pAttachment)
+
+                        Binding inputAttachmentBinding = pMaterial->bindings[binding];
+                        if (NULL == inputAttachmentBinding.bindingUnion.inputAttachmentBinding.pAttachment)
                         {
                             tknAssert(inputAttachmentIndex < attachmentCount, "Input attachment index %u out of bounds", inputAttachmentIndex);
-                            pBinding->bindingUnion.inputAttachmentBinding.pAttachment = attachmentPtrs[inputAttachmentIndex];
-                            pBinding->bindingUnion.inputAttachmentBinding.vkImageLayout = inputAttachmentIndexToVkImageLayout[inputAttachmentIndex];
-                            if (ATTACHMENT_TYPE_DYNAMIC == attachmentPtrs[inputAttachmentIndex]->attachmentType)
-                            {
-                                tknAddToHashSet(&attachmentPtrs[inputAttachmentIndex]->attachmentUnion.dynamicAttachment.bindingPtrHashSet, pBinding);
-                            }
-                            else if (ATTACHMENT_TYPE_FIXED == attachmentPtrs[inputAttachmentIndex]->attachmentType)
-                            {
-                                tknAddToHashSet(&attachmentPtrs[inputAttachmentIndex]->attachmentUnion.fixedAttachment.bindingPtrHashSet, pBinding);
-                            }
-                            else
-                            {
-                                tknError("Input attachment %u is not dynamic or fixed attachment", inputAttachmentIndex);
-                            }
-                            inputAttachmentBindings[inputAttachmentBindingCount] = *pBinding;
+                            inputAttachmentBinding.bindingUnion.inputAttachmentBinding.pAttachment = attachmentPtrs[inputAttachmentIndex];
+                            pMaterial->bindings[binding].bindingUnion.inputAttachmentBinding.vkImageLayout = inputAttachmentIndexToVkImageLayout[inputAttachmentIndex];
+                            inputAttachmentBindings[inputAttachmentBindingCount] = inputAttachmentBinding;
                             inputAttachmentBindingCount++;
                         }
                         else
                         {
-                            tknAssert(pBinding->bindingUnion.inputAttachmentBinding.pAttachment == attachmentPtrs[inputAttachmentIndex],
+                            tknAssert(inputAttachmentBinding.bindingUnion.inputAttachmentBinding.pAttachment == attachmentPtrs[inputAttachmentIndex],
                                       "Input attachment %u already set for binding %u in subpass descriptor set", inputAttachmentIndex, binding);
                         }
                     }
@@ -77,10 +66,9 @@ static Subpass createSubpass(GfxContext *pGfxContext, uint32_t subpassIndex, uin
     }
     tknFree(spvReflectShaderModules);
     tknFree(inputAttachmentIndexToVkImageLayout);
-    updateInputAttachmentBindings(pGfxContext, inputAttachmentBindingCount, inputAttachmentBindings);
+    updateBindings(pGfxContext, inputAttachmentBindingCount, inputAttachmentBindings);
     tknFree(inputAttachmentBindings);
     TknDynamicArray pipelinePtrDynamicArray = tknCreateDynamicArray(sizeof(Pipeline *), TKN_DEFAULT_COLLECTION_SIZE);
-
     Subpass subpass = {
         .pSubpassDescriptorSet = pSubpassDescriptorSet,
         .pipelinePtrDynamicArray = pipelinePtrDynamicArray,
@@ -89,6 +77,7 @@ static Subpass createSubpass(GfxContext *pGfxContext, uint32_t subpassIndex, uin
 }
 static void destroySubpass(GfxContext *pGfxContext, Subpass subpass)
 {
+    // TODO 这里的逻辑交给destroyDescriptorSetPtr?
     for (uint32_t pipelinePtrIndex = 0; pipelinePtrIndex < subpass.pipelinePtrDynamicArray.count; pipelinePtrIndex++)
     {
         Pipeline *pPipeline = *(Pipeline **)tknGetFromDynamicArray(&subpass.pipelinePtrDynamicArray, pipelinePtrIndex);
@@ -96,29 +85,19 @@ static void destroySubpass(GfxContext *pGfxContext, Subpass subpass)
     }
     tknAssert(subpass.pSubpassDescriptorSet->materialPtrDynamicArray.count == 1, "Subpass must have exactly one material");
     Material *pMaterial = *(Material **)tknGetFromDynamicArray(&subpass.pSubpassDescriptorSet->materialPtrDynamicArray, 0);
-    for (uint32_t descriptorIndex = 0; descriptorIndex < subpass.pSubpassDescriptorSet->descriptorCount; descriptorIndex++)
+    uint32_t bindingCount = 0;
+    Binding *bindings = tknMalloc(sizeof(Binding) * pMaterial->bindingCount);
+    for (uint32_t bindingIndex = 0; bindingIndex < pMaterial->bindingCount; bindingIndex++)
     {
-        Binding *pBinding = &pMaterial->bindings[descriptorIndex];
-        if (VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT == pBinding->vkDescriptorType)
-        {
-            Attachment *pAttachment = pBinding->bindingUnion.inputAttachmentBinding.pAttachment;
-            if (ATTACHMENT_TYPE_DYNAMIC == pAttachment->attachmentType)
-            {
-                tknRemoveFromHashSet(&pAttachment->attachmentUnion.dynamicAttachment.bindingPtrHashSet, pBinding);
-            }
-            else if (ATTACHMENT_TYPE_FIXED == pAttachment->attachmentType)
-            {
-                tknRemoveFromHashSet(&pAttachment->attachmentUnion.fixedAttachment.bindingPtrHashSet, pBinding);
-            }
-            else
-            {
-                tknError("Input attachment is swapchain attachment");
-            }
-        }
-        else
-        {
-        }
+        Binding *pBinding = &pMaterial->bindings[bindingIndex];
+        Binding newBinding = *pBinding;
+        newBinding.bindingUnion = getNullBindingUnion(pBinding->vkDescriptorType);
+        bindings[bindingCount] = newBinding;
+        bindingCount++;
     }
+    updateBindings(pGfxContext, bindingCount, bindings);
+    tknFree(bindings);
+
     destroyDescriptorSetPtr(pGfxContext, subpass.pSubpassDescriptorSet);
     tknDestroyDynamicArray(subpass.pipelinePtrDynamicArray);
 }
@@ -138,6 +117,7 @@ RenderPass *createRenderPassPtr(GfxContext *pGfxContext, uint32_t attachmentCoun
         vkAttachmentDescriptions[attachmentIndex].format = pAttachment->vkFormat;
         tknAddToHashSet(&pAttachment->renderPassPtrHashSet, pRenderPass);
     }
+
     VkRenderPassCreateInfo vkRenderPassCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
         .pNext = NULL,
@@ -150,13 +130,15 @@ RenderPass *createRenderPassPtr(GfxContext *pGfxContext, uint32_t attachmentCoun
         .pDependencies = vkSubpassDependencies,
     };
     assertVkResult(vkCreateRenderPass(vkDevice, &vkRenderPassCreateInfo, NULL, &vkRenderPass));
+
     *pRenderPass = (RenderPass){
         .vkRenderPass = vkRenderPass,
-        .vkFramebuffers = NULL,
-        .vkFramebufferCount = 0,
         .attachmentCount = attachmentCount,
         .attachmentPtrs = attachmentPtrs,
         .vkClearValues = vkClearValues,
+        .vkFramebufferCount = 0,
+        .vkFramebuffers = NULL,
+        .renderArea = {0},
         .subpassCount = subpassCount,
         .subpasses = subpasses,
     };
@@ -180,6 +162,8 @@ void destroyRenderPassPtr(GfxContext *pGfxContext, RenderPass *pRenderPass)
     {
         // Skip
     }
+    tknRemoveFromHashSet(&pGfxContext->renderPassPtrHashSet, pRenderPass);
+
     cleanupFramebuffers(pGfxContext, pRenderPass);
     vkDestroyRenderPass(pGfxContext->vkDevice, pRenderPass->vkRenderPass, NULL);
 
@@ -188,12 +172,12 @@ void destroyRenderPassPtr(GfxContext *pGfxContext, RenderPass *pRenderPass)
         Subpass *pSubpass = &pRenderPass->subpasses[i];
         destroySubpass(pGfxContext, *pSubpass);
     }
-    tknFree(pRenderPass->subpasses);
     for (uint32_t i = 0; i < pRenderPass->attachmentCount; i++)
     {
         Attachment *pAttachment = pRenderPass->attachmentPtrs[i];
         tknRemoveFromHashSet(&pAttachment->renderPassPtrHashSet, pRenderPass);
     }
+    tknFree(pRenderPass->subpasses);
     tknFree(pRenderPass->attachmentPtrs);
     tknFree(pRenderPass);
 }
