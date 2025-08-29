@@ -24,7 +24,6 @@ static Subpass createSubpass(GfxContext *pGfxContext, uint32_t subpassIndex, uin
     DescriptorSet *pSubpassDescriptorSet = createDescriptorSetPtr(pGfxContext, spvPathCount, spvReflectShaderModules, TKN_SUBPASS_DESCRIPTOR_SET);
     Material *pMaterial = createMaterialPtr(pGfxContext, pSubpassDescriptorSet);
     // Bind attachments
-    // TODO bind others
     for (uint32_t spvPathIndex = 0; spvPathIndex < spvPathCount; spvPathIndex++)
     {
         SpvReflectShaderModule spvReflectShaderModule = spvReflectShaderModules[spvPathIndex];
@@ -124,7 +123,7 @@ static void destroySubpass(GfxContext *pGfxContext, Subpass subpass)
     tknDestroyDynamicArray(subpass.pipelinePtrDynamicArray);
 }
 
-RenderPass *createRenderPassPtr(GfxContext *pGfxContext, uint32_t attachmentCount, VkAttachmentDescription *vkAttachmentDescriptions, Attachment **inputAttachmentPtrs, VkClearValue *vkClearValues, uint32_t subpassCount, VkSubpassDescription *vkSubpassDescriptions, uint32_t *spvPathCounts, const char ***spvPathsArray, uint32_t vkSubpassDependencyCount, VkSubpassDependency *vkSubpassDependencies)
+RenderPass *createRenderPassPtr(GfxContext *pGfxContext, uint32_t attachmentCount, VkAttachmentDescription *vkAttachmentDescriptions, Attachment **inputAttachmentPtrs, VkClearValue *vkClearValues, uint32_t subpassCount, VkSubpassDescription *vkSubpassDescriptions, uint32_t *spvPathCounts, const char ***spvPathsArray, uint32_t vkSubpassDependencyCount, VkSubpassDependency *vkSubpassDependencies, uint32_t renderPassIndex)
 {
     RenderPass *pRenderPass = tknMalloc(sizeof(RenderPass));
     Attachment **attachmentPtrs = tknMalloc(sizeof(Attachment *) * attachmentCount);
@@ -168,12 +167,19 @@ RenderPass *createRenderPassPtr(GfxContext *pGfxContext, uint32_t attachmentCoun
     {
         pRenderPass->subpasses[subpassIndex] = createSubpass(pGfxContext, subpassIndex, attachmentCount, attachmentPtrs, vkSubpassDescriptions[subpassIndex].inputAttachmentCount, vkSubpassDescriptions[subpassIndex].pInputAttachments, spvPathCounts[subpassIndex], spvPathsArray[subpassIndex]);
     }
-    tknAddToDynamicArray(&pGfxContext->renderPassPtrDynamicArray, &pRenderPass);
+    tknAddToHashSet(&pGfxContext->renderPassPtrHashSet, pRenderPass);
     return pRenderPass;
 }
 void destroyRenderPassPtr(GfxContext *pGfxContext, RenderPass *pRenderPass)
 {
-    tknRemoveFromDynamicArray(&pGfxContext->renderPassPtrDynamicArray, &pRenderPass);
+    if (tknContainsInDynamicArray(&pGfxContext->renderPassPtrDynamicArray, &pRenderPass))
+    {
+        tknRemoveFromDynamicArray(&pGfxContext->renderPassPtrDynamicArray, &pRenderPass);
+    }
+    else
+    {
+        // Skip
+    }
     cleanupFramebuffers(pGfxContext, pRenderPass);
     vkDestroyRenderPass(pGfxContext->vkDevice, pRenderPass->vkRenderPass, NULL);
 
@@ -190,4 +196,13 @@ void destroyRenderPassPtr(GfxContext *pGfxContext, RenderPass *pRenderPass)
     }
     tknFree(pRenderPass->attachmentPtrs);
     tknFree(pRenderPass);
+}
+
+void insertRenderPassPtr(GfxContext *pGfxContext, RenderPass *pRenderPass, uint32_t index)
+{
+    tknInsertIntoDynamicArray(&pGfxContext->renderPassPtrDynamicArray, &pRenderPass, index);
+}
+void removeRenderPassPtr(GfxContext *pGfxContext, RenderPass *pRenderPass)
+{
+    tknRemoveFromDynamicArray(&pGfxContext->renderPassPtrDynamicArray, &pRenderPass);
 }

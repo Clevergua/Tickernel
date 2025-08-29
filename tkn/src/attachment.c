@@ -29,14 +29,14 @@ Attachment *createDynamicAttachmentPtr(GfxContext *pGfxContext, VkFormat vkForma
         .vkFormat = vkFormat,
         .renderPassPtrHashSet = tknCreateHashSet(TKN_DEFAULT_COLLECTION_SIZE),
     };
-    tknAddToDynamicArray(&pGfxContext->dynamicAttachmentPtrDynamicArray, &pAttachment);
+    tknAddToHashSet(&pGfxContext->dynamicAttachmentPtrHashSet, pAttachment);
     return pAttachment;
 }
 void destroyDynamicAttachmentPtr(GfxContext *pGfxContext, Attachment *pAttachment)
 {
     tknAssert(ATTACHMENT_TYPE_DYNAMIC == pAttachment->attachmentType, "Attachment type mismatch!");
     tknAssert(0 == pAttachment->renderPassPtrHashSet.count, "Cannot destroy dynamic attachment with render passes attached!");
-    tknRemoveFromDynamicArray(&pGfxContext->dynamicAttachmentPtrDynamicArray, &pAttachment);
+    tknRemoveFromHashSet(&pGfxContext->dynamicAttachmentPtrHashSet, pAttachment);
     tknDestroyHashSet(pAttachment->attachmentUnion.dynamicAttachment.bindingPtrHashSet);
     tknDestroyHashSet(pAttachment->renderPassPtrHashSet);
     DynamicAttachment dynamicAttachment = pAttachment->attachmentUnion.dynamicAttachment;

@@ -290,7 +290,7 @@ DescriptorSet *createDescriptorSetPtr(GfxContext *pGfxContext, uint32_t spvRefle
                         uint32_t poolSizeIndex;
                         for (poolSizeIndex = 0; poolSizeIndex < vkDescriptorPoolSizeDynamicArray.count; poolSizeIndex++)
                         {
-                            VkDescriptorPoolSize *pVkDescriptorPoolSize = tknGetFromDynamicArray(&vkDescriptorPoolSizeDynamicArray, poolSizeIndex);
+                            VkDescriptorPoolSize *pVkDescriptorPoolSize = *(VkDescriptorPoolSize **)tknGetFromDynamicArray(&vkDescriptorPoolSizeDynamicArray, poolSizeIndex);
                             if (vkDescriptorType == pVkDescriptorPoolSize->type)
                             {
                                 pVkDescriptorPoolSize->descriptorCount += vkDescriptorSetLayoutBinding.descriptorCount;
