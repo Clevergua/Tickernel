@@ -71,7 +71,7 @@ void tknDestroyDynamicArray(TknDynamicArray dynamicArray)
     dynamicArray.count = 0;
     dynamicArray.maxCount = 0;
 }
-void tknInsertIntoDynamicArray(TknDynamicArray *pDynamicArray, void *pInput, uint32_t index)
+void tknInsertIntoDynamicArray(TknDynamicArray *pDynamicArray, void *pData, uint32_t index)
 {
     tknAssert(index >= 0 && index <= pDynamicArray->count, "Index %u is out of bounds for count %u\n", index, pDynamicArray->count);
     if (pDynamicArray->count >= pDynamicArray->maxCount)
@@ -91,12 +91,12 @@ void tknInsertIntoDynamicArray(TknDynamicArray *pDynamicArray, void *pInput, uin
             targetAddress,
             (pDynamicArray->count - index) * pDynamicArray->dataSize);
     }
-    memcpy(targetAddress, pInput, pDynamicArray->dataSize);
+    memcpy(targetAddress, pData, pDynamicArray->dataSize);
     pDynamicArray->count++;
 }
-void tknAddToDynamicArray(TknDynamicArray *pDynamicArray, void *pInput)
+void tknAddToDynamicArray(TknDynamicArray *pDynamicArray, void *pData)
 {
-    tknInsertIntoDynamicArray(pDynamicArray, pInput, pDynamicArray->count);
+    tknInsertIntoDynamicArray(pDynamicArray, pData, pDynamicArray->count);
 }
 void tknRemoveFromDynamicArray(TknDynamicArray *pDynamicArray, void *pData)
 {

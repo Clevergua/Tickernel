@@ -297,7 +297,7 @@ Pipeline *createPipelinePtr(GfxContext *pGfxContext, RenderPass *pRenderPass, ui
 void destroyPipelinePtr(GfxContext *pGfxContext, Pipeline *pPipeline)
 {
     VkDevice vkDevice = pGfxContext->vkDevice;
-    tknRemoveFromDynamicArray(&pPipeline->pRenderPass->subpasses[pPipeline->subpassIndex].pipelinePtrDynamicArray, pPipeline);
+    tknRemoveFromDynamicArray(&pPipeline->pRenderPass->subpasses[pPipeline->subpassIndex].pipelinePtrDynamicArray, &pPipeline);
     tknRemoveFromHashSet(&pPipeline->pMeshVertexInputLayout->referencePtrHashSet, pPipeline);
     tknRemoveFromHashSet(&pPipeline->pInstanceVertexInputLayout->referencePtrHashSet, pPipeline);
     destroyDescriptorSetPtr(pGfxContext, pPipeline->pPipelineDescriptorSet);

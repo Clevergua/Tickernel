@@ -107,7 +107,7 @@ void removeInstanceFromMaterial(GfxContext *pGfxContext, Instance *pInstance, Ma
 {
     if (tknContainsInHashSet(&pInstance->materialPtrHashSet, pMaterial))
     {
-        tknRemoveFromDynamicArray(&pMaterial->instancePtrDynamicArray, pInstance);
+        tknRemoveFromDynamicArray(&pMaterial->instancePtrDynamicArray, &pInstance);
         tknRemoveFromHashSet(&pInstance->materialPtrHashSet, pMaterial);
     }
     else
