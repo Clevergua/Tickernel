@@ -21,13 +21,13 @@ Attachment *createDynamicAttachmentPtr(GfxContext *pGfxContext, VkFormat vkForma
         .vkImageUsageFlags = vkImageUsageFlags,
         .vkImageAspectFlags = vkImageAspectFlags,
         .scaler = scaler,
-        .bindingPtrHashSet = tknCreateHashSet(sizeof(Binding*)),
+        .bindingPtrHashSet = tknCreateHashSet(sizeof(Binding *)),
     };
     *pAttachment = (Attachment){
         .attachmentType = ATTACHMENT_TYPE_DYNAMIC,
         .attachmentUnion.dynamicAttachment = dynamicAttachment,
         .vkFormat = vkFormat,
-        .renderPassPtrHashSet = tknCreateHashSet(sizeof(RenderPass*)),
+        .renderPassPtrHashSet = tknCreateHashSet(sizeof(RenderPass *)),
     };
     tknAddToHashSet(&pGfxContext->dynamicAttachmentPtrHashSet, pAttachment);
     return pAttachment;
@@ -35,11 +35,12 @@ Attachment *createDynamicAttachmentPtr(GfxContext *pGfxContext, VkFormat vkForma
 void destroyDynamicAttachmentPtr(GfxContext *pGfxContext, Attachment *pAttachment)
 {
     tknAssert(ATTACHMENT_TYPE_DYNAMIC == pAttachment->attachmentType, "Attachment type mismatch!");
-    tknAssert(0 == pAttachment->renderPassPtrHashSet.count, "Cannot destroy dynamic attachment with render passes attached!");
     tknRemoveFromHashSet(&pGfxContext->dynamicAttachmentPtrHashSet, pAttachment);
-    tknDestroyHashSet(pAttachment->attachmentUnion.dynamicAttachment.bindingPtrHashSet);
-    tknDestroyHashSet(pAttachment->renderPassPtrHashSet);
     DynamicAttachment dynamicAttachment = pAttachment->attachmentUnion.dynamicAttachment;
+    tknAssert(0 == dynamicAttachment.bindingPtrHashSet.count, "Cannot destroy dynamic attachment with bindings attached!");
+    tknDestroyHashSet(dynamicAttachment.bindingPtrHashSet);
+    tknAssert(0 == pAttachment->renderPassPtrHashSet.count, "Cannot destroy dynamic attachment with render passes attached!");
+    tknDestroyHashSet(pAttachment->renderPassPtrHashSet);
     destroyVkImage(pGfxContext, dynamicAttachment.vkImage, dynamicAttachment.vkDeviceMemory, dynamicAttachment.vkImageView);
     tknFree(pAttachment);
 }
@@ -87,20 +88,22 @@ Attachment *createFixedAttachmentPtr(GfxContext *pGfxContext, VkFormat vkFormat,
         .vkImageView = vkImageView,
         .width = width,
         .height = height,
-        .bindingPtrHashSet = tknCreateHashSet(sizeof(Binding*)),
+        .bindingPtrHashSet = tknCreateHashSet(sizeof(Binding *)),
     };
 
     *pAttachment = (Attachment){
         .attachmentType = ATTACHMENT_TYPE_FIXED,
         .attachmentUnion.fixedAttachment = fixedAttachment,
         .vkFormat = vkFormat,
-        .renderPassPtrHashSet = tknCreateHashSet(sizeof(RenderPass*)),
+        .renderPassPtrHashSet = tknCreateHashSet(sizeof(RenderPass *)),
     };
+    tknAddToHashSet(&pGfxContext->fixedAttachmentPtrHashSet, pAttachment);
     return pAttachment;
 }
 void destroyFixedAttachmentPtr(GfxContext *pGfxContext, Attachment *pAttachment)
 {
     tknAssert(ATTACHMENT_TYPE_FIXED == pAttachment->attachmentType, "Attachment type mismatch!");
+    tknRemoveFromHashSet(&pGfxContext->fixedAttachmentPtrHashSet, pAttachment);
     tknAssert(0 == pAttachment->renderPassPtrHashSet.count, "Cannot destroy fixed attachment with render passes attached!");
     tknDestroyHashSet(pAttachment->renderPassPtrHashSet);
     FixedAttachment fixedAttachment = pAttachment->attachmentUnion.fixedAttachment;

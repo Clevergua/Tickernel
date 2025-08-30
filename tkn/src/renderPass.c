@@ -4,7 +4,6 @@ static Subpass createSubpass(GfxContext *pGfxContext, uint32_t subpassIndex, uin
 {
     uint32_t inputAttachmentBindingCount = 0;
     Binding *inputAttachmentBindings = tknMalloc(sizeof(Binding) * inputVkAttachmentReferenceCount);
-
     VkImageLayout *inputAttachmentIndexToVkImageLayout = tknMalloc(sizeof(VkImageLayout) * attachmentCount);
     for (uint32_t attachmentIndex = 0; attachmentIndex < attachmentCount; attachmentIndex++)
     {
@@ -77,27 +76,12 @@ static Subpass createSubpass(GfxContext *pGfxContext, uint32_t subpassIndex, uin
 }
 static void destroySubpass(GfxContext *pGfxContext, Subpass subpass)
 {
-    // TODO 这里的逻辑交给destroyDescriptorSetPtr?
     for (uint32_t pipelinePtrIndex = 0; pipelinePtrIndex < subpass.pipelinePtrDynamicArray.count; pipelinePtrIndex++)
     {
         Pipeline *pPipeline = *(Pipeline **)tknGetFromDynamicArray(&subpass.pipelinePtrDynamicArray, pipelinePtrIndex);
         destroyPipelinePtr(pGfxContext, pPipeline);
     }
     tknAssert(subpass.pSubpassDescriptorSet->materialPtrDynamicArray.count == 1, "Subpass must have exactly one material");
-    Material *pMaterial = *(Material **)tknGetFromDynamicArray(&subpass.pSubpassDescriptorSet->materialPtrDynamicArray, 0);
-    uint32_t bindingCount = 0;
-    Binding *bindings = tknMalloc(sizeof(Binding) * pMaterial->bindingCount);
-    for (uint32_t bindingIndex = 0; bindingIndex < pMaterial->bindingCount; bindingIndex++)
-    {
-        Binding *pBinding = &pMaterial->bindings[bindingIndex];
-        Binding newBinding = *pBinding;
-        newBinding.bindingUnion = getNullBindingUnion(pBinding->vkDescriptorType);
-        bindings[bindingCount] = newBinding;
-        bindingCount++;
-    }
-    updateBindings(pGfxContext, bindingCount, bindings);
-    tknFree(bindings);
-
     destroyDescriptorSetPtr(pGfxContext, subpass.pSubpassDescriptorSet);
     tknDestroyDynamicArray(subpass.pipelinePtrDynamicArray);
 }
@@ -154,16 +138,9 @@ RenderPass *createRenderPassPtr(GfxContext *pGfxContext, uint32_t attachmentCoun
 }
 void destroyRenderPassPtr(GfxContext *pGfxContext, RenderPass *pRenderPass)
 {
-    if (tknContainsInDynamicArray(&pGfxContext->renderPassPtrDynamicArray, &pRenderPass))
-    {
-        tknRemoveFromDynamicArray(&pGfxContext->renderPassPtrDynamicArray, &pRenderPass);
-    }
-    else
-    {
-        // Skip
-    }
-    tknRemoveFromHashSet(&pGfxContext->renderPassPtrHashSet, pRenderPass);
+    tknAssert(!tknContainsInDynamicArray(&pGfxContext->renderPassPtrDynamicArray, &pRenderPass), "Render pass is still in use!");
 
+    tknRemoveFromHashSet(&pGfxContext->renderPassPtrHashSet, pRenderPass);
     cleanupFramebuffers(pGfxContext, pRenderPass);
     vkDestroyRenderPass(pGfxContext->vkDevice, pRenderPass->vkRenderPass, NULL);
 

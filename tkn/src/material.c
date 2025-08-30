@@ -52,7 +52,7 @@ void destroyMaterialPtr(GfxContext *pGfxContext, Material *pMaterial)
     for (uint32_t binding = 0; binding < pMaterial->bindingCount; binding++)
     {
         VkDescriptorType descriptorType = pMaterial->bindings[binding].vkDescriptorType;
-        if (descriptorType != VK_DESCRIPTOR_TYPE_MAX_ENUM && descriptorType != VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT)
+        if (descriptorType != VK_DESCRIPTOR_TYPE_MAX_ENUM)
         {
             bindings[descriptorCount] = (Binding){
                 .vkDescriptorType = descriptorType,

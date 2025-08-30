@@ -286,6 +286,7 @@ struct GfxContext
     VkCommandBuffer *gfxVkCommandBuffers;
 
     TknHashSet dynamicAttachmentPtrHashSet;
+    TknHashSet fixedAttachmentPtrHashSet;
     TknDynamicArray renderPassPtrDynamicArray;
 
     DescriptorSet *pGlobalDescriptorSet;
