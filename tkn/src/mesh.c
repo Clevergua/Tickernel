@@ -97,7 +97,6 @@ void destroyMeshPtr(GfxContext *pGfxContext, Mesh *pMesh)
     if (pMesh->drawCallPtrHashSet.count > 0)
     {
         printf("Mesh still has %u draw calls attached!\n", pMesh->drawCallPtrHashSet.count);
-        return;
     }
     else
     {

@@ -32,59 +32,62 @@ Material *createMaterialPtr(GfxContext *pGfxContext, DescriptorSet *pDescriptorS
         .descriptorSetCount = 1,
         .pSetLayouts = &pDescriptorSet->vkDescriptorSetLayout,
     };
-    // VkDescriptorSet vkDescriptorSet;
-    // uint32_t bindingCount;
-    // Binding *bindings;
-    // VkDescriptorPool vkDescriptorPool;
-    // DescriptorSet *pDescriptorSet;
-    // Pipeline *pPipeline;
-    // TknDynamicArray instancePtrDynamicArray;
+
     assertVkResult(vkAllocateDescriptorSets(vkDevice, &vkDescriptorSetAllocateInfo, &vkDescriptorSet));
+    TknHashSet drawCallPtrHashSet = tknCreateHashSet(sizeof(DrawCall *));
     *pMaterial = (Material){
         .vkDescriptorSet = vkDescriptorSet,
         .bindingCount = descriptorCount,
         .bindings = bindings,
         .vkDescriptorPool = vkDescriptorPool,
         .pDescriptorSet = pDescriptorSet,
-
+        .drawCallPtrHashSet = drawCallPtrHashSet,
     };
     tknAddToHashSet(&pDescriptorSet->materialPtrHashSet, &pMaterial);
     return pMaterial;
 }
 void destroyMaterialPtr(GfxContext *pGfxContext, Material *pMaterial)
 {
-    VkDevice vkDevice = pGfxContext->vkDevice;
-    uint32_t descriptorCount = 0;
-    Binding *bindings = tknMalloc(sizeof(Binding) * pMaterial->bindingCount);
-    for (uint32_t binding = 0; binding < pMaterial->bindingCount; binding++)
+    if (pMaterial->drawCallPtrHashSet.count > 0)
     {
-        VkDescriptorType descriptorType = pMaterial->bindings[binding].vkDescriptorType;
-        if (descriptorType != VK_DESCRIPTOR_TYPE_MAX_ENUM)
-        {
-            bindings[descriptorCount] = (Binding){
-                .vkDescriptorType = descriptorType,
-                .bindingUnion = getNullBindingUnion(descriptorType),
-                .pMaterial = pMaterial,
-                .binding = binding,
-            };
-            descriptorCount++;
-        }
-        else
-        {
-            // Skip
-        }
+        printf("Material is still in use by draw calls\n");
     }
-    if (descriptorCount > 0)
+    else
     {
-        updateBindings(pGfxContext, descriptorCount, bindings);
+        VkDevice vkDevice = pGfxContext->vkDevice;
+        uint32_t descriptorCount = 0;
+        Binding *bindings = tknMalloc(sizeof(Binding) * pMaterial->bindingCount);
+        for (uint32_t binding = 0; binding < pMaterial->bindingCount; binding++)
+        {
+            VkDescriptorType descriptorType = pMaterial->bindings[binding].vkDescriptorType;
+            if (descriptorType != VK_DESCRIPTOR_TYPE_MAX_ENUM)
+            {
+                bindings[descriptorCount] = (Binding){
+                    .vkDescriptorType = descriptorType,
+                    .bindingUnion = getNullBindingUnion(descriptorType),
+                    .pMaterial = pMaterial,
+                    .binding = binding,
+                };
+                descriptorCount++;
+            }
+            else
+            {
+                // Skip
+            }
+        }
+        if (descriptorCount > 0)
+        {
+            updateBindings(pGfxContext, descriptorCount, bindings);
+        }
+        tknFree(bindings);
+        
+        tknRemoveFromHashSet(&pMaterial->pDescriptorSet->materialPtrHashSet, &pMaterial);
+        tknDestroyHashSet(pMaterial->drawCallPtrHashSet);
+        assertVkResult(vkFreeDescriptorSets(pGfxContext->vkDevice, pMaterial->vkDescriptorPool, 1, &pMaterial->vkDescriptorSet));
+        vkDestroyDescriptorPool(vkDevice, pMaterial->vkDescriptorPool, NULL);
+        tknFree(pMaterial->bindings);
+        tknFree(pMaterial);
     }
-    tknFree(bindings);
-
-    tknRemoveFromHashSet(&pMaterial->pDescriptorSet->materialPtrHashSet, &pMaterial);
-    assertVkResult(vkFreeDescriptorSets(pGfxContext->vkDevice, pMaterial->vkDescriptorPool, 1, &pMaterial->vkDescriptorSet));
-    vkDestroyDescriptorPool(vkDevice, pMaterial->vkDescriptorPool, NULL);
-    tknFree(pMaterial->bindings);
-    tknFree(pMaterial);
 }
 
 BindingUnion getNullBindingUnion(VkDescriptorType vkDescriptorType)

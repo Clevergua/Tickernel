@@ -39,18 +39,23 @@ Instance *createInstancePtr(GfxContext *pGfxContext, VertexInputLayout *pVertexI
 }
 void destroyInstancePtr(GfxContext *pGfxContext, Instance *pInstance)
 {
-    tknAssert(0 == pInstance->drawCallPtrHashSet.count, "Cannot destroy instance with draw calls attached!");
-    tknDestroyHashSet(pInstance->drawCallPtrHashSet);
-    if (pInstance->instanceCount > 0)
+    if (pInstance->drawCallPtrHashSet.count > 0)
     {
-        destroyVkBuffer(pGfxContext, pInstance->instanceVkBuffer, pInstance->instanceVkDeviceMemory);
+        printf("Instance has %u draw calls attached.\n", pInstance->drawCallPtrHashSet.count);
     }
     else
     {
-        // Nothing to clean up
+        if (pInstance->instanceCount > 0)
+        {
+            destroyVkBuffer(pGfxContext, pInstance->instanceVkBuffer, pInstance->instanceVkDeviceMemory);
+        }
+        else
+        {
+            // Nothing to clean up
+        }
+        tknDestroyHashSet(pInstance->drawCallPtrHashSet);
+        tknFree(pInstance);
     }
-    tknDestroyHashSet(pInstance->drawCallPtrHashSet);
-    tknFree(pInstance);
 }
 void updateInstancePtr(GfxContext *pGfxContext, Instance *pInstance, void *newData, uint32_t instanceCount)
 {
