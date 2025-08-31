@@ -200,7 +200,8 @@ VertexInputLayout *createVertexInputLayoutPtr(uint32_t attributeCount, const cha
 }
 void destroyVertexInputLayoutPtr(VertexInputLayout *pVertexInputLayout)
 {
-    tknAssert(pVertexInputLayout->referencePtrHashSet.count == 0, "Cannot destroy vertex input layout with meshes | instance attached!");
+    tknAssert(0 == pVertexInputLayout->referencePtrHashSet.count, "Cannot destroy vertex input layout with meshes | instance attached!");
+    
     tknDestroyHashSet(pVertexInputLayout->referencePtrHashSet);
     tknFree(pVertexInputLayout->names);
     tknFree(pVertexInputLayout->sizes);

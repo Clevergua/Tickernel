@@ -94,16 +94,10 @@ Mesh *createMeshPtr(GfxContext *pGfxContext, VertexInputLayout *pVertexInputLayo
 }
 void destroyMeshPtr(GfxContext *pGfxContext, Mesh *pMesh)
 {
-    if (pMesh->drawCallPtrHashSet.count > 0)
-    {
-        printf("Mesh still has %u draw calls attached!\n", pMesh->drawCallPtrHashSet.count);
-    }
-    else
-    {
-        tknDestroyHashSet(pMesh->drawCallPtrHashSet);
-        tknRemoveFromHashSet(&pMesh->pVertexInputLayout->referencePtrHashSet, pMesh);
-        destroyVkBuffer(pGfxContext, pMesh->vertexVkBuffer, pMesh->vertexVkDeviceMemory);
-        destroyVkBuffer(pGfxContext, pMesh->indexVkBuffer, pMesh->indexVkDeviceMemory);
-        tknFree(pMesh);
-    }
+    tknAssert(0 == pMesh->drawCallPtrHashSet.count, "Mesh still has draw calls attached!");
+    tknDestroyHashSet(pMesh->drawCallPtrHashSet);
+    tknRemoveFromHashSet(&pMesh->pVertexInputLayout->referencePtrHashSet, pMesh);
+    destroyVkBuffer(pGfxContext, pMesh->vertexVkBuffer, pMesh->vertexVkDeviceMemory);
+    destroyVkBuffer(pGfxContext, pMesh->indexVkBuffer, pMesh->indexVkDeviceMemory);
+    tknFree(pMesh);
 }
