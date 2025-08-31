@@ -46,8 +46,6 @@ Mesh *createMeshPtr(GfxContext *pGfxContext, VertexInputLayout *pVertexInputLayo
     VkBuffer indexVkBuffer = VK_NULL_HANDLE;
     VkDeviceMemory indexVkDeviceMemory = VK_NULL_HANDLE;
 
-    TknHashSet instancePtrHashSet = tknCreateHashSet(TKN_DEFAULT_COLLECTION_SIZE);
-
     VkBuffer vertexStagingBuffer;
     VkDeviceMemory vertexStagingBufferMemory;
     VkDeviceSize vertexSize = pVertexInputLayout->stride;
@@ -79,7 +77,7 @@ Mesh *createMeshPtr(GfxContext *pGfxContext, VertexInputLayout *pVertexInputLayo
     {
         // Keep NULL
     }
-
+    TknHashSet drawCallPtrHashSet = tknCreateHashSet(TKN_DEFAULT_COLLECTION_SIZE);
     *pMesh = (Mesh){
         .vertexVkBuffer = vertexVkBuffer,
         .vertexVkDeviceMemory = vertexVkDeviceMemory,
@@ -89,17 +87,24 @@ Mesh *createMeshPtr(GfxContext *pGfxContext, VertexInputLayout *pVertexInputLayo
         .indexCount = indexCount,
         .pVertexInputLayout = pVertexInputLayout,
         .vkIndexType = vkIndexType,
-        .instancePtrHashSet = instancePtrHashSet,
+        .drawCallPtrHashSet = drawCallPtrHashSet,
     };
     tknAddToHashSet(&pVertexInputLayout->referencePtrHashSet, pMesh);
     return pMesh;
 }
 void destroyMeshPtr(GfxContext *pGfxContext, Mesh *pMesh)
 {
-    tknAssert(0 == pMesh->instancePtrHashSet.count, "Cannot destroy mesh with instances attached!");
-    tknDestroyHashSet(pMesh->instancePtrHashSet);
-    tknRemoveFromHashSet(&pMesh->pVertexInputLayout->referencePtrHashSet, pMesh);
-    destroyVkBuffer(pGfxContext, pMesh->vertexVkBuffer, pMesh->vertexVkDeviceMemory);
-    destroyVkBuffer(pGfxContext, pMesh->indexVkBuffer, pMesh->indexVkDeviceMemory);
-    tknFree(pMesh);
+    if (pMesh->drawCallPtrHashSet.count > 0)
+    {
+        printf("Mesh still has %u draw calls attached!\n", pMesh->drawCallPtrHashSet.count);
+        return;
+    }
+    else
+    {
+        tknDestroyHashSet(pMesh->drawCallPtrHashSet);
+        tknRemoveFromHashSet(&pMesh->pVertexInputLayout->referencePtrHashSet, pMesh);
+        destroyVkBuffer(pGfxContext, pMesh->vertexVkBuffer, pMesh->vertexVkDeviceMemory);
+        destroyVkBuffer(pGfxContext, pMesh->indexVkBuffer, pMesh->indexVkDeviceMemory);
+        tknFree(pMesh);
+    }
 }

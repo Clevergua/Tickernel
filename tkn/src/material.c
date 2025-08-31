@@ -32,6 +32,13 @@ Material *createMaterialPtr(GfxContext *pGfxContext, DescriptorSet *pDescriptorS
         .descriptorSetCount = 1,
         .pSetLayouts = &pDescriptorSet->vkDescriptorSetLayout,
     };
+    // VkDescriptorSet vkDescriptorSet;
+    // uint32_t bindingCount;
+    // Binding *bindings;
+    // VkDescriptorPool vkDescriptorPool;
+    // DescriptorSet *pDescriptorSet;
+    // Pipeline *pPipeline;
+    // TknDynamicArray instancePtrDynamicArray;
     assertVkResult(vkAllocateDescriptorSets(vkDevice, &vkDescriptorSetAllocateInfo, &vkDescriptorSet));
     *pMaterial = (Material){
         .vkDescriptorSet = vkDescriptorSet,
@@ -39,13 +46,13 @@ Material *createMaterialPtr(GfxContext *pGfxContext, DescriptorSet *pDescriptorS
         .bindings = bindings,
         .vkDescriptorPool = vkDescriptorPool,
         .pDescriptorSet = pDescriptorSet,
+
     };
-    tknAddToDynamicArray(&pDescriptorSet->materialPtrDynamicArray, &pMaterial);
+    tknAddToHashSet(&pDescriptorSet->materialPtrHashSet, &pMaterial);
     return pMaterial;
 }
 void destroyMaterialPtr(GfxContext *pGfxContext, Material *pMaterial)
 {
-    tknRemoveFromDynamicArray(&pMaterial->pDescriptorSet->materialPtrDynamicArray, &pMaterial);
     VkDevice vkDevice = pGfxContext->vkDevice;
     uint32_t descriptorCount = 0;
     Binding *bindings = tknMalloc(sizeof(Binding) * pMaterial->bindingCount);
@@ -71,9 +78,12 @@ void destroyMaterialPtr(GfxContext *pGfxContext, Material *pMaterial)
     {
         updateBindings(pGfxContext, descriptorCount, bindings);
     }
+    tknFree(bindings);
 
-    tknFree(pMaterial->bindings);
+    tknRemoveFromHashSet(&pMaterial->pDescriptorSet->materialPtrHashSet, &pMaterial);
+    assertVkResult(vkFreeDescriptorSets(pGfxContext->vkDevice, pMaterial->vkDescriptorPool, 1, &pMaterial->vkDescriptorSet));
     vkDestroyDescriptorPool(vkDevice, pMaterial->vkDescriptorPool, NULL);
+    tknFree(pMaterial->bindings);
     tknFree(pMaterial);
 }
 
@@ -394,18 +404,36 @@ void updateBindings(GfxContext *pGfxContext, uint32_t bindingCount, Binding *bin
 Material *getGlobalMaterialPtr(GfxContext *pGfxContext)
 {
     tknAssert(pGfxContext->pGlobalDescriptorSet != NULL, "Global descriptor set is NULL");
-    tknAssert(pGfxContext->pGlobalDescriptorSet->materialPtrDynamicArray.count == 1, "Material pointer dynamic array count is not 1");
-    Material *pMaterial = *(Material **)tknGetFromDynamicArray(&pGfxContext->pGlobalDescriptorSet->materialPtrDynamicArray, 0);
-    return pMaterial;
+    TknHashSet materialPtrHashSet = pGfxContext->pGlobalDescriptorSet->materialPtrHashSet;
+    tknAssert(materialPtrHashSet.count == 1, "Material pointer hashset count is not 1");
+    for (uint32_t nodeIndex = 0; nodeIndex < materialPtrHashSet.capacity; nodeIndex++)
+    {
+        TknListNode *node = materialPtrHashSet.nodePtrs[nodeIndex];
+        if (node)
+        {
+            Material *pMaterial = *(Material **)node->data;
+            return pMaterial;
+        }
+    }
+    tknError("Failed to find global material");
 }
 Material *getSubpassMaterialPtr(GfxContext *pGfxContext, RenderPass *pRenderPass, uint32_t subpassIndex)
 {
     tknAssert(pRenderPass != NULL, "Render pass is NULL");
     tknAssert(subpassIndex < pRenderPass->subpassCount, "Subpass index is out of bounds");
     tknAssert(pRenderPass->subpasses[subpassIndex].pSubpassDescriptorSet != NULL, "Subpass descriptor set is NULL");
-    tknAssert(pRenderPass->subpasses[subpassIndex].pSubpassDescriptorSet->materialPtrDynamicArray.count == 1, "Material pointer dynamic array count is not 1");
-    Material *pMaterial = *(Material **)tknGetFromDynamicArray(&pRenderPass->subpasses[subpassIndex].pSubpassDescriptorSet->materialPtrDynamicArray, 0);
-    return pMaterial;
+    tknAssert(pRenderPass->subpasses[subpassIndex].pSubpassDescriptorSet->materialPtrHashSet.count == 1, "Material pointer hashset count is not 1");
+    TknHashSet materialPtrHashSet = pRenderPass->subpasses[subpassIndex].pSubpassDescriptorSet->materialPtrHashSet;
+    for (uint32_t nodeIndex = 0; nodeIndex < materialPtrHashSet.capacity; nodeIndex++)
+    {
+        TknListNode *node = materialPtrHashSet.nodePtrs[nodeIndex];
+        if (node)
+        {
+            Material *pMaterial = *(Material **)node->data;
+            return pMaterial;
+        }
+    }
+    tknError("Failed to find subpass material");
 }
 Material *createPipelineMaterialPtr(GfxContext *pGfxContext, Pipeline *pPipeline)
 {

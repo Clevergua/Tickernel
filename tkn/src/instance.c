@@ -1,9 +1,9 @@
 #include "gfxCore.h"
 
-Instance *createInstancePtr(GfxContext *pGfxContext, VertexInputLayout *pVertexInputLayout, uint32_t instanceCount, void *instances, Mesh *pMesh)
+Instance *createInstancePtr(GfxContext *pGfxContext, VertexInputLayout *pVertexInputLayout, uint32_t instanceCount, void *instances)
 {
     Instance *pInstance = tknMalloc(sizeof(Instance));
-
+    TknHashSet drawCallPtrHashSet = tknCreateHashSet(TKN_DEFAULT_COLLECTION_SIZE);
     if (instanceCount > 0)
     {
         VkBuffer instanceVkBuffer = VK_NULL_HANDLE;
@@ -20,8 +20,7 @@ Instance *createInstancePtr(GfxContext *pGfxContext, VertexInputLayout *pVertexI
             .instanceMappedBuffer = instanceMappedBuffer,
             .instanceCount = instanceCount,
             .maxInstanceCount = instanceCount,
-            .pMesh = pMesh,
-            .materialPtrHashSet = tknCreateHashSet(TKN_DEFAULT_COLLECTION_SIZE),
+            .drawCallPtrHashSet = drawCallPtrHashSet,
         };
     }
     else
@@ -33,20 +32,24 @@ Instance *createInstancePtr(GfxContext *pGfxContext, VertexInputLayout *pVertexI
             .instanceMappedBuffer = NULL,
             .instanceCount = instanceCount,
             .maxInstanceCount = instanceCount,
-            .pMesh = pMesh,
-            .materialPtrHashSet = tknCreateHashSet(TKN_DEFAULT_COLLECTION_SIZE),
+            .drawCallPtrHashSet = drawCallPtrHashSet,
         };
     }
-    tknAddToHashSet(&pMesh->instancePtrHashSet, pInstance);
-
     return pInstance;
 }
 void destroyInstancePtr(GfxContext *pGfxContext, Instance *pInstance)
 {
-    tknAssert(0 == pInstance->materialPtrHashSet.count, "Cannot destroy instance with materials attached!");
-    tknDestroyHashSet(pInstance->materialPtrHashSet);
-    tknRemoveFromHashSet(&pInstance->pMesh->instancePtrHashSet, pInstance);
-    destroyVkBuffer(pGfxContext, pInstance->instanceVkBuffer, pInstance->instanceVkDeviceMemory);
+    tknAssert(0 == pInstance->drawCallPtrHashSet.count, "Cannot destroy instance with draw calls attached!");
+    tknDestroyHashSet(pInstance->drawCallPtrHashSet);
+    if (pInstance->instanceCount > 0)
+    {
+        destroyVkBuffer(pGfxContext, pInstance->instanceVkBuffer, pInstance->instanceVkDeviceMemory);
+    }
+    else
+    {
+        // Nothing to clean up
+    }
+    tknDestroyHashSet(pInstance->drawCallPtrHashSet);
     tknFree(pInstance);
 }
 void updateInstancePtr(GfxContext *pGfxContext, Instance *pInstance, void *newData, uint32_t instanceCount)
@@ -89,29 +92,5 @@ void updateInstancePtr(GfxContext *pGfxContext, Instance *pInstance, void *newDa
             vkMapMemory(vkDevice, pInstance->instanceVkDeviceMemory, 0, instanceBufferSize, 0, &pInstance->instanceMappedBuffer);
             memcpy(pInstance->instanceMappedBuffer, newData, instanceBufferSize);
         }
-    }
-}
-void addInstanceToMaterial(GfxContext *pGfxContext, Instance *pInstance, Material *pMaterial)
-{
-    if (pMaterial->pPipeline->pInstanceVertexInputLayout == pInstance->pVertexInputLayout && pMaterial->pPipeline->pMeshVertexInputLayout == pInstance->pMesh->pVertexInputLayout)
-    {
-        tknAddToDynamicArray(&pMaterial->instancePtrDynamicArray, &pInstance);
-        tknAddToHashSet(&pInstance->materialPtrHashSet, pMaterial);
-    }
-    else
-    {
-        printf("Instance does not match pipeline layouts\n");
-    }
-}
-void removeInstanceFromMaterial(GfxContext *pGfxContext, Instance *pInstance, Material *pMaterial)
-{
-    if (tknContainsInHashSet(&pInstance->materialPtrHashSet, pMaterial))
-    {
-        tknRemoveFromDynamicArray(&pMaterial->instancePtrDynamicArray, &pInstance);
-        tknRemoveFromHashSet(&pInstance->materialPtrHashSet, pMaterial);
-    }
-    else
-    {
-        printf("Instance is not part of the material\n");
     }
 }

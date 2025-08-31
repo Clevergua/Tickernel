@@ -211,10 +211,11 @@ void destroyVertexInputLayoutPtr(VertexInputLayout *pVertexInputLayout)
 DescriptorSet *createDescriptorSetPtr(GfxContext *pGfxContext, uint32_t spvReflectShaderModuleCount, SpvReflectShaderModule *spvReflectShaderModules, uint32_t set)
 {
     DescriptorSet *pDescriptorSet = tknMalloc(sizeof(DescriptorSet));
-    TknDynamicArray materialPtrDynamicArray = tknCreateDynamicArray(sizeof(Material *), TKN_MIN_COLLECTION_SIZE);
+
+    TknHashSet materialPtrHashSet = tknCreateHashSet(sizeof(Material *));
     VkDescriptorSetLayout vkDescriptorSetLayout = VK_NULL_HANDLE;
     TknDynamicArray vkDescriptorPoolSizeDynamicArray = tknCreateDynamicArray(sizeof(VkDescriptorPoolSize), TKN_DEFAULT_COLLECTION_SIZE);
-    uint32_t descriptorCount = 0;
+    uint32_t bindingCount = 0;
     VkDescriptorType *vkDescriptorTypes = NULL;
 
     for (uint32_t spvReflectShaderModuleIndex = 0; spvReflectShaderModuleIndex < spvReflectShaderModuleCount; spvReflectShaderModuleIndex++)
@@ -228,13 +229,13 @@ DescriptorSet *createDescriptorSetPtr(GfxContext *pGfxContext, uint32_t spvRefle
                 for (uint32_t bindingIndex = 0; bindingIndex < spvReflectDescriptorSet.binding_count; bindingIndex++)
                 {
                     SpvReflectDescriptorBinding *pSpvReflectDescriptorBinding = spvReflectDescriptorSet.bindings[bindingIndex];
-                    if (pSpvReflectDescriptorBinding->binding < descriptorCount)
+                    if (pSpvReflectDescriptorBinding->binding < bindingCount)
                     {
                         // Skip, already counted
                     }
                     else
                     {
-                        descriptorCount = pSpvReflectDescriptorBinding->binding + 1;
+                        bindingCount = pSpvReflectDescriptorBinding->binding + 1;
                     }
                 }
                 // Skip other sets.
@@ -248,13 +249,13 @@ DescriptorSet *createDescriptorSetPtr(GfxContext *pGfxContext, uint32_t spvRefle
         }
     }
 
-    vkDescriptorTypes = tknMalloc(sizeof(VkDescriptorType) * descriptorCount);
-    VkDescriptorSetLayoutBinding *vkDescriptorSetLayoutBindings = tknMalloc(sizeof(VkDescriptorSetLayoutBinding) * descriptorCount);
-    for (uint32_t binding = 0; binding < descriptorCount; binding++)
+    vkDescriptorTypes = tknMalloc(sizeof(VkDescriptorType) * bindingCount);
+    VkDescriptorSetLayoutBinding *vkDescriptorSetLayoutBindings = tknMalloc(sizeof(VkDescriptorSetLayoutBinding) * bindingCount);
+    for (uint32_t binding = 0; binding < bindingCount; binding++)
     {
         vkDescriptorTypes[binding] = VK_DESCRIPTOR_TYPE_MAX_ENUM;
         vkDescriptorSetLayoutBindings[binding] = (VkDescriptorSetLayoutBinding){
-            .binding = binding,
+            .binding = 0,
             .descriptorType = VK_DESCRIPTOR_TYPE_MAX_ENUM,
             .descriptorCount = 0,
             .stageFlags = 0,
@@ -334,29 +335,34 @@ DescriptorSet *createDescriptorSetPtr(GfxContext *pGfxContext, uint32_t spvRefle
     VkDevice vkDevice = pGfxContext->vkDevice;
     VkDescriptorSetLayoutCreateInfo vkDescriptorSetLayoutCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
-        .bindingCount = descriptorCount,
+        .bindingCount = bindingCount,
         .pBindings = vkDescriptorSetLayoutBindings,
     };
     assertVkResult(vkCreateDescriptorSetLayout(vkDevice, &vkDescriptorSetLayoutCreateInfo, NULL, &vkDescriptorSetLayout));
     tknFree(vkDescriptorSetLayoutBindings);
 
     *pDescriptorSet = (DescriptorSet){
-        .materialPtrDynamicArray = materialPtrDynamicArray,
         .vkDescriptorSetLayout = vkDescriptorSetLayout,
         .vkDescriptorPoolSizeDynamicArray = vkDescriptorPoolSizeDynamicArray,
-        .descriptorCount = descriptorCount,
+        .descriptorCount = bindingCount,
         .vkDescriptorTypes = vkDescriptorTypes,
+        .materialPtrHashSet = materialPtrHashSet,
     };
     return pDescriptorSet;
 }
 void destroyDescriptorSetPtr(GfxContext *pGfxContext, DescriptorSet *pDescriptorSet)
 {
-    for (uint32_t i = 0; i < pDescriptorSet->materialPtrDynamicArray.count; i++)
+    for (uint32_t nodeIndex = 0; nodeIndex < pDescriptorSet->materialPtrHashSet.capacity; nodeIndex++)
     {
-        Material *pMaterial = *(Material **)tknGetFromDynamicArray(&pDescriptorSet->materialPtrDynamicArray, i);
-        destroyMaterialPtr(pGfxContext, pMaterial);
+        TknListNode *pNode =  pDescriptorSet->materialPtrHashSet.nodePtrs[nodeIndex];
+        while (pNode)
+        {
+            Material *pMaterial = *(Material **)pNode->data;
+            pNode = pNode->nextNodePtr;
+            destroyMaterialPtr(pGfxContext, pMaterial);
+        }
     }
-    tknDestroyDynamicArray(pDescriptorSet->materialPtrDynamicArray);
+    tknDestroyHashSet(pDescriptorSet->materialPtrHashSet);
     VkDevice vkDevice = pGfxContext->vkDevice;
     vkDestroyDescriptorSetLayout(vkDevice, pDescriptorSet->vkDescriptorSetLayout, NULL);
     tknDestroyDynamicArray(pDescriptorSet->vkDescriptorPoolSizeDynamicArray);
@@ -389,4 +395,3 @@ VkFormat getSupportedFormat(GfxContext *pGfxContext, uint32_t candidateCount, Vk
     fprintf(stderr, "Error: No supported format found for the given requirements\n");
     return VK_FORMAT_MAX_ENUM;
 }
-

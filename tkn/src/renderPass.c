@@ -81,7 +81,7 @@ static void destroySubpass(GfxContext *pGfxContext, Subpass subpass)
         Pipeline *pPipeline = *(Pipeline **)tknGetFromDynamicArray(&subpass.pipelinePtrDynamicArray, pipelinePtrIndex);
         destroyPipelinePtr(pGfxContext, pPipeline);
     }
-    tknAssert(subpass.pSubpassDescriptorSet->materialPtrDynamicArray.count == 1, "Subpass must have exactly one material");
+    tknAssert(subpass.pSubpassDescriptorSet->materialPtrHashSet.count == 1, "Subpass must have exactly one material");
     destroyDescriptorSetPtr(pGfxContext, subpass.pSubpassDescriptorSet);
     tknDestroyDynamicArray(subpass.pipelinePtrDynamicArray);
 }

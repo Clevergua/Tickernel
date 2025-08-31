@@ -156,11 +156,11 @@ typedef struct
 
 typedef struct
 {
-    TknDynamicArray materialPtrDynamicArray;
     VkDescriptorSetLayout vkDescriptorSetLayout;
     TknDynamicArray vkDescriptorPoolSizeDynamicArray;
     uint32_t descriptorCount;
     VkDescriptorType *vkDescriptorTypes;
+    TknHashSet materialPtrHashSet;
 } DescriptorSet;
 
 typedef enum
@@ -188,9 +188,7 @@ struct Instance
     void *instanceMappedBuffer;
     uint32_t instanceCount;
     uint32_t maxInstanceCount;
-
-    Mesh *pMesh;
-    TknHashSet materialPtrHashSet;
+    TknHashSet drawCallPtrHashSet;
 };
 
 struct Mesh
@@ -204,8 +202,7 @@ struct Mesh
     VkBuffer indexVkBuffer;
     VkDeviceMemory indexVkDeviceMemory;
     uint32_t indexCount;
-
-    TknHashSet instancePtrHashSet;
+    TknHashSet drawCallPtrHashSet;
 };
 
 struct Material
@@ -215,8 +212,15 @@ struct Material
     Binding *bindings;
     VkDescriptorPool vkDescriptorPool;
     DescriptorSet *pDescriptorSet;
-    TknDynamicArray instancePtrDynamicArray;
+    TknHashSet drawCallPtrHashSet;
+};
+
+struct DrawCall
+{
     Pipeline *pPipeline;
+    Material *pMaterial;
+    Instance *pInstance;
+    Mesh *pMesh;
 };
 
 typedef enum
@@ -237,6 +241,7 @@ struct Pipeline
 
     VertexInputLayout *pMeshVertexInputLayout;
     VertexInputLayout *pInstanceVertexInputLayout;
+    TknDynamicArray drawCallPtrDynamicArray;
 };
 
 typedef struct
