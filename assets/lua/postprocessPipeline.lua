@@ -1,3 +1,5 @@
+require("vulkan")
+local gfx = require("gfx")
 local postprocessPipeline = {}
 function postprocessPipeline.createPipelinePtr(pGfxContext, pRenderPass, subpassIndex, assetsPath)
     local postprocessPipelineSpvPaths = {
@@ -8,25 +10,6 @@ function postprocessPipeline.createPipelinePtr(pGfxContext, pRenderPass, subpass
     local vkPipelineInputAssemblyStateCreateInfo = {
         topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
         primitiveRestartEnable = false,
-    }
-
-    local vkPipelineViewportStateCreateInfo = {
-        pViewports = {
-            {
-                x = 0.0,
-                y = 0.0,
-                width = 0.0,
-                height = 0.0,
-                minDepth = 0.0,
-                maxDepth = 1.0,
-            },
-        },
-        pScissors = {
-            {
-                offset = { 0, 0 },
-                extent = { 0, 0 },
-            },
-        },
     }
 
     local vkPipelineRasterizationStateCreateInfo = {
@@ -104,7 +87,7 @@ function postprocessPipeline.createPipelinePtr(pGfxContext, pRenderPass, subpass
 
     return gfx.createPipelinePtr(pGfxContext, pRenderPass, subpassIndex, postprocessPipelineSpvPaths,
         nil, nil, vkPipelineInputAssemblyStateCreateInfo,
-        vkPipelineViewportStateCreateInfo,
+        gfx.defaultVkPipelineViewportStateCreateInfo,
         vkPipelineRasterizationStateCreateInfo, vkPipelineMultisampleStateCreateInfo,
         vkPipelineDepthStencilStateCreateInfo, vkPipelineColorBlendStateCreateInfo, vkPipelineDynamicStateCreateInfo)
 end

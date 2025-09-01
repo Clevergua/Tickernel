@@ -3,7 +3,7 @@ local lightingPipeline = require("lightingPipeline")
 local postProcessPipeline = require("postProcessPipeline")
 local deferredRenderPass = {}
 
-function deferredRenderPass.createRenderPassPtr(pGfxContext, pAttachments, assetsPath, pMeshVertexInputLayout,
+function deferredRenderPass.setup(pGfxContext, pAttachments, assetsPath, pMeshVertexInputLayout,
                                                 pInstanceVertexInputLayout, renderPassIndex)
     local colorAttachmentDescription = {
         samples = VK_SAMPLE_COUNT_1_BIT,
@@ -166,23 +166,25 @@ function deferredRenderPass.createRenderPassPtr(pGfxContext, pAttachments, asset
             dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT
         }
     }
-
     local pRenderPass = gfx.createRenderPassPtr(pGfxContext, vkAttachmentDescriptions, pAttachments, vkClearValues,
         vkSubpassDescriptions,
-        spvPathsArray, vkSubpassDependencies)
-    gfx.insertRenderPassPtr(pGfxContext, pRenderPass, renderPassIndex)
-
-    local pGeometryPipeline = geometryPipeline.createPipelinePtr(pGfxContext, pRenderPass, 0, assetsPath,
+        spvPathsArray, vkSubpassDependencies, renderPassIndex)
+    local pipelineIndex = 0
+    local pGeometryPipeline = geometryPipeline.createPipelinePtr(pGfxContext, pRenderPass, pipelineIndex, assetsPath,
         pMeshVertexInputLayout, pInstanceVertexInputLayout)
-    local pLightingPipeline = lightingPipeline.createPipelinePtr(pGfxContext, pRenderPass, 1, assetsPath)
-    local pPostProcessPipeline = postProcessPipeline.createPipelinePtr(pGfxContext, pRenderPass, 2, assetsPath)
+    pipelineIndex = pipelineIndex + 1
+    local pLightingPipeline = lightingPipeline.createPipelinePtr(pGfxContext, pRenderPass, pipelineIndex, assetsPath)
+    pipelineIndex = pipelineIndex + 1
+    local pPostProcessPipeline = postProcessPipeline.createPipelinePtr(pGfxContext, pRenderPass, pipelineIndex,
+        assetsPath)
+
     deferredRenderPass.pRenderPass = pRenderPass
     deferredRenderPass.pGeometryPipeline = pGeometryPipeline
     deferredRenderPass.pLightingPipeline = pLightingPipeline
     deferredRenderPass.pPostProcessPipeline = pPostProcessPipeline
 end
 
-function deferredRenderPass.destroyRenderPass(pGfxContext)
+function deferredRenderPass.teardown(pGfxContext)
     postProcessPipeline.destroyPipelinePtr(pGfxContext, deferredRenderPass.pGeometryPipeline)
     lightingPipeline.destroyPipelinePtr(pGfxContext, deferredRenderPass.pLightingPipeline)
     geometryPipeline.destroyPipelinePtr(pGfxContext, deferredRenderPass.pPostProcessPipeline)

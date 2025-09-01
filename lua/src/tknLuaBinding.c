@@ -73,16 +73,16 @@ static int luaDestroyFixedAttachmentPtr(lua_State *pLuaState)
 static int luaCreateRenderPassPtr(lua_State *pLuaState)
 {
     // Get parameters from Lua stack
-    GfxContext *pGfxContext = (GfxContext *)lua_touserdata(pLuaState, -7);
+    GfxContext *pGfxContext = (GfxContext *)lua_touserdata(pLuaState, -8);
 
     // Get VkAttachmentDescription array
-    lua_len(pLuaState, -6);
+    lua_len(pLuaState, -7);
     uint32_t attachmentCount = (uint32_t)lua_tointeger(pLuaState, -1);
     lua_pop(pLuaState, 1);
     VkAttachmentDescription *vkAttachmentDescriptions = tknMalloc(sizeof(VkAttachmentDescription) * attachmentCount);
     for (uint32_t i = 0; i < attachmentCount; i++)
     {
-        lua_rawgeti(pLuaState, -6, i + 1);
+        lua_rawgeti(pLuaState, -7, i + 1);
         VkAttachmentDescription attachmentDescription = {0};
 
         lua_getfield(pLuaState, -1, "flags");
@@ -126,25 +126,25 @@ static int luaCreateRenderPassPtr(lua_State *pLuaState)
     }
 
     // Get inputAttachmentPtrs array
-    lua_len(pLuaState, -5);
+    lua_len(pLuaState, -6);
     uint32_t inputAttachmentCount = (uint32_t)lua_tointeger(pLuaState, -1);
     lua_pop(pLuaState, 1);
     Attachment **inputAttachmentPtrs = tknMalloc(sizeof(Attachment *) * inputAttachmentCount);
     for (uint32_t i = 0; i < inputAttachmentCount; i++)
     {
-        lua_rawgeti(pLuaState, -5, i + 1);
+        lua_rawgeti(pLuaState, -6, i + 1);
         inputAttachmentPtrs[i] = (Attachment *)lua_touserdata(pLuaState, -1);
         lua_pop(pLuaState, 1);
     }
 
     // Get VkClearValue array
-    lua_len(pLuaState, -4);
+    lua_len(pLuaState, -5);
     uint32_t clearValueCount = (uint32_t)lua_tointeger(pLuaState, -1);
     lua_pop(pLuaState, 1);
     VkClearValue *vkClearValues = tknMalloc(sizeof(VkClearValue) * clearValueCount);
     for (uint32_t i = 0; i < clearValueCount; i++)
     {
-        lua_rawgeti(pLuaState, -4, i + 1);
+        lua_rawgeti(pLuaState, -5, i + 1);
         VkClearValue clearValue = {0};
 
         // Check if it's a depth/stencil clear value (has depth field)
@@ -176,13 +176,13 @@ static int luaCreateRenderPassPtr(lua_State *pLuaState)
     }
 
     // Get VkSubpassDescription array
-    lua_len(pLuaState, -3);
+    lua_len(pLuaState, -4);
     uint32_t subpassCount = (uint32_t)lua_tointeger(pLuaState, -1);
     lua_pop(pLuaState, 1);
     VkSubpassDescription *vkSubpassDescriptions = tknMalloc(sizeof(VkSubpassDescription) * subpassCount);
     for (uint32_t i = 0; i < subpassCount; i++)
     {
-        lua_rawgeti(pLuaState, -3, i + 1);
+        lua_rawgeti(pLuaState, -4, i + 1);
         VkSubpassDescription subpassDescription = {0};
 
         lua_getfield(pLuaState, -1, "pipelineBindPoint");
@@ -253,14 +253,14 @@ static int luaCreateRenderPassPtr(lua_State *pLuaState)
     }
 
     // Get spvPaths array (2D array)
-    lua_len(pLuaState, -2);
+    lua_len(pLuaState, -3);
     uint32_t spvPathsArrayCount = (uint32_t)lua_tointeger(pLuaState, -1);
     lua_pop(pLuaState, 1);
     uint32_t *spvPathCounts = tknMalloc(sizeof(uint32_t) * spvPathsArrayCount);
     const char ***spvPathsArray = tknMalloc(sizeof(const char **) * spvPathsArrayCount);
     for (uint32_t i = 0; i < spvPathsArrayCount; i++)
     {
-        lua_rawgeti(pLuaState, -2, i + 1);
+        lua_rawgeti(pLuaState, -3, i + 1);
         lua_len(pLuaState, -1);
         spvPathCounts[i] = (uint32_t)lua_tointeger(pLuaState, -1);
         lua_pop(pLuaState, 1);
@@ -277,7 +277,7 @@ static int luaCreateRenderPassPtr(lua_State *pLuaState)
     }
 
     // Get VkSubpassDependency array
-    lua_len(pLuaState, -1);
+    lua_len(pLuaState, -2);
     uint32_t vkSubpassDependencyCount = (uint32_t)lua_tointeger(pLuaState, -1);
     lua_pop(pLuaState, 1);
     VkSubpassDependency *vkSubpassDependencies = NULL;
@@ -286,7 +286,7 @@ static int luaCreateRenderPassPtr(lua_State *pLuaState)
         vkSubpassDependencies = tknMalloc(sizeof(VkSubpassDependency) * vkSubpassDependencyCount);
         for (uint32_t i = 0; i < vkSubpassDependencyCount; i++)
         {
-            lua_rawgeti(pLuaState, -1, i + 1);
+            lua_rawgeti(pLuaState, -2, i + 1);
             VkSubpassDependency subpassDependency = {0};
 
             lua_getfield(pLuaState, -1, "srcSubpass");

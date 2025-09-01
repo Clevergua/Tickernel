@@ -1,4 +1,3 @@
-require("vulkan")
 local srp = {}
 local deferredRenderPass = require("deferredRenderPass")
 
@@ -46,9 +45,9 @@ function srp.setup(pGfxContext, assetsPath)
     }, assetsPath, srp.pMeshVertexInputLayout,  srp.pInstanceVertexInputLayout)
 end
 
-function srp.tearDown(pGfxContext)
+function srp.teardown(pGfxContext)
     srp.pDeferredRenderPass = nil
-    deferredRenderPass.destroyRenderPassPtr(pGfxContext, srp.pDeferredRenderPass)
+    deferredRenderPass.teardown(pGfxContext)
     gfx.destroyVertexInputLayoutPtr(srp.pInstanceVertexInputLayout)
     gfx.destroyVertexInputLayoutPtr(srp.pMeshVertexInputLayout)
     gfx.destroyDynamicAttachmentPtr(pGfxContext, srp.pNormalAttachment)

@@ -1,3 +1,5 @@
+require("vulkan")
+local gfx = require("gfx")
 local geometryPipeline = {}
 function geometryPipeline.createPipelinePtr(pGfxContext, pRenderPass, subpassIndex, assetsPath,
                                             pMeshVertexInputLayout, pInstanceVertexInputLayout)
@@ -83,8 +85,8 @@ function geometryPipeline.createPipelinePtr(pGfxContext, pRenderPass, subpassInd
         vkPipelineDepthStencilStateCreateInfo, vkPipelineColorBlendStateCreateInfo, vkPipelineDynamicStateCreateInfo)
 end
 
-function geometryPipeline.destroyPipelinePtr(pGfxContext, pRenderPass)
-    gfx.destroyPipelinePtr(pGfxContext, pRenderPass)
+function geometryPipeline.destroyPipelinePtr(pGfxContext, pPipeline)
+    gfx.destroyPipelinePtr(pGfxContext, pPipeline)
 end
 
 return geometryPipeline

@@ -1,3 +1,5 @@
+require("vulkan")
+local gfx = require("gfx")
 local lightingPipeline = {}
 function lightingPipeline.createPipelinePtr(pGfxContext, pRenderPass, subpassIndex, assetsPath)
     local lightingPipelineSpvPaths = {
@@ -8,25 +10,6 @@ function lightingPipeline.createPipelinePtr(pGfxContext, pRenderPass, subpassInd
     local vkPipelineInputAssemblyStateCreateInfo = {
         topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
         primitiveRestartEnable = false,
-    }
-
-    local vkPipelineViewportStateCreateInfo = {
-        pViewports = {
-            {
-                x = 0.0,
-                y = 0.0,
-                width = 0.0,
-                height = 0.0,
-                minDepth = 0.0,
-                maxDepth = 1.0,
-            },
-        },
-        pScissors = {
-            {
-                offset = { 0, 0 },
-                extent = { 0, 0 },
-            },
-        },
     }
 
     local vkPipelineRasterizationStateCreateInfo = {
@@ -77,7 +60,7 @@ function lightingPipeline.createPipelinePtr(pGfxContext, pRenderPass, subpassInd
         minDepthBounds = 0.0,
         maxDepthBounds = 1.0,
     }
-    
+
     local vkPipelineColorBlendStateCreateInfo = {
         logicOpEnable = false,
         logicOp = VK_LOGIC_OP_COPY,
@@ -90,7 +73,8 @@ function lightingPipeline.createPipelinePtr(pGfxContext, pRenderPass, subpassInd
                 srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE,
                 dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
                 alphaBlendOp = VK_BLEND_OP_ADD,
-                colorWriteMask = VK_COLOR_COMPONENT_A_BIT | VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT,
+                colorWriteMask = VK_COLOR_COMPONENT_A_BIT | VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
+                VK_COLOR_COMPONENT_B_BIT,
             }
         },
         blendConstants = { 0.0, 0.0, 0.0, 0.0 },
@@ -103,7 +87,8 @@ function lightingPipeline.createPipelinePtr(pGfxContext, pRenderPass, subpassInd
     }
 
     return gfx.createPipelinePtr(pGfxContext, pRenderPass, subpassIndex, lightingPipelineSpvPaths,
-        nil, nil, vkPipelineInputAssemblyStateCreateInfo, vkPipelineViewportStateCreateInfo,
+        nil, nil, vkPipelineInputAssemblyStateCreateInfo,
+        gfx.defaultVkPipelineViewportStateCreateInfo,
         vkPipelineRasterizationStateCreateInfo, vkPipelineMultisampleStateCreateInfo,
         vkPipelineDepthStencilStateCreateInfo, vkPipelineColorBlendStateCreateInfo, vkPipelineDynamicStateCreateInfo)
 end
