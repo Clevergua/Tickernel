@@ -28,12 +28,16 @@ void destroyUniformBufferPtr(GfxContext *pGfxContext, UniformBuffer *pUniformBuf
     clearBindingPtrHashSet(pGfxContext, pUniformBuffer->bindingPtrHashSet);
 
     tknDestroyHashSet(pUniformBuffer->bindingPtrHashSet);
+    if (pUniformBuffer->mapped != NULL)
+    {
+        vkUnmapMemory(pGfxContext->vkDevice, pUniformBuffer->vkDeviceMemory);
+    }
     destroyVkBuffer(pGfxContext, pUniformBuffer->vkBuffer, pUniformBuffer->vkDeviceMemory);
     tknFree(pUniformBuffer);
 }
 void updateUniformBufferPtr(GfxContext *pGfxContext, UniformBuffer *pUniformBuffer, const void *data, VkDeviceSize vkDeviceSize)
 {
-    tknAssert(pUniformBuffer->vkDeviceMemory != VK_NULL_HANDLE, "Mapped buffer memory is not allocated!");
+    tknAssert(pUniformBuffer->mapped != NULL, "Uniform buffer is not mapped!");
     tknAssert(vkDeviceSize <= pUniformBuffer->size, "Data size exceeds mapped buffer size!");
     memcpy(pUniformBuffer->mapped, data, vkDeviceSize);
 }

@@ -27,8 +27,8 @@ void populateFramebuffers(GfxContext *pGfxContext, RenderPass *pRenderPass)
         else if (ATTACHMENT_TYPE_DYNAMIC == pAttachment->attachmentType)
         {
             DynamicAttachment dynamicUnion = pAttachment->attachmentUnion.dynamicAttachment;
-            uint32_t dynamicWidth = swapchainWidth * dynamicUnion.scaler;
-            uint32_t dynamicHeight = swapchainHeight * dynamicUnion.scaler;
+            uint32_t dynamicWidth = (uint32_t)(swapchainWidth * dynamicUnion.scaler + 0.5f);
+            uint32_t dynamicHeight = (uint32_t)(swapchainHeight * dynamicUnion.scaler + 0.5f);
             if (UINT32_MAX == width && UINT32_MAX == height)
             {
                 width = dynamicWidth;

@@ -26,9 +26,10 @@ void removeDrawCall(GfxContext *pGfxContext, DrawCall *pDrawCall)
 }
 void clearDrawCalls(GfxContext *pGfxContext, Pipeline *pPipeline)
 {
-    for (uint32_t drawCallIndex = pPipeline->drawCallPtrDynamicArray.count - 1; drawCallIndex > -1; drawCallIndex--)
+    while (pPipeline->drawCallPtrDynamicArray.count > 0)
     {
-        DrawCall *pDrawCall = *(DrawCall **)tknGetFromDynamicArray(&pPipeline->drawCallPtrDynamicArray, drawCallIndex);
+        uint32_t lastIndex = pPipeline->drawCallPtrDynamicArray.count - 1;
+        DrawCall *pDrawCall = *(DrawCall **)tknGetFromDynamicArray(&pPipeline->drawCallPtrDynamicArray, lastIndex);
         removeDrawCall(pGfxContext, pDrawCall);
     }
 }

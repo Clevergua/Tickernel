@@ -47,19 +47,19 @@ void destroyDynamicAttachmentPtr(GfxContext *pGfxContext, Attachment *pAttachmen
 void resizeDynamicAttachmentPtr(GfxContext *pGfxContext, Attachment *pAttachment)
 {
     tknAssert(ATTACHMENT_TYPE_DYNAMIC == pAttachment->attachmentType, "Attachment type mismatch!");
-    DynamicAttachment dynamicAttachment = pAttachment->attachmentUnion.dynamicAttachment;
+    DynamicAttachment *pDynamicAttachment = &pAttachment->attachmentUnion.dynamicAttachment;
     SwapchainAttachment *pswapchainAttachment = &pGfxContext->pSwapchainAttachment->attachmentUnion.swapchainAttachment;
     VkExtent3D vkExtent3D = {
-        .width = (uint32_t)(pswapchainAttachment->swapchainExtent.width * dynamicAttachment.scaler),
-        .height = (uint32_t)(pswapchainAttachment->swapchainExtent.height * dynamicAttachment.scaler),
+        .width = (uint32_t)(pswapchainAttachment->swapchainExtent.width * pDynamicAttachment->scaler),
+        .height = (uint32_t)(pswapchainAttachment->swapchainExtent.height * pDynamicAttachment->scaler),
         .depth = 1,
     };
-    destroyVkImage(pGfxContext, dynamicAttachment.vkImage, dynamicAttachment.vkDeviceMemory, dynamicAttachment.vkImageView);
-    createVkImage(pGfxContext, vkExtent3D, pAttachment->vkFormat, VK_IMAGE_TILING_OPTIMAL, dynamicAttachment.vkImageUsageFlags, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, dynamicAttachment.vkImageAspectFlags, &dynamicAttachment.vkImage, &dynamicAttachment.vkDeviceMemory, &dynamicAttachment.vkImageView);
+    destroyVkImage(pGfxContext, pDynamicAttachment->vkImage, pDynamicAttachment->vkDeviceMemory, pDynamicAttachment->vkImageView);
+    createVkImage(pGfxContext, vkExtent3D, pAttachment->vkFormat, VK_IMAGE_TILING_OPTIMAL, pDynamicAttachment->vkImageUsageFlags, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, pDynamicAttachment->vkImageAspectFlags, &pDynamicAttachment->vkImage, &pDynamicAttachment->vkDeviceMemory, &pDynamicAttachment->vkImageView);
 
-    for (uint32_t i = 0; i < pAttachment->attachmentUnion.dynamicAttachment.bindingPtrHashSet.capacity; i++)
+    for (uint32_t i = 0; i < pDynamicAttachment->bindingPtrHashSet.capacity; i++)
     {
-        TknListNode *node = pAttachment->attachmentUnion.dynamicAttachment.bindingPtrHashSet.nodePtrs[i];
+        TknListNode *node = pDynamicAttachment->bindingPtrHashSet.nodePtrs[i];
         while (node)
         {
             Binding *pBinding = *(Binding **)node->data;
