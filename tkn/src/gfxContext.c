@@ -597,8 +597,8 @@ static void recordCommandBuffer(GfxContext *pGfxContext, uint32_t swapchainIndex
                     DrawCall *pDrawCall = *(DrawCall **)tknGetFromDynamicArray(&pPipeline->drawCallPtrDynamicArray, drawCallIndex);
                     VkDescriptorSet *vkDescriptorSets = tknMalloc(sizeof(VkDescriptorSet) * TKN_MAX_DESCRIPTOR_SET);
                     vkDescriptorSets[TKN_GLOBAL_DESCRIPTOR_SET] = pGlobalMaterial->vkDescriptorSet;
-                    vkDescriptorSets[TKN_GLOBAL_DESCRIPTOR_SET] = pSubpassMaterial->vkDescriptorSet;
-                    vkDescriptorSets[TKN_GLOBAL_DESCRIPTOR_SET] = pDrawCall->pMaterial->vkDescriptorSet;
+                    vkDescriptorSets[TKN_SUBPASS_DESCRIPTOR_SET] = pSubpassMaterial->vkDescriptorSet;
+                    vkDescriptorSets[TKN_PIPELINE_DESCRIPTOR_SET] = pDrawCall->pMaterial->vkDescriptorSet;
                     vkCmdBindDescriptorSets(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pPipeline->vkPipelineLayout, 0, TKN_MAX_DESCRIPTOR_SET, vkDescriptorSets, 0, NULL);
                     tknFree(vkDescriptorSets);
                     if (pDrawCall->pInstance->instanceCount > 0)
@@ -627,7 +627,10 @@ static void recordCommandBuffer(GfxContext *pGfxContext, uint32_t swapchainIndex
                     }
                 }
             }
-            vkCmdNextSubpass(vkCommandBuffer, VK_SUBPASS_CONTENTS_INLINE);
+            if (subpassIndex < pRenderPass->subpassCount - 1)
+            {
+                vkCmdNextSubpass(vkCommandBuffer, VK_SUBPASS_CONTENTS_INLINE);
+            }
         }
         vkCmdEndRenderPass(vkCommandBuffer);
     }
