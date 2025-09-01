@@ -297,6 +297,7 @@ struct GfxContext
     DescriptorSet *pGlobalDescriptorSet;
 
     TknHashSet renderPassPtrHashSet;
+    TknHashSet vertexInputLayoutPtrHashSet;
 };
 
 void assertVkResult(VkResult vkResult);

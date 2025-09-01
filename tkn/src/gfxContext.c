@@ -710,20 +710,35 @@ static void setupRenderPipelineAndResources(GfxContext *pGfxContext, uint32_t sp
     createMaterialPtr(pGfxContext, pGfxContext->pGlobalDescriptorSet);
 
     pGfxContext->renderPassPtrHashSet = tknCreateHashSet(sizeof(RenderPass *));
+    pGfxContext->vertexInputLayoutPtrHashSet = tknCreateHashSet(sizeof(VertexInputLayout *));
 }
 static void teardownRenderPipelineAndResources(GfxContext *pGfxContext)
 {
     tknClearDynamicArray(&pGfxContext->renderPassPtrDynamicArray);
-    for (uint32_t nodeIndex = 0; nodeIndex < pGfxContext->renderPassPtrHashSet.capacity; nodeIndex++)
+    // Safely destroy all render passes by repeatedly taking the first one
+    while (pGfxContext->renderPassPtrHashSet.count > 0)
     {
-        TknListNode *pRenderPassPtrNode = pGfxContext->renderPassPtrHashSet.nodePtrs[nodeIndex];
-        while (pRenderPassPtrNode)
+        RenderPass *pRenderPass = NULL;
+        for (uint32_t nodeIndex = 0; nodeIndex < pGfxContext->renderPassPtrHashSet.capacity; nodeIndex++)
         {
-            RenderPass *pRenderPass = *(RenderPass **)pRenderPassPtrNode->data;
-            pRenderPassPtrNode = pRenderPassPtrNode->nextNodePtr;
+            TknListNode *pNode = pGfxContext->renderPassPtrHashSet.nodePtrs[nodeIndex];
+            if (pNode)
+            {
+                pRenderPass = *(RenderPass **)pNode->data;
+                break;
+            }
+        }
+        if (pRenderPass)
+        {
             destroyRenderPassPtr(pGfxContext, pRenderPass);
         }
+        else
+        {
+            break; // Safety check to avoid infinite loop
+        }
     }
+    tknAssert(pGfxContext->vertexInputLayoutPtrHashSet.count == 0, "Vertex input layout hash set should be empty before destroying GfxContext.");
+    tknDestroyHashSet(pGfxContext->vertexInputLayoutPtrHashSet);
     tknAssert(pGfxContext->renderPassPtrHashSet.count == 0, "Render pass hash set should be empty before destroying GfxContext.");
     tknDestroyHashSet(pGfxContext->renderPassPtrHashSet);
     tknAssert(pGfxContext->renderPassPtrDynamicArray.count == 0, "Render pass dynamic array should be empty before destroying GfxContext.");
@@ -731,27 +746,51 @@ static void teardownRenderPipelineAndResources(GfxContext *pGfxContext)
 
     destroyDescriptorSetPtr(pGfxContext, pGfxContext->pGlobalDescriptorSet);
 
-    for (uint32_t nodeIndex = 0; nodeIndex < pGfxContext->dynamicAttachmentPtrHashSet.capacity; nodeIndex++)
+    // Safely destroy all dynamic attachments by repeatedly taking the first one
+    while (pGfxContext->dynamicAttachmentPtrHashSet.count > 0)
     {
-        TknListNode *pDynamicAttachmentPtrNode = pGfxContext->dynamicAttachmentPtrHashSet.nodePtrs[nodeIndex];
-        while (pDynamicAttachmentPtrNode)
+        Attachment *pDynamicAttachment = NULL;
+        for (uint32_t nodeIndex = 0; nodeIndex < pGfxContext->dynamicAttachmentPtrHashSet.capacity; nodeIndex++)
         {
-            Attachment *pDynamicAttachment = *(Attachment **)pDynamicAttachmentPtrNode->data;
-            pDynamicAttachmentPtrNode = pDynamicAttachmentPtrNode->nextNodePtr;
+            TknListNode *pNode = pGfxContext->dynamicAttachmentPtrHashSet.nodePtrs[nodeIndex];
+            if (pNode)
+            {
+                pDynamicAttachment = *(Attachment **)pNode->data;
+                break;
+            }
+        }
+        if (pDynamicAttachment)
+        {
             destroyDynamicAttachmentPtr(pGfxContext, pDynamicAttachment);
+        }
+        else
+        {
+            break; // Safety check to avoid infinite loop
         }
     }
     tknAssert(0 == pGfxContext->dynamicAttachmentPtrHashSet.count, "Dynamic attachment hash set should be empty before destroying GfxContext.");
     tknDestroyHashSet(pGfxContext->dynamicAttachmentPtrHashSet);
 
-    for (uint32_t nodeIndex = 0; nodeIndex < pGfxContext->fixedAttachmentPtrHashSet.capacity; nodeIndex++)
+    // Safely destroy all fixed attachments by repeatedly taking the first one
+    while (pGfxContext->fixedAttachmentPtrHashSet.count > 0)
     {
-        TknListNode *pFixedAttachmentPtrNode = pGfxContext->fixedAttachmentPtrHashSet.nodePtrs[nodeIndex];
-        while (pFixedAttachmentPtrNode)
+        Attachment *pFixedAttachment = NULL;
+        for (uint32_t nodeIndex = 0; nodeIndex < pGfxContext->fixedAttachmentPtrHashSet.capacity; nodeIndex++)
         {
-            Attachment *pFixedAttachment = *(Attachment **)pFixedAttachmentPtrNode->data;
-            pFixedAttachmentPtrNode = pFixedAttachmentPtrNode->nextNodePtr;
+            TknListNode *pNode = pGfxContext->fixedAttachmentPtrHashSet.nodePtrs[nodeIndex];
+            if (pNode)
+            {
+                pFixedAttachment = *(Attachment **)pNode->data;
+                break;
+            }
+        }
+        if (pFixedAttachment)
+        {
             destroyFixedAttachmentPtr(pGfxContext, pFixedAttachment);
+        }
+        else
+        {
+            break; // Safety check to avoid infinite loop
         }
     }
     tknAssert(0 == pGfxContext->fixedAttachmentPtrHashSet.count, "Fixed attachment hash set should be empty before destroying GfxContext.");

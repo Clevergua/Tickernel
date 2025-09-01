@@ -60,12 +60,16 @@ end
 function gfx.destroyDynamicAttachmentPtr(pGfxContext, pAttachment)
 end
 
-function gfx.createVertexInputLayoutPtr(meshLayout)
-    local pMeshLayout
-    return pMeshLayout
+function gfx.getSwapchainAttachmentPtr(pGfxContext)
+    local pAttachment
+    return pAttachment
 end
 
-function gfx.destroyVertexInputLayoutPtr(pMeshLayout)
+function gfx.createVertexInputLayoutPtr(pGfxContext, layout)
+    local pLayout
+    return pLayout
+end
+function gfx.destroyVertexInputLayoutPtr(pGfxContext, pLayout)
 end
 
 function gfx.createRenderPassPtr(pGfxContext, vkAttachmentDescriptions, inputAttachmentPtrs, vkClearValues,
@@ -85,7 +89,7 @@ function gfx.removeRenderPassPtr(pGfxContext, pRenderPass)
 end
 
 function gfx.createPipelinePtr(pGfxContext, pRenderPass, subpassIndex, spvPaths,
-                               vertexAttributeDescriptions, instanceAttributeDescriptions,
+                               pMeshVertexInputLayout, pInstanceVertexInputLayout,
                                vkPipelineInputAssemblyStateCreateInfo, vkPipelineViewportStateCreateInfo,
                                vkPipelineRasterizationStateCreateInfo, vkPipelineMultisampleStateCreateInfo,
                                vkPipelineDepthStencilStateCreateInfo, vkPipelineColorBlendStateCreateInfo,
@@ -101,8 +105,10 @@ function gfx.addDrawCall(pGfxContext, pPipeline, pMaterial, pMesh, pInstance)
     local pDrawCall
     return pDrawCall
 end
+
 function gfx.removeDrawCall(pGfxContext, pDrawCall)
 end
+
 function gfx.clearDrawCalls(pGfxContext, pPipeline)
 
 end
@@ -126,25 +132,28 @@ function gfx.createInstancePtr(pGfxContext, pVertexInputLayout, instances)
     local pInstance
     return pInstance
 end
+
 function gfx.destroyInstancePtr(pGfxContext, pInstance)
 
 end
 
-function  gfx.getGlobalMaterialPtr(pGfxContext)
+function gfx.getGlobalMaterialPtr(pGfxContext)
     local pMaterial
     return pMaterial
 end
+
 function gfx.getSubpassMaterialPtr(pGfxContext, pRenderPass, subpassIndex)
     local pMaterial
     return pMaterial
 end
+
 function gfx.createPipelineMaterialPtr(pGfxContext, pPipeline)
 
 end
+
 function gfx.destroyPipelineMaterialPtr(pGfxContext, pMaterial)
 
 end
-
 
 gfx.defaultVkPipelineViewportStateCreateInfo = {
     pViewports = {

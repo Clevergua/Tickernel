@@ -89,7 +89,8 @@ function postprocessPipeline.createPipelinePtr(pGfxContext, pRenderPass, subpass
                 srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE,
                 dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
                 alphaBlendOp = VK_BLEND_OP_ADD,
-                colorWriteMask = VK_COLOR_COMPONENT_A_BIT | VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT,
+                colorWriteMask = VK_COLOR_COMPONENT_A_BIT | VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
+                    VK_COLOR_COMPONENT_B_BIT,
             }
         },
         blendConstants = { 0.0, 0.0, 0.0, 0.0 },
@@ -102,7 +103,8 @@ function postprocessPipeline.createPipelinePtr(pGfxContext, pRenderPass, subpass
     }
 
     return gfx.createPipelinePtr(pGfxContext, pRenderPass, subpassIndex, postprocessPipelineSpvPaths,
-        nil, vkPipelineInputAssemblyStateCreateInfo, vkPipelineViewportStateCreateInfo,
+        nil, nil, vkPipelineInputAssemblyStateCreateInfo,
+        vkPipelineViewportStateCreateInfo,
         vkPipelineRasterizationStateCreateInfo, vkPipelineMultisampleStateCreateInfo,
         vkPipelineDepthStencilStateCreateInfo, vkPipelineColorBlendStateCreateInfo, vkPipelineDynamicStateCreateInfo)
 end

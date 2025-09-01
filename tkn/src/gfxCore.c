@@ -173,8 +173,7 @@ void destroyVkBuffer(GfxContext *pGfxContext, VkBuffer vkBuffer, VkDeviceMemory 
     vkDestroyBuffer(vkDevice, vkBuffer, NULL);
     vkFreeMemory(vkDevice, vkDeviceMemory, NULL);
 }
-
-VertexInputLayout *createVertexInputLayoutPtr(uint32_t attributeCount, const char **names, uint32_t *sizes)
+VertexInputLayout *createVertexInputLayoutPtr(GfxContext *pGfxContext, uint32_t attributeCount, const char **names, uint32_t *sizes)
 {
     VertexInputLayout *pVertexInputLayout = tknMalloc(sizeof(VertexInputLayout));
     const char **namesCopy = tknMalloc(sizeof(char *) * attributeCount);
@@ -196,12 +195,13 @@ VertexInputLayout *createVertexInputLayoutPtr(uint32_t attributeCount, const cha
         .stride = stride,
         .referencePtrHashSet = tknCreateHashSet(TKN_DEFAULT_COLLECTION_SIZE),
     };
+    tknAddToHashSet(&pGfxContext->vertexInputLayoutPtrHashSet, pVertexInputLayout);
     return pVertexInputLayout;
 }
-void destroyVertexInputLayoutPtr(VertexInputLayout *pVertexInputLayout)
+void destroyVertexInputLayoutPtr(GfxContext *pGfxContext, VertexInputLayout *pVertexInputLayout)
 {
     tknAssert(0 == pVertexInputLayout->referencePtrHashSet.count, "Cannot destroy vertex input layout with meshes | instance attached!");
-    
+    tknRemoveFromHashSet(&pGfxContext->vertexInputLayoutPtrHashSet, pVertexInputLayout);
     tknDestroyHashSet(pVertexInputLayout->referencePtrHashSet);
     tknFree(pVertexInputLayout->names);
     tknFree(pVertexInputLayout->sizes);
@@ -353,14 +353,26 @@ DescriptorSet *createDescriptorSetPtr(GfxContext *pGfxContext, uint32_t spvRefle
 }
 void destroyDescriptorSetPtr(GfxContext *pGfxContext, DescriptorSet *pDescriptorSet)
 {
-    for (uint32_t nodeIndex = 0; nodeIndex < pDescriptorSet->materialPtrHashSet.capacity; nodeIndex++)
+    // Safely destroy all materials by repeatedly taking the first one
+    while (pDescriptorSet->materialPtrHashSet.count > 0)
     {
-        TknListNode *pNode =  pDescriptorSet->materialPtrHashSet.nodePtrs[nodeIndex];
-        while (pNode)
+        Material *pMaterial = NULL;
+        for (uint32_t nodeIndex = 0; nodeIndex < pDescriptorSet->materialPtrHashSet.capacity; nodeIndex++)
         {
-            Material *pMaterial = *(Material **)pNode->data;
-            pNode = pNode->nextNodePtr;
+            TknListNode *pNode = pDescriptorSet->materialPtrHashSet.nodePtrs[nodeIndex];
+            if (pNode)
+            {
+                pMaterial = *(Material **)pNode->data;
+                break;
+            }
+        }
+        if (pMaterial)
+        {
             destroyMaterialPtr(pGfxContext, pMaterial);
+        }
+        else
+        {
+            break; // Safety check to avoid infinite loop
         }
     }
     tknDestroyHashSet(pDescriptorSet->materialPtrHashSet);

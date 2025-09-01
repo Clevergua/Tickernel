@@ -22,24 +22,28 @@ function srp.setup(pGfxContext, assetsPath)
         VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT, VK_IMAGE_ASPECT_COLOR_BIT, 1)
     srp.pSwapchainAttachment = gfx.getSwapchainAttachmentPtr(pGfxContext)
 
-    local vertexAttributeDescriptions = {
-        { name = "position", size = 64, },
-        { name = "color",    size = 64, },
-        { name = "normal",   size = 64, },
-    }
-
-    local indexAttributeDescriptions = gfx.createInstanceLayoutPtr({
-        instanceAttributeDescription = {
-            { name = "model", size = 4, },
+    local createRenderPassPtr = gfx.createVertexInputLayoutPtr(pGfxContext,
+        {
+            { name = "position", size = 64, },
+            { name = "color",    size = 64, },
+            { name = "normal",   size = 64, },
         }
-    });
+    )
+
+    local pInstanceVertexInputLayout = gfx.createVertexInputLayoutPtr(pGfxContext,
+        {
+            instanceAttributeDescription = {
+                { name = "model", size = 4, },
+            }
+        }
+    );
     srp.pDeferredRenderPass = deferredRenderPass.createRenderPassPtr(pGfxContext, {
         srp.pColorAttachment,
         srp.pDepthAttachment,
         srp.pAlbedoAttachment,
         srp.pNormalAttachment,
         srp.pSwapchainAttachment
-    }, assetsPath, vertexAttributeDescriptions, indexAttributeDescriptions)
+    }, assetsPath, createRenderPassPtr, pInstanceVertexInputLayout)
 end
 
 function srp.tearDown(pGfxContext)
