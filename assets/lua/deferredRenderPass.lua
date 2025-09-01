@@ -169,8 +169,8 @@ function deferredRenderPass.createRenderPassPtr(pGfxContext, pAttachments, asset
 
     local pRenderPass = gfx.createRenderPassPtr(pGfxContext, vkAttachmentDescriptions, pAttachments, vkClearValues,
         vkSubpassDescriptions,
-        spvPathsArray, vkSubpassDependencies, renderPassIndex)
-
+        spvPathsArray, vkSubpassDependencies)
+    gfx.insertRenderPassPtr(pGfxContext, pRenderPass, renderPassIndex)
 
     local pGeometryPipeline = geometryPipeline.createPipelinePtr(pGfxContext, pRenderPass, 0, assetsPath,
         vertexAttributeDescriptions, indexAttributeDescriptions)

@@ -38,19 +38,17 @@ static Subpass createSubpass(GfxContext *pGfxContext, uint32_t subpassIndex, uin
                     {
                         uint32_t binding = pSpvReflectDescriptorBinding->binding;
                         uint32_t inputAttachmentIndex = pSpvReflectDescriptorBinding->input_attachment_index;
-
-                        Binding inputAttachmentBinding = pMaterial->bindings[binding];
-                        if (NULL == inputAttachmentBinding.bindingUnion.inputAttachmentBinding.pAttachment)
+                        if (NULL == pMaterial->bindings[binding].bindingUnion.inputAttachmentBinding.pAttachment)
                         {
                             tknAssert(inputAttachmentIndex < attachmentCount, "Input attachment index %u out of bounds", inputAttachmentIndex);
-                            inputAttachmentBinding.bindingUnion.inputAttachmentBinding.pAttachment = attachmentPtrs[inputAttachmentIndex];
+                            pMaterial->bindings[binding].bindingUnion.inputAttachmentBinding.pAttachment = attachmentPtrs[inputAttachmentIndex];
                             pMaterial->bindings[binding].bindingUnion.inputAttachmentBinding.vkImageLayout = inputAttachmentIndexToVkImageLayout[inputAttachmentIndex];
-                            inputAttachmentBindings[inputAttachmentBindingCount] = inputAttachmentBinding;
+                            inputAttachmentBindings[inputAttachmentBindingCount] = pMaterial->bindings[binding];
                             inputAttachmentBindingCount++;
                         }
                         else
                         {
-                            tknAssert(inputAttachmentBinding.bindingUnion.inputAttachmentBinding.pAttachment == attachmentPtrs[inputAttachmentIndex],
+                            tknAssert(pMaterial->bindings[binding].bindingUnion.inputAttachmentBinding.pAttachment == attachmentPtrs[inputAttachmentIndex],
                                       "Input attachment %u already set for binding %u in subpass descriptor set", inputAttachmentIndex, binding);
                         }
                     }
@@ -86,7 +84,7 @@ static void destroySubpass(GfxContext *pGfxContext, Subpass subpass)
     tknDestroyDynamicArray(subpass.pipelinePtrDynamicArray);
 }
 
-RenderPass *createRenderPassPtr(GfxContext *pGfxContext, uint32_t attachmentCount, VkAttachmentDescription *vkAttachmentDescriptions, Attachment **inputAttachmentPtrs, VkClearValue *vkClearValues, uint32_t subpassCount, VkSubpassDescription *vkSubpassDescriptions, uint32_t *spvPathCounts, const char ***spvPathsArray, uint32_t vkSubpassDependencyCount, VkSubpassDependency *vkSubpassDependencies, uint32_t renderPassIndex)
+RenderPass *createRenderPassPtr(GfxContext *pGfxContext, uint32_t attachmentCount, VkAttachmentDescription *vkAttachmentDescriptions, Attachment **inputAttachmentPtrs, VkClearValue *vkClearValues, uint32_t subpassCount, VkSubpassDescription *vkSubpassDescriptions, uint32_t *spvPathCounts, const char ***spvPathsArray, uint32_t vkSubpassDependencyCount, VkSubpassDependency *vkSubpassDependencies)
 {
     RenderPass *pRenderPass = tknMalloc(sizeof(RenderPass));
     Attachment **attachmentPtrs = tknMalloc(sizeof(Attachment *) * attachmentCount);

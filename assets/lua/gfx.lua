@@ -17,7 +17,7 @@ _G.gfx = {}
 -- VertexInputLayout *createVertexInputLayoutPtr(uint32_t attributeCount, const char **names, uint32_t *sizes);
 -- void destroyVertexInputLayoutPtr(VertexInputLayout *pVertexInputLayout);
 
--- RenderPass *createRenderPassPtr(GfxContext *pGfxContext, uint32_t attachmentCount, VkAttachmentDescription *vkAttachmentDescriptions, Attachment **inputAttachmentPtrs, VkClearValue *vkClearValues, uint32_t subpassCount, VkSubpassDescription *vkSubpassDescriptions, uint32_t *spvPathCounts, const char ***spvPathsArray, uint32_t vkSubpassDependencyCount, VkSubpassDependency *vkSubpassDependencies, uint32_t renderPassIndex);
+-- RenderPass *createRenderPassPtr(GfxContext *pGfxContext, uint32_t attachmentCount, VkAttachmentDescription *vkAttachmentDescriptions, Attachment **inputAttachmentPtrs, VkClearValue *vkClearValues, uint32_t subpassCount, VkSubpassDescription *vkSubpassDescriptions, uint32_t *spvPathCounts, const char ***spvPathsArray, uint32_t vkSubpassDependencyCount, VkSubpassDependency *vkSubpassDependencies);
 -- void destroyRenderPassPtr(GfxContext *pGfxContext, RenderPass *pRenderPass);
 -- void insertRenderPassPtr(GfxContext *pGfxContext, RenderPass *pRenderPass, uint32_t index);
 -- void removeRenderPassPtr(GfxContext *pGfxContext, RenderPass *pRenderPass);
@@ -70,7 +70,7 @@ end
 
 function gfx.createRenderPassPtr(pGfxContext, vkAttachmentDescriptions, inputAttachmentPtrs, vkClearValues,
                                  vkSubpassDescriptions,
-                                 spvPathsArray, vkSubpassDependencies, renderPassIndex)
+                                 spvPathsArray, vkSubpassDependencies)
     local pRenderPass
     return pRenderPass
 end
@@ -96,10 +96,16 @@ end
 
 function gfx.destroyPipelinePtr(pGfxContext, pPipeline)
 end
--- TODO:
--- DrawCall *addDrawCall(GfxContext *pGfxContext, Pipeline *pPipeline, Material *pMaterial, Mesh *pMesh, Instance *pInstance);
--- void removeDrawCall(GfxContext *pGfxContext, DrawCall *pDrawCall);
--- void clearDrawCalls(GfxContext *pGfxContext, Pipeline *pPipeline);
+
+function gfx.addDrawCall(pGfxContext, pPipeline, pMaterial, pMesh, pInstance)
+    local pDrawCall
+    return pDrawCall
+end
+function gfx.removeDrawCall(pGfxContext, pDrawCall)
+end
+function gfx.clearDrawCalls(pGfxContext, pPipeline)
+
+end
 
 -- Image *createImagePtr(GfxContext *pGfxContext, VkExtent3D vkExtent3D, VkFormat vkFormat, VkImageTiling vkImageTiling, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags);
 -- void destroyImagePtr(GfxContext *pGfxContext, Image *pImage);
@@ -116,15 +122,28 @@ end
 function gfx.destroyMeshPtr(pGfxContext, pMesh)
 end
 
--- TODO:
+function gfx.createInstancePtr(pGfxContext, pVertexInputLayout, instances)
+    local pInstance
+    return pInstance
+end
+function gfx.destroyInstancePtr(pGfxContext, pInstance)
 
--- Instance *createInstancePtr(GfxContext *pGfxContext, VertexInputLayout *pVertexInputLayout, uint32_t instanceCount, void *instances);
--- void destroyInstancePtr(GfxContext *pGfxContext, Instance *pInstance);
+end
 
--- Material *getGlobalMaterialPtr(GfxContext *pGfxContext);
--- Material *getSubpassMaterialPtr(GfxContext *pGfxContext, RenderPass *pRenderPass, uint32_t subpassIndex);
--- Material *createPipelineMaterialPtr(GfxContext *pGfxContext, Pipeline *pPipeline);
--- void destroyPipelineMaterialPtr(GfxContext *pGfxContext, Material *pMaterial);
+function  gfx.getGlobalMaterialPtr(pGfxContext)
+    local pMaterial
+    return pMaterial
+end
+function gfx.getSubpassMaterialPtr(pGfxContext, pRenderPass, subpassIndex)
+    local pMaterial
+    return pMaterial
+end
+function gfx.createPipelineMaterialPtr(pGfxContext, pPipeline)
+
+end
+function gfx.destroyPipelineMaterialPtr(pGfxContext, pMaterial)
+
+end
 
 
 gfx.defaultVkPipelineViewportStateCreateInfo = {

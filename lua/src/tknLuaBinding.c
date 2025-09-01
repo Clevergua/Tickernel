@@ -322,14 +322,11 @@ static int luaCreateRenderPassPtr(lua_State *pLuaState)
         }
     }
 
-    // Get renderPassIndex
-    uint32_t renderPassIndex = (uint32_t)lua_tointeger(pLuaState, -1);
-
     // Call the C function
     RenderPass *pRenderPass = createRenderPassPtr(pGfxContext, attachmentCount, vkAttachmentDescriptions,
                                                   inputAttachmentPtrs, vkClearValues, subpassCount, vkSubpassDescriptions,
                                                   spvPathCounts, spvPathsArray, vkSubpassDependencyCount,
-                                                  vkSubpassDependencies, renderPassIndex);
+                                                  vkSubpassDependencies);
 
     // Clean up memory
     tknFree(vkAttachmentDescriptions);
