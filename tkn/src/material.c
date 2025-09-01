@@ -99,7 +99,7 @@ BindingUnion getNullBindingUnion(VkDescriptorType vkDescriptorType)
     // VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER = 4,
     // VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER = 5,
     // VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER = 6,
-    if (VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER == vkDescriptorType)
+    else if (VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER == vkDescriptorType)
     {
         bindingUnion.uniformBufferBinding.pUniformBuffer = NULL;
     }
@@ -323,22 +323,23 @@ void updateBindings(GfxContext *pGfxContext, uint32_t bindingCount, Binding *bin
                     if (pNewAttachment == NULL)
                     {
                         VkImageView vkImageView = VK_NULL_HANDLE;
-                        vkDescriptorImageInfos[bindingIndex] = (VkDescriptorImageInfo){
+                        vkDescriptorImageInfos[vkWriteDescriptorSetCount] = (VkDescriptorImageInfo){
                             .sampler = VK_NULL_HANDLE,
                             .imageView = vkImageView,
                             .imageLayout = pOldBinding->bindingUnion.inputAttachmentBinding.vkImageLayout,
                         };
-                        vkWriteDescriptorSets[bindingIndex] = (VkWriteDescriptorSet){
+                        vkWriteDescriptorSets[vkWriteDescriptorSetCount] = (VkWriteDescriptorSet){
                             .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
                             .dstSet = pMaterial->vkDescriptorSet,
                             .dstBinding = binding,
                             .dstArrayElement = 0,
                             .descriptorCount = 1,
                             .descriptorType = vkDescriptorType,
-                            .pImageInfo = &vkDescriptorImageInfos[bindingIndex],
+                            .pImageInfo = &vkDescriptorImageInfos[vkWriteDescriptorSetCount],
                             .pBufferInfo = VK_NULL_HANDLE,
                             .pTexelBufferView = VK_NULL_HANDLE,
                         };
+                        vkWriteDescriptorSetCount++;
                     }
                     else
                     {
@@ -358,22 +359,23 @@ void updateBindings(GfxContext *pGfxContext, uint32_t bindingCount, Binding *bin
                             tknError("Swapchain attachment cannot be used as input attachment (attachment type: %d)", pNewAttachment->attachmentType);
                         }
 
-                        vkDescriptorImageInfos[bindingIndex] = (VkDescriptorImageInfo){
+                        vkDescriptorImageInfos[vkWriteDescriptorSetCount] = (VkDescriptorImageInfo){
                             .sampler = VK_NULL_HANDLE,
                             .imageView = vkImageView,
                             .imageLayout = pOldBinding->bindingUnion.inputAttachmentBinding.vkImageLayout,
                         };
-                        vkWriteDescriptorSets[bindingIndex] = (VkWriteDescriptorSet){
+                        vkWriteDescriptorSets[vkWriteDescriptorSetCount] = (VkWriteDescriptorSet){
                             .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
                             .dstSet = pMaterial->vkDescriptorSet,
                             .dstBinding = binding,
                             .dstArrayElement = 0,
                             .descriptorCount = 1,
                             .descriptorType = vkDescriptorType,
-                            .pImageInfo = &vkDescriptorImageInfos[bindingIndex],
+                            .pImageInfo = &vkDescriptorImageInfos[vkWriteDescriptorSetCount],
                             .pBufferInfo = VK_NULL_HANDLE,
                             .pTexelBufferView = VK_NULL_HANDLE,
                         };
+                        vkWriteDescriptorSetCount++;
                     }
                     pOldBinding->bindingUnion.inputAttachmentBinding.pAttachment = pNewAttachment;
                 }

@@ -586,6 +586,10 @@ static void recordCommandBuffer(GfxContext *pGfxContext, uint32_t swapchainIndex
         vkCmdSetScissor(vkCommandBuffer, 0, 1, &scissor);
         for (uint32_t subpassIndex = 0; subpassIndex < pRenderPass->subpassCount; subpassIndex++)
         {
+            if (subpassIndex > 0)
+            {
+                vkCmdNextSubpass(vkCommandBuffer, VK_SUBPASS_CONTENTS_INLINE);
+            }
             Subpass *pSubpass = &pRenderPass->subpasses[subpassIndex];
             Material *pSubpassMaterial = getSubpassMaterialPtr(pGfxContext, pRenderPass, subpassIndex);
             for (uint32_t pipelineIndex = 0; pipelineIndex < pSubpass->pipelinePtrDynamicArray.count; pipelineIndex++)
@@ -626,10 +630,6 @@ static void recordCommandBuffer(GfxContext *pGfxContext, uint32_t swapchainIndex
                         // skip
                     }
                 }
-            }
-            if (subpassIndex < pRenderPass->subpassCount - 1)
-            {
-                vkCmdNextSubpass(vkCommandBuffer, VK_SUBPASS_CONTENTS_INLINE);
             }
         }
         vkCmdEndRenderPass(vkCommandBuffer);
