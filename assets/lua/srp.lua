@@ -22,7 +22,7 @@ function srp.setup(pGfxContext, assetsPath)
         VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT, VK_IMAGE_ASPECT_COLOR_BIT, 1)
     srp.pSwapchainAttachment = gfx.getSwapchainAttachmentPtr(pGfxContext)
 
-    local createRenderPassPtr = gfx.createVertexInputLayoutPtr(pGfxContext,
+    srp.pMeshVertexInputLayout = gfx.createVertexInputLayoutPtr(pGfxContext,
         {
             { name = "position", size = 64, },
             { name = "color",    size = 64, },
@@ -30,7 +30,7 @@ function srp.setup(pGfxContext, assetsPath)
         }
     )
 
-    local pInstanceVertexInputLayout = gfx.createVertexInputLayoutPtr(pGfxContext,
+    srp.pInstanceVertexInputLayout = gfx.createVertexInputLayoutPtr(pGfxContext,
         {
             instanceAttributeDescription = {
                 { name = "model", size = 4, },
@@ -43,15 +43,14 @@ function srp.setup(pGfxContext, assetsPath)
         srp.pAlbedoAttachment,
         srp.pNormalAttachment,
         srp.pSwapchainAttachment
-    }, assetsPath, createRenderPassPtr, pInstanceVertexInputLayout)
+    }, assetsPath, srp.pMeshVertexInputLayout,  srp.pInstanceVertexInputLayout)
 end
 
 function srp.tearDown(pGfxContext)
     srp.pDeferredRenderPass = nil
-
     deferredRenderPass.destroyRenderPassPtr(pGfxContext, srp.pDeferredRenderPass)
-    gfx.destroyInstanceLayoutPtr(srp.pGeometryInstanceLayout)
-    gfx.destroyMeshLayoutPtr(srp.pGeometryMeshLayout)
+    gfx.destroyVertexInputLayoutPtr(srp.pInstanceVertexInputLayout)
+    gfx.destroyVertexInputLayoutPtr(srp.pMeshVertexInputLayout)
     gfx.destroyDynamicAttachmentPtr(pGfxContext, srp.pNormalAttachment)
     gfx.destroyDynamicAttachmentPtr(pGfxContext, srp.pAlbedoAttachment)
     gfx.destroyDynamicAttachmentPtr(pGfxContext, srp.pDepthAttachment)

@@ -709,38 +709,18 @@ static void setupRenderPipelineAndResources(GfxContext *pGfxContext, uint32_t sp
     tknFree(spvReflectShaderModules);
     createMaterialPtr(pGfxContext, pGfxContext->pGlobalDescriptorSet);
 
-    pGfxContext->renderPassPtrHashSet = tknCreateHashSet(sizeof(RenderPass *));
     pGfxContext->vertexInputLayoutPtrHashSet = tknCreateHashSet(sizeof(VertexInputLayout *));
 }
 static void teardownRenderPipelineAndResources(GfxContext *pGfxContext)
 {
-    tknClearDynamicArray(&pGfxContext->renderPassPtrDynamicArray);
-    // Safely destroy all render passes by repeatedly taking the first one
-    while (pGfxContext->renderPassPtrHashSet.count > 0)
+    for (uint32_t i = 0; i < pGfxContext->renderPassPtrDynamicArray.count; i++)
     {
-        RenderPass *pRenderPass = NULL;
-        for (uint32_t nodeIndex = 0; nodeIndex < pGfxContext->renderPassPtrHashSet.capacity; nodeIndex++)
-        {
-            TknListNode *pNode = pGfxContext->renderPassPtrHashSet.nodePtrs[nodeIndex];
-            if (pNode)
-            {
-                pRenderPass = *(RenderPass **)pNode->data;
-                break;
-            }
-        }
-        if (pRenderPass)
-        {
-            destroyRenderPassPtr(pGfxContext, pRenderPass);
-        }
-        else
-        {
-            break; // Safety check to avoid infinite loop
-        }
+        RenderPass *pRenderPass = *(RenderPass **)tknGetFromDynamicArray(&pGfxContext->renderPassPtrDynamicArray, i);
+        destroyRenderPassPtr(pGfxContext, pRenderPass);
     }
+    tknClearDynamicArray(&pGfxContext->renderPassPtrDynamicArray);
     tknAssert(pGfxContext->vertexInputLayoutPtrHashSet.count == 0, "Vertex input layout hash set should be empty before destroying GfxContext.");
     tknDestroyHashSet(pGfxContext->vertexInputLayoutPtrHashSet);
-    tknAssert(pGfxContext->renderPassPtrHashSet.count == 0, "Render pass hash set should be empty before destroying GfxContext.");
-    tknDestroyHashSet(pGfxContext->renderPassPtrHashSet);
     tknAssert(pGfxContext->renderPassPtrDynamicArray.count == 0, "Render pass dynamic array should be empty before destroying GfxContext.");
     tknDestroyDynamicArray(pGfxContext->renderPassPtrDynamicArray);
 

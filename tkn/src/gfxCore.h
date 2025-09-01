@@ -295,8 +295,6 @@ struct GfxContext
     TknDynamicArray renderPassPtrDynamicArray;
 
     DescriptorSet *pGlobalDescriptorSet;
-
-    TknHashSet renderPassPtrHashSet;
     TknHashSet vertexInputLayoutPtrHashSet;
 };
 
