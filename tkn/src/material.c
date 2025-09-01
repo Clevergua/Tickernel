@@ -416,6 +416,7 @@ Material *getGlobalMaterialPtr(GfxContext *pGfxContext)
         }
     }
     tknError("Failed to find global material");
+    return NULL;
 }
 Material *getSubpassMaterialPtr(GfxContext *pGfxContext, RenderPass *pRenderPass, uint32_t subpassIndex)
 {
@@ -434,6 +435,7 @@ Material *getSubpassMaterialPtr(GfxContext *pGfxContext, RenderPass *pRenderPass
         }
     }
     tknError("Failed to find subpass material");
+    return NULL;
 }
 Material *createPipelineMaterialPtr(GfxContext *pGfxContext, Pipeline *pPipeline)
 {

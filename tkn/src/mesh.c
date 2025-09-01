@@ -63,14 +63,16 @@ Mesh *createMeshPtr(GfxContext *pGfxContext, VertexInputLayout *pVertexInputLayo
     {
         VkBuffer indexStagingBuffer;
         VkDeviceMemory indexStagingBufferMemory;
-        createVkBuffer(pGfxContext, indexCount * sizeof(uint32_t), VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &indexStagingBuffer, &indexStagingBufferMemory);
+        size_t indexSize = (vkIndexType == VK_INDEX_TYPE_UINT16) ? sizeof(uint16_t) : sizeof(uint32_t);
+        VkDeviceSize indexBufferSize = indexCount * indexSize;
+        createVkBuffer(pGfxContext, indexBufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &indexStagingBuffer, &indexStagingBufferMemory);
         void *data;
         VkDevice vkDevice = pGfxContext->vkDevice;
-        vkMapMemory(vkDevice, indexStagingBufferMemory, 0, indexCount * sizeof(uint32_t), 0, &data);
-        memcpy(data, indices, (size_t)indexCount * sizeof(uint32_t));
+        vkMapMemory(vkDevice, indexStagingBufferMemory, 0, indexBufferSize, 0, &data);
+        memcpy(data, indices, indexBufferSize);
         vkUnmapMemory(vkDevice, indexStagingBufferMemory);
-        createVkBuffer(pGfxContext, indexCount * sizeof(uint32_t), VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &indexVkBuffer, &indexVkDeviceMemory);
-        copyVkBuffer(pGfxContext, indexStagingBuffer, indexVkBuffer, indexCount * sizeof(uint32_t));
+        createVkBuffer(pGfxContext, indexBufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &indexVkBuffer, &indexVkDeviceMemory);
+        copyVkBuffer(pGfxContext, indexStagingBuffer, indexVkBuffer, indexBufferSize);
         destroyVkBuffer(pGfxContext, indexStagingBuffer, indexStagingBufferMemory);
     }
     else

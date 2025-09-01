@@ -56,26 +56,27 @@ void updateInstancePtr(GfxContext *pGfxContext, Instance *pInstance, void *newDa
     VkDevice vkDevice = pGfxContext->vkDevice;
     if (0 == pInstance->maxInstanceCount)
     {
-        if (0 == instanceCount)
+        if (instanceCount > 0)
         {
             pInstance->maxInstanceCount = instanceCount;
             pInstance->instanceCount = instanceCount;
             VkDeviceSize instanceBufferSize = pInstance->pVertexInputLayout->stride * pInstance->instanceCount;
             createVkBuffer(pGfxContext, instanceBufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &pInstance->instanceVkBuffer, &pInstance->instanceVkDeviceMemory);
-            pInstance->instanceMappedBuffer = NULL;
             vkMapMemory(vkDevice, pInstance->instanceVkDeviceMemory, 0, instanceBufferSize, 0, &pInstance->instanceMappedBuffer);
             memcpy(pInstance->instanceMappedBuffer, newData, instanceBufferSize);
         }
         else
         {
             pInstance->instanceCount = 0;
-            destroyVkBuffer(pGfxContext, pInstance->instanceVkBuffer, pInstance->instanceVkDeviceMemory);
-            pInstance->instanceMappedBuffer = NULL;
         }
     }
     else
     {
-        if (instanceCount <= pInstance->maxInstanceCount)
+        if (instanceCount == 0)
+        {
+            pInstance->instanceCount = 0;
+        }
+        else if (instanceCount <= pInstance->maxInstanceCount)
         {
             pInstance->instanceCount = instanceCount;
             VkDeviceSize bufferSize = pInstance->pVertexInputLayout->stride * pInstance->instanceCount;
