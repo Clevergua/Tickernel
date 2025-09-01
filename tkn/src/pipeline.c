@@ -159,8 +159,7 @@ Pipeline *createPipelinePtr(GfxContext *pGfxContext, RenderPass *pRenderPass, ui
                     .stride = pInstanceVertexInputLayout->stride,
                     .inputRate = VK_VERTEX_INPUT_RATE_INSTANCE,
                 };
-                uint32_t vkVertexInputAttributeDescriptionCount = 0;
-                VkVertexInputAttributeDescription *vkVertexInputAttributeDescriptions = tknMalloc(sizeof(VkVertexInputAttributeDescription) * pGfxContext->vkPhysicalDeviceProperties.limits.maxVertexInputAttributes);
+                vkVertexInputAttributeDescriptions = tknMalloc(sizeof(VkVertexInputAttributeDescription) * pGfxContext->vkPhysicalDeviceProperties.limits.maxVertexInputAttributes);
                 for (uint32_t inputVariableIndex = 0; inputVariableIndex < spvReflectShaderModule.input_variable_count; inputVariableIndex++)
                 {
                     SpvReflectInterfaceVariable *pSpvReflectInterfaceVariable = spvReflectShaderModule.input_variables[inputVariableIndex];
@@ -183,8 +182,11 @@ Pipeline *createPipelinePtr(GfxContext *pGfxContext, RenderPass *pRenderPass, ui
                         attributeIndex = 0;
                         for (attributeIndex = 0; attributeIndex < pInstanceVertexInputLayout->attributeCount; attributeIndex++)
                         {
-                            updateVkVertexInputAttributeDescriptions(*pInstanceVertexInputLayout, attributeIndex, *pSpvReflectInterfaceVariable, INSTANCE_BINDING_DESCRIPTION, vkVertexInputAttributeDescriptions, &vkVertexInputAttributeDescriptionCount);
-                            break;
+                            if (0 == strcmp(pSpvReflectInterfaceVariable->name, pInstanceVertexInputLayout->names[attributeIndex]))
+                            {
+                                updateVkVertexInputAttributeDescriptions(*pInstanceVertexInputLayout, attributeIndex, *pSpvReflectInterfaceVariable, INSTANCE_BINDING_DESCRIPTION, vkVertexInputAttributeDescriptions, &vkVertexInputAttributeDescriptionCount);
+                                break;
+                            }
                         }
                         tknAssert(attributeIndex < pInstanceVertexInputLayout->attributeCount, "Attribute not found");
                     }
@@ -195,9 +197,9 @@ Pipeline *createPipelinePtr(GfxContext *pGfxContext, RenderPass *pRenderPass, ui
                 // Skip
             }
         }
-        if ((vkShaderStageFlagBits & spvReflectShaderModule.shader_stage) == 0)
+        if ((vkShaderStageFlagBits & spvReflectShaderModule.shader_stage) != 0)
         {
-            tknError("Incompatible shader stage");
+            tknError("Duplicate shader stage: %d", spvReflectShaderModule.shader_stage);
         }
         else
         {
