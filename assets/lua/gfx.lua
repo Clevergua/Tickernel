@@ -1,12 +1,22 @@
 -- Document not code!
 _G.gfx = {}
 
+TYPE_UINT8 = 0
+TYPE_UINT16 = 1
+TYPE_UINT32 = 2
+TYPE_UINT64 = 3
+TYPE_INT8 = 4
+TYPE_INT16 = 5
+TYPE_INT32 = 6
+TYPE_INT64 = 7
+TYPE_FLOAT = 8
+TYPE_DOUBLE = 9
+
 function gfx.getSupportedFormat(pGfxContext, candidateCount, candidates, tiling, features)
     return VK_FORMAT_MAX_ENUM
 end
 
-function gfx.createDynamicAttachmentPtr(pGfxContext, vkFormat, vkImageUsageFlags,
-                                        vkImageAspectFlags, scaler)
+function gfx.createDynamicAttachmentPtr(pGfxContext, vkFormat, vkImageUsageFlags, vkImageAspectFlags, scaler)
     local pAttachment
     return pAttachment
 end
@@ -27,9 +37,7 @@ end
 function gfx.destroyVertexInputLayoutPtr(pGfxContext, pLayout)
 end
 
-function gfx.createRenderPassPtr(pGfxContext, vkAttachmentDescriptions, inputAttachmentPtrs, vkClearValues,
-                                 vkSubpassDescriptions,
-                                 spvPathsArray, vkSubpassDependencies, renderPassIndex)
+function gfx.createRenderPassPtr(pGfxContext, vkAttachmentDescriptions, inputAttachmentPtrs, vkClearValues, vkSubpassDescriptions, spvPathsArray, vkSubpassDependencies, renderPassIndex)
     local pRenderPass
     return pRenderPass
 end
@@ -37,12 +45,7 @@ end
 function gfx.destroyRenderPassPtr(pGfxContext, pRenderPass)
 end
 
-function gfx.createPipelinePtr(pGfxContext, pRenderPass, subpassIndex, spvPaths,
-                               pMeshVertexInputLayout, pInstanceVertexInputLayout,
-                               vkPipelineInputAssemblyStateCreateInfo, vkPipelineViewportStateCreateInfo,
-                               vkPipelineRasterizationStateCreateInfo, vkPipelineMultisampleStateCreateInfo,
-                               vkPipelineDepthStencilStateCreateInfo, vkPipelineColorBlendStateCreateInfo,
-                               vkPipelineDynamicStateCreateInfo)
+function gfx.createPipelinePtr(pGfxContext, pRenderPass, subpassIndex, spvPaths, pMeshVertexInputLayout, pInstanceVertexInputLayout, vkPipelineInputAssemblyStateCreateInfo, vkPipelineViewportStateCreateInfo, vkPipelineRasterizationStateCreateInfo, vkPipelineMultisampleStateCreateInfo, vkPipelineDepthStencilStateCreateInfo, vkPipelineColorBlendStateCreateInfo, vkPipelineDynamicStateCreateInfo)
     local pPipeline
     return pPipeline
 end
@@ -50,12 +53,12 @@ end
 function gfx.destroyPipelinePtr(pGfxContext, pPipeline)
 end
 
-function gfx.addDrawCall(pGfxContext, pPipeline, pMaterial, pMesh, pInstance)
+function gfx.addDrawCallPtr(pGfxContext, pPipeline, pMaterial, pMesh, pInstance)
     local pDrawCall
     return pDrawCall
 end
 
-function gfx.removeDrawCall(pGfxContext, pDrawCall)
+function gfx.removeDrawCallPtr(pGfxContext, pDrawCall)
 end
 
 function gfx.clearDrawCalls(pGfxContext, pPipeline)
@@ -69,7 +72,7 @@ end
 -- void destroyUniformBufferPtr(GfxContext *pGfxContext, UniformBuffer *pUniformBuffer);
 -- void updateUniformBufferPtr(GfxContext *pGfxContext, UniformBuffer *pUniformBuffer, const void *data, VkDeviceSize vkDeviceSize);
 
-function gfx.createMeshPtr(pGfxContext, pMeshVertexInputLayout, vertices, indices)
+function gfx.createMeshPtr(pGfxContext, pMeshVertexInputLayout, vertexLayout, vertices, indices)
     local pMesh
     return pMesh
 end
@@ -83,7 +86,6 @@ function gfx.createInstancePtr(pGfxContext, pVertexInputLayout, instances)
 end
 
 function gfx.destroyInstancePtr(pGfxContext, pInstance)
-
 end
 
 function gfx.getGlobalMaterialPtr(pGfxContext)
@@ -97,30 +99,32 @@ function gfx.getSubpassMaterialPtr(pGfxContext, pRenderPass, subpassIndex)
 end
 
 function gfx.createPipelineMaterialPtr(pGfxContext, pPipeline)
-
+    local pMaterial
+    return pMaterial
 end
 
 function gfx.destroyPipelineMaterialPtr(pGfxContext, pMaterial)
-
 end
 
 gfx.defaultVkPipelineViewportStateCreateInfo = {
-    pViewports = {
-        {
-            x = 0.0,
-            y = 0.0,
-            width = 0.0,
-            height = 0.0,
-            minDepth = 0.0,
-            maxDepth = 1.0,
+    pViewports = {{
+        x = 0.0,
+        y = 0.0,
+        width = 0.0,
+        height = 0.0,
+        minDepth = 0.0,
+        maxDepth = 1.0
+    }},
+    pScissors = {{
+        offset = {
+            x = 0,
+            y = 0
+        },
+        extent = {
+            width = 0,
+            height = 0
         }
-    },
-    pScissors = {
-        {
-            offset = { x = 0, y = 0, },
-            extent = { width = 0, height = 0, },
-        }
-    },
+    }}
 }
 gfx.defaultVkPipelineMultisampleStateCreateInfo = {
     rasterizationSamples = VK_SAMPLE_COUNT_1_BIT,
@@ -128,12 +132,10 @@ gfx.defaultVkPipelineMultisampleStateCreateInfo = {
     minSampleShading = 0,
     pSampleMask = nil,
     alphaToCoverageEnable = false,
-    alphaToOneEnable = false,
+    alphaToOneEnable = false
 }
 
 gfx.defaultVkPipelineDynamicStateCreateInfo = {
-    pDynamicStates = {
-        VK_DYNAMIC_STATE_VIEWPORT,
-        VK_DYNAMIC_STATE_SCISSOR,
-    },
+    pDynamicStates = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR}
 }
+

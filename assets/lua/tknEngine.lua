@@ -1,37 +1,54 @@
-local srp = require("srp")
-local tknEngine = {
-    assetsPath = nil,
-}
+local tknRenderPipeline = require("tknRenderPipeline")
+local tknEngine = {}
 
 function tknEngine.start(pGfxContext, assetsPath)
     print("Lua start")
     tknEngine.assetsPath = assetsPath
     -- binding = 0
+    tknEngine.vertexLayout = {{
+        name = "position",
+        type = TYPE_FLOAT,
+        count = 3
+    }, {
+        name = "color",
+        type = TYPE_UINT8,
+        count = 4
+    }, {
+        name = "normal",
+        type = TYPE_UINT32,
+        count = 1
+    }}
+    tknEngine.instanceLayout = {{
+        name = "model",
+        type = TYPE_FLOAT,
+        count = 16
+    }}
+    tknEngine.pMeshVertexInputLayout = gfx.createVertexInputLayoutPtr(pGfxContext, tknEngine.vertexLayout)
+    tknEngine.pInstanceVertexInputLayout = gfx.createVertexInputLayoutPtr(pGfxContext, tknEngine.instanceLayout);
 
-    srp.setup(pGfxContext, assetsPath)
+    tknRenderPipeline.setup(pGfxContext, assetsPath, tknEngine.pMeshVertexInputLayout, tknEngine.pInstanceVertexInputLayout)
+    tknEngine.pGlobalMaterialPtr = gfx.getGlobalMaterialPtr(pGfxContext)
 
-    local mesh = {
-        vertices = {
-            { { 0, 0, 0, }, { 255, 0, 0, 255 }, { 0x0 } },
-            { { 0, 1, 0, }, { 255, 0, 0, 255 }, { 0x0 } },
-            { { 0, 2, 0, }, { 255, 0, 0, 255 }, { 0x0 } },
-            { { 0, 3, 0, }, { 255, 0, 0, 255 }, { 0x0 } },
-        },
-        instances = {
-            {
-                1, 0, 0, 0,
-                0, 1, 0, 0,
-                0, 0, 1, 0,
-                0, 0, 0, 1,
-            }
-        }
-    }
-    gfx.createMeshPtr(pGfxContext, mesh)
+    local vertices = {{{0, 0, 0}, {255, 0, 0, 255}, {0x0}}, {{0, 1, 0}, {255, 0, 0, 255}, {0x0}}, {{0, 2, 0}, {255, 0, 0, 255}, {0x0}}, {{0, 3, 0}, {255, 0, 0, 255}, {0x0}}}
+    tknEngine.pTestMesh = gfx.createMeshPtr(pGfxContext, tknEngine.pMeshVertexInputLayout, tknEngine.vertexLayout, vertices, nil)
+    local deferredRenderPass = tknRenderPipeline.deferredRenderPass
+    tknEngine.pDrawCall = gfx.addDrawCallPtr(pGfxContext, deferredRenderPass.pGeometryPipeline, deferredRenderPass.pGeometryMaterial, tknEngine.pTestMesh, nil)
 end
 
 function tknEngine.stop(pGfxContext)
     print("Lua stop")
-    srp.tearDown(pGfxContext)
+    gfx.removeDrawCallPtr(pGfxContext, tknEngine.pDrawCall)
+    tknEngine.pDrawCall = nil
+    gfx.destroyMeshPtr(pGfxContext, tknEngine.testMesh)
+    tknEngine.pTestMesh = nil
+
+    tknEngine.pGlobalMaterialPtr = nil
+    tknRenderPipeline.tearDown(pGfxContext)
+
+    gfx.destroyVertexInputLayoutPtr(pGfxContext, tknEngine.pInstanceVertexInputLayout)
+    gfx.destroyVertexInputLayoutPtr(pGfxContext, tknEngine.pMeshVertexInputLayout)
+    tknEngine.instanceLayout = nil
+    tknEngine.vertexLayout = nil
 end
 
 function tknEngine.updateGameplay()
