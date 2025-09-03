@@ -1,5 +1,5 @@
 require("vulkan")
-local gfx = require("gfx")
+require("gfx")
 local geometryPipeline = {}
 function geometryPipeline.createPipelinePtr(pGfxContext, pRenderPass, subpassIndex, assetsPath,
                                             pMeshVertexInputLayout, pInstanceVertexInputLayout)
@@ -25,14 +25,6 @@ function geometryPipeline.createPipelinePtr(pGfxContext, pRenderPass, subpassInd
         lineWidth = 1.0,
     }
 
-    local vkPipelineMultisampleStateCreateInfo = {
-        rasterizationSamples = VK_SAMPLE_COUNT_1_BIT,
-        sampleShadingEnable = false,
-        minSampleShading = 0,
-        pSampleMask = nil,
-        alphaToCoverageEnable = false,
-        alphaToOneEnable = false,
-    }
     local vkPipelineDepthStencilStateCreateInfo = {
         depthTestEnable = true,
         depthWriteEnable = true,
@@ -71,18 +63,13 @@ function geometryPipeline.createPipelinePtr(pGfxContext, pRenderPass, subpassInd
         },
         blendConstants = { 0.0, 0.0, 0.0, 0.0 },
     }
-    local vkPipelineDynamicStateCreateInfo = {
-        pDynamicStates = {
-            VK_DYNAMIC_STATE_VIEWPORT,
-            VK_DYNAMIC_STATE_SCISSOR,
-        },
-    }
+
 
     return gfx.createPipelinePtr(pGfxContext, pRenderPass, subpassIndex, geometryPipelineSpvPaths,
         pMeshVertexInputLayout, pInstanceVertexInputLayout, vkPipelineInputAssemblyStateCreateInfo,
         gfx.defaultVkPipelineViewportStateCreateInfo,
-        vkPipelineRasterizationStateCreateInfo, vkPipelineMultisampleStateCreateInfo,
-        vkPipelineDepthStencilStateCreateInfo, vkPipelineColorBlendStateCreateInfo, vkPipelineDynamicStateCreateInfo)
+        vkPipelineRasterizationStateCreateInfo, gfx.defaultVkPipelineMultisampleStateCreateInfo,
+        vkPipelineDepthStencilStateCreateInfo, vkPipelineColorBlendStateCreateInfo, gfx.defaultVkPipelineDynamicStateCreateInfo)
 end
 
 function geometryPipeline.destroyPipelinePtr(pGfxContext, pPipeline)

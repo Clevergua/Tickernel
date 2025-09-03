@@ -1,5 +1,5 @@
 require("vulkan")
-local gfx = require("gfx")
+require("gfx")
 local lightingPipeline = {}
 function lightingPipeline.createPipelinePtr(pGfxContext, pRenderPass, subpassIndex, assetsPath)
     local lightingPipelineSpvPaths = {
@@ -25,38 +25,12 @@ function lightingPipeline.createPipelinePtr(pGfxContext, pRenderPass, subpassInd
         lineWidth = 1.0,
     }
 
-    local vkPipelineMultisampleStateCreateInfo = {
-        rasterizationSamples = VK_SAMPLE_COUNT_1_BIT,
-        sampleShadingEnable = false,
-        minSampleShading = 0,
-        pSampleMask = nil,
-        alphaToCoverageEnable = false,
-        alphaToOneEnable = false,
-    }
     local vkPipelineDepthStencilStateCreateInfo = {
         depthTestEnable = false,
         depthWriteEnable = false,
         depthCompareOp = VK_COMPARE_OP_ALWAYS,
         depthBoundsTestEnable = false,
         stencilTestEnable = false,
-        front = {
-            failOp = VK_STENCIL_OP_KEEP,
-            passOp = VK_STENCIL_OP_KEEP,
-            depthFailOp = VK_STENCIL_OP_KEEP,
-            compareOp = VK_COMPARE_OP_ALWAYS,
-            compareMask = 0xFF,
-            writeMask = 0xFF,
-            reference = 0,
-        },
-        back = {
-            failOp = VK_STENCIL_OP_KEEP,
-            passOp = VK_STENCIL_OP_KEEP,
-            depthFailOp = VK_STENCIL_OP_KEEP,
-            compareOp = VK_COMPARE_OP_ALWAYS,
-            compareMask = 0xFF,
-            writeMask = 0xFF,
-            reference = 0,
-        },
         minDepthBounds = 0.0,
         maxDepthBounds = 1.0,
     }
@@ -79,18 +53,12 @@ function lightingPipeline.createPipelinePtr(pGfxContext, pRenderPass, subpassInd
         },
         blendConstants = { 0.0, 0.0, 0.0, 0.0 },
     }
-    local vkPipelineDynamicStateCreateInfo = {
-        pDynamicStates = {
-            VK_DYNAMIC_STATE_VIEWPORT,
-            VK_DYNAMIC_STATE_SCISSOR,
-        },
-    }
 
     return gfx.createPipelinePtr(pGfxContext, pRenderPass, subpassIndex, lightingPipelineSpvPaths,
         nil, nil, vkPipelineInputAssemblyStateCreateInfo,
         gfx.defaultVkPipelineViewportStateCreateInfo,
-        vkPipelineRasterizationStateCreateInfo, vkPipelineMultisampleStateCreateInfo,
-        vkPipelineDepthStencilStateCreateInfo, vkPipelineColorBlendStateCreateInfo, vkPipelineDynamicStateCreateInfo)
+        vkPipelineRasterizationStateCreateInfo, gfx.defaultVkPipelineMultisampleStateCreateInfo,
+        vkPipelineDepthStencilStateCreateInfo, vkPipelineColorBlendStateCreateInfo, gfx.defaultVkPipelineDynamicStateCreateInfo)
 end
 
 function lightingPipeline.destroyPipelinePtr(pGfxContext, pRenderPass)

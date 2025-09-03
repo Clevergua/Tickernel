@@ -23,26 +23,26 @@ function srp.setup(pGfxContext, assetsPath)
 
     srp.pMeshVertexInputLayout = gfx.createVertexInputLayoutPtr(pGfxContext,
         {
-            { name = "position", size = 64, },
-            { name = "color",    size = 64, },
-            { name = "normal",   size = 64, },
+            { name = "position", size = 12, },
+            { name = "color",    size = 4, },
+            { name = "normal",   size = 4, },
         }
     )
 
     srp.pInstanceVertexInputLayout = gfx.createVertexInputLayoutPtr(pGfxContext,
         {
             instanceAttributeDescription = {
-                { name = "model", size = 4, },
+                { name = "model", size = 64, },
             }
         }
     );
-    srp.pDeferredRenderPass = deferredRenderPass.createRenderPassPtr(pGfxContext, {
+    srp.pDeferredRenderPass = deferredRenderPass.setup(pGfxContext, {
         srp.pColorAttachment,
         srp.pDepthAttachment,
         srp.pAlbedoAttachment,
         srp.pNormalAttachment,
         srp.pSwapchainAttachment
-    }, assetsPath, srp.pMeshVertexInputLayout,  srp.pInstanceVertexInputLayout)
+    }, assetsPath, srp.pMeshVertexInputLayout, srp.pInstanceVertexInputLayout)
 end
 
 function srp.teardown(pGfxContext)

@@ -4,7 +4,7 @@ local postProcessPipeline = require("postProcessPipeline")
 local deferredRenderPass = {}
 
 function deferredRenderPass.setup(pGfxContext, pAttachments, assetsPath, pMeshVertexInputLayout,
-                                                pInstanceVertexInputLayout, renderPassIndex)
+                                  pInstanceVertexInputLayout, renderPassIndex)
     local colorAttachmentDescription = {
         samples = VK_SAMPLE_COUNT_1_BIT,
         loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
@@ -178,6 +178,34 @@ function deferredRenderPass.setup(pGfxContext, pAttachments, assetsPath, pMeshVe
     local pPostProcessPipeline = postProcessPipeline.createPipelinePtr(pGfxContext, pRenderPass, pipelineIndex,
         assetsPath)
 
+    deferredRenderPass.pGeometryMaterial = gfx.createPipelineMaterialPtr(pGfxContext, pGeometryPipeline)
+    deferredRenderPass.pLightingMaterial = gfx.createPipelineMaterialPtr(pGfxContext, pLightingPipeline)
+    deferredRenderPass.pPostProcessMaterial = gfx.createPipelineMaterialPtr(pGfxContext, pPostProcessPipeline)
+    local instances = {
+        {
+            {
+                1.0, 0.0, 0.0, 0.0,
+                0.0, 1.0, 0.0, 0.0,
+                0.0, 0.0, 1.0, 0.0,
+                0.0, 0.0, 0.0, 1.0,
+            },
+        },
+    }
+    gfx.createInstancePtr(pGfxContext, pInstanceVertexInputLayout, instances)
+    local vertices = {
+        {
+            {
+                -0.5, -0.5, 0.0
+            },
+            {
+                0xFF0000FF
+            },
+            {
+                0x0
+            }
+        },
+    }
+    gfx.createMeshPtr(pGfxContext, pMeshVertexInputLayout, vertices, nil)
     deferredRenderPass.pRenderPass = pRenderPass
     deferredRenderPass.pGeometryPipeline = pGeometryPipeline
     deferredRenderPass.pLightingPipeline = pLightingPipeline
@@ -185,9 +213,18 @@ function deferredRenderPass.setup(pGfxContext, pAttachments, assetsPath, pMeshVe
 end
 
 function deferredRenderPass.teardown(pGfxContext)
+    deferredRenderPass.pPostProcessMaterial = nil
     postProcessPipeline.destroyPipelinePtr(pGfxContext, deferredRenderPass.pGeometryPipeline)
+    deferredRenderPass.pLightingMaterial = nil
     lightingPipeline.destroyPipelinePtr(pGfxContext, deferredRenderPass.pLightingPipeline)
-    geometryPipeline.destroyPipelinePtr(pGfxContext, deferredRenderPass.pPostProcessPipeline)
+    deferredRenderPass.pGeometryMaterial = nil
+    geometryPipeline.destroyPipelinePtr(pGfxContext, deferredRenderPass.pGeometryPipeline)
+
+    gfx.destroyPipelineMaterialPtr(pGfxContext, deferredRenderPass.pPostProcessMaterial)
+    gfx.destroyPipelineMaterialPtr(pGfxContext, deferredRenderPass.pLightingMaterial)
+    gfx.destroyPipelineMaterialPtr(pGfxContext, deferredRenderPass.pGeometryMaterial)
+
+
     gfx.destroyRenderPassPtr(pGfxContext, deferredRenderPass.pRenderPass)
 
     deferredRenderPass.pRenderPass = nil

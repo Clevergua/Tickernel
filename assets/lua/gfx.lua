@@ -23,6 +23,7 @@ function gfx.createVertexInputLayoutPtr(pGfxContext, layout)
     local pLayout
     return pLayout
 end
+
 function gfx.destroyVertexInputLayoutPtr(pGfxContext, pLayout)
 end
 
@@ -32,9 +33,9 @@ function gfx.createRenderPassPtr(pGfxContext, vkAttachmentDescriptions, inputAtt
     local pRenderPass
     return pRenderPass
 end
+
 function gfx.destroyRenderPassPtr(pGfxContext, pRenderPass)
 end
-
 
 function gfx.createPipelinePtr(pGfxContext, pRenderPass, subpassIndex, spvPaths,
                                pMeshVertexInputLayout, pInstanceVertexInputLayout,
@@ -56,6 +57,7 @@ end
 
 function gfx.removeDrawCall(pGfxContext, pDrawCall)
 end
+
 function gfx.clearDrawCalls(pGfxContext, pPipeline)
 
 end
@@ -118,5 +120,20 @@ gfx.defaultVkPipelineViewportStateCreateInfo = {
             offset = { x = 0, y = 0, },
             extent = { width = 0, height = 0, },
         }
+    },
+}
+gfx.defaultVkPipelineMultisampleStateCreateInfo = {
+    rasterizationSamples = VK_SAMPLE_COUNT_1_BIT,
+    sampleShadingEnable = false,
+    minSampleShading = 0,
+    pSampleMask = nil,
+    alphaToCoverageEnable = false,
+    alphaToOneEnable = false,
+}
+
+gfx.defaultVkPipelineDynamicStateCreateInfo = {
+    pDynamicStates = {
+        VK_DYNAMIC_STATE_VIEWPORT,
+        VK_DYNAMIC_STATE_SCISSOR,
     },
 }
