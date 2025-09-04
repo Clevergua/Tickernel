@@ -29,7 +29,7 @@ function gfx.getSwapchainAttachmentPtr(pGfxContext)
     return pAttachment
 end
 
-function gfx.createVertexInputLayoutPtr(pGfxContext, layout)
+function gfx.createVertexInputLayoutPtr(pGfxContext, format)
     local pLayout
     return pLayout
 end
@@ -65,45 +65,44 @@ function gfx.clearDrawCalls(pGfxContext, pPipeline)
 
 end
 
--- Image *createImagePtr(GfxContext *pGfxContext, VkExtent3D vkExtent3D, VkFormat vkFormat, VkImageTiling vkImageTiling, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags);
--- void destroyImagePtr(GfxContext *pGfxContext, Image *pImage);
-
--- UniformBuffer *createUniformBufferPtr(GfxContext *pGfxContext, VkDeviceSize vkDeviceSize);
--- void destroyUniformBufferPtr(GfxContext *pGfxContext, UniformBuffer *pUniformBuffer);
--- void updateUniformBufferPtr(GfxContext *pGfxContext, UniformBuffer *pUniformBuffer, const void *data, VkDeviceSize vkDeviceSize);
-
-function gfx.createMeshPtr(pGfxContext, pMeshVertexInputLayout, vertexLayout, vertices, indices)
-    local pMesh
-    return pMesh
+function gfx.createUniformBufferPtr(pGfxContext, format, buffer)
+    local pUniformBuffer
+    return pUniformBuffer
+end
+function gfx.destroyUniformBufferPtr(pGfxContext, pUniformBuffer)
+end
+function gfx.updateUniformBufferPtr(pGfxContext, pUniformBuffer, format, buffer, size)
 end
 
-function gfx.destroyMeshPtr(pGfxContext, pMesh)
-end
-
-function gfx.createInstancePtr(pGfxContext, pVertexInputLayout, instances)
+function gfx.createInstancePtr(pGfxContext, pVertexInputLayout, format, instances)
     local pInstance
     return pInstance
 end
-
 function gfx.destroyInstancePtr(pGfxContext, pInstance)
+end
+
+function gfx.createMeshPtr(pGfxContext, pMeshVertexInputLayout, format, vertices, indices)
+    local pMesh
+    return pMesh
+end
+function gfx.destroyMeshPtr(pGfxContext, pMesh)
 end
 
 function gfx.getGlobalMaterialPtr(pGfxContext)
     local pMaterial
     return pMaterial
 end
-
 function gfx.getSubpassMaterialPtr(pGfxContext, pRenderPass, subpassIndex)
     local pMaterial
     return pMaterial
 end
-
 function gfx.createPipelineMaterialPtr(pGfxContext, pPipeline)
     local pMaterial
     return pMaterial
 end
-
 function gfx.destroyPipelineMaterialPtr(pGfxContext, pMaterial)
+end
+function gfx.updateMaterialPtr(pGfxContext, pMaterial, inputBindings)
 end
 
 gfx.defaultVkPipelineViewportStateCreateInfo = {
