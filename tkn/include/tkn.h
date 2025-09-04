@@ -18,6 +18,38 @@ typedef struct Image Image;
 typedef struct Sampler Sampler;
 typedef struct UniformBuffer UniformBuffer;
 
+typedef struct
+{
+    Sampler *pSampler;
+} SamplerBinding;
+
+typedef struct
+{
+    UniformBuffer *pUniformBuffer;
+} UniformBufferBinding;
+
+typedef union
+{
+    // VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER = 1,
+    SamplerBinding samplerBinding;
+    // VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE = 2,
+    // VK_DESCRIPTOR_TYPE_STORAGE_IMAGE = 3,
+    // VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER = 4,
+    // VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER = 5,
+    // VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER = 6,
+    UniformBufferBinding uniformBufferBinding;
+    // VK_DESCRIPTOR_TYPE_STORAGE_BUFFER = 7,
+    // VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC = 8,
+    // VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC = 9,
+} InputBindingUnion;
+
+typedef struct
+{
+    VkDescriptorType vkDescriptorType;
+    InputBindingUnion inputBindingUnion;
+    uint32_t binding;
+} InputBinding;
+
 VkFormat getSupportedFormat(GfxContext *pGfxContext, uint32_t candidateCount, VkFormat *candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
 
 GfxContext *createGfxContextPtr(int targetSwapchainImageCount, VkSurfaceFormatKHR targetVkSurfaceFormat, VkPresentModeKHR targetVkPresentMode, VkInstance vkInstance, VkSurfaceKHR vkSurface, VkExtent2D swapchainExtent, uint32_t spvPathCount, const char **spvPaths);
@@ -36,7 +68,6 @@ void destroyVertexInputLayoutPtr(GfxContext *pGfxContext, VertexInputLayout *pVe
 
 RenderPass *createRenderPassPtr(GfxContext *pGfxContext, uint32_t attachmentCount, VkAttachmentDescription *vkAttachmentDescriptions, Attachment **inputAttachmentPtrs, VkClearValue *vkClearValues, uint32_t subpassCount, VkSubpassDescription *vkSubpassDescriptions, uint32_t *spvPathCounts, const char ***spvPathsArray, uint32_t vkSubpassDependencyCount, VkSubpassDependency *vkSubpassDependencies, uint32_t renderPassIndex);
 void destroyRenderPassPtr(GfxContext *pGfxContext, RenderPass *pRenderPass);
-
 
 Pipeline *createPipelinePtr(GfxContext *pGfxContext, RenderPass *pRenderPass, uint32_t subpassIndex, uint32_t spvPathCount, const char **spvPaths, VertexInputLayout *pMeshVertexInputLayout, VertexInputLayout *pInstanceVertexInputLayout, VkPipelineInputAssemblyStateCreateInfo vkPipelineInputAssemblyStateCreateInfo, VkPipelineViewportStateCreateInfo vkPipelineViewportStateCreateInfo, VkPipelineRasterizationStateCreateInfo vkPipelineRasterizationStateCreateInfo, VkPipelineMultisampleStateCreateInfo vkPipelineMultisampleStateCreateInfo, VkPipelineDepthStencilStateCreateInfo vkPipelineDepthStencilStateCreateInfo, VkPipelineColorBlendStateCreateInfo vkPipelineColorBlendStateCreateInfo, VkPipelineDynamicStateCreateInfo vkPipelineDynamicStateCreateInfo);
 void destroyPipelinePtr(GfxContext *pGfxContext, Pipeline *pPipeline);
@@ -62,6 +93,8 @@ Material *getGlobalMaterialPtr(GfxContext *pGfxContext);
 Material *getSubpassMaterialPtr(GfxContext *pGfxContext, RenderPass *pRenderPass, uint32_t subpassIndex);
 Material *createPipelineMaterialPtr(GfxContext *pGfxContext, Pipeline *pPipeline);
 void destroyPipelineMaterialPtr(GfxContext *pGfxContext, Material *pMaterial);
+InputBindingUnion getEmptyInputBindingUnion(VkDescriptorType vkDescriptorType);
+void updateMaterialPtr(GfxContext *pGfxContext, Material *pMaterial, uint32_t inputBindingCount, InputBinding *inputBindings);
 
 void tknError(char const *const _Format, ...);
 void tknWarning(const char *format, ...);

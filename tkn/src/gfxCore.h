@@ -115,16 +115,6 @@ struct Attachment
 
 typedef struct
 {
-    Sampler *pSampler;
-} SamplerBinding;
-
-typedef struct
-{
-    UniformBuffer *pUniformBuffer;
-} UniformBufferBinding;
-
-typedef struct
-{
     Attachment *pAttachment;
     VkImageLayout vkImageLayout;
 } InputAttachmentBinding;
@@ -317,8 +307,11 @@ Material *createMaterialPtr(GfxContext *pGfxContext, DescriptorSet *pDescriptorS
 void destroyMaterialPtr(GfxContext *pGfxContext, Material *pMaterial);
 
 void resizeDynamicAttachmentPtr(GfxContext *pGfxContext, Attachment *pAttachment);
-BindingUnion getNullBindingUnion(VkDescriptorType vkDescriptorType);
-void updateBindings(GfxContext *pGfxContext, uint32_t bindingCount, Binding *bindings);
+BindingUnion getEmptyBindingUnion(VkDescriptorType vkDescriptorType);
+void bindAttachmentsToMaterialPtr(GfxContext *pGfxContext, Material *pMaterial);
+void unbindAttachmentsFromMaterialPtr(GfxContext *pGfxContext, Material *pMaterial);
+void updateAttachmentOfMaterialPtr(GfxContext *pGfxContext, Binding *pBinding);
+
 
 void clearBindingPtrHashSet(GfxContext *pGfxContext, TknHashSet bindingPtrHashSet);
 

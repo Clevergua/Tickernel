@@ -2,8 +2,6 @@
 
 static Subpass createSubpass(GfxContext *pGfxContext, uint32_t subpassIndex, uint32_t attachmentCount, Attachment **attachmentPtrs, uint32_t inputVkAttachmentReferenceCount, const VkAttachmentReference *inputVkAttachmentReferences, uint32_t spvPathCount, const char **spvPaths)
 {
-    uint32_t inputAttachmentBindingCount = 0;
-    Binding *inputAttachmentBindings = tknMalloc(sizeof(Binding) * inputVkAttachmentReferenceCount);
     VkImageLayout *inputAttachmentIndexToVkImageLayout = tknMalloc(sizeof(VkImageLayout) * attachmentCount);
     for (uint32_t attachmentIndex = 0; attachmentIndex < attachmentCount; attachmentIndex++)
     {
@@ -38,17 +36,16 @@ static Subpass createSubpass(GfxContext *pGfxContext, uint32_t subpassIndex, uin
                     {
                         uint32_t binding = pSpvReflectDescriptorBinding->binding;
                         uint32_t inputAttachmentIndex = pSpvReflectDescriptorBinding->input_attachment_index;
+                        Attachment *pInputAttachment = attachmentPtrs[inputAttachmentIndex];
                         if (NULL == pMaterial->bindings[binding].bindingUnion.inputAttachmentBinding.pAttachment)
                         {
                             tknAssert(inputAttachmentIndex < attachmentCount, "Input attachment index %u out of bounds", inputAttachmentIndex);
-                            pMaterial->bindings[binding].bindingUnion.inputAttachmentBinding.pAttachment = attachmentPtrs[inputAttachmentIndex];
+                            pMaterial->bindings[binding].bindingUnion.inputAttachmentBinding.pAttachment = pInputAttachment;
                             pMaterial->bindings[binding].bindingUnion.inputAttachmentBinding.vkImageLayout = inputAttachmentIndexToVkImageLayout[inputAttachmentIndex];
-                            inputAttachmentBindings[inputAttachmentBindingCount] = pMaterial->bindings[binding];
-                            inputAttachmentBindingCount++;
                         }
                         else
                         {
-                            tknAssert(pMaterial->bindings[binding].bindingUnion.inputAttachmentBinding.pAttachment == attachmentPtrs[inputAttachmentIndex],
+                            tknAssert(pMaterial->bindings[binding].bindingUnion.inputAttachmentBinding.pAttachment == pInputAttachment,
                                       "Input attachment %u already set for binding %u in subpass descriptor set", inputAttachmentIndex, binding);
                         }
                     }
@@ -63,8 +60,9 @@ static Subpass createSubpass(GfxContext *pGfxContext, uint32_t subpassIndex, uin
     }
     tknFree(spvReflectShaderModules);
     tknFree(inputAttachmentIndexToVkImageLayout);
-    updateBindings(pGfxContext, inputAttachmentBindingCount, inputAttachmentBindings);
-    tknFree(inputAttachmentBindings);
+
+    bindAttachmentsToMaterialPtr(pGfxContext, pMaterial);
+
     TknDynamicArray pipelinePtrDynamicArray = tknCreateDynamicArray(sizeof(Pipeline *), TKN_DEFAULT_COLLECTION_SIZE);
     Subpass subpass = {
         .pSubpassDescriptorSet = pSubpassDescriptorSet,
@@ -80,6 +78,20 @@ static void destroySubpass(GfxContext *pGfxContext, Subpass subpass)
         destroyPipelinePtr(pGfxContext, pPipeline);
     }
     tknAssert(subpass.pSubpassDescriptorSet->materialPtrHashSet.count == 1, "Subpass must have exactly one material");
+    for (uint32_t i = 0; i < subpass.pSubpassDescriptorSet->materialPtrHashSet.capacity; i++)
+    {
+        TknListNode *node = subpass.pSubpassDescriptorSet->materialPtrHashSet.nodePtrs[i];
+        if (node != NULL)
+        {
+            Material *pMaterial = *(Material **)node->data;
+            unbindAttachmentsFromMaterialPtr(pGfxContext, pMaterial);
+            break;
+        }
+        else
+        {
+            // Skip
+        }
+    }
     destroyDescriptorSetPtr(pGfxContext, subpass.pSubpassDescriptorSet);
     tknDestroyDynamicArray(subpass.pipelinePtrDynamicArray);
 }
