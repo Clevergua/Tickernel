@@ -12,6 +12,10 @@ SpvReflectShaderModule createSpvReflectShaderModule(const char *filePath)
     {
         tknError("Failed to open file: %s\n", filePath);
     }
+    else
+    {
+        // File opened successfully
+    }
     fseek(file, 0, SEEK_END);
     size_t shaderSize = ftell(file);
     fseek(file, 0, SEEK_SET);
@@ -21,6 +25,10 @@ SpvReflectShaderModule createSpvReflectShaderModule(const char *filePath)
         fclose(file);
         tknError("Invalid SPIR-V file size: %s\n", filePath);
     }
+    else
+    {
+        // Valid SPIR-V file size
+    }
     void *shaderCode = tknMalloc(shaderSize);
     size_t bytesRead = fread(shaderCode, 1, shaderSize, file);
 
@@ -29,6 +37,10 @@ SpvReflectShaderModule createSpvReflectShaderModule(const char *filePath)
     if (bytesRead != shaderSize)
     {
         tknError("Failed to read entire file: %s\n", filePath);
+    }
+    else
+    {
+        // File read successfully
     }
     SpvReflectShaderModule spvReflectShaderModule;
     SpvReflectResult spvReflectResult = spvReflectCreateShaderModule(shaderSize, shaderCode, &spvReflectShaderModule);
@@ -52,10 +64,15 @@ static uint32_t getMemoryTypeIndex(VkPhysicalDevice vkPhysicalDevice, uint32_t t
         {
             return i;
         }
+        else
+        {
+            // Memory type doesn't match requirements
+        }
     }
     tknError("Failed to get suitable memory type!");
     return UINT32_MAX;
 }
+
 
 void clearBindingPtrHashSet(GfxContext *pGfxContext, TknHashSet bindingPtrHashSet)
 {
@@ -67,7 +84,7 @@ void clearBindingPtrHashSet(GfxContext *pGfxContext, TknHashSet bindingPtrHashSe
             Binding *pBinding = *(Binding **)node->data;
             InputBinding inputBinding = {
                 .vkDescriptorType = pBinding->vkDescriptorType,
-                .inputBindingUnion = getEmptyInputBindingUnion(pBinding->vkDescriptorType),
+                .inputBindingUnion = {0},
                 .binding = pBinding->binding,
             };
             updateMaterialPtr(pGfxContext, pBinding->pMaterial, 1, &inputBinding);
@@ -368,6 +385,10 @@ void destroyDescriptorSetPtr(GfxContext *pGfxContext, DescriptorSet *pDescriptor
                 pMaterial = *(Material **)pNode->data;
                 break;
             }
+            else
+            {
+                // No node at this index
+            }
         }
         if (pMaterial)
         {
@@ -399,6 +420,10 @@ VkFormat getSupportedFormat(GfxContext *pGfxContext, uint32_t candidateCount, Vk
             {
                 return format;
             }
+            else
+            {
+                // Linear tiling features don't match
+            }
         }
         else if (VK_IMAGE_TILING_OPTIMAL == tiling)
         {
@@ -406,6 +431,14 @@ VkFormat getSupportedFormat(GfxContext *pGfxContext, uint32_t candidateCount, Vk
             {
                 return format;
             }
+            else
+            {
+                // Optimal tiling features don't match
+            }
+        }
+        else
+        {
+            // Unknown tiling mode
         }
     }
     fprintf(stderr, "Error: No supported format found for the given requirements\n");

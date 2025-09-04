@@ -139,7 +139,7 @@ Pipeline *createPipelinePtr(GfxContext *pGfxContext, RenderPass *pRenderPass, ui
     {
         spvReflectShaderModules[spvPathIndex] = createSpvReflectShaderModule(spvPaths[spvPathIndex]);
     }
-    DescriptorSet *pPipelineDescriptorSet = createDescriptorSetPtr(pGfxContext, spvPathCount, spvReflectShaderModules, TKN_GLOBAL_DESCRIPTOR_SET);
+    DescriptorSet *pPipelineDescriptorSet = createDescriptorSetPtr(pGfxContext, spvPathCount, spvReflectShaderModules, TKN_PIPELINE_DESCRIPTOR_SET);
     for (uint32_t spvPathIndex = 0; spvPathIndex < spvPathCount; spvPathIndex++)
     {
         SpvReflectShaderModule spvReflectShaderModule = spvReflectShaderModules[spvPathIndex];
@@ -179,13 +179,17 @@ Pipeline *createPipelinePtr(GfxContext *pGfxContext, RenderPass *pRenderPass, ui
                     }
                     else
                     {
-                        attributeIndex = 0;
+                        // Try to find in instance vertex input layout
                         for (attributeIndex = 0; attributeIndex < pInstanceVertexInputLayout->attributeCount; attributeIndex++)
                         {
                             if (0 == strcmp(pSpvReflectInterfaceVariable->name, pInstanceVertexInputLayout->names[attributeIndex]))
                             {
                                 updateVkVertexInputAttributeDescriptions(*pInstanceVertexInputLayout, attributeIndex, *pSpvReflectInterfaceVariable, INSTANCE_BINDING_DESCRIPTION, vkVertexInputAttributeDescriptions, &vkVertexInputAttributeDescriptionCount);
                                 break;
+                            }
+                            else
+                            {
+                                // Continue searching
                             }
                         }
                         tknAssert(attributeIndex < pInstanceVertexInputLayout->attributeCount, "Attribute not found");

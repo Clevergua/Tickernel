@@ -15,8 +15,7 @@ static Subpass createSubpass(GfxContext *pGfxContext, uint32_t subpassIndex, uin
     SpvReflectShaderModule *spvReflectShaderModules = tknMalloc(sizeof(SpvReflectShaderModule) * spvPathCount);
     for (uint32_t spvPathIndex = 0; spvPathIndex < spvPathCount; spvPathIndex++)
     {
-        const char *spvPath = spvPaths[spvPathIndex];
-        spvReflectShaderModules[spvPathIndex] = createSpvReflectShaderModule(spvPath);
+        spvReflectShaderModules[spvPathIndex] = createSpvReflectShaderModule(spvPaths[spvPathIndex]);
     }
     DescriptorSet *pSubpassDescriptorSet = createDescriptorSetPtr(pGfxContext, spvPathCount, spvReflectShaderModules, TKN_SUBPASS_DESCRIPTOR_SET);
     Material *pMaterial = createMaterialPtr(pGfxContext, pSubpassDescriptorSet);

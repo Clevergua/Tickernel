@@ -103,8 +103,8 @@ Attachment *createFixedAttachmentPtr(GfxContext *pGfxContext, VkFormat vkFormat,
 void destroyFixedAttachmentPtr(GfxContext *pGfxContext, Attachment *pAttachment)
 {
     tknAssert(ATTACHMENT_TYPE_FIXED == pAttachment->attachmentType, "Attachment type mismatch!");
-    tknRemoveFromHashSet(&pGfxContext->fixedAttachmentPtrHashSet, pAttachment);
     tknAssert(0 == pAttachment->renderPassPtrHashSet.count, "Cannot destroy fixed attachment with render passes attached!");
+    tknRemoveFromHashSet(&pGfxContext->fixedAttachmentPtrHashSet, pAttachment);
     tknDestroyHashSet(pAttachment->renderPassPtrHashSet);
     FixedAttachment fixedAttachment = pAttachment->attachmentUnion.fixedAttachment;
     destroyVkImage(pGfxContext, fixedAttachment.vkImage, fixedAttachment.vkDeviceMemory, fixedAttachment.vkImageView);

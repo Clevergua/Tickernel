@@ -293,6 +293,10 @@ Material *getGlobalMaterialPtr(GfxContext *pGfxContext)
             Material *pMaterial = *(Material **)node->data;
             return pMaterial;
         }
+        else
+        {
+            // Continue searching
+        }
     }
     tknError("Failed to find global material");
     return NULL;
@@ -311,6 +315,10 @@ Material *getSubpassMaterialPtr(GfxContext *pGfxContext, RenderPass *pRenderPass
         {
             Material *pMaterial = *(Material **)node->data;
             return pMaterial;
+        }
+        else
+        {
+            // Continue searching
         }
     }
     tknError("Failed to find subpass material");
@@ -431,7 +439,6 @@ void updateMaterialPtr(GfxContext *pGfxContext, Material *pMaterial, uint32_t in
             else if (VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER == vkDescriptorType)
             {
                 UniformBuffer *pInputUniformBuffer = inputBinding.inputBindingUnion.uniformBufferBinding.pUniformBuffer;
-                Binding *pBinding = &pMaterial->bindings[binding];
                 UniformBuffer *pUniformBuffer = pBinding->bindingUnion.uniformBufferBinding.pUniformBuffer;
                 if (pInputUniformBuffer == pUniformBuffer)
                 {
