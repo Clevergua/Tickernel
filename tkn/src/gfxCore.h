@@ -307,11 +307,9 @@ Material *createMaterialPtr(GfxContext *pGfxContext, DescriptorSet *pDescriptorS
 void destroyMaterialPtr(GfxContext *pGfxContext, Material *pMaterial);
 
 void resizeDynamicAttachmentPtr(GfxContext *pGfxContext, Attachment *pAttachment);
-BindingUnion getEmptyBindingUnion(VkDescriptorType vkDescriptorType);
 void bindAttachmentsToMaterialPtr(GfxContext *pGfxContext, Material *pMaterial);
 void unbindAttachmentsFromMaterialPtr(GfxContext *pGfxContext, Material *pMaterial);
 void updateAttachmentOfMaterialPtr(GfxContext *pGfxContext, Binding *pBinding);
-
 
 void clearBindingPtrHashSet(GfxContext *pGfxContext, TknHashSet bindingPtrHashSet);
 
