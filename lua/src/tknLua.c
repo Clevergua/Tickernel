@@ -64,6 +64,7 @@ TknContext *createTknContextPtr(const char *assetsPath, uint32_t luaLibraryCount
         luaL_setfuncs(pLuaState, luaLibrary.luaRegs, 0);
         lua_setglobal(pLuaState, luaLibrary.name);
     }
+    
     char tknEngineLuaPath[FILENAME_MAX];
     snprintf(tknEngineLuaPath, FILENAME_MAX, "%s/lua/tknEngine.lua", assetsPath);
     int result = luaL_dofile(pLuaState, tknEngineLuaPath);

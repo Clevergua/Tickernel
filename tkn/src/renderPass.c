@@ -150,7 +150,6 @@ void destroyRenderPassPtr(GfxContext *pGfxContext, RenderPass *pRenderPass)
     tknRemoveFromDynamicArray(&pGfxContext->renderPassPtrDynamicArray, &pRenderPass);
     cleanupFramebuffers(pGfxContext, pRenderPass);
     vkDestroyRenderPass(pGfxContext->vkDevice, pRenderPass->vkRenderPass, NULL);
-
     for (uint32_t i = 0; i < pRenderPass->subpassCount; i++)
     {
         Subpass *pSubpass = &pRenderPass->subpasses[i];

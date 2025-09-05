@@ -8,69 +8,79 @@ static VkDeviceSize calculateLayoutSize(lua_State *pLuaState, int layoutIndex)
     lua_len(pLuaState, layoutIndex);
     uint32_t fieldCount = (uint32_t)lua_tointeger(pLuaState, -1);
     lua_pop(pLuaState, 1);
-    
+
     for (uint32_t i = 0; i < fieldCount; i++)
     {
         lua_rawgeti(pLuaState, layoutIndex, i + 1);
-        
+
         lua_getfield(pLuaState, -1, "type");
         uint32_t type = (uint32_t)lua_tointeger(pLuaState, -1);
         lua_pop(pLuaState, 1);
-        
+
         lua_getfield(pLuaState, -1, "count");
         uint32_t count = (uint32_t)lua_tointeger(pLuaState, -1);
         lua_pop(pLuaState, 1);
-        
+
         uint32_t typeSize = 0;
-        if (type == TYPE_UINT8) typeSize = 1;
-        else if (type == TYPE_UINT16) typeSize = 2;
-        else if (type == TYPE_UINT32) typeSize = 4;
-        else if (type == TYPE_UINT64) typeSize = 8;
-        else if (type == TYPE_INT8) typeSize = 1;
-        else if (type == TYPE_INT16) typeSize = 2;
-        else if (type == TYPE_INT32) typeSize = 4;
-        else if (type == TYPE_INT64) typeSize = 8;
-        else if (type == TYPE_FLOAT) typeSize = 4;
-        else if (type == TYPE_DOUBLE) typeSize = 8;
+        if (type == TYPE_UINT8)
+            typeSize = 1;
+        else if (type == TYPE_UINT16)
+            typeSize = 2;
+        else if (type == TYPE_UINT32)
+            typeSize = 4;
+        else if (type == TYPE_UINT64)
+            typeSize = 8;
+        else if (type == TYPE_INT8)
+            typeSize = 1;
+        else if (type == TYPE_INT16)
+            typeSize = 2;
+        else if (type == TYPE_INT32)
+            typeSize = 4;
+        else if (type == TYPE_INT64)
+            typeSize = 8;
+        else if (type == TYPE_FLOAT)
+            typeSize = 4;
+        else if (type == TYPE_DOUBLE)
+            typeSize = 8;
         else
         {
             typeSize = 4; // default
         }
-        
+
         totalSize += typeSize * count;
         lua_pop(pLuaState, 1);
     }
-    
+
     return totalSize;
 }
 
 // Helper function to pack data from Lua table according to layout
-static void* packDataFromLayout(lua_State *pLuaState, int layoutIndex, int dataIndex, VkDeviceSize* outSize)
+static void *packDataFromLayout(lua_State *pLuaState, int layoutIndex, int dataIndex, VkDeviceSize *outSize)
 {
     VkDeviceSize totalSize = calculateLayoutSize(pLuaState, layoutIndex);
-    void* data = tknMalloc(totalSize);
-    uint8_t* dataPtr = (uint8_t*)data;
-    
+    void *data = tknMalloc(totalSize);
+    uint8_t *dataPtr = (uint8_t *)data;
+
     lua_len(pLuaState, layoutIndex);
     uint32_t fieldCount = (uint32_t)lua_tointeger(pLuaState, -1);
     lua_pop(pLuaState, 1);
-    
+
     for (uint32_t i = 0; i < fieldCount; i++)
     {
         lua_rawgeti(pLuaState, layoutIndex, i + 1);
-        
+
         lua_getfield(pLuaState, -1, "name");
-        const char* fieldName = lua_tostring(pLuaState, -1);
+        const char *fieldName = lua_tostring(pLuaState, -1);
         lua_pop(pLuaState, 1);
-        
+
         lua_getfield(pLuaState, -1, "type");
         uint32_t type = (uint32_t)lua_tointeger(pLuaState, -1);
         lua_pop(pLuaState, 1);
-        
+
         lua_getfield(pLuaState, -1, "count");
         uint32_t count = (uint32_t)lua_tointeger(pLuaState, -1);
         lua_pop(pLuaState, 1);
-        
+
         // Get data for this field
         lua_getfield(pLuaState, dataIndex, fieldName);
         if (!lua_isnil(pLuaState, -1))
@@ -140,17 +150,20 @@ static void* packDataFromLayout(lua_State *pLuaState, int layoutIndex, int dataI
         lua_pop(pLuaState, 1); // pop field data
         lua_pop(pLuaState, 1); // pop layout entry
     }
-    
+
     *outSize = totalSize;
     return data;
 }
 
 static int luaGetSupportedFormat(lua_State *pLuaState)
 {
-    GfxContext *pGfxContext = (GfxContext *)lua_touserdata(pLuaState, -5);
-    uint32_t candidateCount = (uint32_t)lua_tointeger(pLuaState, -4);
+    GfxContext *pGfxContext = (GfxContext *)lua_touserdata(pLuaState, -4);
     
     // candidates table is at position -3
+    lua_len(pLuaState, -3);
+    uint32_t candidateCount = (uint32_t)lua_tointeger(pLuaState, -1);
+    lua_pop(pLuaState, 1);
+    
     VkFormat *candidates = tknMalloc(sizeof(VkFormat) * candidateCount);
     for (uint32_t i = 0; i < candidateCount; i++)
     {
@@ -164,9 +177,7 @@ static int luaGetSupportedFormat(lua_State *pLuaState)
     tknFree(candidates);
     lua_pushinteger(pLuaState, (lua_Integer)supportedFormat);
     return 1;
-}
-
-static int luaCreateDynamicAttachmentPtr(lua_State *pLuaState)
+}static int luaCreateDynamicAttachmentPtr(lua_State *pLuaState)
 {
     GfxContext *pGfxContext = (GfxContext *)lua_touserdata(pLuaState, -5);
     VkFormat vkFormat = (VkFormat)lua_tointeger(pLuaState, -4);
@@ -959,56 +970,66 @@ static int luaDestroyPipelinePtr(lua_State *pLuaState)
 static int luaCreateVertexInputLayoutPtr(lua_State *pLuaState)
 {
     GfxContext *pGfxContext = (GfxContext *)lua_touserdata(pLuaState, -2);
-    
+
     // Get layout array
     lua_len(pLuaState, -1);
     uint32_t attributeCount = (uint32_t)lua_tointeger(pLuaState, -1);
     lua_pop(pLuaState, 1);
-    
-    const char **names = tknMalloc(sizeof(char*) * attributeCount);
+
+    const char **names = tknMalloc(sizeof(char *) * attributeCount);
     uint32_t *sizes = tknMalloc(sizeof(uint32_t) * attributeCount);
-    
+
     for (uint32_t i = 0; i < attributeCount; i++)
     {
         lua_rawgeti(pLuaState, -1, i + 1);
-        
+
         lua_getfield(pLuaState, -1, "name");
         names[i] = lua_tostring(pLuaState, -1);
         lua_pop(pLuaState, 1);
-        
+
         lua_getfield(pLuaState, -1, "type");
         uint32_t type = (uint32_t)lua_tointeger(pLuaState, -1);
         lua_pop(pLuaState, 1);
-        
+
         lua_getfield(pLuaState, -1, "count");
         uint32_t count = (uint32_t)lua_tointeger(pLuaState, -1);
         lua_pop(pLuaState, 1);
-        
+
         uint32_t typeSize = 0;
-        if (type == TYPE_UINT8) typeSize = 1;
-        else if (type == TYPE_UINT16) typeSize = 2;
-        else if (type == TYPE_UINT32) typeSize = 4;
-        else if (type == TYPE_UINT64) typeSize = 8;
-        else if (type == TYPE_INT8) typeSize = 1;
-        else if (type == TYPE_INT16) typeSize = 2;
-        else if (type == TYPE_INT32) typeSize = 4;
-        else if (type == TYPE_INT64) typeSize = 8;
-        else if (type == TYPE_FLOAT) typeSize = 4;
-        else if (type == TYPE_DOUBLE) typeSize = 8;
+        if (type == TYPE_UINT8)
+            typeSize = 1;
+        else if (type == TYPE_UINT16)
+            typeSize = 2;
+        else if (type == TYPE_UINT32)
+            typeSize = 4;
+        else if (type == TYPE_UINT64)
+            typeSize = 8;
+        else if (type == TYPE_INT8)
+            typeSize = 1;
+        else if (type == TYPE_INT16)
+            typeSize = 2;
+        else if (type == TYPE_INT32)
+            typeSize = 4;
+        else if (type == TYPE_INT64)
+            typeSize = 8;
+        else if (type == TYPE_FLOAT)
+            typeSize = 4;
+        else if (type == TYPE_DOUBLE)
+            typeSize = 8;
         else
         {
             typeSize = 4; // default
         }
-        
+
         sizes[i] = typeSize * count;
         lua_pop(pLuaState, 1);
     }
-    
+
     VertexInputLayout *pVertexInputLayout = createVertexInputLayoutPtr(pGfxContext, attributeCount, names, sizes);
-    
+
     tknFree(names);
     tknFree(sizes);
-    
+
     lua_pushlightuserdata(pLuaState, pVertexInputLayout);
     return 1;
 }
@@ -1028,7 +1049,7 @@ static int luaAddDrawCallPtr(lua_State *pLuaState)
     Material *pMaterial = (Material *)lua_touserdata(pLuaState, -3);
     Mesh *pMesh = (Mesh *)lua_touserdata(pLuaState, -2);
     Instance *pInstance = lua_isnil(pLuaState, -1) ? NULL : (Instance *)lua_touserdata(pLuaState, -1);
-    
+
     DrawCall *pDrawCall = addDrawCallPtr(pGfxContext, pPipeline, pMaterial, pMesh, pInstance);
     lua_pushlightuserdata(pLuaState, pDrawCall);
     return 1;
@@ -1054,12 +1075,12 @@ static int luaCreateUniformBufferPtr(lua_State *pLuaState)
 {
     GfxContext *pGfxContext = (GfxContext *)lua_touserdata(pLuaState, -3);
     // layout at -2, data at -1
-    
+
     VkDeviceSize size;
-    void* packedData = packDataFromLayout(pLuaState, -2, -1, &size);
-    
+    void *packedData = packDataFromLayout(pLuaState, -2, -1, &size);
+
     UniformBuffer *pUniformBuffer = createUniformBufferPtr(pGfxContext, packedData, size);
-    
+
     tknFree(packedData);
     lua_pushlightuserdata(pLuaState, pUniformBuffer);
     return 1;
@@ -1078,15 +1099,15 @@ static int luaUpdateUniformBufferPtr(lua_State *pLuaState)
     GfxContext *pGfxContext = (GfxContext *)lua_touserdata(pLuaState, -5);
     UniformBuffer *pUniformBuffer = (UniformBuffer *)lua_touserdata(pLuaState, -4);
     // layout at -3, data at -2, size at -1
-    
+
     VkDeviceSize size;
-    void* packedData = packDataFromLayout(pLuaState, -3, -2, &size);
-    
+    void *packedData = packDataFromLayout(pLuaState, -3, -2, &size);
+
     // Use the provided size if available, otherwise use calculated size
     VkDeviceSize finalSize = lua_isnil(pLuaState, -1) ? size : (VkDeviceSize)lua_tointeger(pLuaState, -1);
-    
+
     updateUniformBufferPtr(pGfxContext, pUniformBuffer, packedData, finalSize);
-    
+
     tknFree(packedData);
     return 0;
 }
@@ -1096,10 +1117,10 @@ static int luaCreateMeshPtr(lua_State *pLuaState)
     GfxContext *pGfxContext = (GfxContext *)lua_touserdata(pLuaState, -5);
     VertexInputLayout *pVertexInputLayout = (VertexInputLayout *)lua_touserdata(pLuaState, -4);
     // vertexLayout at -3, vertices at -2, indices at -1
-    
+
     VkDeviceSize vertexSize;
-    void* vertexData = packDataFromLayout(pLuaState, -3, -2, &vertexSize);
-    
+    void *vertexData = packDataFromLayout(pLuaState, -3, -2, &vertexSize);
+
     // Calculate vertex count based on layout
     uint32_t vertexCount = 0;
     VkDeviceSize layoutSize = calculateLayoutSize(pLuaState, -3);
@@ -1107,21 +1128,21 @@ static int luaCreateMeshPtr(lua_State *pLuaState)
     {
         vertexCount = (uint32_t)(vertexSize / layoutSize);
     }
-    
+
     // Handle indices
-    void* indexData = NULL;
+    void *indexData = NULL;
     uint32_t indexCount = 0;
     VkIndexType indexType = VK_INDEX_TYPE_UINT32;
-    
+
     if (!lua_isnil(pLuaState, -1))
     {
         lua_len(pLuaState, -1);
         indexCount = (uint32_t)lua_tointeger(pLuaState, -1);
         lua_pop(pLuaState, 1);
-        
+
         indexData = tknMalloc(sizeof(uint32_t) * indexCount);
-        uint32_t* indices = (uint32_t*)indexData;
-        
+        uint32_t *indices = (uint32_t *)indexData;
+
         for (uint32_t i = 0; i < indexCount; i++)
         {
             lua_rawgeti(pLuaState, -1, i + 1);
@@ -1129,12 +1150,13 @@ static int luaCreateMeshPtr(lua_State *pLuaState)
             lua_pop(pLuaState, 1);
         }
     }
-    
+
     Mesh *pMesh = createMeshPtr(pGfxContext, pVertexInputLayout, vertexData, vertexCount, indexType, indexData, indexCount);
-    
+
     tknFree(vertexData);
-    if (indexData) tknFree(indexData);
-    
+    if (indexData)
+        tknFree(indexData);
+
     lua_pushlightuserdata(pLuaState, pMesh);
     return 1;
 }
@@ -1152,10 +1174,10 @@ static int luaCreateInstancePtr(lua_State *pLuaState)
     GfxContext *pGfxContext = (GfxContext *)lua_touserdata(pLuaState, -4);
     VertexInputLayout *pVertexInputLayout = (VertexInputLayout *)lua_touserdata(pLuaState, -3);
     // instanceLayout at -2, instances at -1
-    
+
     VkDeviceSize instanceSize;
-    void* instanceData = packDataFromLayout(pLuaState, -2, -1, &instanceSize);
-    
+    void *instanceData = packDataFromLayout(pLuaState, -2, -1, &instanceSize);
+
     // Calculate instance count based on layout
     uint32_t instanceCount = 1;
     VkDeviceSize layoutSize = calculateLayoutSize(pLuaState, -2);
@@ -1163,9 +1185,9 @@ static int luaCreateInstancePtr(lua_State *pLuaState)
     {
         instanceCount = (uint32_t)(instanceSize / layoutSize);
     }
-    
+
     Instance *pInstance = createInstancePtr(pGfxContext, pVertexInputLayout, instanceCount, instanceData);
-    
+
     tknFree(instanceData);
     lua_pushlightuserdata(pLuaState, pInstance);
     return 1;
@@ -1218,32 +1240,32 @@ static int luaUpdateMaterialPtr(lua_State *pLuaState)
 {
     GfxContext *pGfxContext = (GfxContext *)lua_touserdata(pLuaState, -3);
     Material *pMaterial = (Material *)lua_touserdata(pLuaState, -2);
-    
+
     // Get inputBindings array
     lua_len(pLuaState, -1);
     uint32_t inputBindingCount = (uint32_t)lua_tointeger(pLuaState, -1);
     lua_pop(pLuaState, 1);
-    
+
     InputBinding *inputBindings = tknMalloc(sizeof(InputBinding) * inputBindingCount);
-    
+
     for (uint32_t i = 0; i < inputBindingCount; i++)
     {
         lua_rawgeti(pLuaState, -1, i + 1);
-        
+
         // For now, assume it's a UniformBuffer pointer (binding 0, descriptor type 6)
         UniformBuffer *pUniformBuffer = (UniformBuffer *)lua_touserdata(pLuaState, -1);
-        
+
         inputBindings[i] = (InputBinding){
             .vkDescriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
             .inputBindingUnion = {.uniformBufferBinding = {.pUniformBuffer = pUniformBuffer}},
             .binding = i,
         };
-        
+
         lua_pop(pLuaState, 1);
     }
-    
+
     updateMaterialPtr(pGfxContext, pMaterial, inputBindingCount, inputBindings);
-    
+
     tknFree(inputBindings);
     return 0;
 }
@@ -1281,29 +1303,6 @@ void bindFunctions(lua_State *pLuaState)
         {NULL, NULL},
     };
     luaL_newlib(pLuaState, regs);
-    
-    // Add type constants
-    lua_pushinteger(pLuaState, TYPE_UINT8);
-    lua_setfield(pLuaState, -2, "TYPE_UINT8");
-    lua_pushinteger(pLuaState, TYPE_UINT16);
-    lua_setfield(pLuaState, -2, "TYPE_UINT16");
-    lua_pushinteger(pLuaState, TYPE_UINT32);
-    lua_setfield(pLuaState, -2, "TYPE_UINT32");
-    lua_pushinteger(pLuaState, TYPE_UINT64);
-    lua_setfield(pLuaState, -2, "TYPE_UINT64");
-    lua_pushinteger(pLuaState, TYPE_INT8);
-    lua_setfield(pLuaState, -2, "TYPE_INT8");
-    lua_pushinteger(pLuaState, TYPE_INT16);
-    lua_setfield(pLuaState, -2, "TYPE_INT16");
-    lua_pushinteger(pLuaState, TYPE_INT32);
-    lua_setfield(pLuaState, -2, "TYPE_INT32");
-    lua_pushinteger(pLuaState, TYPE_INT64);
-    lua_setfield(pLuaState, -2, "TYPE_INT64");
-    lua_pushinteger(pLuaState, TYPE_FLOAT);
-    lua_setfield(pLuaState, -2, "TYPE_FLOAT");
-    lua_pushinteger(pLuaState, TYPE_DOUBLE);
-    lua_setfield(pLuaState, -2, "TYPE_DOUBLE");
-    
     lua_setglobal(pLuaState, "gfx");
 }
 

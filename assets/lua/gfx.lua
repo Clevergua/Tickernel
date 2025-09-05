@@ -1,108 +1,171 @@
 -- Document not code!
-_G.gfx = {}
+-- This file provides type hints and documentation for the gfx module
+-- Actual implementations are provided by C bindings
 
-TYPE_UINT8 = 0
-TYPE_UINT16 = 1
-TYPE_UINT32 = 2
-TYPE_UINT64 = 3
-TYPE_INT8 = 4
-TYPE_INT16 = 5
-TYPE_INT32 = 6
-TYPE_INT64 = 7
-TYPE_FLOAT = 8
-TYPE_DOUBLE = 9
+-- Initialize gfx table if not already loaded by C bindings
+_G.gfx = _G.gfx or {}
 
-function gfx.getSupportedFormat(pGfxContext, candidateCount, candidates, tiling, features)
-    return VK_FORMAT_MAX_ENUM
-end
+-- Type constants (will be overridden by C bindings if available)
+TYPE_UINT8 = TYPE_UINT8 or 0
+TYPE_UINT16 = TYPE_UINT16 or 1
+TYPE_UINT32 = TYPE_UINT32 or 2
+TYPE_UINT64 = TYPE_UINT64 or 3
+TYPE_INT8 = TYPE_INT8 or 4
+TYPE_INT16 = TYPE_INT16 or 5
+TYPE_INT32 = TYPE_INT32 or 6
+TYPE_INT64 = TYPE_INT64 or 7
+TYPE_FLOAT = TYPE_FLOAT or 8
+TYPE_DOUBLE = TYPE_DOUBLE or 9
 
-function gfx.createDynamicAttachmentPtr(pGfxContext, vkFormat, vkImageUsageFlags, vkImageAspectFlags, scaler)
-    local pAttachment
-    return pAttachment
-end
-
-function gfx.destroyDynamicAttachmentPtr(pGfxContext, pAttachment)
-end
-
-function gfx.getSwapchainAttachmentPtr(pGfxContext)
-    local pAttachment
-    return pAttachment
+-- Function declarations for IDE support (only used if C binding not available)
+if not gfx.getSupportedFormat then
+    function gfx.getSupportedFormat(pGfxContext, candidates, tiling, features)
+        error("gfx.getSupportedFormat: C binding not loaded")
+    end
 end
 
-function gfx.createVertexInputLayoutPtr(pGfxContext, format)
-    local pLayout
-    return pLayout
+if not gfx.createDynamicAttachmentPtr then
+    function gfx.createDynamicAttachmentPtr(pGfxContext, vkFormat, vkImageUsageFlags, vkImageAspectFlags, scaler)
+        error("gfx.createDynamicAttachmentPtr: C binding not loaded")
+    end
 end
 
-function gfx.destroyVertexInputLayoutPtr(pGfxContext, pLayout)
+if not gfx.destroyDynamicAttachmentPtr then
+    function gfx.destroyDynamicAttachmentPtr(pGfxContext, pAttachment)
+        error("gfx.destroyDynamicAttachmentPtr: C binding not loaded")
+    end
 end
 
-function gfx.createRenderPassPtr(pGfxContext, vkAttachmentDescriptions, inputAttachmentPtrs, vkClearValues, vkSubpassDescriptions, spvPathsArray, vkSubpassDependencies, renderPassIndex)
-    local pRenderPass
-    return pRenderPass
+if not gfx.getSwapchainAttachmentPtr then
+    function gfx.getSwapchainAttachmentPtr(pGfxContext)
+        error("gfx.getSwapchainAttachmentPtr: C binding not loaded")
+    end
 end
 
-function gfx.destroyRenderPassPtr(pGfxContext, pRenderPass)
+if not gfx.createVertexInputLayoutPtr then
+    function gfx.createVertexInputLayoutPtr(pGfxContext, format)
+        error("gfx.createVertexInputLayoutPtr: C binding not loaded")
+    end
 end
 
-function gfx.createPipelinePtr(pGfxContext, pRenderPass, subpassIndex, spvPaths, pMeshVertexInputLayout, pInstanceVertexInputLayout, vkPipelineInputAssemblyStateCreateInfo, vkPipelineViewportStateCreateInfo, vkPipelineRasterizationStateCreateInfo, vkPipelineMultisampleStateCreateInfo, vkPipelineDepthStencilStateCreateInfo, vkPipelineColorBlendStateCreateInfo, vkPipelineDynamicStateCreateInfo)
-    local pPipeline
-    return pPipeline
+if not gfx.destroyVertexInputLayoutPtr then
+    function gfx.destroyVertexInputLayoutPtr(pGfxContext, pLayout)
+        error("gfx.destroyVertexInputLayoutPtr: C binding not loaded")
+    end
 end
 
-function gfx.destroyPipelinePtr(pGfxContext, pPipeline)
+if not gfx.createRenderPassPtr then
+    function gfx.createRenderPassPtr(pGfxContext, vkAttachmentDescriptions, inputAttachmentPtrs, vkClearValues, vkSubpassDescriptions, spvPathsArray, vkSubpassDependencies, renderPassIndex)
+        error("gfx.createRenderPassPtr: C binding not loaded")
+    end
 end
 
-function gfx.addDrawCallPtr(pGfxContext, pPipeline, pMaterial, pMesh, pInstance)
-    local pDrawCall
-    return pDrawCall
+if not gfx.destroyRenderPassPtr then
+    function gfx.destroyRenderPassPtr(pGfxContext, pRenderPass)
+        error("gfx.destroyRenderPassPtr: C binding not loaded")
+    end
 end
 
-function gfx.removeDrawCallPtr(pGfxContext, pDrawCall)
+if not gfx.createPipelinePtr then
+    function gfx.createPipelinePtr(pGfxContext, pRenderPass, subpassIndex, spvPaths, pMeshVertexInputLayout, pInstanceVertexInputLayout, vkPipelineInputAssemblyStateCreateInfo, vkPipelineViewportStateCreateInfo, vkPipelineRasterizationStateCreateInfo, vkPipelineMultisampleStateCreateInfo, vkPipelineDepthStencilStateCreateInfo, vkPipelineColorBlendStateCreateInfo, vkPipelineDynamicStateCreateInfo)
+        error("gfx.createPipelinePtr: C binding not loaded")
+    end
 end
 
-function gfx.clearDrawCalls(pGfxContext, pPipeline)
-
+if not gfx.destroyPipelinePtr then
+    function gfx.destroyPipelinePtr(pGfxContext, pPipeline)
+        error("gfx.destroyPipelinePtr: C binding not loaded")
+    end
 end
 
-function gfx.createUniformBufferPtr(pGfxContext, format, buffer)
-    local pUniformBuffer
-    return pUniformBuffer
-end
-function gfx.destroyUniformBufferPtr(pGfxContext, pUniformBuffer)
-end
-function gfx.updateUniformBufferPtr(pGfxContext, pUniformBuffer, format, buffer, size)
+if not gfx.addDrawCallPtr then
+    function gfx.addDrawCallPtr(pGfxContext, pPipeline, pMaterial, pMesh, pInstance)
+        error("gfx.addDrawCallPtr: C binding not loaded")
+    end
 end
 
-function gfx.createInstancePtr(pGfxContext, pVertexInputLayout, format, instances)
-    local pInstance
-    return pInstance
-end
-function gfx.destroyInstancePtr(pGfxContext, pInstance)
-end
-
-function gfx.createMeshPtr(pGfxContext, pMeshVertexInputLayout, format, vertices, indices)
-    local pMesh
-    return pMesh
-end
-function gfx.destroyMeshPtr(pGfxContext, pMesh)
+if not gfx.removeDrawCallPtr then
+    function gfx.removeDrawCallPtr(pGfxContext, pDrawCall)
+        error("gfx.removeDrawCallPtr: C binding not loaded")
+    end
 end
 
-function gfx.getGlobalMaterialPtr(pGfxContext)
-    local pMaterial
-    return pMaterial
+if not gfx.clearDrawCalls then
+    function gfx.clearDrawCalls(pGfxContext, pPipeline)
+        error("gfx.clearDrawCalls: C binding not loaded")
+    end
 end
-function gfx.getSubpassMaterialPtr(pGfxContext, pRenderPass, subpassIndex)
-    local pMaterial
-    return pMaterial
+
+if not gfx.createUniformBufferPtr then
+    function gfx.createUniformBufferPtr(pGfxContext, format, buffer)
+        error("gfx.createUniformBufferPtr: C binding not loaded")
+    end
 end
-function gfx.createPipelineMaterialPtr(pGfxContext, pPipeline)
-    local pMaterial
-    return pMaterial
+
+if not gfx.destroyUniformBufferPtr then
+    function gfx.destroyUniformBufferPtr(pGfxContext, pUniformBuffer)
+        error("gfx.destroyUniformBufferPtr: C binding not loaded")
+    end
 end
-function gfx.destroyPipelineMaterialPtr(pGfxContext, pMaterial)
+
+if not gfx.updateUniformBufferPtr then
+    function gfx.updateUniformBufferPtr(pGfxContext, pUniformBuffer, format, buffer, size)
+        error("gfx.updateUniformBufferPtr: C binding not loaded")
+    end
 end
-function gfx.updateMaterialPtr(pGfxContext, pMaterial, inputBindings)
+
+if not gfx.createInstancePtr then
+    function gfx.createInstancePtr(pGfxContext, pVertexInputLayout, format, instances)
+        error("gfx.createInstancePtr: C binding not loaded")
+    end
+end
+
+if not gfx.destroyInstancePtr then
+    function gfx.destroyInstancePtr(pGfxContext, pInstance)
+        error("gfx.destroyInstancePtr: C binding not loaded")
+    end
+end
+
+if not gfx.createMeshPtr then
+    function gfx.createMeshPtr(pGfxContext, pMeshVertexInputLayout, format, vertices, indices)
+        error("gfx.createMeshPtr: C binding not loaded")
+    end
+end
+
+if not gfx.destroyMeshPtr then
+    function gfx.destroyMeshPtr(pGfxContext, pMesh)
+        error("gfx.destroyMeshPtr: C binding not loaded")
+    end
+end
+
+if not gfx.getGlobalMaterialPtr then
+    function gfx.getGlobalMaterialPtr(pGfxContext)
+        error("gfx.getGlobalMaterialPtr: C binding not loaded")
+    end
+end
+
+if not gfx.getSubpassMaterialPtr then
+    function gfx.getSubpassMaterialPtr(pGfxContext, pRenderPass, subpassIndex)
+        error("gfx.getSubpassMaterialPtr: C binding not loaded")
+    end
+end
+
+if not gfx.createPipelineMaterialPtr then
+    function gfx.createPipelineMaterialPtr(pGfxContext, pPipeline)
+        error("gfx.createPipelineMaterialPtr: C binding not loaded")
+    end
+end
+
+if not gfx.destroyPipelineMaterialPtr then
+    function gfx.destroyPipelineMaterialPtr(pGfxContext, pMaterial)
+        error("gfx.destroyPipelineMaterialPtr: C binding not loaded")
+    end
+end
+
+if not gfx.updateMaterialPtr then
+    function gfx.updateMaterialPtr(pGfxContext, pMaterial, inputBindings)
+        error("gfx.updateMaterialPtr: C binding not loaded")
+    end
 end
 
 gfx.defaultVkPipelineViewportStateCreateInfo = {
