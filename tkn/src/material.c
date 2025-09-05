@@ -119,12 +119,12 @@ void bindAttachmentsToMaterialPtr(GfxContext *pGfxContext, Material *pMaterial)
                 if (ATTACHMENT_TYPE_DYNAMIC == pInputAttachment->attachmentType)
                 {
                     vkImageView = pInputAttachment->attachmentUnion.dynamicAttachment.vkImageView;
-                    tknAddToHashSet(&pInputAttachment->attachmentUnion.dynamicAttachment.bindingPtrHashSet, pBinding);
+                    tknAddToHashSet(&pInputAttachment->attachmentUnion.dynamicAttachment.bindingPtrHashSet, &pBinding);
                 }
                 else if (ATTACHMENT_TYPE_FIXED == pInputAttachment->attachmentType)
                 {
                     vkImageView = pInputAttachment->attachmentUnion.fixedAttachment.vkImageView;
-                    tknAddToHashSet(&pInputAttachment->attachmentUnion.fixedAttachment.bindingPtrHashSet, pBinding);
+                    tknAddToHashSet(&pInputAttachment->attachmentUnion.fixedAttachment.bindingPtrHashSet, &pBinding);
                 }
                 else
                 {
@@ -195,11 +195,11 @@ void unbindAttachmentsFromMaterialPtr(GfxContext *pGfxContext, Material *pMateri
 
                 if (ATTACHMENT_TYPE_DYNAMIC == pAttachment->attachmentType)
                 {
-                    tknRemoveFromHashSet(&pAttachment->attachmentUnion.dynamicAttachment.bindingPtrHashSet, pBinding);
+                    tknRemoveFromHashSet(&pAttachment->attachmentUnion.dynamicAttachment.bindingPtrHashSet, &pBinding);
                 }
                 else if (ATTACHMENT_TYPE_FIXED == pAttachment->attachmentType)
                 {
-                    tknRemoveFromHashSet(&pAttachment->attachmentUnion.fixedAttachment.bindingPtrHashSet, pBinding);
+                    tknRemoveFromHashSet(&pAttachment->attachmentUnion.fixedAttachment.bindingPtrHashSet, &pBinding);
                 }
                 else
                 {
@@ -379,7 +379,7 @@ void updateMaterialPtr(GfxContext *pGfxContext, Material *pMaterial, uint32_t in
                     else
                     {
                         // Current sampler deref descriptor
-                        tknRemoveFromHashSet(&pSampler->bindingPtrHashSet, pBinding);
+                        tknRemoveFromHashSet(&pSampler->bindingPtrHashSet, &pBinding);
                     }
 
                     pBinding->bindingUnion.samplerBinding.pSampler = pInputSampler;
@@ -394,7 +394,7 @@ void updateMaterialPtr(GfxContext *pGfxContext, Material *pMaterial, uint32_t in
                     else
                     {
                         // New sampler ref descriptor
-                        tknAddToHashSet(&pInputSampler->bindingPtrHashSet, pBinding);
+                        tknAddToHashSet(&pInputSampler->bindingPtrHashSet, &pBinding);
                         vkDescriptorImageInfos[vkWriteDescriptorSetCount] = (VkDescriptorImageInfo){
                             .sampler = pInputSampler->vkSampler,
                             .imageView = VK_NULL_HANDLE,
@@ -453,7 +453,7 @@ void updateMaterialPtr(GfxContext *pGfxContext, Material *pMaterial, uint32_t in
                     else
                     {
                         // Current uniform buffer deref descriptor
-                        tknRemoveFromHashSet(&pUniformBuffer->bindingPtrHashSet, pBinding);
+                        tknRemoveFromHashSet(&pUniformBuffer->bindingPtrHashSet, &pBinding);
                     }
                     pBinding->bindingUnion.uniformBufferBinding.pUniformBuffer = pInputUniformBuffer;
                     if (NULL == pInputUniformBuffer)
@@ -467,7 +467,7 @@ void updateMaterialPtr(GfxContext *pGfxContext, Material *pMaterial, uint32_t in
                     else
                     {
                         // New uniform buffer ref descriptor
-                        tknAddToHashSet(&pInputUniformBuffer->bindingPtrHashSet, pBinding);
+                        tknAddToHashSet(&pInputUniformBuffer->bindingPtrHashSet, &pBinding);
                         vkDescriptorBufferInfos[vkWriteDescriptorSetCount] = (VkDescriptorBufferInfo){
                             .buffer = pInputUniformBuffer->vkBuffer,
                             .offset = 0,

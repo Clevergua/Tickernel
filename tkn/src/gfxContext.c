@@ -285,7 +285,6 @@ static void populateLogicalDevice(GfxContext *pGfxContext)
 
     char *extensionNames[] = {
         VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-        "VK_KHR_portability_subset",
     };
     uint32_t extensionCount = TKN_ARRAY_COUNT(extensionNames);
     VkDeviceCreateInfo vkDeviceCreateInfo =
@@ -676,7 +675,7 @@ static void present(GfxContext *pGfxContext, uint32_t swapchainIndex)
         {
             RenderPass *pRenderPass = *(RenderPass **)tknGetFromDynamicArray(&pGfxContext->renderPassPtrDynamicArray, renderPassIndex);
             Attachment *pSwapchainAttachment = getSwapchainAttachmentPtr(pGfxContext);
-            if (tknContainsInHashSet(&pSwapchainAttachment->renderPassPtrHashSet, pRenderPass))
+            if (tknContainsInHashSet(&pSwapchainAttachment->renderPassPtrHashSet, &pRenderPass))
             {
                 repopulateFramebuffers(pGfxContext, pRenderPass);
             }
@@ -906,7 +905,7 @@ void updateGfxContextPtr(GfxContext *pGfxContext, VkExtent2D swapchainExtent)
                     {
                         RenderPass *pRenderPass = *(RenderPass **)tknGetFromDynamicArray(&pGfxContext->renderPassPtrDynamicArray, renderPassIndex);
                         Attachment *pSwapchainAttachment = getSwapchainAttachmentPtr(pGfxContext);
-                        if (tknContainsInHashSet(&pSwapchainAttachment->renderPassPtrHashSet, pRenderPass))
+                        if (tknContainsInHashSet(&pSwapchainAttachment->renderPassPtrHashSet, &pRenderPass))
                         {
                             repopulateFramebuffers(pGfxContext, pRenderPass);
                         }

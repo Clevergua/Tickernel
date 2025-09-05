@@ -3,8 +3,8 @@ require("gfx")
 local lightingPipeline = {}
 function lightingPipeline.createPipelinePtr(pGfxContext, pRenderPass, subpassIndex, assetsPath)
     local lightingPipelineSpvPaths = {
-        assetsPath .. "/shaders/spv/lighting.vert.spv",
-        assetsPath .. "/shaders/spv/lighting.frag.spv",
+        assetsPath .. "/shaders/opaqueLighting.vert.spv",
+        assetsPath .. "/shaders/opaqueLighting.frag.spv",
     }
 
     local vkPipelineInputAssemblyStateCreateInfo = {

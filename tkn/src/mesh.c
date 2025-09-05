@@ -91,14 +91,14 @@ Mesh *createMeshPtr(GfxContext *pGfxContext, VertexInputLayout *pVertexInputLayo
         .vkIndexType = vkIndexType,
         .drawCallPtrHashSet = drawCallPtrHashSet,
     };
-    tknAddToHashSet(&pVertexInputLayout->referencePtrHashSet, pMesh);
+    tknAddToHashSet(&pVertexInputLayout->referencePtrHashSet, &pMesh);
     return pMesh;
 }
 void destroyMeshPtr(GfxContext *pGfxContext, Mesh *pMesh)
 {
     tknAssert(0 == pMesh->drawCallPtrHashSet.count, "Mesh still has draw calls attached!");
     tknDestroyHashSet(pMesh->drawCallPtrHashSet);
-    tknRemoveFromHashSet(&pMesh->pVertexInputLayout->referencePtrHashSet, pMesh);
+    tknRemoveFromHashSet(&pMesh->pVertexInputLayout->referencePtrHashSet, &pMesh);
     destroyVkBuffer(pGfxContext, pMesh->vertexVkBuffer, pMesh->vertexVkDeviceMemory);
     destroyVkBuffer(pGfxContext, pMesh->indexVkBuffer, pMesh->indexVkDeviceMemory);
     tknFree(pMesh);

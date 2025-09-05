@@ -60,7 +60,7 @@ void populateFramebuffers(GfxContext *pGfxContext, RenderPass *pRenderPass)
         .extent = {width, height},
     };
     Attachment *pSwapchainAttachment = getSwapchainAttachmentPtr(pGfxContext);
-    if (tknContainsInHashSet(&pSwapchainAttachment->renderPassPtrHashSet, pRenderPass))
+    if (tknContainsInHashSet(&pSwapchainAttachment->renderPassPtrHashSet, &pRenderPass))
     {
         uint32_t swapchainImageCount = pSwapchainUnion->swapchainImageCount;
         pRenderPass->vkFramebufferCount = swapchainImageCount;

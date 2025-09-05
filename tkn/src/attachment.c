@@ -29,13 +29,13 @@ Attachment *createDynamicAttachmentPtr(GfxContext *pGfxContext, VkFormat vkForma
         .vkFormat = vkFormat,
         .renderPassPtrHashSet = tknCreateHashSet(sizeof(RenderPass *)),
     };
-    tknAddToHashSet(&pGfxContext->dynamicAttachmentPtrHashSet, pAttachment);
+    tknAddToHashSet(&pGfxContext->dynamicAttachmentPtrHashSet, &pAttachment);
     return pAttachment;
 }
 void destroyDynamicAttachmentPtr(GfxContext *pGfxContext, Attachment *pAttachment)
 {
     tknAssert(ATTACHMENT_TYPE_DYNAMIC == pAttachment->attachmentType, "Attachment type mismatch!");
-    tknRemoveFromHashSet(&pGfxContext->dynamicAttachmentPtrHashSet, pAttachment);
+    tknRemoveFromHashSet(&pGfxContext->dynamicAttachmentPtrHashSet, &pAttachment);
     DynamicAttachment dynamicAttachment = pAttachment->attachmentUnion.dynamicAttachment;
     tknAssert(0 == dynamicAttachment.bindingPtrHashSet.count, "Cannot destroy dynamic attachment with bindings attached!");
     tknDestroyHashSet(dynamicAttachment.bindingPtrHashSet);
@@ -97,14 +97,14 @@ Attachment *createFixedAttachmentPtr(GfxContext *pGfxContext, VkFormat vkFormat,
         .vkFormat = vkFormat,
         .renderPassPtrHashSet = tknCreateHashSet(sizeof(RenderPass *)),
     };
-    tknAddToHashSet(&pGfxContext->fixedAttachmentPtrHashSet, pAttachment);
+    tknAddToHashSet(&pGfxContext->fixedAttachmentPtrHashSet, &pAttachment);
     return pAttachment;
 }
 void destroyFixedAttachmentPtr(GfxContext *pGfxContext, Attachment *pAttachment)
 {
     tknAssert(ATTACHMENT_TYPE_FIXED == pAttachment->attachmentType, "Attachment type mismatch!");
     tknAssert(0 == pAttachment->renderPassPtrHashSet.count, "Cannot destroy fixed attachment with render passes attached!");
-    tknRemoveFromHashSet(&pGfxContext->fixedAttachmentPtrHashSet, pAttachment);
+    tknRemoveFromHashSet(&pGfxContext->fixedAttachmentPtrHashSet, &pAttachment);
     tknDestroyHashSet(pAttachment->renderPassPtrHashSet);
     FixedAttachment fixedAttachment = pAttachment->attachmentUnion.fixedAttachment;
     destroyVkImage(pGfxContext, fixedAttachment.vkImage, fixedAttachment.vkDeviceMemory, fixedAttachment.vkImageView);

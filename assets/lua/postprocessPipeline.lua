@@ -3,8 +3,8 @@ require("gfx")
 local postprocessPipeline = {}
 function postprocessPipeline.createPipelinePtr(pGfxContext, pRenderPass, subpassIndex, assetsPath)
     local postprocessPipelineSpvPaths = {
-        assetsPath .. "/shaders/spv/postprocess.vert.spv",
-        assetsPath .. "/shaders/spv/postprocess.frag.spv",
+        assetsPath .. "/shaders/postprocess.vert.spv",
+        assetsPath .. "/shaders/postprocess.frag.spv",
     }
 
     local vkPipelineInputAssemblyStateCreateInfo = {

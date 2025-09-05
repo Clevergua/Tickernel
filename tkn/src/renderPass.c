@@ -108,7 +108,7 @@ RenderPass *createRenderPassPtr(GfxContext *pGfxContext, uint32_t attachmentCoun
         Attachment *pAttachment = inputAttachmentPtrs[attachmentIndex];
         attachmentPtrs[attachmentIndex] = pAttachment;
         vkAttachmentDescriptions[attachmentIndex].format = pAttachment->vkFormat;
-        tknAddToHashSet(&pAttachment->renderPassPtrHashSet, pRenderPass);
+        tknAddToHashSet(&pAttachment->renderPassPtrHashSet, &pRenderPass);
     }
 
     VkRenderPassCreateInfo vkRenderPassCreateInfo = {
@@ -158,7 +158,7 @@ void destroyRenderPassPtr(GfxContext *pGfxContext, RenderPass *pRenderPass)
     for (uint32_t i = 0; i < pRenderPass->attachmentCount; i++)
     {
         Attachment *pAttachment = pRenderPass->attachmentPtrs[i];
-        tknRemoveFromHashSet(&pAttachment->renderPassPtrHashSet, pRenderPass);
+        tknRemoveFromHashSet(&pAttachment->renderPassPtrHashSet, &pRenderPass);
     }
     tknFree(pRenderPass->subpasses);
     tknFree(pRenderPass->attachmentPtrs);

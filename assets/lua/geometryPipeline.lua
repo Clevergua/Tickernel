@@ -4,8 +4,8 @@ local geometryPipeline = {}
 function geometryPipeline.createPipelinePtr(pGfxContext, pRenderPass, subpassIndex, assetsPath,
                                             pMeshVertexInputLayout, pInstanceVertexInputLayout)
     local geometryPipelineSpvPaths = {
-        assetsPath .. "/shaders/spv/geometry.vert.spv",
-        assetsPath .. "/shaders/spv/geometry.frag.spv",
+        assetsPath .. "/shaders/opaqueGeometry.vert.spv",
+        assetsPath .. "/shaders/opaqueGeometry.frag.spv",
     }
     local vkPipelineInputAssemblyStateCreateInfo = {
         topology = VK_PRIMITIVE_TOPOLOGY_POINT_LIST,

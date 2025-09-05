@@ -215,13 +215,13 @@ VertexInputLayout *createVertexInputLayoutPtr(GfxContext *pGfxContext, uint32_t 
         .stride = stride,
         .referencePtrHashSet = tknCreateHashSet(TKN_DEFAULT_COLLECTION_SIZE),
     };
-    tknAddToHashSet(&pGfxContext->vertexInputLayoutPtrHashSet, pVertexInputLayout);
+    tknAddToHashSet(&pGfxContext->vertexInputLayoutPtrHashSet, &pVertexInputLayout);
     return pVertexInputLayout;
 }
 void destroyVertexInputLayoutPtr(GfxContext *pGfxContext, VertexInputLayout *pVertexInputLayout)
 {
     tknAssert(0 == pVertexInputLayout->referencePtrHashSet.count, "Cannot destroy vertex input layout with meshes | instance attached!");
-    tknRemoveFromHashSet(&pGfxContext->vertexInputLayoutPtrHashSet, pVertexInputLayout);
+    tknRemoveFromHashSet(&pGfxContext->vertexInputLayoutPtrHashSet, &pVertexInputLayout);
     tknDestroyHashSet(pVertexInputLayout->referencePtrHashSet);
     tknFree(pVertexInputLayout->names);
     tknFree(pVertexInputLayout->sizes);
@@ -264,8 +264,8 @@ DescriptorSet *createDescriptorSetPtr(GfxContext *pGfxContext, uint32_t spvRefle
             }
             else
             {
-                // Skip
-                tknError("Skipping descriptor set %d because of target set %d\n ", spvReflectDescriptorSet.set, set);
+                //  Skip
+                printf("Skipping descriptor set %d because of target set %d\n ", spvReflectDescriptorSet.set, set);
             }
         }
     }
