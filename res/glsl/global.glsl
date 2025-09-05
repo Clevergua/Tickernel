@@ -9,7 +9,5 @@ layout(set = GLOBAL_DESCRIPTOR_SET, binding = 0) uniform GlobalUniform {
     float near;
     float far;
     float fov;
-    int width;
-    int height;
 } globalUniform;
 

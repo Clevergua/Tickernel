@@ -8,20 +8,20 @@ function tknEngine.start(pGfxContext, assetsPath)
     tknEngine.vertexFormat = {{
         name = "position",
         type = TYPE_FLOAT,
-        count = 3
+        count = 3,
     }, {
         name = "color",
         type = TYPE_UINT8,
-        count = 4
+        count = 4,
     }, {
         name = "normal",
         type = TYPE_UINT32,
-        count = 1
+        count = 1,
     }}
     tknEngine.instanceFormat = {{
         name = "model",
         type = TYPE_FLOAT,
-        count = 16
+        count = 16,
     }}
     tknEngine.pMeshVertexInputLayout = gfx.createVertexInputLayoutPtr(pGfxContext, tknEngine.vertexFormat)
     tknEngine.pInstanceVertexInputLayout = gfx.createVertexInputLayoutPtr(pGfxContext, tknEngine.instanceFormat);
@@ -31,62 +31,82 @@ function tknEngine.start(pGfxContext, assetsPath)
     tknEngine.globalUniformBufferFormat = {{
         name = "view",
         type = TYPE_FLOAT,
-        count = 16
+        count = 16,
     }, {
-        name = "projection",
+        name = "proj",
         type = TYPE_FLOAT,
-        count = 16
+        count = 16,
     }, {
-        name = "viewProjection",
+        name = "inv_view_proj",
         type = TYPE_FLOAT,
-        count = 16
+        count = 16,
     }, {
-        name = "cameraPosition",
+        name = "pointSizeFactor",
         type = TYPE_FLOAT,
-        count = 4
+        count = 1,
     }, {
-        name = "lightDirection",
+        name = "time",
         type = TYPE_FLOAT,
-        count = 4
+        count = 1,
     }, {
-        name = "lightColor",
+        name = "frameCount",
+        type = TYPE_INT32,
+        count = 1,
+    }, {
+        name = "near",
         type = TYPE_FLOAT,
-        count = 4
+        count = 1,
+    }, {
+        name = "far",
+        type = TYPE_FLOAT,
+        count = 1,
+    }, {
+        name = "fov",
+        type = TYPE_FLOAT,
+        count = 1,
     }}
-    local pGlobalUniformBuffer =
-    {
+    local pGlobalUniformBuffer = {
         view = {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1},
-        projection = {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1},
-        viewProjection = {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1},
-        cameraPosition = {0, 0, 5, 1},
-        lightDirection = {0.57735, -0.57735, -0.57735, 0},
-        lightColor = {1, 1, 1, 1}
+        proj = {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1},
+        inv_view_proj = {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1},
+        pointSizeFactor = 1.0,
+        time = 0.0,
+        frameCount = 0,
+        near = 0.1,
+        far = 100.0,
+        fov = 45.0,
     }
-    gfx.createUniformBufferPtr(pGfxContext, tknEngine.globalUniformBufferFormat, pGlobalUniformBuffer)
-
-
+    tknEngine.pGlobalUniformBuffer = gfx.createUniformBufferPtr(pGfxContext, tknEngine.globalUniformBufferFormat, pGlobalUniformBuffer)
+    local inputBindings = {{
+        vkDescriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+        pUniformBuffer = tknEngine.pGlobalUniformBuffer,
+        binding = 0,
+    }}
+    gfx.updateMaterialPtr(pGfxContext, tknEngine.pGlobalMaterialPtr, inputBindings)
     local vertices = {
         position = {0, 0, 0, 0, 1, 0, 0, 2, 0, 0, 3, 0},
         color = {255, 0, 0, 255, 255, 0, 0, 255, 255, 0, 0, 255, 255, 0, 0, 255},
-        normal = {0x0, 0x0, 0x0, 0x0}
+        normal = {0x0, 0x0, 0x0, 0x0},
     }
     tknEngine.pMesh = gfx.createMeshPtr(pGfxContext, tknEngine.pMeshVertexInputLayout, tknEngine.vertexFormat, vertices, nil)
     local instances = {
-        model = {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1}
+        model = {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1},
     }
     tknEngine.pInstance = gfx.createInstancePtr(pGfxContext, tknEngine.pInstanceVertexInputLayout, tknEngine.instanceFormat, instances)
 
     local deferredRenderPass = tknRenderPipeline.deferredRenderPass
-    tknEngine.pDrawCall = gfx.addDrawCallPtr(pGfxContext, deferredRenderPass.pGeometryPipeline, deferredRenderPass.pGeometryMaterial, tknEngine.pMesh, nil)
+    tknEngine.pDrawCall = gfx.addDrawCallPtr(pGfxContext, deferredRenderPass.pGeometryPipeline, deferredRenderPass.pGeometryMaterial, tknEngine.pMesh, tknEngine.pInstance)
 end
 
 function tknEngine.stop(pGfxContext)
     print("Lua stop")
+    gfx.destroyUniformBufferPtr(pGfxContext, tknEngine.pGlobalUniformBuffer)
+    tknEngine.pGlobalUniformBuffer = nil
     gfx.removeDrawCallPtr(pGfxContext, tknEngine.pDrawCall)
     tknEngine.pDrawCall = nil
     gfx.destroyInstancePtr(pGfxContext, tknEngine.pInstance)
     tknEngine.pInstance = nil
-    gfx.destroyMeshPtr(pGfxContext, tknEngine.testMesh)
+    gfx.destroyMeshPtr(pGfxContext, tknEngine.pMesh)
     tknEngine.pMesh = nil
 
     tknEngine.pGlobalMaterialPtr = nil

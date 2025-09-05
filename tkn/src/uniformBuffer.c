@@ -1,12 +1,5 @@
 #include "gfxCore.h"
 
-static VkDeviceSize getUniformBufferSize(GfxContext *pGfxContext, UniformBuffer *pUniformBuffer)
-{
-    VkMemoryRequirements memoryRequirements;
-    vkGetBufferMemoryRequirements(pGfxContext->vkDevice, pUniformBuffer->vkBuffer, &memoryRequirements);
-    return memoryRequirements.size;
-}
-
 UniformBuffer *createUniformBufferPtr(GfxContext *pGfxContext, const void *data, VkDeviceSize size)
 {
     UniformBuffer *pUniformBuffer = tknMalloc(sizeof(UniformBuffer));
@@ -24,6 +17,7 @@ UniformBuffer *createUniformBufferPtr(GfxContext *pGfxContext, const void *data,
         .vkDeviceMemory = vkDeviceMemory,
         .mapped = mapped,
         .bindingPtrHashSet = bindingPtrHashSet,
+        .size = size,
     };
 
     memcpy(pUniformBuffer->mapped, data, size);
@@ -43,7 +37,7 @@ void destroyUniformBufferPtr(GfxContext *pGfxContext, UniformBuffer *pUniformBuf
 }
 void updateUniformBufferPtr(GfxContext *pGfxContext, UniformBuffer *pUniformBuffer, const void *data, VkDeviceSize size)
 {
-    VkDeviceSize bufferSize = getUniformBufferSize(pGfxContext, pUniformBuffer);
-    tknAssert(size <= bufferSize, "Data size exceeds mapped buffer size!");
+    tknAssert(pUniformBuffer->mapped != NULL, "Uniform buffer is not mapped!");
+    tknAssert(size <= pUniformBuffer->size, "Data size exceeds mapped buffer size!");
     memcpy(pUniformBuffer->mapped, data, size);
 }
