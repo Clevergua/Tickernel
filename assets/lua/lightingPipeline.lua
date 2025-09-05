@@ -12,18 +12,7 @@ function lightingPipeline.createPipelinePtr(pGfxContext, pRenderPass, subpassInd
         primitiveRestartEnable = false,
     }
 
-    local vkPipelineRasterizationStateCreateInfo = {
-        depthClampEnable = false,
-        rasterizerDiscardEnable = false,
-        polygonMode = VK_POLYGON_MODE_FILL,
-        cullMode = VK_CULL_MODE_NONE,
-        frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE,
-        depthBiasEnable = false,
-        depthBiasConstantFactor = 0.0,
-        depthBiasClamp = 0.0,
-        depthBiasSlopeFactor = 0.0,
-        lineWidth = 1.0,
-    }
+
 
     local vkPipelineDepthStencilStateCreateInfo = {
         depthTestEnable = false,
@@ -57,7 +46,7 @@ function lightingPipeline.createPipelinePtr(pGfxContext, pRenderPass, subpassInd
     return gfx.createPipelinePtr(pGfxContext, pRenderPass, subpassIndex, lightingPipelineSpvPaths,
         nil, nil, vkPipelineInputAssemblyStateCreateInfo,
         gfx.defaultVkPipelineViewportStateCreateInfo,
-        vkPipelineRasterizationStateCreateInfo, gfx.defaultVkPipelineMultisampleStateCreateInfo,
+        gfx.vkPipelineRasterizationStateCreateInfo, gfx.defaultVkPipelineMultisampleStateCreateInfo,
         vkPipelineDepthStencilStateCreateInfo, vkPipelineColorBlendStateCreateInfo, gfx.defaultVkPipelineDynamicStateCreateInfo)
 end
 

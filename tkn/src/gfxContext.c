@@ -285,6 +285,7 @@ static void populateLogicalDevice(GfxContext *pGfxContext)
 
     char *extensionNames[] = {
         VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+        "VK_KHR_portability_subset",
     };
     uint32_t extensionCount = TKN_ARRAY_COUNT(extensionNames);
     VkDeviceCreateInfo vkDeviceCreateInfo =

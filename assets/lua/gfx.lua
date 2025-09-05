@@ -1,7 +1,6 @@
 -- Document not code!
 -- This file provides type hints and documentation for the gfx module
 -- Actual implementations are provided by C bindings
-
 -- Initialize gfx table if not already loaded by C bindings
 _G.gfx = _G.gfx or {}
 
@@ -175,18 +174,18 @@ gfx.defaultVkPipelineViewportStateCreateInfo = {
         width = 0.0,
         height = 0.0,
         minDepth = 0.0,
-        maxDepth = 1.0
+        maxDepth = 1.0,
     }},
     pScissors = {{
         offset = {
             x = 0,
-            y = 0
+            y = 0,
         },
         extent = {
             width = 0,
-            height = 0
-        }
-    }}
+            height = 0,
+        },
+    }},
 }
 gfx.defaultVkPipelineMultisampleStateCreateInfo = {
     rasterizationSamples = VK_SAMPLE_COUNT_1_BIT,
@@ -194,10 +193,22 @@ gfx.defaultVkPipelineMultisampleStateCreateInfo = {
     minSampleShading = 0,
     pSampleMask = nil,
     alphaToCoverageEnable = false,
-    alphaToOneEnable = false
+    alphaToOneEnable = false,
 }
 
 gfx.defaultVkPipelineDynamicStateCreateInfo = {
-    pDynamicStates = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR}
+    pDynamicStates = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR},
 }
 
+gfx.defaultVkPipelineRasterizationStateCreateInfo = {
+    depthClampEnable = false,
+    rasterizerDiscardEnable = false,
+    polygonMode = VK_POLYGON_MODE_FILL,
+    cullMode = VK_CULL_MODE_NONE,
+    frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE,
+    depthBiasEnable = false,
+    depthBiasConstantFactor = 0.0,
+    depthBiasClamp = 0.0,
+    depthBiasSlopeFactor = 0.0,
+    lineWidth = 1.0,
+}

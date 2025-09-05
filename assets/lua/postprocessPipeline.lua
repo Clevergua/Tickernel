@@ -12,19 +12,6 @@ function postprocessPipeline.createPipelinePtr(pGfxContext, pRenderPass, subpass
         primitiveRestartEnable = false,
     }
 
-    local vkPipelineRasterizationStateCreateInfo = {
-        depthClampEnable = false,
-        rasterizerDiscardEnable = false,
-        polygonMode = VK_POLYGON_MODE_FILL,
-        cullMode = VK_CULL_MODE_FRONT_BIT,
-        frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE,
-        depthBiasEnable = false,
-        depthBiasConstantFactor = 0.0,
-        depthBiasClamp = 0.0,
-        depthBiasSlopeFactor = 0.0,
-        lineWidth = 1.0,
-    }
-
     local vkPipelineDepthStencilStateCreateInfo = {
         depthTestEnable = false,
         depthWriteEnable = false,
@@ -55,7 +42,7 @@ function postprocessPipeline.createPipelinePtr(pGfxContext, pRenderPass, subpass
     return gfx.createPipelinePtr(pGfxContext, pRenderPass, subpassIndex, postprocessPipelineSpvPaths,
         nil, nil, vkPipelineInputAssemblyStateCreateInfo,
         gfx.defaultVkPipelineViewportStateCreateInfo,
-        vkPipelineRasterizationStateCreateInfo, gfx.defaultVkPipelineMultisampleStateCreateInfo,
+        gfx.defaultVkPipelineRasterizationStateCreateInfo, gfx.defaultVkPipelineMultisampleStateCreateInfo,
         vkPipelineDepthStencilStateCreateInfo, vkPipelineColorBlendStateCreateInfo, gfx.defaultVkPipelineDynamicStateCreateInfo)
 end
 
