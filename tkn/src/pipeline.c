@@ -1,5 +1,5 @@
 #include "gfxCore.h"
-static size_t getSizeOfVkFormat(VkFormat format)
+static uint32_t getSizeOfVkFormat(VkFormat format)
 {
     switch (format)
     {

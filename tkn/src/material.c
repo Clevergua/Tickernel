@@ -81,7 +81,7 @@ void destroyMaterialPtr(GfxContext *pGfxContext, Material *pMaterial)
 
     tknRemoveFromHashSet(&pMaterial->pDescriptorSet->materialPtrHashSet, &pMaterial);
     tknDestroyHashSet(pMaterial->drawCallPtrHashSet);
-    assertVkResult(vkFreeDescriptorSets(pGfxContext->vkDevice, pMaterial->vkDescriptorPool, 1, &pMaterial->vkDescriptorSet));
+    // Destroying the descriptor pool automatically frees all descriptor sets allocated from it
     vkDestroyDescriptorPool(vkDevice, pMaterial->vkDescriptorPool, NULL);
     tknFree(pMaterial->bindings);
     tknFree(pMaterial);

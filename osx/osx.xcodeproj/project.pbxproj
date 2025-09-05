@@ -50,10 +50,22 @@
 			path = osx;
 			sourceTree = "<group>";
 		};
-		DEF6D0B72E521BCA00D7310A /* tkn */ = {
+		DEDB5A532E6AD0DF0023753A /* external */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			name = tkn;
-			path = ../tkn;
+			name = external;
+			path = ../tkn/external;
+			sourceTree = SOURCE_ROOT;
+		};
+		DEDB5A552E6AD0DF0023753A /* include */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			name = include;
+			path = ../tkn/include;
+			sourceTree = SOURCE_ROOT;
+		};
+		DEDB5A652E6AD0DF0023753A /* src */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			name = src;
+			path = ../tkn/src;
 			sourceTree = SOURCE_ROOT;
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -76,7 +88,9 @@
 		DE6CC08C2D39397000D80E9A = {
 			isa = PBXGroup;
 			children = (
-				DEF6D0B72E521BCA00D7310A /* tkn */,
+				DEDB5A532E6AD0DF0023753A /* external */,
+				DEDB5A552E6AD0DF0023753A /* include */,
+				DEDB5A652E6AD0DF0023753A /* src */,
 				DEE96E042E3FC89D003ED6AF /* assets */,
 				DE6CC0972D39397000D80E9A /* osx */,
 				DE6CC3392D3950F500D80E9A /* Frameworks */,
@@ -121,7 +135,9 @@
 			);
 			fileSystemSynchronizedGroups = (
 				DE6CC0972D39397000D80E9A /* osx */,
-				DEF6D0B72E521BCA00D7310A /* tkn */,
+				DEDB5A532E6AD0DF0023753A /* external */,
+				DEDB5A552E6AD0DF0023753A /* include */,
+				DEDB5A652E6AD0DF0023753A /* src */,
 			);
 			name = osx;
 			packageProductDependencies = (

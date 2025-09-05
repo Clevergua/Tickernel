@@ -110,7 +110,7 @@ function tknEngine.stop(pGfxContext)
     tknEngine.pMesh = nil
 
     tknEngine.pGlobalMaterialPtr = nil
-    tknRenderPipeline.tearDown(pGfxContext)
+    tknRenderPipeline.teardown(pGfxContext)
     gfx.destroyVertexInputLayoutPtr(pGfxContext, tknEngine.pInstanceVertexInputLayout)
     gfx.destroyVertexInputLayoutPtr(pGfxContext, tknEngine.pMeshVertexInputLayout)
     tknEngine.instanceFormat = nil

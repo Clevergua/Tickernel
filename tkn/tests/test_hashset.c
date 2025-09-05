@@ -2,12 +2,14 @@
 #include <string.h>
 #include "tknCore.h"
 
-typedef struct {
+typedef struct
+{
     int id;
     float value;
 } MyStruct;
 
-void test_struct_hashset() {
+static void test_struct_hashset()
+{
     printf("--- struct hashset test ---\n");
     TknHashSet set = tknCreateHashSet(sizeof(MyStruct));
     MyStruct a = {1, 3.14f};
@@ -20,9 +22,11 @@ void test_struct_hashset() {
     printf("Contains b? %d\n", tknContainsInHashSet(&set, &b));
     printf("Contains c? %d\n", tknContainsInHashSet(&set, &c));
     printf("遍历 struct hashset:\n");
-    for (size_t i = 0; i < set.capacity; i++) {
+    for (size_t i = 0; i < set.capacity; i++)
+    {
         TknListNode *node = set.nodePtrs[i];
-        while (node) {
+        while (node)
+        {
             MyStruct *data = (MyStruct *)node->data;
             printf("id=%d, value=%f\n", data->id, data->value);
             node = node->nextNodePtr;
@@ -31,9 +35,10 @@ void test_struct_hashset() {
     tknDestroyHashSet(set);
 }
 
-void test_pointer_hashset() {
+static void test_pointer_hashset()
+{
     printf("--- pointer hashset test ---\n");
-    TknHashSet set = tknCreateHashSet(sizeof(int*));
+    TknHashSet set = tknCreateHashSet(sizeof(int *));
     int x = 42, y = 43, z = 44;
     void *px = &x, *py = &y, *pz = &z;
     tknAddToHashSet(&set, &px);
@@ -43,18 +48,21 @@ void test_pointer_hashset() {
     printf("Contains py:%p? %d\n", py, tknContainsInHashSet(&set, &py));
     printf("Contains pz:%p? %d\n", pz, tknContainsInHashSet(&set, &pz));
     printf("遍历 pointer hashset:\n");
-    for (size_t i = 0; i < set.capacity; i++) {
+    for (size_t i = 0; i < set.capacity; i++)
+    {
         TknListNode *node = set.nodePtrs[i];
-        while (node) {
+        while (node)
+        {
             void *ptr = *(void **)node->data;
-            printf("ptr=%p, *ptr=%d\n", ptr, *(int*)ptr);
+            printf("ptr=%p, *ptr=%d\n", ptr, *(int *)ptr);
             node = node->nextNodePtr;
         }
     }
     tknDestroyHashSet(set);
 }
 
-int main() {
+int main()
+{
     test_struct_hashset();
     test_pointer_hashset();
     return 0;
