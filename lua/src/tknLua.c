@@ -6,17 +6,22 @@ struct TknContext
     GfxContext *pGfxContext;
 };
 
+static int errorHandler(lua_State *L)
+{
+    const char *msg = lua_tostring(L, 1);
+    if (msg == NULL) msg = "unknown error";
+    luaL_traceback(L, L, msg, 1);
+    return 1;
+}
+
 static void assertLuaResult(lua_State *pLuaState, int result)
 {
     if (LUA_OK != result)
     {
-        const char *err = lua_tostring(pLuaState, -1);
-        if (err == NULL) err = "unknown error";
-        luaL_traceback(pLuaState, pLuaState, err, 0);
-        const char *fullTraceback = lua_tostring(pLuaState, -1);
-        printf("Lua Error with Stack Trace:\n%s\n", fullTraceback);
-        tknError("Lua error: %s (result: %d)", err, result);
-        lua_pop(pLuaState, 2);
+        const char *fullError = lua_tostring(pLuaState, -1);
+        if (fullError == NULL) fullError = "unknown error";
+        tknError("Lua error: %s (result: %d)", fullError, result);
+        lua_pop(pLuaState, 1);
     }
 }
 
@@ -73,7 +78,9 @@ TknContext *createTknContextPtr(const char *assetsPath, uint32_t luaLibraryCount
     lua_getfield(pLuaState, -1, "start");
     lua_pushlightuserdata(pLuaState, pGfxContext);
     lua_pushstring(pLuaState, assetsPath);
-    assertLuaResult(pLuaState, lua_pcall(pLuaState, 2, 0, 0));
+    lua_pushcfunction(pLuaState, errorHandler);
+    lua_insert(pLuaState, -4);
+    assertLuaResult(pLuaState, lua_pcall(pLuaState, 2, 0, -4));
     lua_pop(pLuaState, 1);
 
     TknContext TknContext = {
@@ -90,7 +97,9 @@ void destroyTknContextPtr(TknContext *pTknContext)
     lua_getglobal(pLuaState, "tknEngine");
     lua_getfield(pLuaState, -1, "stop");
     lua_pushlightuserdata(pLuaState, pTknContext->pGfxContext);
-    assertLuaResult(pLuaState, lua_pcall(pLuaState, 1, 0, 0));
+    lua_pushcfunction(pLuaState, errorHandler);
+    lua_insert(pLuaState, -3);
+    assertLuaResult(pLuaState, lua_pcall(pLuaState, 1, 0, -3));
     lua_pop(pLuaState, 1);
     lua_close(pTknContext->pLuaState);
 
@@ -105,7 +114,9 @@ void updateTknContext(TknContext *pTknContext, VkExtent2D swapchainExtent)
     lua_State *pLuaState = pTknContext->pLuaState;
     lua_getglobal(pLuaState, "tknEngine");
     lua_getfield(pLuaState, -1, "updateGameplay");
-    assertLuaResult(pLuaState, lua_pcall(pLuaState, 0, 0, 0));
+    lua_pushcfunction(pLuaState, errorHandler);
+    lua_insert(pLuaState, -2);
+    assertLuaResult(pLuaState, lua_pcall(pLuaState, 0, 0, -2));
 
     GfxContext *pGfxContext = pTknContext->pGfxContext;
 
@@ -113,7 +124,9 @@ void updateTknContext(TknContext *pTknContext, VkExtent2D swapchainExtent)
 
     lua_getfield(pLuaState, -1, "updateGfx");
     lua_pushlightuserdata(pLuaState, pGfxContext);
-    assertLuaResult(pLuaState, lua_pcall(pLuaState, 1, 0, 0));
+    lua_pushcfunction(pLuaState, errorHandler);
+    lua_insert(pLuaState, -3);
+    assertLuaResult(pLuaState, lua_pcall(pLuaState, 1, 0, -3));
 
     updateGfxContextPtr(pGfxContext, swapchainExtent);
     lua_pop(pLuaState, 1);

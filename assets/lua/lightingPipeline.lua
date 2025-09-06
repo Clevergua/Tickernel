@@ -46,7 +46,7 @@ function lightingPipeline.createPipelinePtr(pGfxContext, pRenderPass, subpassInd
     return gfx.createPipelinePtr(pGfxContext, pRenderPass, subpassIndex, lightingPipelineSpvPaths,
         nil, nil, vkPipelineInputAssemblyStateCreateInfo,
         gfx.defaultVkPipelineViewportStateCreateInfo,
-        gfx.vkPipelineRasterizationStateCreateInfo, gfx.defaultVkPipelineMultisampleStateCreateInfo,
+        gfx.defaultVkPipelineRasterizationStateCreateInfo, gfx.defaultVkPipelineMultisampleStateCreateInfo,
         vkPipelineDepthStencilStateCreateInfo, vkPipelineColorBlendStateCreateInfo, gfx.defaultVkPipelineDynamicStateCreateInfo)
 end
 

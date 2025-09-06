@@ -11,13 +11,11 @@ function tknRenderPipeline.setup(pGfxContext, assetsPath, pMeshVertexInputLayout
     tknRenderPipeline.pNormalAttachment = gfx.createDynamicAttachmentPtr(pGfxContext, VK_FORMAT_A2R10G10B10_UNORM_PACK32, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT, VK_IMAGE_ASPECT_COLOR_BIT, 1)
     tknRenderPipeline.pSwapchainAttachment = gfx.getSwapchainAttachmentPtr(pGfxContext)
     local pAttachments = {tknRenderPipeline.pColorAttachment, tknRenderPipeline.pDepthAttachment, tknRenderPipeline.pAlbedoAttachment, tknRenderPipeline.pNormalAttachment, tknRenderPipeline.pSwapchainAttachment}
-    tknRenderPipeline.pDeferredRenderPass = deferredRenderPass.setup(pGfxContext, pAttachments, assetsPath, tknRenderPipeline.pMeshVertexInputLayout, tknRenderPipeline.pInstanceVertexInputLayout)
+    tknRenderPipeline.pDeferredRenderPass = deferredRenderPass.setup(pGfxContext, pAttachments, assetsPath, pMeshVertexInputLayout, pInstanceVertexInputLayout)
 end
 
 function tknRenderPipeline.teardown(pGfxContext)
     deferredRenderPass.teardown(pGfxContext)
-    gfx.destroyVertexInputLayoutPtr(tknRenderPipeline.pInstanceVertexInputLayout)
-    gfx.destroyVertexInputLayoutPtr(tknRenderPipeline.pMeshVertexInputLayout)
     gfx.destroyDynamicAttachmentPtr(pGfxContext, tknRenderPipeline.pNormalAttachment)
     gfx.destroyDynamicAttachmentPtr(pGfxContext, tknRenderPipeline.pAlbedoAttachment)
     gfx.destroyDynamicAttachmentPtr(pGfxContext, tknRenderPipeline.pDepthAttachment)
