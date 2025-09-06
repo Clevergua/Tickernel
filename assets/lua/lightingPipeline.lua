@@ -12,8 +12,6 @@ function lightingPipeline.createPipelinePtr(pGfxContext, pRenderPass, subpassInd
         primitiveRestartEnable = false,
     }
 
-
-
     local vkPipelineDepthStencilStateCreateInfo = {
         depthTestEnable = false,
         depthWriteEnable = false,

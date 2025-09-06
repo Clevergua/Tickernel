@@ -302,9 +302,11 @@ Pipeline *createPipelinePtr(GfxContext *pGfxContext, RenderPass *pRenderPass, ui
         .drawCallPtrDynamicArray = drawCallPtrDynamicArray,
     };
     tknAddToDynamicArray(&pRenderPass->subpasses[subpassIndex].pipelinePtrDynamicArray, &pPipeline);
+    if (NULL != pMeshVertexInputLayout)
+        tknAddToHashSet(&pMeshVertexInputLayout->referencePtrHashSet, &pPipeline);
+    if (NULL != pInstanceVertexInputLayout)
+        tknAddToHashSet(&pInstanceVertexInputLayout->referencePtrHashSet, &pPipeline);
 
-    tknAddToHashSet(&pMeshVertexInputLayout->referencePtrHashSet, &pPipeline);
-    tknAddToHashSet(&pInstanceVertexInputLayout->referencePtrHashSet, &pPipeline);
     return pPipeline;
 }
 void destroyPipelinePtr(GfxContext *pGfxContext, Pipeline *pPipeline)

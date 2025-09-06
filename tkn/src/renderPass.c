@@ -2,15 +2,13 @@
 
 static Subpass createSubpass(GfxContext *pGfxContext, uint32_t subpassIndex, uint32_t attachmentCount, Attachment **attachmentPtrs, uint32_t inputVkAttachmentReferenceCount, const VkAttachmentReference *inputVkAttachmentReferences, uint32_t spvPathCount, const char **spvPaths)
 {
-    VkImageLayout *inputAttachmentIndexToVkImageLayout = tknMalloc(sizeof(VkImageLayout) * attachmentCount);
-    for (uint32_t attachmentIndex = 0; attachmentIndex < attachmentCount; attachmentIndex++)
-    {
-        inputAttachmentIndexToVkImageLayout[attachmentIndex] = VK_IMAGE_LAYOUT_UNDEFINED;
-    }
+    VkImageLayout *inputAttachmentIndexToVkImageLayout = tknMalloc(sizeof(VkImageLayout) * inputVkAttachmentReferenceCount);
     for (uint32_t inputVkAttachmentReferenceIndex = 0; inputVkAttachmentReferenceIndex < inputVkAttachmentReferenceCount; inputVkAttachmentReferenceIndex++)
     {
         tknAssert(inputVkAttachmentReferences[inputVkAttachmentReferenceIndex].attachment < attachmentCount, "Input attachment reference index %u out of bounds", inputVkAttachmentReferenceIndex);
-        inputAttachmentIndexToVkImageLayout[inputVkAttachmentReferences[inputVkAttachmentReferenceIndex].attachment] = inputVkAttachmentReferences[inputVkAttachmentReferenceIndex].layout;
+        printf("Input Attachment Index %u -> Attachment %u uses layout %d\n", inputVkAttachmentReferenceIndex, inputVkAttachmentReferences[inputVkAttachmentReferenceIndex].attachment, inputVkAttachmentReferences[inputVkAttachmentReferenceIndex].layout);
+
+        inputAttachmentIndexToVkImageLayout[inputVkAttachmentReferenceIndex] = inputVkAttachmentReferences[inputVkAttachmentReferenceIndex].layout;
     }
     SpvReflectShaderModule *spvReflectShaderModules = tknMalloc(sizeof(SpvReflectShaderModule) * spvPathCount);
     for (uint32_t spvPathIndex = 0; spvPathIndex < spvPathCount; spvPathIndex++)
@@ -35,10 +33,12 @@ static Subpass createSubpass(GfxContext *pGfxContext, uint32_t subpassIndex, uin
                     {
                         uint32_t binding = pSpvReflectDescriptorBinding->binding;
                         uint32_t inputAttachmentIndex = pSpvReflectDescriptorBinding->input_attachment_index;
-                        Attachment *pInputAttachment = attachmentPtrs[inputAttachmentIndex];
+                        tknAssert(inputAttachmentIndex < inputVkAttachmentReferenceCount, "Input attachment index %u out of bounds (max %u)", inputAttachmentIndex, inputVkAttachmentReferenceCount);
+                        
+                        uint32_t realAttachmentIndex = inputVkAttachmentReferences[inputAttachmentIndex].attachment;
+                        Attachment *pInputAttachment = attachmentPtrs[realAttachmentIndex];
                         if (NULL == pMaterial->bindings[binding].bindingUnion.inputAttachmentBinding.pAttachment)
                         {
-                            tknAssert(inputAttachmentIndex < attachmentCount, "Input attachment index %u out of bounds", inputAttachmentIndex);
                             pMaterial->bindings[binding].bindingUnion.inputAttachmentBinding.pAttachment = pInputAttachment;
                             pMaterial->bindings[binding].bindingUnion.inputAttachmentBinding.vkImageLayout = inputAttachmentIndexToVkImageLayout[inputAttachmentIndex];
                         }

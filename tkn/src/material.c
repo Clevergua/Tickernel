@@ -136,6 +136,7 @@ void bindAttachmentsToMaterialPtr(GfxContext *pGfxContext, Material *pMaterial)
                     .imageView = vkImageView,
                     .imageLayout = pBinding->bindingUnion.inputAttachmentBinding.vkImageLayout,
                 };
+                printf("Binding input attachment: binding %d, imageView %p, imageLayout %d\n", binding, (void *)vkImageView, pBinding->bindingUnion.inputAttachmentBinding.vkImageLayout);
                 vkWriteDescriptorSets[vkWriteDescriptorSetIndex] = (VkWriteDescriptorSet){
                     .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
                     .dstSet = pMaterial->vkDescriptorSet,
@@ -243,10 +244,10 @@ void updateAttachmentOfMaterialPtr(GfxContext *pGfxContext, Binding *pBinding)
 {
     tknAssert(pBinding->vkDescriptorType == VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, "Binding is not an input attachment");
     tknAssert(pBinding->bindingUnion.inputAttachmentBinding.pAttachment != NULL, "Binding is not bound to an attachment");
-    
+
     Attachment *pAttachment = pBinding->bindingUnion.inputAttachmentBinding.pAttachment;
     VkImageView vkImageView = VK_NULL_HANDLE;
-    
+
     if (ATTACHMENT_TYPE_DYNAMIC == pAttachment->attachmentType)
     {
         vkImageView = pAttachment->attachmentUnion.dynamicAttachment.vkImageView;
@@ -259,7 +260,7 @@ void updateAttachmentOfMaterialPtr(GfxContext *pGfxContext, Binding *pBinding)
     {
         tknError("Swapchain attachment cannot be used as input attachment (attachment type: %d)", pAttachment->attachmentType);
     }
-    
+
     VkDescriptorImageInfo vkDescriptorImageInfo = {
         .sampler = VK_NULL_HANDLE,
         .imageView = vkImageView,

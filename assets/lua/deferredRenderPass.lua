@@ -59,9 +59,7 @@ function deferredRenderPass.setup(pGfxContext, pAttachments, assetsPath, pMeshVe
 
     local geometrySubpassDescription = {
         pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
-        inputAttachmentCount = 0,
         pInputAttachments = {},
-        colorAttachmentCount = 2,
         pColorAttachments = {{
             attachment = 2,
             layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
@@ -74,13 +72,11 @@ function deferredRenderPass.setup(pGfxContext, pAttachments, assetsPath, pMeshVe
             attachment = 1,
             layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
         },
-        preserveAttachmentCount = 0,
         pPreserveAttachments = {}
     }
 
     local ligthtingSubpassDescription = {
         pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
-        inputAttachmentCount = 3,
         pInputAttachments = {{
             attachment = 1,
             layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL
@@ -91,32 +87,27 @@ function deferredRenderPass.setup(pGfxContext, pAttachments, assetsPath, pMeshVe
             attachment = 3,
             layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
         }},
-        colorAttachmentCount = 1,
         pColorAttachments = {{
             attachment = 0,
             layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
         }},
         pResolveAttachments = {},
         pDepthStencilAttachment = nil,
-        preserveAttachmentCount = 0,
         pPreserveAttachments = {}
     }
 
     local postProcessSubpassDescription = {
         pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
-        inputAttachmentCount = 1,
         pInputAttachments = {{
             attachment = 0,
             layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
         }},
-        colorAttachmentCount = 1,
         pColorAttachments = {{
             attachment = 4,
             layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
         }},
         pResolveAttachments = {},
         pDepthStencilAttachment = nil,
-        preserveAttachmentCount = 0,
         pPreserveAttachments = {}
     }
 

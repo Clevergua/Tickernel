@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VariablesViewState
+   version = "1.0">
+   <ContextStates>
+      <ContextState
+         contextName = "tknAddToHashSet:tknCore.c">
+      </ContextState>
+      <ContextState
+         contextName = "createPipelinePtr:pipeline.c">
+      </ContextState>
+      <ContextState
+         contextName = "GLOBAL">
+         <PersistentStrings>
+            <PersistentString
+               value = "inputAttachmentIndexToVkImageLayout[0]">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "createSubpass:renderPass.c">
+      </ContextState>
+   </ContextStates>
+</VariablesViewState>
