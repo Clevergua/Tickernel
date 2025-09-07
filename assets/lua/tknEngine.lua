@@ -148,7 +148,7 @@ function tknEngine.start(pGfxContext, assetsPath)
         0, 255, 0, 255, -- Green  
         0, 0, 255, 255 -- Blue
         },
-        normal = {0x0, -- Front facing normal (encoded)
+        normal = {0x1, -- Front facing normal (encoded)
         0x0, 0x0},
     }
 

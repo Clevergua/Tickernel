@@ -61,100 +61,133 @@ static void *packDataFromLayout(lua_State *pLuaState, int layoutIndex, int dataI
     int absoluteLayoutIndex = lua_absindex(pLuaState, layoutIndex);
     int absoluteDataIndex = lua_absindex(pLuaState, dataIndex);
     
-    VkDeviceSize totalSize = calculateLayoutSize(pLuaState, absoluteLayoutIndex);
+    VkDeviceSize singleVertexSize = calculateLayoutSize(pLuaState, absoluteLayoutIndex);
+    
+    // Calculate vertex count by checking the first field's array length
+    uint32_t vertexCount = 0;
+    lua_len(pLuaState, absoluteLayoutIndex);
+    uint32_t fieldCount = (uint32_t)lua_tointeger(pLuaState, -1);
+    lua_pop(pLuaState, 1);
+    
+    if (fieldCount > 0) {
+        // Get first field info
+        lua_rawgeti(pLuaState, absoluteLayoutIndex, 1);
+        lua_getfield(pLuaState, -1, "name");
+        const char *firstFieldName = lua_tostring(pLuaState, -1);
+        lua_pop(pLuaState, 1);
+        lua_getfield(pLuaState, -1, "count");
+        uint32_t firstFieldCount = (uint32_t)lua_tointeger(pLuaState, -1);
+        lua_pop(pLuaState, 2);
+        
+        // Get first field data to determine vertex count
+        lua_getfield(pLuaState, absoluteDataIndex, firstFieldName);
+        if (lua_istable(pLuaState, -1)) {
+            lua_len(pLuaState, -1);
+            uint32_t arrayLength = (uint32_t)lua_tointeger(pLuaState, -1);
+            lua_pop(pLuaState, 1);
+            vertexCount = arrayLength / firstFieldCount;
+        }
+        lua_pop(pLuaState, 1);
+    }
+    
+    VkDeviceSize totalSize = singleVertexSize * vertexCount;
     void *data = tknMalloc(totalSize);
     uint8_t *dataPtr = (uint8_t *)data;
 
     lua_len(pLuaState, absoluteLayoutIndex);
-    uint32_t fieldCount = (uint32_t)lua_tointeger(pLuaState, -1);
+    fieldCount = (uint32_t)lua_tointeger(pLuaState, -1);
     lua_pop(pLuaState, 1);
 
-    for (uint32_t i = 0; i < fieldCount; i++)
+    // Pack data for each vertex
+    for (uint32_t vertexIdx = 0; vertexIdx < vertexCount; vertexIdx++)
     {
-        lua_rawgeti(pLuaState, absoluteLayoutIndex, i + 1);
-
-        lua_getfield(pLuaState, -1, "name");
-        const char *fieldName = lua_tostring(pLuaState, -1);
-        lua_pop(pLuaState, 1);
-
-        lua_getfield(pLuaState, -1, "type");
-        uint32_t type = (uint32_t)lua_tointeger(pLuaState, -1);
-        lua_pop(pLuaState, 1);
-
-        lua_getfield(pLuaState, -1, "count");
-        uint32_t count = (uint32_t)lua_tointeger(pLuaState, -1);
-        lua_pop(pLuaState, 1);
-
-        // Get data for this field
-        lua_getfield(pLuaState, absoluteDataIndex, fieldName);
-        if (!lua_isnil(pLuaState, -1))
+        for (uint32_t i = 0; i < fieldCount; i++)
         {
-            if (lua_istable(pLuaState, -1))
+            lua_rawgeti(pLuaState, absoluteLayoutIndex, i + 1);
+
+            lua_getfield(pLuaState, -1, "name");
+            const char *fieldName = lua_tostring(pLuaState, -1);
+            lua_pop(pLuaState, 1);
+
+            lua_getfield(pLuaState, -1, "type");
+            uint32_t type = (uint32_t)lua_tointeger(pLuaState, -1);
+            lua_pop(pLuaState, 1);
+
+            lua_getfield(pLuaState, -1, "count");
+            uint32_t count = (uint32_t)lua_tointeger(pLuaState, -1);
+            lua_pop(pLuaState, 1);
+
+            // Get data for this field
+            lua_getfield(pLuaState, absoluteDataIndex, fieldName);
+            if (!lua_isnil(pLuaState, -1))
             {
-                // Array data
-                for (uint32_t j = 0; j < count; j++)
+                if (lua_istable(pLuaState, -1))
                 {
-                    lua_rawgeti(pLuaState, -1, j + 1);
-                    if (type == TYPE_UINT8 || type == TYPE_INT8)
+                    // Array data - get data for current vertex
+                    for (uint32_t j = 0; j < count; j++)
                     {
-                        uint8_t value = (uint8_t)lua_tointeger(pLuaState, -1);
-                        memcpy(dataPtr, &value, 1);
-                        dataPtr += 1;
+                        uint32_t dataIndex = vertexIdx * count + j + 1; // Lua arrays are 1-indexed
+                        lua_rawgeti(pLuaState, -1, dataIndex);
+                        if (type == TYPE_UINT8 || type == TYPE_INT8)
+                        {
+                            uint8_t value = (uint8_t)lua_tointeger(pLuaState, -1);
+                            memcpy(dataPtr, &value, 1);
+                            dataPtr += 1;
+                        }
+                        else if (type == TYPE_UINT16 || type == TYPE_INT16)
+                        {
+                            uint16_t value = (uint16_t)lua_tointeger(pLuaState, -1);
+                            memcpy(dataPtr, &value, 2);
+                            dataPtr += 2;
+                        }
+                        else if (type == TYPE_UINT32 || type == TYPE_INT32)
+                        {
+                            uint32_t value = (uint32_t)lua_tointeger(pLuaState, -1);
+                            memcpy(dataPtr, &value, 4);
+                            dataPtr += 4;
+                        }
+                        else if (type == TYPE_UINT64 || type == TYPE_INT64)
+                        {
+                            uint64_t value = (uint64_t)lua_tointeger(pLuaState, -1);
+                            memcpy(dataPtr, &value, 8);
+                            dataPtr += 8;
+                        }
+                        else if (type == TYPE_FLOAT)
+                        {
+                            float value = (float)lua_tonumber(pLuaState, -1);
+                            memcpy(dataPtr, &value, 4);
+                            dataPtr += 4;
+                        }
+                        else if (type == TYPE_DOUBLE)
+                        {
+                            double value = (double)lua_tonumber(pLuaState, -1);
+                            memcpy(dataPtr, &value, 8);
+                            dataPtr += 8;
+                        }
+                        lua_pop(pLuaState, 1);
                     }
-                    else if (type == TYPE_UINT16 || type == TYPE_INT16)
-                    {
-                        uint16_t value = (uint16_t)lua_tointeger(pLuaState, -1);
-                        memcpy(dataPtr, &value, 2);
-                        dataPtr += 2;
-                    }
-                    else if (type == TYPE_UINT32 || type == TYPE_INT32)
-                    {
-                        uint32_t value = (uint32_t)lua_tointeger(pLuaState, -1);
-                        memcpy(dataPtr, &value, 4);
-                        dataPtr += 4;
-                    }
-                    else if (type == TYPE_UINT64 || type == TYPE_INT64)
-                    {
-                        uint64_t value = (uint64_t)lua_tointeger(pLuaState, -1);
-                        memcpy(dataPtr, &value, 8);
-                        dataPtr += 8;
-                    }
-                    else if (type == TYPE_FLOAT)
+                }
+                else
+                {
+                    // Single value - repeat for each vertex
+                    if (type == TYPE_FLOAT)
                     {
                         float value = (float)lua_tonumber(pLuaState, -1);
                         memcpy(dataPtr, &value, 4);
                         dataPtr += 4;
                     }
-                    else if (type == TYPE_DOUBLE)
+                    else
                     {
-                        double value = (double)lua_tonumber(pLuaState, -1);
-                        memcpy(dataPtr, &value, 8);
-                        dataPtr += 8;
+                        uint32_t value = (uint32_t)lua_tointeger(pLuaState, -1);
+                        memcpy(dataPtr, &value, 4);
+                        dataPtr += 4;
                     }
-                    lua_pop(pLuaState, 1);
                 }
             }
-            else
-            {
-                // Single value
-                if (type == TYPE_FLOAT)
-                {
-                    float value = (float)lua_tonumber(pLuaState, -1);
-                    memcpy(dataPtr, &value, 4);
-                    dataPtr += 4;
-                }
-                else
-                {
-                    uint32_t value = (uint32_t)lua_tointeger(pLuaState, -1);
-                    memcpy(dataPtr, &value, 4);
-                    dataPtr += 4;
-                }
-            }
+            lua_pop(pLuaState, 1); // pop field data
+            lua_pop(pLuaState, 1); // pop layout entry
         }
-        lua_pop(pLuaState, 1); // pop field data
-        lua_pop(pLuaState, 1); // pop layout entry
     }
-
     *outSize = totalSize;
     return data;
 }

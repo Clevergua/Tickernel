@@ -11,12 +11,12 @@ layout(location = 0) out vec4 outputAlbedo;
 layout(location = 1) out vec3 outputNormal;
 
 void main(void) {
-    // 解包颜色：高效的位操作
+    // 解包颜色：修正位操作顺序，适配RGBA字节序
     vec4 unpackedColor = vec4(
-        float((color      ) & 0xFFu),
-        float((color >>  8) & 0xFFu),
-        float((color >> 16) & 0xFFu),
-        float((color >> 24) & 0xFFu)
+        float((color >> 24) & 0xFFu),  // R
+        float((color >> 16) & 0xFFu),  // G  
+        float((color >>  8) & 0xFFu),  // B
+        float((color      ) & 0xFFu)   // A
     ) * (1.0/255.0);
 
     // 6个主要方向的法线（6位）
