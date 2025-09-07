@@ -72,7 +72,7 @@ function tknEngine.start(pGfxContext, assetsPath)
         proj = {1.3584, 0, 0, 0, 0, 2.4142, 0, 0, 0, 0, -1.0020, -1, 0, 0, -0.2002, 0},
         -- Inverse view-projection matrix (computed from the above matrices)
         inv_view_proj = {0.5206, 0, -0.5206, 0, -0.3007, 0.6013, -0.3007, 0, 0.0231, 0.0231, 0.0231, 0, 2.3077, 4.3301, 2.3077, 43.301},
-        pointSizeFactor = 50.0,
+        pointSizeFactor = 1000.0,
         time = 0.0,
         frameCount = 0,
         near = 0.1,
@@ -85,8 +85,9 @@ function tknEngine.start(pGfxContext, assetsPath)
         pUniformBuffer = tknEngine.pGlobalUniformBuffer,
         binding = 0,
     }}
+    tknEngine.pGlobalMaterialPtr = gfx.getGlobalMaterialPtr(pGfxContext)
     gfx.updateMaterialPtr(pGfxContext, tknEngine.pGlobalMaterialPtr, inputBindings)
-    
+
     -- -- Create lights uniform buffer for lighting subpass
     -- tknEngine.lightsUniformBufferFormat = {{
     --     -- DirectionalLight: direction(vec3) + strength(float) + color(vec3) + padding(float)
@@ -115,7 +116,7 @@ function tknEngine.start(pGfxContext, assetsPath)
     --     type = TYPE_INT32,
     --     count = 3,
     -- }}
-    
+
     -- local pLightsUniformBuffer = {
     --     directionalLight_direction = {0.5, -1.0, 0.3}, -- Light coming from upper right
     --     directionalLight_strength = 1.0,
@@ -124,9 +125,9 @@ function tknEngine.start(pGfxContext, assetsPath)
     --     pointLightCount = 0, -- No point lights for now
     --     pointLightArray_padding = {0, 0, 0},
     -- }
-    
+
     -- tknEngine.pLightsUniformBuffer = gfx.createUniformBufferPtr(pGfxContext, tknEngine.lightsUniformBufferFormat, pLightsUniformBuffer)
-    
+
     -- Get the lighting subpass material and update it with lights uniform buffer
     -- local deferredRenderPass = tknRenderPipeline.deferredRenderPass
     -- tknEngine.pLightingMaterial = gfx.getSubpassMaterialPtr(pGfxContext, deferredRenderPass.pRenderPass, 1) -- Lighting is subpass 1
@@ -136,24 +137,19 @@ function tknEngine.start(pGfxContext, assetsPath)
     --     binding = 3,
     -- }}
     -- gfx.updateMaterialPtr(pGfxContext, tknEngine.pLightingMaterial, lightingInputBindings)
-    
+
     local vertices = {
         -- Triangle vertices
-        position = {
-            -1.0, -1.0, 0.0,  -- Bottom left
-             1.0, -1.0, 0.0,  -- Bottom right
-             0.0,  1.0, 0.0   -- Top center
+        position = {-1.0, -1.0, 0.0, -- Bottom left
+        1.0, -1.0, 0.0, -- Bottom right
+        0.0, 1.0, 0.0 -- Top center
         },
-        color = {
-            255, 0, 0, 255,   -- Red
-            0, 255, 0, 255,   -- Green  
-            0, 0, 255, 255    -- Blue
+        color = {255, 0, 0, 255, -- Red
+        0, 255, 0, 255, -- Green  
+        0, 0, 255, 255 -- Blue
         },
-        normal = {
-            0x0,  -- Front facing normal (encoded)
-            0x0,
-            0x0
-        },
+        normal = {0x0, -- Front facing normal (encoded)
+        0x0, 0x0},
     }
 
     tknEngine.pMesh = gfx.createMeshPtr(pGfxContext, tknEngine.pMeshVertexInputLayout, tknEngine.vertexFormat, vertices, nil)
@@ -168,7 +164,7 @@ end
 
 function tknEngine.stop(pGfxContext)
     print("Lua stop")
-    
+
     -- First remove drawcalls
     gfx.removeDrawCallPtr(pGfxContext, tknEngine.pDrawCall)
     tknEngine.pDrawCall = nil
@@ -182,10 +178,10 @@ function tknEngine.stop(pGfxContext)
     -- Clear material references before destroying pipeline
     tknEngine.pGlobalMaterial = nil
     tknEngine.pLightingMaterial = nil
-    
+
     -- Destroy render pipeline (this will destroy materials that use the uniform buffers)
     tknRenderPipeline.teardown(pGfxContext)
-    
+
     -- Now it's safe to destroy the uniform buffers
     gfx.destroyUniformBufferPtr(pGfxContext, tknEngine.pGlobalUniformBuffer)
     tknEngine.pGlobalUniformBuffer = nil
