@@ -314,9 +314,12 @@ void destroyPipelinePtr(GfxContext *pGfxContext, Pipeline *pPipeline)
     clearDrawCalls(pGfxContext, pPipeline);
     VkDevice vkDevice = pGfxContext->vkDevice;
     tknRemoveFromDynamicArray(&pPipeline->pRenderPass->subpasses[pPipeline->subpassIndex].pipelinePtrDynamicArray, &pPipeline);
+    if (pPipeline->pMeshVertexInputLayout != NULL)
+        tknRemoveFromHashSet(&pPipeline->pMeshVertexInputLayout->referencePtrHashSet, &pPipeline);
 
-    tknRemoveFromHashSet(&pPipeline->pMeshVertexInputLayout->referencePtrHashSet, &pPipeline);
-    tknRemoveFromHashSet(&pPipeline->pInstanceVertexInputLayout->referencePtrHashSet, &pPipeline);
+    if (pPipeline->pInstanceVertexInputLayout != NULL)
+        tknRemoveFromHashSet(&pPipeline->pInstanceVertexInputLayout->referencePtrHashSet, &pPipeline);
+
     tknDestroyDynamicArray(pPipeline->drawCallPtrDynamicArray);
     destroyDescriptorSetPtr(pGfxContext, pPipeline->pPipelineDescriptorSet);
     vkDestroyPipeline(vkDevice, pPipeline->vkPipeline, NULL);

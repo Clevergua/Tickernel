@@ -11,7 +11,7 @@ function deferredRenderPass.setup(pGfxContext, pAttachments, assetsPath, pMeshVe
         stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
         stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
         initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-        finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+        finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
     };
     local depthAttachmentDescription = {
         samples = VK_SAMPLE_COUNT_1_BIT,
@@ -20,7 +20,7 @@ function deferredRenderPass.setup(pGfxContext, pAttachments, assetsPath, pMeshVe
         stencilLoadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
         stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
         initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-        finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
+        finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
     };
     local albedoAttachmentDescription = {
         samples = VK_SAMPLE_COUNT_1_BIT,
@@ -29,7 +29,7 @@ function deferredRenderPass.setup(pGfxContext, pAttachments, assetsPath, pMeshVe
         stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
         stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
         initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-        finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+        finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
     };
     local normalAttachmentDescription = {
         samples = VK_SAMPLE_COUNT_1_BIT,
@@ -38,7 +38,7 @@ function deferredRenderPass.setup(pGfxContext, pAttachments, assetsPath, pMeshVe
         stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
         stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
         initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-        finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+        finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
     };
     local swapchainAttachmentDescription = {
         samples = VK_SAMPLE_COUNT_1_BIT,
@@ -47,14 +47,14 @@ function deferredRenderPass.setup(pGfxContext, pAttachments, assetsPath, pMeshVe
         stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
         stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
         initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-        finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
+        finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
     };
 
     local vkAttachmentDescriptions = {colorAttachmentDescription, depthAttachmentDescription, albedoAttachmentDescription, normalAttachmentDescription, swapchainAttachmentDescription};
 
     local vkClearValues = {{0.0, 0.0, 0.0, 1.0}, {
         depth = 1.0,
-        stencil = 0
+        stencil = 0,
     }, {0.0, 0.0, 0.0, 1.0}, {0.0, 0.0, 0.0, 1.0}, {0.0, 0.0, 0.0, 1.0}};
 
     local geometrySubpassDescription = {
@@ -62,53 +62,53 @@ function deferredRenderPass.setup(pGfxContext, pAttachments, assetsPath, pMeshVe
         pInputAttachments = {},
         pColorAttachments = {{
             attachment = 2,
-            layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+            layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
         }, {
             attachment = 3,
-            layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+            layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
         }},
         pResolveAttachments = {},
         pDepthStencilAttachment = {
             attachment = 1,
-            layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
+            layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
         },
-        pPreserveAttachments = {}
+        pPreserveAttachments = {},
     }
 
     local ligthtingSubpassDescription = {
         pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
         pInputAttachments = {{
             attachment = 1,
-            layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL
+            layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL,
         }, {
             attachment = 2,
-            layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+            layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
         }, {
             attachment = 3,
-            layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+            layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
         }},
         pColorAttachments = {{
             attachment = 0,
-            layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+            layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
         }},
         pResolveAttachments = {},
         pDepthStencilAttachment = nil,
-        pPreserveAttachments = {}
+        pPreserveAttachments = {},
     }
 
     local postProcessSubpassDescription = {
         pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
         pInputAttachments = {{
             attachment = 0,
-            layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+            layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
         }},
         pColorAttachments = {{
             attachment = 4,
-            layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+            layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
         }},
         pResolveAttachments = {},
         pDepthStencilAttachment = nil,
-        pPreserveAttachments = {}
+        pPreserveAttachments = {},
     }
 
     local vkSubpassDescriptions = {geometrySubpassDescription, ligthtingSubpassDescription, postProcessSubpassDescription}
@@ -122,7 +122,7 @@ function deferredRenderPass.setup(pGfxContext, pAttachments, assetsPath, pMeshVe
         dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
         srcAccessMask = VK_ACCESS_MEMORY_READ_BIT,
         dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-        dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT
+        dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT,
     }, {
         srcSubpass = 0,
         dstSubpass = 1,
@@ -130,7 +130,7 @@ function deferredRenderPass.setup(pGfxContext, pAttachments, assetsPath, pMeshVe
         dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
         srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
         dstAccessMask = VK_ACCESS_INPUT_ATTACHMENT_READ_BIT,
-        dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT
+        dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT,
     }, {
         srcSubpass = 1,
         dstSubpass = 2,
@@ -138,7 +138,7 @@ function deferredRenderPass.setup(pGfxContext, pAttachments, assetsPath, pMeshVe
         dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
         srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
         dstAccessMask = VK_ACCESS_INPUT_ATTACHMENT_READ_BIT,
-        dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT
+        dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT,
     }, {
         srcSubpass = 2,
         dstSubpass = VK_SUBPASS_EXTERNAL,
@@ -146,7 +146,7 @@ function deferredRenderPass.setup(pGfxContext, pAttachments, assetsPath, pMeshVe
         dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
         srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
         dstAccessMask = VK_ACCESS_MEMORY_READ_BIT,
-        dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT
+        dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT,
     }}
     deferredRenderPass.pRenderPass = gfx.createRenderPassPtr(pGfxContext, vkAttachmentDescriptions, pAttachments, vkClearValues, vkSubpassDescriptions, spvPathsArray, vkSubpassDependencies, renderPassIndex)
     local pipelineIndex = 0
@@ -168,7 +168,7 @@ function deferredRenderPass.teardown(pGfxContext)
     postProcessPipeline.destroyPipelinePtr(pGfxContext, deferredRenderPass.pGeometryPipeline)
     deferredRenderPass.pGeometryMaterial = nil
     lightingPipeline.destroyPipelinePtr(pGfxContext, deferredRenderPass.pLightingPipeline)
-    geometryPipeline.destroyPipelinePtr(pGfxContext, deferredRenderPass.pGeometryPipeline)
+    geometryPipeline.destroyPipelinePtr(pGfxContext, deferredRenderPass.pPostProcessPipeline)
 
     gfx.destroyRenderPassPtr(pGfxContext, deferredRenderPass.pRenderPass)
 
