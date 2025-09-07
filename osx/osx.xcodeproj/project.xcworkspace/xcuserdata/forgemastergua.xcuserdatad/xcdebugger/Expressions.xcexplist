@@ -3,17 +3,6 @@
    version = "1.0">
    <ContextStates>
       <ContextState
-         contextName = "GLOBAL">
-         <PersistentStrings>
-            <PersistentString
-               value = "vkVertexInputAttributeDescriptions[1]">
-            </PersistentString>
-            <PersistentString
-               value = "vkVertexInputAttributeDescriptions[3]">
-            </PersistentString>
-         </PersistentStrings>
-      </ContextState>
-      <ContextState
          contextName = "createPipelinePtr:pipeline.c">
          <PersistentStrings>
             <PersistentString
@@ -32,6 +21,9 @@
       </ContextState>
       <ContextState
          contextName = "tknAddToHashSet:tknCore.c">
+      </ContextState>
+      <ContextState
+         contextName = "packDataFromLayout:tknLuaBinding.c">
       </ContextState>
       <ContextState
          contextName = "createSubpass:renderPass.c">

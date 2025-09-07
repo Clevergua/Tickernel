@@ -11,8 +11,8 @@ function tknEngine.start(pGfxContext, assetsPath)
         count = 3,
     }, {
         name = "color",
-        type = TYPE_UINT8,
-        count = 4,
+        type = TYPE_UINT32,
+        count = 1,
     }, {
         name = "normal",
         type = TYPE_UINT32,
@@ -144,10 +144,7 @@ function tknEngine.start(pGfxContext, assetsPath)
         1.0, -1.0, 0.0, -- Bottom right
         0.0, 1.0, 0.0 -- Top center
         },
-        color = {255, 0, 0, 255, -- Red
-        0, 255, 0, 255, -- Green  
-        0, 0, 255, 255 -- Blue
-        },
+        color = {0xFF0000FF, 0x00FF00FF, 0x0000FFFF}, -- Red, Green, Blue (RGBA packed)
         normal = {0x1, -- Front facing normal (encoded)
         0x0, 0x0},
     }

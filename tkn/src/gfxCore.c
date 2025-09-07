@@ -73,7 +73,6 @@ static uint32_t getMemoryTypeIndex(VkPhysicalDevice vkPhysicalDevice, uint32_t t
     return UINT32_MAX;
 }
 
-
 void clearBindingPtrHashSet(GfxContext *pGfxContext, TknHashSet bindingPtrHashSet)
 {
     for (uint32_t i = 0; i < bindingPtrHashSet.capacity; i++)
@@ -220,7 +219,7 @@ VertexInputLayout *createVertexInputLayoutPtr(GfxContext *pGfxContext, uint32_t 
         .sizes = sizesCopy,
         .offsets = offsets,
         .stride = stride,
-        .referencePtrHashSet = tknCreateHashSet(TKN_DEFAULT_COLLECTION_SIZE),
+        .referencePtrHashSet = tknCreateHashSet(sizeof(void *)),
     };
     tknAddToHashSet(&pGfxContext->vertexInputLayoutPtrHashSet, &pVertexInputLayout);
     return pVertexInputLayout;
@@ -230,11 +229,11 @@ void destroyVertexInputLayoutPtr(GfxContext *pGfxContext, VertexInputLayout *pVe
     tknAssert(0 == pVertexInputLayout->referencePtrHashSet.count, "Cannot destroy vertex input layout with meshes | instance attached!");
     tknRemoveFromHashSet(&pGfxContext->vertexInputLayoutPtrHashSet, &pVertexInputLayout);
     tknDestroyHashSet(pVertexInputLayout->referencePtrHashSet);
-    
+
     // Free the deep-copied strings
     for (uint32_t i = 0; i < pVertexInputLayout->attributeCount; i++)
     {
-        tknFree((void*)pVertexInputLayout->names[i]);
+        tknFree((void *)pVertexInputLayout->names[i]);
     }
     tknFree(pVertexInputLayout->names);
     tknFree(pVertexInputLayout->sizes);

@@ -9,7 +9,8 @@ struct TknContext
 static int errorHandler(lua_State *L)
 {
     const char *msg = lua_tostring(L, 1);
-    if (msg == NULL) msg = "unknown error";
+    if (msg == NULL)
+        msg = "unknown error";
     luaL_traceback(L, L, msg, 1);
     return 1;
 }
@@ -19,7 +20,8 @@ static void assertLuaResult(lua_State *pLuaState, int result)
     if (LUA_OK != result)
     {
         const char *fullError = lua_tostring(pLuaState, -1);
-        if (fullError == NULL) fullError = "unknown error";
+        if (fullError == NULL)
+            fullError = "unknown error";
         tknError("Lua error: %s (result: %d)", fullError, result);
         lua_pop(pLuaState, 1);
     }
@@ -69,7 +71,7 @@ TknContext *createTknContextPtr(const char *assetsPath, uint32_t luaLibraryCount
         luaL_setfuncs(pLuaState, luaLibrary.luaRegs, 0);
         lua_setglobal(pLuaState, luaLibrary.name);
     }
-    
+
     char tknEngineLuaPath[FILENAME_MAX];
     snprintf(tknEngineLuaPath, FILENAME_MAX, "%s/lua/tknEngine.lua", assetsPath);
     int result = luaL_dofile(pLuaState, tknEngineLuaPath);
@@ -93,17 +95,19 @@ TknContext *createTknContextPtr(const char *assetsPath, uint32_t luaLibraryCount
 
 void destroyTknContextPtr(TknContext *pTknContext)
 {
+    GfxContext *pGfxContext = pTknContext->pGfxContext;
+
+    waitGfxContextPtr(pGfxContext);
     lua_State *pLuaState = pTknContext->pLuaState;
     lua_getglobal(pLuaState, "tknEngine");
     lua_getfield(pLuaState, -1, "stop");
-    lua_pushlightuserdata(pLuaState, pTknContext->pGfxContext);
+    lua_pushlightuserdata(pLuaState, pGfxContext);
     lua_pushcfunction(pLuaState, errorHandler);
     lua_insert(pLuaState, -3);
     assertLuaResult(pLuaState, lua_pcall(pLuaState, 1, 0, -3));
     lua_pop(pLuaState, 1);
     lua_close(pTknContext->pLuaState);
 
-    GfxContext *pGfxContext = pTknContext->pGfxContext;
     destroyGfxContextPtr(pGfxContext);
 
     tknFree(pTknContext);

@@ -11,7 +11,7 @@ Image *createImagePtr(GfxContext *pGfxContext, VkExtent3D vkExtent3D, VkFormat v
         .vkImage = vkImage,
         .vkDeviceMemory = vkDeviceMemory,
         .vkImageView = vkImageView,
-        .bindingPtrHashSet = tknCreateHashSet(TKN_DEFAULT_COLLECTION_SIZE),
+        .bindingPtrHashSet = tknCreateHashSet(sizeof(Binding *)),
     };
     *pImage = image;
 

@@ -79,7 +79,7 @@ Mesh *createMeshPtr(GfxContext *pGfxContext, VertexInputLayout *pVertexInputLayo
     {
         // Keep NULL
     }
-    TknHashSet drawCallPtrHashSet = tknCreateHashSet(TKN_DEFAULT_COLLECTION_SIZE);
+    TknHashSet drawCallPtrHashSet = tknCreateHashSet(sizeof(DrawCall *));
     *pMesh = (Mesh){
         .vertexVkBuffer = vertexVkBuffer,
         .vertexVkDeviceMemory = vertexVkDeviceMemory,

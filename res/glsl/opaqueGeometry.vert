@@ -11,7 +11,7 @@ layout(location = 0) out vec4 outputAlbedo;
 layout(location = 1) out vec3 outputNormal;
 
 void main(void) {
-    // 解包颜色：修正位操作顺序，适配RGBA字节序
+    // 解包颜色：RGBA打包的uint32
     vec4 unpackedColor = vec4(
         float((color >> 24) & 0xFFu),  // R
         float((color >> 16) & 0xFFu),  // G  
