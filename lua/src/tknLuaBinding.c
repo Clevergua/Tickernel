@@ -351,6 +351,9 @@ static int luaCreateRenderPassPtr(lua_State *pLuaState)
             lua_getfield(pLuaState, -1, "stencil");
             clearValue.depthStencil.stencil = (uint32_t)lua_tointeger(pLuaState, -1);
             lua_pop(pLuaState, 1);
+            
+            printf("ClearValue[%u] depth/stencil: depth=%.6f, stencil=%u\n", 
+                   i, clearValue.depthStencil.depth, clearValue.depthStencil.stencil);
         }
         else
         {
@@ -362,6 +365,10 @@ static int luaCreateRenderPassPtr(lua_State *pLuaState)
                 clearValue.color.float32[j] = (float)lua_tonumber(pLuaState, -1);
                 lua_pop(pLuaState, 1);
             }
+            
+            printf("ClearValue[%u] color: R=%.6f, G=%.6f, B=%.6f, A=%.6f\n", 
+                   i, clearValue.color.float32[0], clearValue.color.float32[1], 
+                   clearValue.color.float32[2], clearValue.color.float32[3]);
         }
 
         vkClearValues[i] = clearValue;

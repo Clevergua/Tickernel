@@ -123,12 +123,13 @@ RenderPass *createRenderPassPtr(GfxContext *pGfxContext, uint32_t attachmentCoun
         .pDependencies = vkSubpassDependencies,
     };
     assertVkResult(vkCreateRenderPass(vkDevice, &vkRenderPassCreateInfo, NULL, &vkRenderPass));
-
+    VkClearValue *clearValues = tknMalloc(sizeof(VkClearValue) * attachmentCount);
+    memcpy(clearValues, vkClearValues, sizeof(VkClearValue) * attachmentCount);
     *pRenderPass = (RenderPass){
         .vkRenderPass = vkRenderPass,
         .attachmentCount = attachmentCount,
         .attachmentPtrs = attachmentPtrs,
-        .vkClearValues = vkClearValues,
+        .vkClearValues = clearValues,
         .vkFramebufferCount = 0,
         .vkFramebuffers = NULL,
         .renderArea = {0},
@@ -160,6 +161,7 @@ void destroyRenderPassPtr(GfxContext *pGfxContext, RenderPass *pRenderPass)
         Attachment *pAttachment = pRenderPass->attachmentPtrs[i];
         tknRemoveFromHashSet(&pAttachment->renderPassPtrHashSet, &pRenderPass);
     }
+    tknFree(pRenderPass->vkClearValues);
     tknFree(pRenderPass->subpasses);
     tknFree(pRenderPass->attachmentPtrs);
     tknFree(pRenderPass);

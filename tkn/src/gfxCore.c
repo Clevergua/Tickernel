@@ -197,7 +197,14 @@ VertexInputLayout *createVertexInputLayoutPtr(GfxContext *pGfxContext, uint32_t 
 {
     VertexInputLayout *pVertexInputLayout = tknMalloc(sizeof(VertexInputLayout));
     const char **namesCopy = tknMalloc(sizeof(char *) * attributeCount);
-    memcpy(namesCopy, names, sizeof(char *) * attributeCount);
+    // Deep copy the strings, not just the pointers
+    for (uint32_t i = 0; i < attributeCount; i++)
+    {
+        size_t nameLen = strlen(names[i]) + 1;
+        char *nameCopy = tknMalloc(nameLen);
+        memcpy(nameCopy, names[i], nameLen);
+        namesCopy[i] = nameCopy;
+    }
     uint32_t *sizesCopy = tknMalloc(sizeof(uint32_t) * attributeCount);
     memcpy(sizesCopy, sizes, sizeof(uint32_t) * attributeCount);
     uint32_t *offsets = tknMalloc(sizeof(uint32_t) * attributeCount);
@@ -223,6 +230,12 @@ void destroyVertexInputLayoutPtr(GfxContext *pGfxContext, VertexInputLayout *pVe
     tknAssert(0 == pVertexInputLayout->referencePtrHashSet.count, "Cannot destroy vertex input layout with meshes | instance attached!");
     tknRemoveFromHashSet(&pGfxContext->vertexInputLayoutPtrHashSet, &pVertexInputLayout);
     tknDestroyHashSet(pVertexInputLayout->referencePtrHashSet);
+    
+    // Free the deep-copied strings
+    for (uint32_t i = 0; i < pVertexInputLayout->attributeCount; i++)
+    {
+        tknFree((void*)pVertexInputLayout->names[i]);
+    }
     tknFree(pVertexInputLayout->names);
     tknFree(pVertexInputLayout->sizes);
     tknFree(pVertexInputLayout->offsets);

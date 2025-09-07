@@ -3,18 +3,35 @@
    version = "1.0">
    <ContextStates>
       <ContextState
-         contextName = "tknAddToHashSet:tknCore.c">
-      </ContextState>
-      <ContextState
-         contextName = "createPipelinePtr:pipeline.c">
-      </ContextState>
-      <ContextState
          contextName = "GLOBAL">
          <PersistentStrings>
             <PersistentString
-               value = "inputAttachmentIndexToVkImageLayout[0]">
+               value = "vkVertexInputAttributeDescriptions[1]">
+            </PersistentString>
+            <PersistentString
+               value = "vkVertexInputAttributeDescriptions[3]">
             </PersistentString>
          </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "createPipelinePtr:pipeline.c">
+         <PersistentStrings>
+            <PersistentString
+               value = "vkVertexInputAttributeDescriptions[5]">
+            </PersistentString>
+            <PersistentString
+               value = "vkVertexInputAttributeDescriptions[2]">
+            </PersistentString>
+            <PersistentString
+               value = "vkVertexInputAttributeDescriptions[4]">
+            </PersistentString>
+            <PersistentString
+               value = "vkVertexInputAttributeDescriptions[6]">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "tknAddToHashSet:tknCore.c">
       </ContextState>
       <ContextState
          contextName = "createSubpass:renderPass.c">

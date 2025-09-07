@@ -16,8 +16,8 @@ void main() {
 
     float ndl = max(dot(normal, -normalize(lightsUniform.directionalLight.direction)), 0.0);
     float halfLambert = ndl * 0.5 + 0.5;
-    vec3 o_rgb = albedo.rgb * lightsUniform.directionalLight.color.rgb * lightsUniform.directionalLight.color.a * halfLambert;
-
+    // vec3 o_rgb = albedo.rgb * lightsUniform.directionalLight.color.rgb * lightsUniform.directionalLight.color.a * halfLambert;
+    vec3 o_rgb = albedo.rgb;
     for(int i = 0; i < lightsUniform.pointLightCount; i++) {
         PointLight light = lightsUniform.pointLights[i];
         vec3 toLight = position - light.position;
