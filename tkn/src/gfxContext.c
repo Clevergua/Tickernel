@@ -602,14 +602,21 @@ static void recordCommandBuffer(GfxContext *pGfxContext, uint32_t swapchainIndex
                     VkDescriptorSet *vkDescriptorSets = tknMalloc(sizeof(VkDescriptorSet) * TKN_MAX_DESCRIPTOR_SET);
                     vkDescriptorSets[TKN_GLOBAL_DESCRIPTOR_SET] = pGlobalMaterial->vkDescriptorSet;
                     vkDescriptorSets[TKN_SUBPASS_DESCRIPTOR_SET] = pSubpassMaterial->vkDescriptorSet;
-                    vkDescriptorSets[TKN_PIPELINE_DESCRIPTOR_SET] = pDrawCall->pMaterial->vkDescriptorSet;
-                    vkCmdBindDescriptorSets(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pPipeline->vkPipelineLayout, 0, TKN_MAX_DESCRIPTOR_SET, vkDescriptorSets, 0, NULL);
-                    tknFree(vkDescriptorSets);
-                    if (pDrawCall->pInstance->instanceCount > 0)
+                    if (pDrawCall->pMaterial != NULL)
                     {
-                        Mesh *pMesh = pDrawCall->pMesh;
-                        tknAssert(pMesh->vertexCount > 0, "Mesh has no vertices");
-                        VkBuffer vertexBuffers[] = {pMesh->vertexVkBuffer, pDrawCall->pInstance->instanceMappedBuffer};
+                        vkDescriptorSets[TKN_PIPELINE_DESCRIPTOR_SET] = pDrawCall->pMaterial->vkDescriptorSet;
+                        vkCmdBindDescriptorSets(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pPipeline->vkPipelineLayout, 0, TKN_MAX_DESCRIPTOR_SET, vkDescriptorSets, 0, NULL);
+                    }
+                    else
+                    {
+                        vkCmdBindDescriptorSets(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pPipeline->vkPipelineLayout, 0, TKN_MAX_DESCRIPTOR_SET - 1, vkDescriptorSets, 0, NULL);
+                    }
+                    tknFree(vkDescriptorSets);
+                    Mesh *pMesh = pDrawCall->pMesh;
+                    if (pMesh != NULL && pDrawCall->pInstance != NULL && pDrawCall->pInstance->instanceCount > 0)
+                    {
+                        tknAssert(pDrawCall->pMesh->vertexCount > 0, "Mesh has no vertices");
+                        VkBuffer vertexBuffers[] = {pMesh->vertexVkBuffer, pDrawCall->pInstance->instanceVkBuffer};
                         if (pMesh->indexCount > 0)
                         {
                             VkDeviceSize offsets[] = {0, 0};
@@ -621,13 +628,12 @@ static void recordCommandBuffer(GfxContext *pGfxContext, uint32_t swapchainIndex
                         {
                             VkDeviceSize offsets[] = {0, 0};
                             vkCmdBindVertexBuffers(vkCommandBuffer, 0, 2, vertexBuffers, offsets);
-                            vkCmdBindIndexBuffer(vkCommandBuffer, pMesh->indexVkBuffer, 0, pMesh->vkIndexType);
                             vkCmdDraw(vkCommandBuffer, pMesh->vertexCount, pDrawCall->pInstance->instanceCount, 0, 0);
                         }
                     }
                     else
                     {
-                        // skip
+                        vkCmdDraw(vkCommandBuffer, 3, 1, 0, 0);
                     }
                 }
             }

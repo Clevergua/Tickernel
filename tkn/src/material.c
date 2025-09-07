@@ -315,6 +315,7 @@ Material *getSubpassMaterialPtr(GfxContext *pGfxContext, RenderPass *pRenderPass
         if (node)
         {
             Material *pMaterial = *(Material **)node->data;
+            printf("Found subpass material: %p\n", (void *)pMaterial);
             return pMaterial;
         }
         else

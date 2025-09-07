@@ -50,6 +50,12 @@
 			path = osx;
 			sourceTree = "<group>";
 		};
+		DEA54FD52E6CFA8F00F53F25 /* lua */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			name = lua;
+			path = ../lua;
+			sourceTree = SOURCE_ROOT;
+		};
 		DEDB5A532E6AD0DF0023753A /* external */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			name = external;
@@ -88,6 +94,7 @@
 		DE6CC08C2D39397000D80E9A = {
 			isa = PBXGroup;
 			children = (
+				DEA54FD52E6CFA8F00F53F25 /* lua */,
 				DEDB5A532E6AD0DF0023753A /* external */,
 				DEDB5A552E6AD0DF0023753A /* include */,
 				DEDB5A652E6AD0DF0023753A /* src */,
@@ -135,6 +142,7 @@
 			);
 			fileSystemSynchronizedGroups = (
 				DE6CC0972D39397000D80E9A /* osx */,
+				DEA54FD52E6CFA8F00F53F25 /* lua */,
 				DEDB5A532E6AD0DF0023753A /* external */,
 				DEDB5A552E6AD0DF0023753A /* include */,
 				DEDB5A652E6AD0DF0023753A /* src */,

@@ -52,6 +52,7 @@ void main(void) {
     gl_Position = globalUniform.proj * viewPosition;
     gl_PointSize = globalUniform.pointSizeFactor / -viewPosition.z;
     
-    outputNormal = normalize(mat3(model) * bestNormal);
+    // outputNormal = normalize(mat3(model) * bestNormal);
+    outputNormal = vec3(0.0, 0.0, 1.0);
     outputAlbedo = unpackedColor;
 }

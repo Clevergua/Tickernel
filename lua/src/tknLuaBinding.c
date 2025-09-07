@@ -57,17 +57,21 @@ static VkDeviceSize calculateLayoutSize(lua_State *pLuaState, int layoutIndex)
 // Helper function to pack data from Lua table according to layout
 static void *packDataFromLayout(lua_State *pLuaState, int layoutIndex, int dataIndex, VkDeviceSize *outSize)
 {
-    VkDeviceSize totalSize = calculateLayoutSize(pLuaState, layoutIndex);
+    // Convert negative indices to absolute indices to avoid stack changes affecting them
+    int absoluteLayoutIndex = lua_absindex(pLuaState, layoutIndex);
+    int absoluteDataIndex = lua_absindex(pLuaState, dataIndex);
+    
+    VkDeviceSize totalSize = calculateLayoutSize(pLuaState, absoluteLayoutIndex);
     void *data = tknMalloc(totalSize);
     uint8_t *dataPtr = (uint8_t *)data;
 
-    lua_len(pLuaState, layoutIndex);
+    lua_len(pLuaState, absoluteLayoutIndex);
     uint32_t fieldCount = (uint32_t)lua_tointeger(pLuaState, -1);
     lua_pop(pLuaState, 1);
 
     for (uint32_t i = 0; i < fieldCount; i++)
     {
-        lua_rawgeti(pLuaState, layoutIndex, i + 1);
+        lua_rawgeti(pLuaState, absoluteLayoutIndex, i + 1);
 
         lua_getfield(pLuaState, -1, "name");
         const char *fieldName = lua_tostring(pLuaState, -1);
@@ -82,7 +86,7 @@ static void *packDataFromLayout(lua_State *pLuaState, int layoutIndex, int dataI
         lua_pop(pLuaState, 1);
 
         // Get data for this field
-        lua_getfield(pLuaState, dataIndex, fieldName);
+        lua_getfield(pLuaState, absoluteDataIndex, fieldName);
         if (!lua_isnil(pLuaState, -1))
         {
             if (lua_istable(pLuaState, -1))
@@ -1215,6 +1219,7 @@ static int luaGetSubpassMaterialPtr(lua_State *pLuaState)
     RenderPass *pRenderPass = (RenderPass *)lua_touserdata(pLuaState, -2);
     uint32_t subpassIndex = (uint32_t)lua_tointeger(pLuaState, -1);
     Material *pMaterial = getSubpassMaterialPtr(pGfxContext, pRenderPass, subpassIndex);
+    printf("Subpass Material: %p\n", (void *)pMaterial);
     lua_pushlightuserdata(pLuaState, pMaterial);
     return 1;
 }
@@ -1252,16 +1257,42 @@ static int luaUpdateMaterialPtr(lua_State *pLuaState)
     {
         lua_rawgeti(pLuaState, -1, i + 1);
 
-        // For now, assume it's a UniformBuffer pointer (binding 0, descriptor type 6)
-        UniformBuffer *pUniformBuffer = (UniformBuffer *)lua_touserdata(pLuaState, -1);
-
-        inputBindings[i] = (InputBinding){
-            .vkDescriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-            .inputBindingUnion = {.uniformBufferBinding = {.pUniformBuffer = pUniformBuffer}},
-            .binding = i,
-        };
-
+        // Get vkDescriptorType
+        lua_getfield(pLuaState, -1, "vkDescriptorType");
+        VkDescriptorType vkDescriptorType = (VkDescriptorType)lua_tointeger(pLuaState, -1);
         lua_pop(pLuaState, 1);
+
+        // Get binding
+        lua_getfield(pLuaState, -1, "binding");
+        uint32_t binding = (uint32_t)lua_tointeger(pLuaState, -1);
+        lua_pop(pLuaState, 1);
+
+        inputBindings[i].vkDescriptorType = vkDescriptorType;
+        inputBindings[i].binding = binding;
+
+        // Parse different descriptor types based on current supported types
+        if (vkDescriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER)
+        {
+            lua_getfield(pLuaState, -1, "pUniformBuffer");
+            UniformBuffer *pUniformBuffer = (UniformBuffer *)lua_touserdata(pLuaState, -1);
+            lua_pop(pLuaState, 1);
+            
+            inputBindings[i].inputBindingUnion.uniformBufferBinding.pUniformBuffer = pUniformBuffer;
+        }
+        else if (vkDescriptorType == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
+        {
+            lua_getfield(pLuaState, -1, "pSampler");
+            Sampler *pSampler = (Sampler *)lua_touserdata(pLuaState, -1);
+            lua_pop(pLuaState, 1);
+            
+            inputBindings[i].inputBindingUnion.samplerBinding.pSampler = pSampler;
+        }
+        else
+        {
+            tknError("Unsupported descriptor type in InputBinding: %d", vkDescriptorType);
+        }
+
+        lua_pop(pLuaState, 1); // Remove the binding table
     }
 
     updateMaterialPtr(pGfxContext, pMaterial, inputBindingCount, inputBindings);

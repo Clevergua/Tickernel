@@ -18,5 +18,67 @@
             endingLineNumber = "149">
          </BreakpointContent>
       </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "06905568-B763-4EC3-AC8F-7A2D1949C030"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "../lua/src/tknLuaBinding.c"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "1117"
+            endingLineNumber = "1117"
+            landmarkName = "luaUpdateUniformBufferPtr(pLuaState)"
+            landmarkType = "9">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "07B69BC2-97A8-4197-B00D-8E35582C95CA"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "../lua/src/tknLuaBinding.c"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "1222"
+            endingLineNumber = "1222"
+            landmarkName = "luaGetSubpassMaterialPtr(pLuaState)"
+            landmarkType = "9">
+            <Locations>
+               <Location
+                  uuid = "07B69BC2-97A8-4197-B00D-8E35582C95CA - 4a300ca355f0856e"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "luaGetSubpassMaterialPtr"
+                  moduleName = "osx.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/forgemastergua/Documents/GitHub/Tickernel/lua/src/tknLuaBinding.c"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "1222"
+                  endingLineNumber = "1222">
+               </Location>
+               <Location
+                  uuid = "07B69BC2-97A8-4197-B00D-8E35582C95CA - eb093f72709bfdf"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "luaGetSubpassMaterialPtr"
+                  moduleName = "libTickernelLua.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/forgemastergua/Documents/GitHub/Tickernel/lua/src/tknLuaBinding.c"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "1222"
+                  endingLineNumber = "1222">
+               </Location>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
    </Breakpoints>
 </Bucket>

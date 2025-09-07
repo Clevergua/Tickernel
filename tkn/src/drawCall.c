@@ -9,17 +9,23 @@ DrawCall *addDrawCallPtr(GfxContext *pGfxContext, Pipeline *pPipeline, Material 
         .pInstance = pInstance,
         .pMesh = pMesh,
     };
-    tknAddToHashSet(&pMaterial->drawCallPtrHashSet, &pDrawCall);
-    tknAddToHashSet(&pInstance->drawCallPtrHashSet, &pDrawCall);
-    tknAddToHashSet(&pMesh->drawCallPtrHashSet, &pDrawCall);
+    if (pMaterial != NULL)
+        tknAddToHashSet(&pMaterial->drawCallPtrHashSet, &pDrawCall);
+    if (pInstance != NULL)
+        tknAddToHashSet(&pInstance->drawCallPtrHashSet, &pDrawCall);
+    if (pMesh != NULL)
+        tknAddToHashSet(&pMesh->drawCallPtrHashSet, &pDrawCall);
     tknAddToDynamicArray(&pPipeline->drawCallPtrDynamicArray, &pDrawCall);
     return pDrawCall;
 }
 void removeDrawCallPtr(GfxContext *pGfxContext, DrawCall *pDrawCall)
 {
-    tknRemoveFromHashSet(&pDrawCall->pMaterial->drawCallPtrHashSet, &pDrawCall);
-    tknRemoveFromHashSet(&pDrawCall->pInstance->drawCallPtrHashSet, &pDrawCall);
-    tknRemoveFromHashSet(&pDrawCall->pMesh->drawCallPtrHashSet, &pDrawCall);
+    if (pDrawCall->pMaterial != NULL)
+        tknRemoveFromHashSet(&pDrawCall->pMaterial->drawCallPtrHashSet, &pDrawCall);
+    if (pDrawCall->pInstance != NULL)
+        tknRemoveFromHashSet(&pDrawCall->pInstance->drawCallPtrHashSet, &pDrawCall);
+    if (pDrawCall->pMesh != NULL)
+        tknRemoveFromHashSet(&pDrawCall->pMesh->drawCallPtrHashSet, &pDrawCall);
     tknRemoveFromDynamicArray(&pDrawCall->pPipeline->drawCallPtrDynamicArray, &pDrawCall);
     *pDrawCall = (DrawCall){0};
     tknFree(pDrawCall);
