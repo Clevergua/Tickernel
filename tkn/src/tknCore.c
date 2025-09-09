@@ -26,7 +26,7 @@ void tknError(const char *format, ...)
 {
     va_list args;
     va_start(args, format);
-    tknInternalError("ERROR", format, args);
+    tknInternalError("ERROR: ", format, args);
     va_end(args);
 }
 
@@ -36,7 +36,7 @@ void tknAssert(bool condition, const char *format, ...)
     {
         va_list args;
         va_start(args, format);
-        tknInternalError("ASSERTION FAILED", format, args);
+        tknInternalError("ASSERTION FAILED: ", format, args);
         va_end(args);
     }
 }
@@ -201,12 +201,12 @@ bool tknAddToHashSet(TknHashSet *pTknHashSet, const void *pData)
     {
         if (memcmp(node->data, pData, pTknHashSet->dataSize) == 0)
             return false;
-        node = node->nextNodePtr;
+        node = node->pNextNode;
     }
     TknListNode *newNode = tknMalloc(sizeof(TknListNode));
     newNode->data = tknMalloc(pTknHashSet->dataSize);
     memcpy(newNode->data, pData, pTknHashSet->dataSize);
-    newNode->nextNodePtr = pTknHashSet->nodePtrs[index];
+    newNode->pNextNode = pTknHashSet->nodePtrs[index];
     pTknHashSet->nodePtrs[index] = newNode;
     pTknHashSet->count++;
     return true;
@@ -223,7 +223,7 @@ bool tknContainsInHashSet(TknHashSet *pTknHashSet, const void *pData)
     {
         if (memcmp(node->data, pData, pTknHashSet->dataSize) == 0)
             return true;
-        node = node->nextNodePtr;
+        node = node->pNextNode;
     }
     return false;
 }
@@ -241,16 +241,16 @@ void tknRemoveFromHashSet(TknHashSet *pTknHashSet, const void *pData)
         if (memcmp(node->data, pData, pTknHashSet->dataSize) == 0)
         {
             if (prevNode)
-                prevNode->nextNodePtr = node->nextNodePtr;
+                prevNode->pNextNode = node->pNextNode;
             else
-                pTknHashSet->nodePtrs[index] = node->nextNodePtr;
+                pTknHashSet->nodePtrs[index] = node->pNextNode;
             tknFree(node->data);
             tknFree(node);
             pTknHashSet->count--;
             return;
         }
         prevNode = node;
-        node = node->nextNodePtr;
+        node = node->pNextNode;
     }
 }
 
@@ -261,7 +261,7 @@ void tknClearHashSet(TknHashSet *pTknHashSet)
         TknListNode *node = pTknHashSet->nodePtrs[i];
         while (node)
         {
-            TknListNode *nextNode = node->nextNodePtr;
+            TknListNode *nextNode = node->pNextNode;
             tknFree(node->data);
             tknFree(node);
             node = nextNode;

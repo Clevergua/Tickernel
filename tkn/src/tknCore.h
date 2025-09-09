@@ -27,7 +27,7 @@ typedef struct
 typedef struct TknListNode
 {
     void *data;
-    struct TknListNode *nextNodePtr;
+    struct TknListNode *pNextNode;
 } TknListNode;
 
 typedef struct

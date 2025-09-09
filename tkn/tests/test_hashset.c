@@ -29,7 +29,7 @@ static void test_struct_hashset()
         {
             MyStruct *data = (MyStruct *)node->data;
             printf("id=%d, value=%f\n", data->id, data->value);
-            node = node->nextNodePtr;
+            node = node->pNextNode;
         }
     }
     tknDestroyHashSet(set);
@@ -55,7 +55,7 @@ static void test_pointer_hashset()
         {
             void *ptr = *(void **)node->data;
             printf("ptr=%p, *ptr=%d\n", ptr, *(int *)ptr);
-            node = node->nextNodePtr;
+            node = node->pNextNode;
         }
     }
     tknDestroyHashSet(set);

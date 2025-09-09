@@ -54,19 +54,76 @@ void destroyMaterialPtr(GfxContext *pGfxContext, Material *pMaterial)
     InputBinding *inputBindings = tknMalloc(sizeof(InputBinding) * pMaterial->bindingCount);
     for (uint32_t binding = 0; binding < pMaterial->bindingCount; binding++)
     {
-        VkDescriptorType descriptorType = pMaterial->bindings[binding].vkDescriptorType;
-        if (descriptorType != VK_DESCRIPTOR_TYPE_MAX_ENUM && descriptorType != VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT)
+        Binding *pBinding = &pMaterial->bindings[binding];
+        VkDescriptorType vkDescriptorType = pBinding->vkDescriptorType;
+        if (vkDescriptorType != VK_DESCRIPTOR_TYPE_MAX_ENUM && vkDescriptorType != VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT)
         {
-            inputBindings[inputBindingCount] = (InputBinding){
-                .vkDescriptorType = descriptorType,
-                .inputBindingUnion = {0},
-                .binding = binding,
-            };
-            inputBindingCount++;
+            if (VK_DESCRIPTOR_TYPE_SAMPLER == vkDescriptorType)
+            {
+                Sampler *pSampler = pBinding->bindingUnion.samplerBinding.pSampler;
+                if (NULL == pSampler)
+                {
+                    // Nothing
+                }
+                else
+                {
+                    // Current sampler deref descriptor
+                    tknRemoveFromHashSet(&pSampler->bindingPtrHashSet, &pBinding);
+                }
+            }
+            else if (VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER == vkDescriptorType)
+            {
+                tknError("Combined image sampler not yet implemented");
+            }
+            else if (VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE == vkDescriptorType)
+            {
+                tknError("Sampled image not yet implemented");
+            }
+            else if (VK_DESCRIPTOR_TYPE_STORAGE_IMAGE == vkDescriptorType)
+            {
+                tknError("Storage image not yet implemented");
+            }
+            else if (VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER == vkDescriptorType)
+            {
+                tknError("Uniform texel buffer not yet implemented");
+            }
+            else if (VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER == vkDescriptorType)
+            {
+                tknError("Storage texel buffer not yet implemented");
+            }
+            else if (VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER == vkDescriptorType)
+            {
+                UniformBuffer *pUniformBuffer = pBinding->bindingUnion.uniformBufferBinding.pUniformBuffer;
+                if (NULL == pUniformBuffer)
+                {
+                    // Nothing
+                }
+                else
+                {
+                    // Current uniform buffer deref descriptor
+                    tknRemoveFromHashSet(&pUniformBuffer->bindingPtrHashSet, &pBinding);
+                }
+            }
+            else if (VK_DESCRIPTOR_TYPE_STORAGE_BUFFER == vkDescriptorType)
+            {
+                tknError("Storage buffer not yet implemented");
+            }
+            else if (VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC == vkDescriptorType)
+            {
+                tknError("Uniform buffer dynamic not yet implemented");
+            }
+            else if (VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC == vkDescriptorType)
+            {
+                tknError("Storage buffer dynamic not yet implemented");
+            }
+            else
+            {
+                tknError("Unsupported descriptor type: %d", vkDescriptorType);
+            }
         }
-        else if (VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT == descriptorType)
+        else if (VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT == vkDescriptorType)
         {
-            tknAssert(pMaterial->bindings[binding].bindingUnion.inputAttachmentBinding.pAttachment == NULL, "Input attachment bindings must be unbound before destroying a material");
+            tknAssert(pBinding->bindingUnion.inputAttachmentBinding.pAttachment == NULL, "Input attachment bindings must be unbound before destroying a material");
         }
         else
         {
@@ -206,11 +263,11 @@ void unbindAttachmentsFromMaterialPtr(GfxContext *pGfxContext, Material *pMateri
                 {
                     tknError("Swapchain attachment cannot be used as input attachment (attachment type: %d)", pAttachment->attachmentType);
                 }
-                VkImageView vkImageView = VK_NULL_HANDLE;
+                VkImageView vkImageView = pGfxContext->pEmptyImage->vkImageView;
                 vkDescriptorImageInfos[vkWriteDescriptorSetIndex] = (VkDescriptorImageInfo){
                     .sampler = VK_NULL_HANDLE,
                     .imageView = vkImageView,
-                    .imageLayout = pBinding->bindingUnion.inputAttachmentBinding.vkImageLayout,
+                    .imageLayout = VK_IMAGE_LAYOUT_GENERAL,
                 };
                 vkWriteDescriptorSets[vkWriteDescriptorSetIndex] = (VkWriteDescriptorSet){
                     .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
@@ -387,11 +444,7 @@ void updateMaterialPtr(GfxContext *pGfxContext, Material *pMaterial, uint32_t in
                     pBinding->bindingUnion.samplerBinding.pSampler = pInputSampler;
                     if (NULL == pInputSampler)
                     {
-                        vkDescriptorImageInfos[vkWriteDescriptorSetCount] = (VkDescriptorImageInfo){
-                            .sampler = NULL,
-                            .imageView = VK_NULL_HANDLE,
-                            .imageLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-                        };
+                        tknError("Cannot bind NULL sampler");
                     }
                     else
                     {
@@ -460,11 +513,7 @@ void updateMaterialPtr(GfxContext *pGfxContext, Material *pMaterial, uint32_t in
                     pBinding->bindingUnion.uniformBufferBinding.pUniformBuffer = pInputUniformBuffer;
                     if (NULL == pInputUniformBuffer)
                     {
-                        vkDescriptorBufferInfos[vkWriteDescriptorSetCount] = (VkDescriptorBufferInfo){
-                            .buffer = VK_NULL_HANDLE,
-                            .offset = 0,
-                            .range = VK_WHOLE_SIZE,
-                        };
+                        tknError("Cannot bind NULL uniform buffer");
                     }
                     else
                     {
@@ -519,7 +568,7 @@ void updateMaterialPtr(GfxContext *pGfxContext, Material *pMaterial, uint32_t in
     }
     else
     {
-        printf("Warning: No bindings to update\n");
+        tknWarning("No bindings to update");
         return;
     }
 }
@@ -530,18 +579,18 @@ InputBindingUnion getEmptyInputBindingUnion(GfxContext *pGfxContext, VkDescripto
     // Create appropriate empty binding union based on descriptor type
     switch (vkDescriptorType)
     {
-        case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
-            emptyUnion.uniformBufferBinding.pUniformBuffer = pGfxContext->pEmptyUniformBuffer;
-            break;
-        case VK_DESCRIPTOR_TYPE_SAMPLER:
-        case VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER:
-            emptyUnion.samplerBinding.pSampler = pGfxContext->pEmptySampler;
-            break;
-        default:
-            // For unsupported types, default to uniform buffer as a safe fallback
-            emptyUnion.uniformBufferBinding.pUniformBuffer = pGfxContext->pEmptyUniformBuffer;
-            tknWarning("Unsupported descriptor type %d in getEmptyInputBindingUnion, using uniform buffer fallback", vkDescriptorType);
-            break;
+    case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
+        emptyUnion.uniformBufferBinding.pUniformBuffer = pGfxContext->pEmptyUniformBuffer;
+        break;
+    case VK_DESCRIPTOR_TYPE_SAMPLER:
+    case VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER:
+        emptyUnion.samplerBinding.pSampler = pGfxContext->pEmptySampler;
+        break;
+    default:
+        // For unsupported types, default to uniform buffer as a safe fallback
+        emptyUnion.uniformBufferBinding.pUniformBuffer = pGfxContext->pEmptyUniformBuffer;
+        tknWarning("Unsupported descriptor type %d in getEmptyInputBindingUnion, using uniform buffer fallback", vkDescriptorType);
+        break;
     }
 
     return emptyUnion;

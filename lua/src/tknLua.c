@@ -95,20 +95,25 @@ TknContext *createTknContextPtr(const char *assetsPath, uint32_t luaLibraryCount
 
 void destroyTknContextPtr(TknContext *pTknContext)
 {
-    GfxContext *pGfxContext = pTknContext->pGfxContext;
+    if (!pTknContext)
+        return;
 
+    GfxContext *pGfxContext = pTknContext->pGfxContext;
     lua_State *pLuaState = pTknContext->pLuaState;
+
+    lua_pushcfunction(pLuaState, errorHandler);
     lua_getglobal(pLuaState, "tknEngine");
     lua_getfield(pLuaState, -1, "stop");
+    assertLuaResult(pLuaState, lua_pcall(pLuaState, 0, 0, -3));
+
+    waitGfxRenderFence(pGfxContext);
+    lua_getfield(pLuaState, -1, "stopGfx");
     lua_pushlightuserdata(pLuaState, pGfxContext);
-    lua_pushcfunction(pLuaState, errorHandler);
-    lua_insert(pLuaState, -3);
-    assertLuaResult(pLuaState, lua_pcall(pLuaState, 1, 0, -3));
-    lua_pop(pLuaState, 1);
-    lua_close(pTknContext->pLuaState);
+    assertLuaResult(pLuaState, lua_pcall(pLuaState, 1, 0, -4));
+    lua_pop(pLuaState, 2);
 
     destroyGfxContextPtr(pGfxContext);
-
+    lua_close(pLuaState);
     tknFree(pTknContext);
 }
 
@@ -121,7 +126,7 @@ void updateTknContext(TknContext *pTknContext, VkExtent2D swapchainExtent)
     assertLuaResult(pLuaState, lua_pcall(pLuaState, 0, 0, -3));
 
     GfxContext *pGfxContext = pTknContext->pGfxContext;
-    waitGfxContextPtr(pGfxContext);
+    waitGfxRenderFence(pGfxContext);
 
     lua_getfield(pLuaState, -1, "updateGfx");
     lua_pushlightuserdata(pLuaState, pGfxContext);

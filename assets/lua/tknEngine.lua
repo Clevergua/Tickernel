@@ -163,8 +163,12 @@ function tknEngine.start(pGfxContext, assetsPath)
     tknEngine.pDrawCall = gfx.addDrawCallPtr(pGfxContext, deferredRenderPass.pGeometryPipeline, deferredRenderPass.pGeometryMaterial, tknEngine.pMesh, tknEngine.pInstance)
 end
 
-function tknEngine.stop(pGfxContext)
+function tknEngine.stop()
     print("Lua stop")
+end
+
+function tknEngine.stopGfx(pGfxContext)
+    print("Lua stopGfx")
 
     -- First remove drawcalls
     gfx.removeDrawCallPtr(pGfxContext, tknEngine.pDrawCall)

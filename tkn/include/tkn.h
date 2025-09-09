@@ -53,7 +53,8 @@ typedef struct
 VkFormat getSupportedFormat(GfxContext *pGfxContext, uint32_t candidateCount, VkFormat *candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
 
 GfxContext *createGfxContextPtr(int targetSwapchainImageCount, VkSurfaceFormatKHR targetVkSurfaceFormat, VkPresentModeKHR targetVkPresentMode, VkInstance vkInstance, VkSurfaceKHR vkSurface, VkExtent2D swapchainExtent, uint32_t spvPathCount, const char **spvPaths);
-void waitGfxContextPtr(GfxContext *pGfxContext);
+void waitGfxRenderFence(GfxContext *pGfxContext);
+void waitGfxDeviceIdle(GfxContext *pGfxContext);
 void updateGfxContextPtr(GfxContext *pGfxContext, VkExtent2D swapchainExtent);
 void destroyGfxContextPtr(GfxContext *pGfxContext);
 

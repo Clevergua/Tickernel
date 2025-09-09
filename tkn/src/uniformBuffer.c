@@ -26,13 +26,14 @@ UniformBuffer *createUniformBufferPtr(GfxContext *pGfxContext, const void *data,
 void destroyUniformBufferPtr(GfxContext *pGfxContext, UniformBuffer *pUniformBuffer)
 {
     clearBindingPtrHashSet(pGfxContext, pUniformBuffer->bindingPtrHashSet);
-
     tknDestroyHashSet(pUniformBuffer->bindingPtrHashSet);
     if (pUniformBuffer->mapped != NULL)
     {
         vkUnmapMemory(pGfxContext->vkDevice, pUniformBuffer->vkDeviceMemory);
     }
     destroyVkBuffer(pGfxContext, pUniformBuffer->vkBuffer, pUniformBuffer->vkDeviceMemory);
+    pUniformBuffer->vkBuffer = VK_NULL_HANDLE;
+    pUniformBuffer->vkDeviceMemory = VK_NULL_HANDLE;
     tknFree(pUniformBuffer);
 }
 void updateUniformBufferPtr(GfxContext *pGfxContext, UniformBuffer *pUniformBuffer, const void *data, VkDeviceSize size)

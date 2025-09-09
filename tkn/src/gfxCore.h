@@ -290,6 +290,7 @@ struct GfxContext
     // Empty resources for empty bindings
     UniformBuffer *pEmptyUniformBuffer;
     Sampler *pEmptySampler;
+    Image *pEmptyImage;
 };
 
 void assertVkResult(VkResult vkResult);
