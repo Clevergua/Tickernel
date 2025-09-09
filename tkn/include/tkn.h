@@ -94,6 +94,7 @@ Material *getSubpassMaterialPtr(GfxContext *pGfxContext, RenderPass *pRenderPass
 Material *createPipelineMaterialPtr(GfxContext *pGfxContext, Pipeline *pPipeline);
 void destroyPipelineMaterialPtr(GfxContext *pGfxContext, Material *pMaterial);
 void updateMaterialPtr(GfxContext *pGfxContext, Material *pMaterial, uint32_t inputBindingCount, InputBinding *inputBindings);
+InputBindingUnion getEmptyInputBindingUnion(GfxContext *pGfxContext, VkDescriptorType vkDescriptorType);
 
 void tknError(char const *const _Format, ...);
 void tknWarning(const char *format, ...);

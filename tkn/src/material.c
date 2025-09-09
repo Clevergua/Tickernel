@@ -523,3 +523,26 @@ void updateMaterialPtr(GfxContext *pGfxContext, Material *pMaterial, uint32_t in
         return;
     }
 }
+
+InputBindingUnion getEmptyInputBindingUnion(GfxContext *pGfxContext, VkDescriptorType vkDescriptorType)
+{
+    InputBindingUnion emptyUnion = {0};
+    // Create appropriate empty binding union based on descriptor type
+    switch (vkDescriptorType)
+    {
+        case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
+            emptyUnion.uniformBufferBinding.pUniformBuffer = pGfxContext->pEmptyUniformBuffer;
+            break;
+        case VK_DESCRIPTOR_TYPE_SAMPLER:
+        case VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER:
+            emptyUnion.samplerBinding.pSampler = pGfxContext->pEmptySampler;
+            break;
+        default:
+            // For unsupported types, default to uniform buffer as a safe fallback
+            emptyUnion.uniformBufferBinding.pUniformBuffer = pGfxContext->pEmptyUniformBuffer;
+            tknWarning("Unsupported descriptor type %d in getEmptyInputBindingUnion, using uniform buffer fallback", vkDescriptorType);
+            break;
+    }
+
+    return emptyUnion;
+}

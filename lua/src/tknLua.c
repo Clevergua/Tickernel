@@ -97,7 +97,6 @@ void destroyTknContextPtr(TknContext *pTknContext)
 {
     GfxContext *pGfxContext = pTknContext->pGfxContext;
 
-    waitGfxContextPtr(pGfxContext);
     lua_State *pLuaState = pTknContext->pLuaState;
     lua_getglobal(pLuaState, "tknEngine");
     lua_getfield(pLuaState, -1, "stop");

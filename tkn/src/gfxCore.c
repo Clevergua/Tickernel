@@ -81,13 +81,13 @@ void clearBindingPtrHashSet(GfxContext *pGfxContext, TknHashSet bindingPtrHashSe
         while (node)
         {
             Binding *pBinding = *(Binding **)node->data;
+            node = node->nextNodePtr;
             InputBinding inputBinding = {
                 .vkDescriptorType = pBinding->vkDescriptorType,
-                .inputBindingUnion = {0},
+                .inputBindingUnion = getEmptyInputBindingUnion(pGfxContext, pBinding->vkDescriptorType),
                 .binding = pBinding->binding,
             };
             updateMaterialPtr(pGfxContext, pBinding->pMaterial, 1, &inputBinding);
-            node = node->nextNodePtr;
         }
     }
 }

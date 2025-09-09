@@ -286,6 +286,10 @@ struct GfxContext
 
     DescriptorSet *pGlobalDescriptorSet;
     TknHashSet vertexInputLayoutPtrHashSet;
+
+    // Empty resources for empty bindings
+    UniformBuffer *pEmptyUniformBuffer;
+    Sampler *pEmptySampler;
 };
 
 void assertVkResult(VkResult vkResult);
@@ -310,7 +314,7 @@ void resizeDynamicAttachmentPtr(GfxContext *pGfxContext, Attachment *pAttachment
 void bindAttachmentsToMaterialPtr(GfxContext *pGfxContext, Material *pMaterial);
 void unbindAttachmentsFromMaterialPtr(GfxContext *pGfxContext, Material *pMaterial);
 void updateAttachmentOfMaterialPtr(GfxContext *pGfxContext, Binding *pBinding);
-
+InputBindingUnion getEmptyInputBindingUnion(GfxContext *pGfxContext, VkDescriptorType vkDescriptorType);
 void clearBindingPtrHashSet(GfxContext *pGfxContext, TknHashSet bindingPtrHashSet);
 
 void createVkImage(GfxContext *pGfxContext, VkExtent3D vkExtent3D, VkFormat vkFormat, VkImageTiling vkImageTiling, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags, VkImage *pVkImage, VkDeviceMemory *pVkDeviceMemory, VkImageView *pVkImageView);

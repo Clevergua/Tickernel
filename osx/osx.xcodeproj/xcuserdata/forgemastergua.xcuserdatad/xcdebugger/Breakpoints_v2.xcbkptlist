@@ -18,5 +18,97 @@
             endingLineNumber = "149">
          </BreakpointContent>
       </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "60D91AED-B21D-49B9-A507-19F232D01C70"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "../tkn/src/gfxContext.c"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "510"
+            endingLineNumber = "510"
+            landmarkName = "cleanupSignals(pGfxContext)"
+            landmarkType = "9">
+            <Locations>
+               <Location
+                  uuid = "60D91AED-B21D-49B9-A507-19F232D01C70 - 65f3727feb907ea9"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "cleanupSignals"
+                  moduleName = "osx.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/forgemastergua/Documents/GitHub/Tickernel/tkn/src/gfxContext.c"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "510"
+                  endingLineNumber = "510">
+               </Location>
+               <Location
+                  uuid = "60D91AED-B21D-49B9-A507-19F232D01C70 - 294c8575d0011365"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "cleanupSignals"
+                  moduleName = "libTickernel.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/forgemastergua/Documents/GitHub/Tickernel/tkn/src/gfxContext.c"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "510"
+                  endingLineNumber = "510">
+               </Location>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "CBA7D172-B3D8-42D6-BA22-C562F684EC26"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "../tkn/src/gfxContext.c"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "833"
+            endingLineNumber = "833"
+            landmarkName = "destroyGfxContextPtr(pGfxContext)"
+            landmarkType = "9">
+            <Locations>
+               <Location
+                  uuid = "CBA7D172-B3D8-42D6-BA22-C562F684EC26 - 3dea21d9625d6c8f"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "destroyGfxContextPtr"
+                  moduleName = "osx.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/forgemastergua/Documents/GitHub/Tickernel/tkn/src/gfxContext.c"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "833"
+                  endingLineNumber = "833">
+               </Location>
+               <Location
+                  uuid = "CBA7D172-B3D8-42D6-BA22-C562F684EC26 - 7155d6d359cc0143"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "destroyGfxContextPtr"
+                  moduleName = "libTickernel.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/forgemastergua/Documents/GitHub/Tickernel/tkn/src/gfxContext.c"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "833"
+                  endingLineNumber = "833">
+               </Location>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
    </Breakpoints>
 </Bucket>

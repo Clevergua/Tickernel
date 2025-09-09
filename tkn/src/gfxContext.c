@@ -716,9 +716,50 @@ static void setupRenderPipelineAndResources(GfxContext *pGfxContext, uint32_t sp
     createMaterialPtr(pGfxContext, pGfxContext->pGlobalDescriptorSet);
 
     pGfxContext->vertexInputLayoutPtrHashSet = tknCreateHashSet(sizeof(VertexInputLayout *));
+
+    // Create empty resources for empty bindings
+    uint32_t emptyData = 0;
+    pGfxContext->pEmptyUniformBuffer = createUniformBufferPtr(pGfxContext, &emptyData, sizeof(emptyData));
+    
+    // Create empty sampler with default settings
+    VkSamplerCreateInfo samplerCreateInfo = {
+        .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
+        .magFilter = VK_FILTER_LINEAR,
+        .minFilter = VK_FILTER_LINEAR,
+        .addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT,
+        .addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT,
+        .addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT,
+        .anisotropyEnable = VK_FALSE,
+        .maxAnisotropy = 1.0f,
+        .borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK,
+        .unnormalizedCoordinates = VK_FALSE,
+        .compareEnable = VK_FALSE,
+        .compareOp = VK_COMPARE_OP_ALWAYS,
+        .mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR,
+        .mipLodBias = 0.0f,
+        .minLod = 0.0f,
+        .maxLod = 0.0f,
+    };
+    
+    pGfxContext->pEmptySampler = tknMalloc(sizeof(Sampler));
+    pGfxContext->pEmptySampler->bindingPtrHashSet = tknCreateHashSet(sizeof(Binding *));
+    assertVkResult(vkCreateSampler(pGfxContext->vkDevice, &samplerCreateInfo, NULL, &pGfxContext->pEmptySampler->vkSampler));
 }
 static void teardownRenderPipelineAndResources(GfxContext *pGfxContext)
 {
+    // Cleanup empty resources
+    if (pGfxContext->pEmptyUniformBuffer) {
+        destroyUniformBufferPtr(pGfxContext, pGfxContext->pEmptyUniformBuffer);
+        pGfxContext->pEmptyUniformBuffer = NULL;
+    }
+    
+    if (pGfxContext->pEmptySampler) {
+        vkDestroySampler(pGfxContext->vkDevice, pGfxContext->pEmptySampler->vkSampler, NULL);
+        tknDestroyHashSet(pGfxContext->pEmptySampler->bindingPtrHashSet);
+        tknFree(pGfxContext->pEmptySampler);
+        pGfxContext->pEmptySampler = NULL;
+    }
+
     for (uint32_t i = 0; i < pGfxContext->renderPassPtrDynamicArray.count; i++)
     {
         RenderPass *pRenderPass = *(RenderPass **)tknGetFromDynamicArray(&pGfxContext->renderPassPtrDynamicArray, i);

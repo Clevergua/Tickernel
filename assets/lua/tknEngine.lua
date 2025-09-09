@@ -88,55 +88,59 @@ function tknEngine.start(pGfxContext, assetsPath)
     tknEngine.pGlobalMaterialPtr = gfx.getGlobalMaterialPtr(pGfxContext)
     gfx.updateMaterialPtr(pGfxContext, tknEngine.pGlobalMaterialPtr, inputBindings)
 
-    -- -- Create lights uniform buffer for lighting subpass
-    -- tknEngine.lightsUniformBufferFormat = {{
-    --     -- DirectionalLight: direction(vec3) + strength(float) + color(vec3) + padding(float)
-    --     name = "directionalLight_direction",
-    --     type = TYPE_FLOAT,
-    --     count = 3,
-    -- }, {
-    --     name = "directionalLight_strength", 
-    --     type = TYPE_FLOAT,
-    --     count = 1,
-    -- }, {
-    --     name = "directionalLight_color",
-    --     type = TYPE_FLOAT,
-    --     count = 3,
-    -- }, {
-    --     name = "directionalLight_padding",
-    --     type = TYPE_FLOAT,
-    --     count = 1,
-    -- }, {
-    --     name = "pointLightCount",
-    --     type = TYPE_INT32,
-    --     count = 1,
-    -- }, {
-    --     -- PointLight array padding to align to 16 bytes
-    --     name = "pointLightArray_padding",
-    --     type = TYPE_INT32,
-    --     count = 3,
-    -- }}
+    -- Create lights uniform buffer for lighting subpass
+    tknEngine.lightsUniformBufferFormat = {{
+        -- DirectionalLight.color (vec4)
+        name = "directionalLight_color",
+        type = TYPE_FLOAT,
+        count = 4,
+    }, {
+        -- DirectionalLight.direction (vec3, but aligned as vec4 in uniform buffer)
+        name = "directionalLight_direction",
+        type = TYPE_FLOAT,
+        count = 4,
+    }, {
+        -- pointLightCount (int)
+        name = "pointLightCount",
+        type = TYPE_INT32,
+        count = 1,
+    }, {
+        -- padding to 16-byte alignment
+        name = "pointLightCount_padding",
+        type = TYPE_INT32,
+        count = 3,
+    }, {
+        -- PointLight array - each PointLight has 8 floats (color=4 + position=4 + range=1 + padding=3)
+        name = "pointLights",
+        type = TYPE_FLOAT,
+        count = 256 * 8,
+    }}
 
-    -- local pLightsUniformBuffer = {
-    --     directionalLight_direction = {0.5, -1.0, 0.3}, -- Light coming from upper right
-    --     directionalLight_strength = 1.0,
-    --     directionalLight_color = {1.0, 1.0, 0.9}, -- Warm white light
-    --     directionalLight_padding = 0.0,
-    --     pointLightCount = 0, -- No point lights for now
-    --     pointLightArray_padding = {0, 0, 0},
-    -- }
+    local pLightsUniformBuffer = {
+        directionalLight_color = {1.0, 1.0, 0.9, 1.0}, -- Warm white light RGBA
+        directionalLight_direction = {0.5, -1.0, 0.3, 0.0}, -- Light direction XYZ + padding
+        pointLightCount = 0, -- No point lights for now
+        pointLightCount_padding = {0, 0, 0},
+        pointLights = {}
+    }
 
-    -- tknEngine.pLightsUniformBuffer = gfx.createUniformBufferPtr(pGfxContext, tknEngine.lightsUniformBufferFormat, pLightsUniformBuffer)
+    -- Fill pointLights array with zeros (256 point lights * 8 floats each)
+    for i = 1, 256 * 8 do
+        table.insert(pLightsUniformBuffer.pointLights, 0.0)
+    end
+
+    tknEngine.pLightsUniformBuffer = gfx.createUniformBufferPtr(pGfxContext, tknEngine.lightsUniformBufferFormat, pLightsUniformBuffer)
 
     -- Get the lighting subpass material and update it with lights uniform buffer
-    -- local deferredRenderPass = tknRenderPipeline.deferredRenderPass
-    -- tknEngine.pLightingMaterial = gfx.getSubpassMaterialPtr(pGfxContext, deferredRenderPass.pRenderPass, 1) -- Lighting is subpass 1
-    -- local lightingInputBindings = {{
-    --     vkDescriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-    --     pUniformBuffer = tknEngine.pLightsUniformBuffer,
-    --     binding = 3,
-    -- }}
-    -- gfx.updateMaterialPtr(pGfxContext, tknEngine.pLightingMaterial, lightingInputBindings)
+    local deferredRenderPass = tknRenderPipeline.deferredRenderPass
+    tknEngine.pLightingMaterial = gfx.getSubpassMaterialPtr(pGfxContext, deferredRenderPass.pRenderPass, 1) -- Lighting is subpass 1
+    local lightingInputBindings = {{
+        vkDescriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+        pUniformBuffer = tknEngine.pLightsUniformBuffer,
+        binding = 3,
+    }}
+    gfx.updateMaterialPtr(pGfxContext, tknEngine.pLightingMaterial, lightingInputBindings)
+
 
     local vertices = {
         -- Triangle vertices
