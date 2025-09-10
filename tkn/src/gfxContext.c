@@ -737,7 +737,7 @@ static void setupRenderPipelineAndResources(GfxContext *pGfxContext, uint32_t sp
         VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
         VK_IMAGE_ASPECT_COLOR_BIT);
-        
+
     pGfxContext->dynamicAttachmentPtrHashSet = tknCreateHashSet(sizeof(Attachment *));
     pGfxContext->fixedAttachmentPtrHashSet = tknCreateHashSet(sizeof(Attachment *));
     pGfxContext->renderPassPtrDynamicArray = tknCreateDynamicArray(sizeof(RenderPass *), TKN_DEFAULT_COLLECTION_SIZE);
@@ -764,12 +764,12 @@ static void teardownRenderPipelineAndResources(GfxContext *pGfxContext)
         destroyRenderPassPtr(pGfxContext, pRenderPass);
     }
     tknClearDynamicArray(&pGfxContext->renderPassPtrDynamicArray);
-    tknAssert(pGfxContext->vertexInputLayoutPtrHashSet.count == 0, "Vertex input layout hash set should be empty before destroying GfxContext.");
-    tknDestroyHashSet(pGfxContext->vertexInputLayoutPtrHashSet);
     tknAssert(pGfxContext->renderPassPtrDynamicArray.count == 0, "Render pass dynamic array should be empty before destroying GfxContext.");
     tknDestroyDynamicArray(pGfxContext->renderPassPtrDynamicArray);
 
     destroyDescriptorSetPtr(pGfxContext, pGfxContext->pGlobalDescriptorSet);
+    tknAssert(pGfxContext->vertexInputLayoutPtrHashSet.count == 0, "Vertex input layout hash set should be empty before destroying GfxContext.");
+    tknDestroyHashSet(pGfxContext->vertexInputLayoutPtrHashSet);
 
     while (pGfxContext->dynamicAttachmentPtrHashSet.count > 0)
     {

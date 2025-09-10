@@ -32,10 +32,19 @@ void removeDrawCallPtr(GfxContext *pGfxContext, DrawCall *pDrawCall)
 }
 void clearDrawCalls(GfxContext *pGfxContext, Pipeline *pPipeline)
 {
+    // Process all drawcalls from the end to avoid index issues
     while (pPipeline->drawCallPtrDynamicArray.count > 0)
     {
         uint32_t lastIndex = pPipeline->drawCallPtrDynamicArray.count - 1;
         DrawCall *pDrawCall = *(DrawCall **)tknGetFromDynamicArray(&pPipeline->drawCallPtrDynamicArray, lastIndex);
-        removeDrawCallPtr(pGfxContext, pDrawCall);
+        if (pDrawCall->pMaterial != NULL)
+            tknRemoveFromHashSet(&pDrawCall->pMaterial->drawCallPtrHashSet, &pDrawCall);
+        if (pDrawCall->pInstance != NULL)
+            tknRemoveFromHashSet(&pDrawCall->pInstance->drawCallPtrHashSet, &pDrawCall);
+        if (pDrawCall->pMesh != NULL)
+            tknRemoveFromHashSet(&pDrawCall->pMesh->drawCallPtrHashSet, &pDrawCall);
+        tknRemoveAtIndexFromDynamicArray(&pPipeline->drawCallPtrDynamicArray, lastIndex);
+        *pDrawCall = (DrawCall){0};
+        tknFree(pDrawCall);
     }
 }

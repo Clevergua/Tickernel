@@ -99,7 +99,13 @@ void destroyMeshPtr(GfxContext *pGfxContext, Mesh *pMesh)
     tknAssert(0 == pMesh->drawCallPtrHashSet.count, "Mesh still has draw calls attached!");
     tknDestroyHashSet(pMesh->drawCallPtrHashSet);
     tknRemoveFromHashSet(&pMesh->pVertexInputLayout->referencePtrHashSet, &pMesh);
-    destroyVkBuffer(pGfxContext, pMesh->vertexVkBuffer, pMesh->vertexVkDeviceMemory);
-    destroyVkBuffer(pGfxContext, pMesh->indexVkBuffer, pMesh->indexVkDeviceMemory);
+    if (pMesh->vertexVkBuffer != VK_NULL_HANDLE && pMesh->vertexVkDeviceMemory != VK_NULL_HANDLE)
+    {
+        destroyVkBuffer(pGfxContext, pMesh->vertexVkBuffer, pMesh->vertexVkDeviceMemory);
+    }
+    if (pMesh->indexVkBuffer != VK_NULL_HANDLE && pMesh->indexVkDeviceMemory != VK_NULL_HANDLE)
+    {
+        destroyVkBuffer(pGfxContext, pMesh->indexVkBuffer, pMesh->indexVkDeviceMemory);
+    }
     tknFree(pMesh);
 }
