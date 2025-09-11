@@ -193,7 +193,7 @@ void bindAttachmentsToMaterialPtr(GfxContext *pGfxContext, Material *pMaterial)
                     .imageView = vkImageView,
                     .imageLayout = pBinding->bindingUnion.inputAttachmentBinding.vkImageLayout,
                 };
-                printf("Binding input attachment: binding %d, imageView %p, imageLayout %d\n", binding, (void *)vkImageView, pBinding->bindingUnion.inputAttachmentBinding.vkImageLayout);
+
                 vkWriteDescriptorSets[vkWriteDescriptorSetIndex] = (VkWriteDescriptorSet){
                     .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
                     .dstSet = pMaterial->vkDescriptorSet,
@@ -372,7 +372,6 @@ Material *getSubpassMaterialPtr(GfxContext *pGfxContext, RenderPass *pRenderPass
         if (node)
         {
             Material *pMaterial = *(Material **)node->data;
-            printf("Found subpass material: %p\n", (void *)pMaterial);
             return pMaterial;
         }
         else

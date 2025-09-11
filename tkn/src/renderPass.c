@@ -6,7 +6,6 @@ static Subpass createSubpass(GfxContext *pGfxContext, uint32_t subpassIndex, uin
     for (uint32_t inputVkAttachmentReferenceIndex = 0; inputVkAttachmentReferenceIndex < inputVkAttachmentReferenceCount; inputVkAttachmentReferenceIndex++)
     {
         tknAssert(inputVkAttachmentReferences[inputVkAttachmentReferenceIndex].attachment < attachmentCount, "Input attachment reference index %u out of bounds", inputVkAttachmentReferenceIndex);
-        printf("Input Attachment Index %u -> Attachment %u uses layout %d\n", inputVkAttachmentReferenceIndex, inputVkAttachmentReferences[inputVkAttachmentReferenceIndex].attachment, inputVkAttachmentReferences[inputVkAttachmentReferenceIndex].layout);
 
         inputAttachmentIndexToVkImageLayout[inputVkAttachmentReferenceIndex] = inputVkAttachmentReferences[inputVkAttachmentReferenceIndex].layout;
     }

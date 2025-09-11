@@ -60,16 +60,17 @@ static void *packDataFromLayout(lua_State *pLuaState, int layoutIndex, int dataI
     // Convert negative indices to absolute indices to avoid stack changes affecting them
     int absoluteLayoutIndex = lua_absindex(pLuaState, layoutIndex);
     int absoluteDataIndex = lua_absindex(pLuaState, dataIndex);
-    
+
     VkDeviceSize singleVertexSize = calculateLayoutSize(pLuaState, absoluteLayoutIndex);
-    
+
     // Calculate vertex count by checking the first field's array length
     uint32_t vertexCount = 0;
     lua_len(pLuaState, absoluteLayoutIndex);
     uint32_t fieldCount = (uint32_t)lua_tointeger(pLuaState, -1);
     lua_pop(pLuaState, 1);
-    
-    if (fieldCount > 0) {
+
+    if (fieldCount > 0)
+    {
         // Get first field info
         lua_rawgeti(pLuaState, absoluteLayoutIndex, 1);
         lua_getfield(pLuaState, -1, "name");
@@ -78,10 +79,11 @@ static void *packDataFromLayout(lua_State *pLuaState, int layoutIndex, int dataI
         lua_getfield(pLuaState, -1, "count");
         uint32_t firstFieldCount = (uint32_t)lua_tointeger(pLuaState, -1);
         lua_pop(pLuaState, 2);
-        
+
         // Get first field data to determine vertex count
         lua_getfield(pLuaState, absoluteDataIndex, firstFieldName);
-        if (lua_istable(pLuaState, -1)) {
+        if (lua_istable(pLuaState, -1))
+        {
             lua_len(pLuaState, -1);
             uint32_t arrayLength = (uint32_t)lua_tointeger(pLuaState, -1);
             lua_pop(pLuaState, 1);
@@ -89,7 +91,7 @@ static void *packDataFromLayout(lua_State *pLuaState, int layoutIndex, int dataI
         }
         lua_pop(pLuaState, 1);
     }
-    
+
     VkDeviceSize totalSize = singleVertexSize * vertexCount;
     void *data = tknMalloc(totalSize);
     uint8_t *dataPtr = (uint8_t *)data;
@@ -195,12 +197,12 @@ static void *packDataFromLayout(lua_State *pLuaState, int layoutIndex, int dataI
 static int luaGetSupportedFormat(lua_State *pLuaState)
 {
     GfxContext *pGfxContext = (GfxContext *)lua_touserdata(pLuaState, -4);
-    
+
     // candidates table is at position -3
     lua_len(pLuaState, -3);
     uint32_t candidateCount = (uint32_t)lua_tointeger(pLuaState, -1);
     lua_pop(pLuaState, 1);
-    
+
     VkFormat *candidates = tknMalloc(sizeof(VkFormat) * candidateCount);
     for (uint32_t i = 0; i < candidateCount; i++)
     {
@@ -214,7 +216,8 @@ static int luaGetSupportedFormat(lua_State *pLuaState)
     tknFree(candidates);
     lua_pushinteger(pLuaState, (lua_Integer)supportedFormat);
     return 1;
-}static int luaCreateDynamicAttachmentPtr(lua_State *pLuaState)
+}
+static int luaCreateDynamicAttachmentPtr(lua_State *pLuaState)
 {
     GfxContext *pGfxContext = (GfxContext *)lua_touserdata(pLuaState, -5);
     VkFormat vkFormat = (VkFormat)lua_tointeger(pLuaState, -4);
@@ -351,9 +354,6 @@ static int luaCreateRenderPassPtr(lua_State *pLuaState)
             lua_getfield(pLuaState, -1, "stencil");
             clearValue.depthStencil.stencil = (uint32_t)lua_tointeger(pLuaState, -1);
             lua_pop(pLuaState, 1);
-            
-            printf("ClearValue[%u] depth/stencil: depth=%.6f, stencil=%u\n", 
-                   i, clearValue.depthStencil.depth, clearValue.depthStencil.stencil);
         }
         else
         {
@@ -365,10 +365,6 @@ static int luaCreateRenderPassPtr(lua_State *pLuaState)
                 clearValue.color.float32[j] = (float)lua_tonumber(pLuaState, -1);
                 lua_pop(pLuaState, 1);
             }
-            
-            printf("ClearValue[%u] color: R=%.6f, G=%.6f, B=%.6f, A=%.6f\n", 
-                   i, clearValue.color.float32[0], clearValue.color.float32[1], 
-                   clearValue.color.float32[2], clearValue.color.float32[3]);
         }
 
         vkClearValues[i] = clearValue;
@@ -1316,7 +1312,7 @@ static int luaUpdateMaterialPtr(lua_State *pLuaState)
             lua_getfield(pLuaState, -1, "pUniformBuffer");
             UniformBuffer *pUniformBuffer = (UniformBuffer *)lua_touserdata(pLuaState, -1);
             lua_pop(pLuaState, 1);
-            
+
             inputBindings[i].inputBindingUnion.uniformBufferBinding.pUniformBuffer = pUniformBuffer;
         }
         else if (vkDescriptorType == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
@@ -1324,7 +1320,7 @@ static int luaUpdateMaterialPtr(lua_State *pLuaState)
             lua_getfield(pLuaState, -1, "pSampler");
             Sampler *pSampler = (Sampler *)lua_touserdata(pLuaState, -1);
             lua_pop(pLuaState, 1);
-            
+
             inputBindings[i].inputBindingUnion.samplerBinding.pSampler = pSampler;
         }
         else

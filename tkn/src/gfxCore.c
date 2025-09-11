@@ -277,7 +277,6 @@ DescriptorSet *createDescriptorSetPtr(GfxContext *pGfxContext, uint32_t spvRefle
             else
             {
                 //  Skip
-                printf("Skipping descriptor set %d because of target set %d\n ", spvReflectDescriptorSet.set, set);
             }
         }
     }

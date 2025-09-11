@@ -44,17 +44,8 @@ TknContext *createTknContextPtr(const char *assetsPath, uint32_t luaLibraryCount
     GfxContext *pGfxContext = createGfxContextPtr(targetSwapchainImageCount, targetVkSurfaceFormat, targetVkPresentMode, vkInstance, vkSurface, swapchainExtent, TKN_ARRAY_COUNT(spvPaths), spvPaths);
 
     lua_State *pLuaState = luaL_newstate();
-    printf("DEBUG: luaL_newstate() returned %p\n", (void *)pLuaState);
-
-    if (NULL == pLuaState)
-    {
-        printf("ERROR: luaL_newstate() failed!\n");
-        return NULL;
-    }
-
-    printf("DEBUG: About to call luaL_openlibs with %p\n", (void *)pLuaState);
+    tknAssert(pLuaState, "Failed to create Lua state");
     luaL_openlibs(pLuaState);
-    printf("DEBUG: luaL_openlibs completed\n");
 
     char packagePath[FILENAME_MAX];
     snprintf(packagePath, FILENAME_MAX, "%s/lua/?.lua", assetsPath);
