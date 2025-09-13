@@ -153,7 +153,7 @@ function tknEngine.start(pGfxContext, assetsPath)
         0x0, 0x0},
     }
 
-    tknEngine.pMesh = gfx.createMeshPtr(pGfxContext, tknEngine.pMeshVertexInputLayout, tknEngine.vertexFormat, vertices, nil)
+    tknEngine.pMesh = gfx.createMeshPtrWithData(pGfxContext, tknEngine.pMeshVertexInputLayout, tknEngine.vertexFormat, vertices, nil)
     local instances = {
         model = {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1},
     }

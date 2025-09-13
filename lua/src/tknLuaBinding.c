@@ -1152,7 +1152,7 @@ static int luaUpdateUniformBufferPtr(lua_State *pLuaState)
     return 0;
 }
 
-static int luaCreateMeshPtr(lua_State *pLuaState)
+static int luaCreateMeshPtrWithData(lua_State *pLuaState)
 {
     GfxContext *pGfxContext = (GfxContext *)lua_touserdata(pLuaState, -5);
     VertexInputLayout *pVertexInputLayout = (VertexInputLayout *)lua_touserdata(pLuaState, -4);
@@ -1191,7 +1191,7 @@ static int luaCreateMeshPtr(lua_State *pLuaState)
         }
     }
 
-    Mesh *pMesh = createMeshPtr(pGfxContext, pVertexInputLayout, vertexData, vertexCount, indexType, indexData, indexCount);
+    Mesh *pMesh = createMeshPtrWithData(pGfxContext, pVertexInputLayout, vertexData, vertexCount, indexType, indexData, indexCount);
 
     tknFree(vertexData);
     if (indexData)
@@ -1358,7 +1358,7 @@ void bindFunctions(lua_State *pLuaState)
         {"createUniformBufferPtr", luaCreateUniformBufferPtr},
         {"destroyUniformBufferPtr", luaDestroyUniformBufferPtr},
         {"updateUniformBufferPtr", luaUpdateUniformBufferPtr},
-        {"createMeshPtr", luaCreateMeshPtr},
+        {"createMeshPtrWithData", luaCreateMeshPtrWithData},
         {"destroyMeshPtr", luaDestroyMeshPtr},
         {"createInstancePtr", luaCreateInstancePtr},
         {"destroyInstancePtr", luaDestroyInstancePtr},
