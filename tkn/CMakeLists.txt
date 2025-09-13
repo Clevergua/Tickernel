@@ -9,8 +9,6 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 # Output configuration information
 message(STATUS "Configuring ${PROJECT_NAME} v${PROJECT_VERSION}")
 
-
-# Source and header files
 file(GLOB_RECURSE SOURCE_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/*.c
     ${CMAKE_CURRENT_SOURCE_DIR}/external/*.c
