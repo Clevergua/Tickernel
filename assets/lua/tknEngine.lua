@@ -1,76 +1,16 @@
 local tknRenderPipeline = require("tknRenderPipeline")
+local format = require("format")
 local tknEngine = {}
 
 function tknEngine.start(pGfxContext, assetsPath)
     print("Lua start")
     tknEngine.assetsPath = assetsPath
-    -- binding = 0
-    tknEngine.vertexFormat = {{
-        name = "position",
-        type = TYPE_FLOAT,
-        count = 3,
-    }, {
-        name = "color",
-        type = TYPE_UINT32,
-        count = 1,
-    }, {
-        name = "normal",
-        type = TYPE_UINT32,
-        count = 1,
-    }}
-    tknEngine.instanceFormat = {{
-        name = "model",
-        type = TYPE_FLOAT,
-        count = 16,
-    }}
-    tknEngine.pMeshVertexInputLayout = gfx.createVertexInputLayoutPtr(pGfxContext, tknEngine.vertexFormat)
-    tknEngine.pInstanceVertexInputLayout = gfx.createVertexInputLayoutPtr(pGfxContext, tknEngine.instanceFormat);
-    tknRenderPipeline.setup(pGfxContext, assetsPath, tknEngine.pMeshVertexInputLayout, tknEngine.pInstanceVertexInputLayout)
+    format.createLayouts(pGfxContext)
+    tknRenderPipeline.setup(pGfxContext, assetsPath, format.pVoxelMeshVertexInputLayout, format.pInstanceVertexInputLayout)
     tknEngine.pGlobalMaterial = gfx.getGlobalMaterialPtr(pGfxContext)
-
-    tknEngine.globalUniformBufferFormat = {{
-        name = "view",
-        type = TYPE_FLOAT,
-        count = 16,
-    }, {
-        name = "proj",
-        type = TYPE_FLOAT,
-        count = 16,
-    }, {
-        name = "inv_view_proj",
-        type = TYPE_FLOAT,
-        count = 16,
-    }, {
-        name = "pointSizeFactor",
-        type = TYPE_FLOAT,
-        count = 1,
-    }, {
-        name = "time",
-        type = TYPE_FLOAT,
-        count = 1,
-    }, {
-        name = "frameCount",
-        type = TYPE_INT32,
-        count = 1,
-    }, {
-        name = "near",
-        type = TYPE_FLOAT,
-        count = 1,
-    }, {
-        name = "far",
-        type = TYPE_FLOAT,
-        count = 1,
-    }, {
-        name = "fov",
-        type = TYPE_FLOAT,
-        count = 1,
-    }}
     local pGlobalUniformBuffer = {
-        -- View matrix: camera at (5, 5, 5) looking at (0, 0, 0) with up vector (0, 1, 0)
         view = {0.7071, -0.4082, 0.5774, 0, 0, 0.8165, 0.5774, 0, -0.7071, -0.4082, 0.5774, 0, 0, 0, -8.6603, 1},
-        -- Perspective projection matrix: 45° FOV, 16:9 aspect ratio, near=0.1, far=100.0
         proj = {1.3584, 0, 0, 0, 0, 2.4142, 0, 0, 0, 0, -1.0020, -1, 0, 0, -0.2002, 0},
-        -- Inverse view-projection matrix (computed from the above matrices)
         inv_view_proj = {0.5206, 0, -0.5206, 0, -0.3007, 0.6013, -0.3007, 0, 0.0231, 0.0231, 0.0231, 0, 2.3077, 4.3301, 2.3077, 43.301},
         pointSizeFactor = 1000.0,
         time = 0.0,
@@ -79,7 +19,7 @@ function tknEngine.start(pGfxContext, assetsPath)
         far = 100.0,
         fov = 90.0,
     }
-    tknEngine.pGlobalUniformBuffer = gfx.createUniformBufferPtr(pGfxContext, tknEngine.globalUniformBufferFormat, pGlobalUniformBuffer)
+    tknEngine.pGlobalUniformBuffer = gfx.createUniformBufferPtr(pGfxContext, format.globalUniformBufferFormat, pGlobalUniformBuffer)
     local inputBindings = {{
         vkDescriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
         pUniformBuffer = tknEngine.pGlobalUniformBuffer,
@@ -88,50 +28,17 @@ function tknEngine.start(pGfxContext, assetsPath)
     tknEngine.pGlobalMaterialPtr = gfx.getGlobalMaterialPtr(pGfxContext)
     gfx.updateMaterialPtr(pGfxContext, tknEngine.pGlobalMaterialPtr, inputBindings)
 
-    -- Create lights uniform buffer for lighting subpass
-    tknEngine.lightsUniformBufferFormat = {{
-        -- DirectionalLight.color (vec4)
-        name = "directionalLight_color",
-        type = TYPE_FLOAT,
-        count = 4,
-    }, {
-        -- DirectionalLight.direction (vec3, but aligned as vec4 in uniform buffer)
-        name = "directionalLight_direction",
-        type = TYPE_FLOAT,
-        count = 4,
-    }, {
-        -- pointLightCount (int)
-        name = "pointLightCount",
-        type = TYPE_INT32,
-        count = 1,
-    }, {
-        -- padding to 16-byte alignment
-        name = "pointLightCount_padding",
-        type = TYPE_INT32,
-        count = 3,
-    }, {
-        -- PointLight array - each PointLight has 8 floats (color=4 + position=4 + range=1 + padding=3)
-        name = "pointLights",
-        type = TYPE_FLOAT,
-        count = 256 * 8,
-    }}
-
     local pLightsUniformBuffer = {
-        directionalLight_color = {1.0, 1.0, 0.9, 1.0}, -- Warm white light RGBA
-        directionalLight_direction = {0.5, -1.0, 0.3, 0.0}, -- Light direction XYZ + padding
-        pointLightCount = 0, -- No point lights for now
-        pointLightCount_padding = {0, 0, 0},
-        pointLights = {}
+        directionalLightColor = {1.0, 1.0, 0.9, 1.0},
+        directionalLightDirection = {0.5, -1.0, 0.3, 0.0},
+        pointLights = {},
+        pointLightCount = 0,
     }
-
-    -- Fill pointLights array with zeros (256 point lights * 8 floats each)
-    for i = 1, 256 * 8 do
+    for i = 1, 128 * 8 do
         table.insert(pLightsUniformBuffer.pointLights, 0.0)
     end
+    tknEngine.pLightsUniformBuffer = gfx.createUniformBufferPtr(pGfxContext, format.lightsUniformBufferFormat, pLightsUniformBuffer)
 
-    tknEngine.pLightsUniformBuffer = gfx.createUniformBufferPtr(pGfxContext, tknEngine.lightsUniformBufferFormat, pLightsUniformBuffer)
-
-    -- Get the lighting subpass material and update it with lights uniform buffer
     local deferredRenderPass = tknRenderPipeline.deferredRenderPass
     tknEngine.pLightingMaterial = gfx.getSubpassMaterialPtr(pGfxContext, deferredRenderPass.pRenderPass, 1) -- Lighting is subpass 1
     local lightingInputBindings = {{
@@ -141,23 +48,17 @@ function tknEngine.start(pGfxContext, assetsPath)
     }}
     gfx.updateMaterialPtr(pGfxContext, tknEngine.pLightingMaterial, lightingInputBindings)
 
-
     local vertices = {
-        -- Triangle vertices
-        position = {-1.0, -1.0, 0.0, -- Bottom left
-        1.0, -1.0, 0.0, -- Bottom right
-        0.0, 1.0, 0.0 -- Top center
-        },
-        color = {0xFF0000FF, 0x00FF00FF, 0x0000FFFF}, -- Red, Green, Blue (RGBA packed)
-        normal = {0x1, -- Front facing normal (encoded)
-        0x0, 0x0},
+        position = {-1.0, -1.0, 0.0, 1.0, -1.0, 0.0, 0.0, 1.0, 0.0},
+        color = {0xFF0000FF, 0x00FF00FF, 0x0000FFFF},
+        normal = {0x1, 0x0, 0x0},
     }
 
-    tknEngine.pMesh = gfx.createMeshPtrWithData(pGfxContext, tknEngine.pMeshVertexInputLayout, tknEngine.vertexFormat, vertices, nil)
+    tknEngine.pMesh = gfx.createMeshPtrWithData(pGfxContext, format.pVoxelMeshVertexInputLayout, format.voxelVertexFormat, vertices, nil)
     local instances = {
         model = {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1},
     }
-    tknEngine.pInstance = gfx.createInstancePtr(pGfxContext, tknEngine.pInstanceVertexInputLayout, tknEngine.instanceFormat, instances)
+    tknEngine.pInstance = gfx.createInstancePtr(pGfxContext, format.pInstanceVertexInputLayout, format.instanceFormat, instances)
 
     local deferredRenderPass = tknRenderPipeline.deferredRenderPass
     tknEngine.pDrawCall = gfx.addDrawCallPtr(pGfxContext, deferredRenderPass.pGeometryPipeline, deferredRenderPass.pGeometryMaterial, tknEngine.pMesh, tknEngine.pInstance)
@@ -193,10 +94,7 @@ function tknEngine.stopGfx(pGfxContext)
     gfx.destroyUniformBufferPtr(pGfxContext, tknEngine.pLightsUniformBuffer)
     tknEngine.pLightsUniformBuffer = nil
 
-    gfx.destroyVertexInputLayoutPtr(pGfxContext, tknEngine.pInstanceVertexInputLayout)
-    gfx.destroyVertexInputLayoutPtr(pGfxContext, tknEngine.pMeshVertexInputLayout)
-    tknEngine.instanceFormat = nil
-    tknEngine.vertexFormat = nil
+    format.destroyLayouts(pGfxContext)
 end
 
 function tknEngine.updateGameplay()
