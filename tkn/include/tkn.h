@@ -86,6 +86,7 @@ void updateUniformBufferPtr(GfxContext *pGfxContext, UniformBuffer *pUniformBuff
 
 Mesh *createMeshPtrWithData(GfxContext *pGfxContext, VertexInputLayout *pMeshVertexInputLayout, void *vertices, uint32_t vertexCount, VkIndexType vkIndexType, void *indices, uint32_t indexCount);
 Mesh *createMeshPtrWithPlyFile(GfxContext *pGfxContext, VertexInputLayout *pMeshVertexInputLayout, VkIndexType vkIndexType, const char *plyFilePath);
+void saveMeshPtrToPlyFile(uint32_t vertexPropertyCount, const char **vertexPropertyNames, const char **vertexPropertyTypes, VertexInputLayout *pMeshVertexInputLayout, void *vertices, uint32_t vertexCount, VkIndexType vkIndexType, void *indices, uint32_t indexCount, const char *plyFilePath);
 void destroyMeshPtr(GfxContext *pGfxContext, Mesh *pMesh);
 
 Instance *createInstancePtr(GfxContext *pGfxContext, VertexInputLayout *pVertexInputLayout, uint32_t instanceCount, void *instances);
