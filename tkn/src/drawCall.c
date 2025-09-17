@@ -1,6 +1,6 @@
 #include "gfxCore.h"
 
-DrawCall *addDrawCallPtr(GfxContext *pGfxContext, Pipeline *pPipeline, Material *pMaterial, Mesh *pMesh, Instance *pInstance)
+DrawCall *addDrawCallPtr(GfxContext *pGfxContext, Pipeline *pPipeline, Material *pMaterial, Mesh *pMesh, Instance *pInstance, uint32_t index)
 {
     DrawCall *pDrawCall = tknMalloc(sizeof(DrawCall));
     *pDrawCall = (DrawCall){
@@ -15,7 +15,7 @@ DrawCall *addDrawCallPtr(GfxContext *pGfxContext, Pipeline *pPipeline, Material 
         tknAddToHashSet(&pInstance->drawCallPtrHashSet, &pDrawCall);
     if (pMesh != NULL)
         tknAddToHashSet(&pMesh->drawCallPtrHashSet, &pDrawCall);
-    tknAddToDynamicArray(&pPipeline->drawCallPtrDynamicArray, &pDrawCall);
+    tknInsertIntoDynamicArray(&pPipeline->drawCallPtrDynamicArray, &pDrawCall, index);
     return pDrawCall;
 }
 void removeDrawCallPtr(GfxContext *pGfxContext, DrawCall *pDrawCall)
@@ -47,4 +47,16 @@ void clearDrawCalls(GfxContext *pGfxContext, Pipeline *pPipeline)
         *pDrawCall = (DrawCall){0};
         tknFree(pDrawCall);
     }
+}
+DrawCall *getDrawCallAtIndex(GfxContext *pGfxContext, Pipeline *pPipeline, uint32_t index)
+{
+    if (index >= pPipeline->drawCallPtrDynamicArray.count)
+    {
+        return NULL; // Index out of bounds
+    }
+    return *(DrawCall **)tknGetFromDynamicArray(&pPipeline->drawCallPtrDynamicArray, index);
+}
+uint32_t getDrawCallCount(GfxContext *pGfxContext, Pipeline *pPipeline)
+{
+    return pPipeline->drawCallPtrDynamicArray.count;
 }

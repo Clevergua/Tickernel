@@ -1084,13 +1084,13 @@ static int luaDestroyVertexInputLayoutPtr(lua_State *pLuaState)
 
 static int luaAddDrawCallPtr(lua_State *pLuaState)
 {
-    GfxContext *pGfxContext = (GfxContext *)lua_touserdata(pLuaState, -5);
-    Pipeline *pPipeline = (Pipeline *)lua_touserdata(pLuaState, -4);
-    Material *pMaterial = (Material *)lua_touserdata(pLuaState, -3);
-    Mesh *pMesh = (Mesh *)lua_touserdata(pLuaState, -2);
-    Instance *pInstance = lua_isnil(pLuaState, -1) ? NULL : (Instance *)lua_touserdata(pLuaState, -1);
-
-    DrawCall *pDrawCall = addDrawCallPtr(pGfxContext, pPipeline, pMaterial, pMesh, pInstance);
+    GfxContext *pGfxContext = (GfxContext *)lua_touserdata(pLuaState, -6);
+    Pipeline *pPipeline = (Pipeline *)lua_touserdata(pLuaState, -5);
+    Material *pMaterial = (Material *)lua_touserdata(pLuaState, -4);
+    Mesh *pMesh = (Mesh *)lua_touserdata(pLuaState, -3);
+    Instance *pInstance = lua_touserdata(pLuaState, -2);
+    uint32_t index = luaL_checkinteger(pLuaState, -1);
+    DrawCall *pDrawCall = addDrawCallPtr(pGfxContext, pPipeline, pMaterial, pMesh, pInstance, index);
     lua_pushlightuserdata(pLuaState, pDrawCall);
     return 1;
 }
@@ -1109,6 +1109,25 @@ static int luaClearDrawCalls(lua_State *pLuaState)
     Pipeline *pPipeline = (Pipeline *)lua_touserdata(pLuaState, -1);
     clearDrawCalls(pGfxContext, pPipeline);
     return 0;
+}
+
+static int luaGetDrawCallAtIndex(lua_State *pLuaState)
+{
+    GfxContext *pGfxContext = (GfxContext *)lua_touserdata(pLuaState, -3);
+    Pipeline *pPipeline = (Pipeline *)lua_touserdata(pLuaState, -2);
+    uint32_t index = (uint32_t)lua_tointeger(pLuaState, -1);
+    DrawCall *pDrawCall = getDrawCallAtIndex(pGfxContext, pPipeline, index);
+    lua_pushlightuserdata(pLuaState, pDrawCall);
+    return 1;
+}
+
+static int luaGetDrawCallCount(lua_State *pLuaState)
+{
+    GfxContext *pGfxContext = (GfxContext *)lua_touserdata(pLuaState, -2);
+    Pipeline *pPipeline = (Pipeline *)lua_touserdata(pLuaState, -1);
+    uint32_t count = getDrawCallCount(pGfxContext, pPipeline);
+    lua_pushinteger(pLuaState, (lua_Integer)count);
+    return 1;
 }
 
 static int luaCreateUniformBufferPtr(lua_State *pLuaState)
@@ -1212,12 +1231,12 @@ static int luaDestroyMeshPtr(lua_State *pLuaState)
 static int luaSaveMeshPtrToPlyFile(lua_State *pLuaState)
 {
     // Parameters: vertexPropertyNames, vertexPropertyTypes, vertexInputLayout, vertices, indices, filePath
-    
+
     // Get vertexPropertyNames array
     lua_len(pLuaState, -6);
     uint32_t vertexPropertyCount = (uint32_t)lua_tointeger(pLuaState, -1);
     lua_pop(pLuaState, 1);
-    
+
     const char **vertexPropertyNames = tknMalloc(sizeof(const char *) * vertexPropertyCount);
     for (uint32_t i = 0; i < vertexPropertyCount; i++)
     {
@@ -1225,7 +1244,7 @@ static int luaSaveMeshPtrToPlyFile(lua_State *pLuaState)
         vertexPropertyNames[i] = lua_tostring(pLuaState, -1);
         lua_pop(pLuaState, 1);
     }
-    
+
     // Get vertexPropertyTypes array
     const char **vertexPropertyTypes = tknMalloc(sizeof(const char *) * vertexPropertyCount);
     for (uint32_t i = 0; i < vertexPropertyCount; i++)
@@ -1234,13 +1253,13 @@ static int luaSaveMeshPtrToPlyFile(lua_State *pLuaState)
         vertexPropertyTypes[i] = lua_tostring(pLuaState, -1);
         lua_pop(pLuaState, 1);
     }
-    
+
     VertexInputLayout *pMeshVertexInputLayout = (VertexInputLayout *)lua_touserdata(pLuaState, -4);
-    
+
     // Pack vertex data from layout
     VkDeviceSize vertexSize;
     void *vertices = packDataFromLayout(pLuaState, -4, -3, &vertexSize);
-    
+
     // Calculate vertex count
     uint32_t vertexCount = 0;
     VkDeviceSize layoutSize = calculateLayoutSize(pLuaState, -4);
@@ -1248,21 +1267,21 @@ static int luaSaveMeshPtrToPlyFile(lua_State *pLuaState)
     {
         vertexCount = (uint32_t)(vertexSize / layoutSize);
     }
-    
+
     // Handle indices (can be nil)
     void *indices = NULL;
     uint32_t indexCount = 0;
     VkIndexType vkIndexType = VK_INDEX_TYPE_UINT32;
-    
+
     if (!lua_isnil(pLuaState, -2))
     {
         lua_len(pLuaState, -2);
         indexCount = (uint32_t)lua_tointeger(pLuaState, -1);
         lua_pop(pLuaState, 1);
-        
+
         indices = tknMalloc(sizeof(uint32_t) * indexCount);
         uint32_t *indexArray = (uint32_t *)indices;
-        
+
         for (uint32_t i = 0; i < indexCount; i++)
         {
             lua_rawgeti(pLuaState, -2, i + 1);
@@ -1270,21 +1289,21 @@ static int luaSaveMeshPtrToPlyFile(lua_State *pLuaState)
             lua_pop(pLuaState, 1);
         }
     }
-    
+
     // Get file path
     const char *plyFilePath = lua_tostring(pLuaState, -1);
-    
+
     // Call the C function
-    saveMeshPtrToPlyFile(vertexPropertyCount, vertexPropertyNames, vertexPropertyTypes, 
+    saveMeshPtrToPlyFile(vertexPropertyCount, vertexPropertyNames, vertexPropertyTypes,
                          pMeshVertexInputLayout, vertices, vertexCount, vkIndexType, indices, indexCount, plyFilePath);
-    
+
     // Clean up
     tknFree(vertexPropertyNames);
     tknFree(vertexPropertyTypes);
     tknFree(vertices);
     if (indices)
         tknFree(indices);
-    
+
     return 0;
 }
 
@@ -1434,6 +1453,8 @@ void bindFunctions(lua_State *pLuaState)
         {"addDrawCallPtr", luaAddDrawCallPtr},
         {"removeDrawCallPtr", luaRemoveDrawCallPtr},
         {"clearDrawCalls", luaClearDrawCalls},
+        {"getDrawCallAtIndex", luaGetDrawCallAtIndex},
+        {"getDrawCallCount", luaGetDrawCallCount},
         {"createUniformBufferPtr", luaCreateUniformBufferPtr},
         {"destroyUniformBufferPtr", luaDestroyUniformBufferPtr},
         {"updateUniformBufferPtr", luaUpdateUniformBufferPtr},
