@@ -1,22 +1,44 @@
 require("gfx")
+local uiRenderPass = require("uiRenderPass")
+
 local ui = {}
 
-function ui.setup()
+function ui.setup(pGfxContext, pSwapchainAttachment, assetsPath)
+    ui.uiVertexFormat = {{
+        name = "position",
+        type = TYPE_FLOAT,
+        count = 2,
+    }, {
+        name = "uv",
+        type = TYPE_FLOAT,
+        count = 2,
+    }, {
+        name = "color",
+        type = TYPE_UINT32,
+        count = 1,
+    }}
+    ui.pUIVertexInputLayout = gfx.createVertexInputLayoutPtr(pGfxContext, ui.uiVertexFormat)
+    uiRenderPass.setup(pGfxContext, pSwapchainAttachment, assetsPath, ui.pUIVertexInputLayout)
+
     ui.rootNode = {
         name = "root",
         children = {},
     }
-    ui.currentNode = ui.rootNode
     ui.nodePool = {}
     ui.drawCalls = {}
+    ui.dirty = false
 end
 
-function ui.teardown()
+function ui.teardown(pGfxContext)
     ui.removeNode(ui.rootNode)
-    ui.rootNode = nil
-    ui.currentNode = nil
-    ui.nodePool = nil
+
+    ui.dirty = nil
     ui.drawCalls = nil
+    ui.nodePool = nil
+    ui.rootNode = nil
+
+    gfx.destroyVertexInputLayoutPtr(pGfxContext, ui.pUIVertexInputLayout)
+    ui.uiVertexFormat = nil
 end
 
 function ui.addNode(name, material, rect, parent)
@@ -69,4 +91,21 @@ function ui.traverseNodes(node, callback)
     end
 end
 
+function ui.updateDrawCalls(pGfxContext)
+    if ui.dirty then
+        gfx.clearDrawCalls(pGfxContext, uiRenderPass.pUIPipeline)
+        ui.drawCalls = {}
+
+        ui.traverseNodes(ui.rootNode, function(node)
+            if node.material then
+                local drawCall = gfx.addDrawCallPtr(pGfxContext, uiRenderPass.pUIPipeline, uiRenderPass.pUIMaterial, node.rect)
+                table.insert(ui.drawCalls, drawCall)
+            end
+        end)
+        ui.dirty = false
+    else
+        -- nothing
+    end
+
+end
 return ui

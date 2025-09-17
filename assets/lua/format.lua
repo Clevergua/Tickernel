@@ -15,19 +15,6 @@ format.voxelVertexFormat = {{
     count = 1,
 }}
 
-format.uiVertexFormat = {{
-    name = "position",
-    type = TYPE_FLOAT,
-    count = 2,
-}, {
-    name = "uv",
-    type = TYPE_FLOAT,
-    count = 2,
-}, {
-    name = "color",
-    type = TYPE_UINT32,
-    count = 1,
-}}
 
 format.instanceFormat = {{
     name = "model",
