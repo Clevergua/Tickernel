@@ -61,7 +61,8 @@ function tknEngine.start(pGfxContext, assetsPath)
     tknEngine.pInstance = gfx.createInstancePtr(pGfxContext, format.pInstanceVertexInputLayout, format.instanceFormat, instances)
 
     local deferredRenderPass = tknRenderPipeline.deferredRenderPass
-    tknEngine.pDrawCall = gfx.addDrawCallPtr(pGfxContext, deferredRenderPass.pGeometryPipeline, deferredRenderPass.pGeometryMaterial, tknEngine.pMesh, tknEngine.pInstance)
+    tknEngine.pDrawCall = gfx.createDrawCallPtr(pGfxContext, deferredRenderPass.pGeometryPipeline, deferredRenderPass.pGeometryMaterial, tknEngine.pMesh, tknEngine.pInstance)
+    gfx.insertDrawCallPtr(tknEngine.pDrawCall, 0)
 end
 
 function tknEngine.stop()
@@ -71,7 +72,7 @@ end
 function tknEngine.stopGfx(pGfxContext)
     print("Lua stopGfx")
 
-    gfx.removeDrawCallPtr(pGfxContext, tknEngine.pDrawCall)
+    gfx.destroyDrawCallPtr(pGfxContext, tknEngine.pDrawCall)
     tknEngine.pDrawCall = nil
 
     gfx.destroyInstancePtr(pGfxContext, tknEngine.pInstance)

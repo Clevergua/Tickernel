@@ -232,6 +232,7 @@ struct Pipeline
     VertexInputLayout *pMeshVertexInputLayout;
     VertexInputLayout *pInstanceVertexInputLayout;
     TknDynamicArray drawCallPtrDynamicArray;
+    TknHashSet drawCallPtrHashSet;
 };
 
 typedef struct

@@ -291,6 +291,7 @@ Pipeline *createPipelinePtr(GfxContext *pGfxContext, RenderPass *pRenderPass, ui
     tknFree(vkDescriptorSetLayouts);
     tknFree(pipelineShaderStageCreateInfos);
     TknDynamicArray drawCallPtrDynamicArray = tknCreateDynamicArray(sizeof(DrawCall *), TKN_DEFAULT_COLLECTION_SIZE);
+    TknHashSet drawCallPtrHashSet = tknCreateHashSet(sizeof(DrawCall *));
     *pPipeline = (Pipeline){
         .pPipelineDescriptorSet = pPipelineDescriptorSet,
         .vkPipeline = vkPipeline,
@@ -300,6 +301,7 @@ Pipeline *createPipelinePtr(GfxContext *pGfxContext, RenderPass *pRenderPass, ui
         .pMeshVertexInputLayout = pMeshVertexInputLayout,
         .pInstanceVertexInputLayout = pInstanceVertexInputLayout,
         .drawCallPtrDynamicArray = drawCallPtrDynamicArray,
+        .drawCallPtrHashSet = drawCallPtrHashSet,
     };
     tknAddToDynamicArray(&pRenderPass->subpasses[subpassIndex].pipelinePtrDynamicArray, &pPipeline);
     if (NULL != pMeshVertexInputLayout)
@@ -311,7 +313,20 @@ Pipeline *createPipelinePtr(GfxContext *pGfxContext, RenderPass *pRenderPass, ui
 }
 void destroyPipelinePtr(GfxContext *pGfxContext, Pipeline *pPipeline)
 {
-    clearDrawCalls(pGfxContext, pPipeline);
+    for (size_t i = 0; i < pPipeline->drawCallPtrHashSet.capacity; i++)
+    {
+        TknListNode *node = pPipeline->drawCallPtrHashSet.nodePtrs[i];
+        while (node)
+        {
+            TknListNode *nextNode = node->pNextNode;
+            DrawCall *pDrawCall = *(DrawCall **)node->data;
+            destroyDrawCallPtr(pGfxContext, pDrawCall);
+            node = nextNode;
+        }
+        pPipeline->drawCallPtrHashSet.nodePtrs[i] = NULL;
+    }
+    pPipeline->drawCallPtrHashSet.count = 0;
+    
     VkDevice vkDevice = pGfxContext->vkDevice;
     tknRemoveFromDynamicArray(&pPipeline->pRenderPass->subpasses[pPipeline->subpassIndex].pipelinePtrDynamicArray, &pPipeline);
     if (pPipeline->pMeshVertexInputLayout != NULL)
@@ -321,6 +336,7 @@ void destroyPipelinePtr(GfxContext *pGfxContext, Pipeline *pPipeline)
         tknRemoveFromHashSet(&pPipeline->pInstanceVertexInputLayout->referencePtrHashSet, &pPipeline);
 
     tknDestroyDynamicArray(pPipeline->drawCallPtrDynamicArray);
+    tknDestroyHashSet(pPipeline->drawCallPtrHashSet);
     destroyDescriptorSetPtr(pGfxContext, pPipeline->pPipelineDescriptorSet);
     vkDestroyPipeline(vkDevice, pPipeline->vkPipeline, NULL);
     vkDestroyPipelineLayout(vkDevice, pPipeline->vkPipelineLayout, NULL);

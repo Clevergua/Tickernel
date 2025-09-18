@@ -148,7 +148,6 @@ void *tknGetFromDynamicArray(TknDynamicArray *pDynamicArray, uint32_t index)
         return NULL;
     }
 }
-
 bool tknContainsInDynamicArray(TknDynamicArray *pDynamicArray, void *pData)
 {
     if (NULL == pDynamicArray || NULL == pData || 0 == pDynamicArray->count)

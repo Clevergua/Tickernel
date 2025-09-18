@@ -73,11 +73,13 @@ void destroyRenderPassPtr(GfxContext *pGfxContext, RenderPass *pRenderPass);
 Pipeline *createPipelinePtr(GfxContext *pGfxContext, RenderPass *pRenderPass, uint32_t subpassIndex, uint32_t spvPathCount, const char **spvPaths, VertexInputLayout *pMeshVertexInputLayout, VertexInputLayout *pInstanceVertexInputLayout, VkPipelineInputAssemblyStateCreateInfo vkPipelineInputAssemblyStateCreateInfo, VkPipelineViewportStateCreateInfo vkPipelineViewportStateCreateInfo, VkPipelineRasterizationStateCreateInfo vkPipelineRasterizationStateCreateInfo, VkPipelineMultisampleStateCreateInfo vkPipelineMultisampleStateCreateInfo, VkPipelineDepthStencilStateCreateInfo vkPipelineDepthStencilStateCreateInfo, VkPipelineColorBlendStateCreateInfo vkPipelineColorBlendStateCreateInfo, VkPipelineDynamicStateCreateInfo vkPipelineDynamicStateCreateInfo);
 void destroyPipelinePtr(GfxContext *pGfxContext, Pipeline *pPipeline);
 
-DrawCall *addDrawCallPtr(GfxContext *pGfxContext, Pipeline *pPipeline, Material *pMaterial, Mesh *pMesh, Instance *pInstance, uint32_t index);
-void removeDrawCallPtr(GfxContext *pGfxContext, DrawCall *pDrawCall);
-void clearDrawCalls(GfxContext *pGfxContext, Pipeline *pPipeline);
-DrawCall *getDrawCallAtIndex(GfxContext *pGfxContext, Pipeline *pPipeline, uint32_t index);
-uint32_t getDrawCallCount(GfxContext *pGfxContext, Pipeline *pPipeline);
+DrawCall *createDrawCallPtr(GfxContext *pGfxContext, Pipeline *pPipeline, Material *pMaterial, Mesh *pMesh, Instance *pInstance);
+void destroyDrawCallPtr(GfxContext *pGfxContext, DrawCall *pDrawCall);
+void insertDrawCallPtr(DrawCall *pDrawCall, uint32_t index);
+void removeDrawCallPtr(DrawCall *pDrawCall);
+void removeDrawCallAtIndex(Pipeline *pPipeline, uint32_t index);
+DrawCall *getDrawCallAtIndex(Pipeline *pPipeline, uint32_t index);
+uint32_t getDrawCallCount(Pipeline *pPipeline);
 
 Image *createImagePtr(GfxContext *pGfxContext, VkExtent3D vkExtent3D, VkFormat vkFormat, VkImageTiling vkImageTiling, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags);
 void destroyImagePtr(GfxContext *pGfxContext, Image *pImage);

@@ -1007,6 +1007,41 @@ static int luaDestroyPipelinePtr(lua_State *pLuaState)
     return 0;
 }
 
+static int luaCreateDrawCallPtr(lua_State *pLuaState)
+{
+    GfxContext *pGfxContext = (GfxContext *)lua_touserdata(pLuaState, -5);
+    Pipeline *pPipeline = (Pipeline *)lua_touserdata(pLuaState, -4);
+    Material *pMaterial = (Material *)lua_touserdata(pLuaState, -3);
+    Mesh *pMesh = (Mesh *)lua_touserdata(pLuaState, -2);
+    Instance *pInstance = (Instance *)lua_touserdata(pLuaState, -1);
+    DrawCall *pDrawCall = createDrawCallPtr(pGfxContext, pPipeline, pMaterial, pMesh, pInstance);
+    lua_pushlightuserdata(pLuaState, pDrawCall);
+    return 1;
+}
+
+static int luaDestroyDrawCallPtr(lua_State *pLuaState)
+{
+    GfxContext *pGfxContext = (GfxContext *)lua_touserdata(pLuaState, -2);
+    DrawCall *pDrawCall = (DrawCall *)lua_touserdata(pLuaState, -1);
+    destroyDrawCallPtr(pGfxContext, pDrawCall);
+    return 0;
+}
+
+static int luaInsertDrawCallPtr(lua_State *pLuaState)
+{
+    DrawCall *pDrawCall = (DrawCall *)lua_touserdata(pLuaState, -2);
+    uint32_t index = (uint32_t)lua_tointeger(pLuaState, -1);
+    insertDrawCallPtr(pDrawCall, index);
+    return 0;
+}
+
+static int luaRemoveDrawCallPtr(lua_State *pLuaState)
+{
+    DrawCall *pDrawCall = (DrawCall *)lua_touserdata(pLuaState, -1);
+    removeDrawCallPtr(pDrawCall);
+    return 0;
+}
+
 static int luaCreateVertexInputLayoutPtr(lua_State *pLuaState)
 {
     GfxContext *pGfxContext = (GfxContext *)lua_touserdata(pLuaState, -2);
@@ -1082,50 +1117,27 @@ static int luaDestroyVertexInputLayoutPtr(lua_State *pLuaState)
     return 0;
 }
 
-static int luaAddDrawCallPtr(lua_State *pLuaState)
+static int luaRemoveDrawCallAtIndex(lua_State *pLuaState)
 {
-    GfxContext *pGfxContext = (GfxContext *)lua_touserdata(pLuaState, -6);
-    Pipeline *pPipeline = (Pipeline *)lua_touserdata(pLuaState, -5);
-    Material *pMaterial = (Material *)lua_touserdata(pLuaState, -4);
-    Mesh *pMesh = (Mesh *)lua_touserdata(pLuaState, -3);
-    Instance *pInstance = lua_touserdata(pLuaState, -2);
-    uint32_t index = luaL_checkinteger(pLuaState, -1);
-    DrawCall *pDrawCall = addDrawCallPtr(pGfxContext, pPipeline, pMaterial, pMesh, pInstance, index);
-    lua_pushlightuserdata(pLuaState, pDrawCall);
-    return 1;
-}
-
-static int luaRemoveDrawCallPtr(lua_State *pLuaState)
-{
-    GfxContext *pGfxContext = (GfxContext *)lua_touserdata(pLuaState, -2);
-    DrawCall *pDrawCall = (DrawCall *)lua_touserdata(pLuaState, -1);
-    removeDrawCallPtr(pGfxContext, pDrawCall);
-    return 0;
-}
-
-static int luaClearDrawCalls(lua_State *pLuaState)
-{
-    GfxContext *pGfxContext = (GfxContext *)lua_touserdata(pLuaState, -2);
-    Pipeline *pPipeline = (Pipeline *)lua_touserdata(pLuaState, -1);
-    clearDrawCalls(pGfxContext, pPipeline);
+    Pipeline *pPipeline = (Pipeline *)lua_touserdata(pLuaState, -2);
+    uint32_t index = (uint32_t)lua_tointeger(pLuaState, -1);
+    removeDrawCallAtIndex(pPipeline, index);
     return 0;
 }
 
 static int luaGetDrawCallAtIndex(lua_State *pLuaState)
 {
-    GfxContext *pGfxContext = (GfxContext *)lua_touserdata(pLuaState, -3);
     Pipeline *pPipeline = (Pipeline *)lua_touserdata(pLuaState, -2);
     uint32_t index = (uint32_t)lua_tointeger(pLuaState, -1);
-    DrawCall *pDrawCall = getDrawCallAtIndex(pGfxContext, pPipeline, index);
+    DrawCall *pDrawCall = getDrawCallAtIndex(pPipeline, index);
     lua_pushlightuserdata(pLuaState, pDrawCall);
     return 1;
 }
 
 static int luaGetDrawCallCount(lua_State *pLuaState)
 {
-    GfxContext *pGfxContext = (GfxContext *)lua_touserdata(pLuaState, -2);
     Pipeline *pPipeline = (Pipeline *)lua_touserdata(pLuaState, -1);
-    uint32_t count = getDrawCallCount(pGfxContext, pPipeline);
+    uint32_t count = getDrawCallCount(pPipeline);
     lua_pushinteger(pLuaState, (lua_Integer)count);
     return 1;
 }
@@ -1457,9 +1469,11 @@ void bindFunctions(lua_State *pLuaState)
         {"destroyRenderPassPtr", luaDestroyRenderPassPtr},
         {"createPipelinePtr", luaCreatePipelinePtr},
         {"destroyPipelinePtr", luaDestroyPipelinePtr},
-        {"addDrawCallPtr", luaAddDrawCallPtr},
+        {"createDrawCallPtr", luaCreateDrawCallPtr},
+        {"destroyDrawCallPtr", luaDestroyDrawCallPtr},
+        {"insertDrawCallPtr", luaInsertDrawCallPtr},
         {"removeDrawCallPtr", luaRemoveDrawCallPtr},
-        {"clearDrawCalls", luaClearDrawCalls},
+        {"removeDrawCallAtIndex", luaRemoveDrawCallAtIndex},
         {"getDrawCallAtIndex", luaGetDrawCallAtIndex},
         {"getDrawCallCount", luaGetDrawCallCount},
         {"createUniformBufferPtr", luaCreateUniformBufferPtr},

@@ -4,7 +4,7 @@ Instance *createInstancePtr(GfxContext *pGfxContext, VertexInputLayout *pVertexI
 {
     Instance *pInstance = tknMalloc(sizeof(Instance));
     TknHashSet drawCallPtrHashSet = tknCreateHashSet(sizeof(DrawCall *));
-    // Initialize common fields
+
     *pInstance = (Instance){
         .pVertexInputLayout = pVertexInputLayout,
         .instanceVkBuffer = VK_NULL_HANDLE,

@@ -77,32 +77,44 @@ if not gfx.destroyPipelinePtr then
     end
 end
 
-if not gfx.addDrawCallPtr then
-    function gfx.addDrawCallPtr(pGfxContext, pPipeline, pMaterial, pMesh, pInstance, index)
-        error("gfx.addDrawCallPtr: C binding not loaded")
+if not gfx.createDrawCallPtr then
+    function gfx.createDrawCallPtr(pGfxContext, pMaterial, pMesh, pInstance)
+        error("gfx.createDrawCallPtr: C binding not loaded")
+    end
+end
+
+if not gfx.destroyDrawCallPtr then
+    function gfx.destroyDrawCallPtr(pGfxContext, pDrawCall)
+        error("gfx.destroyDrawCallPtr: C binding not loaded")
+    end
+end
+
+if not gfx.insertDrawCallPtr then
+    function gfx.insertDrawCallPtr(pDrawCall, index)
+        error("gfx.insertDrawCallPtr: C binding not loaded")
     end
 end
 
 if not gfx.removeDrawCallPtr then
-    function gfx.removeDrawCallPtr(pGfxContext, pDrawCall)
+    function gfx.removeDrawCallPtr(pDrawCall)
         error("gfx.removeDrawCallPtr: C binding not loaded")
     end
 end
 
-if not gfx.clearDrawCalls then
-    function gfx.clearDrawCalls(pGfxContext, pPipeline)
-        error("gfx.clearDrawCalls: C binding not loaded")
+if not gfx.removeDrawCallAtIndex then
+    function gfx.removeDrawCallAtIndex(pPipeline, index)
+        error("gfx.removeDrawCallAtIndex: C binding not loaded")
     end
 end
 
 if not gfx.getDrawCallAtIndex then
-    function gfx.getDrawCallAtIndex(pGfxContext, pPipeline, index)
+    function gfx.getDrawCallAtIndex(pPipeline, index)
         error("gfx.getDrawCallAtIndex: C binding not loaded")
     end
 end
 
 if not gfx.getDrawCallCount then
-    function gfx.getDrawCallCount(pGfxContext, pPipeline)
+    function gfx.getDrawCallCount(pPipeline)
         error("gfx.getDrawCallCount: C binding not loaded")
     end
 end
