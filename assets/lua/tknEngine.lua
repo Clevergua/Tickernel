@@ -54,7 +54,7 @@ function tknEngine.start(pGfxContext, assetsPath)
         normal = {0x1, 0x0, 0x0},
     }
 
-    tknEngine.pMesh = gfx.createMeshPtrWithData(pGfxContext, format.pVoxelMeshVertexInputLayout, format.voxelVertexFormat, vertices, nil)
+    tknEngine.pMesh = gfx.createMeshPtrWithData(pGfxContext, format.pVoxelMeshVertexInputLayout, format.voxelVertexFormat, vertices, 0, nil)
     local instances = {
         model = {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1},
     }

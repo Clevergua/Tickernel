@@ -138,7 +138,7 @@ if not gfx.destroyInstancePtr then
 end
 
 if not gfx.createMeshPtrWithData then
-    function gfx.createMeshPtrWithData(pGfxContext, pMeshVertexInputLayout, format, vertices, indices)
+    function gfx.createMeshPtrWithData(pGfxContext, pMeshVertexInputLayout, format, vertices, indexType, indices)
         error("gfx.createMeshPtrWithData: C binding not loaded")
     end
 end

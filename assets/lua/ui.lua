@@ -3,6 +3,22 @@ local uiRenderPass = require("uiRenderPass")
 
 local ui = {}
 
+function ui.isNodeVisible(node)
+    return node.rect ~= nil and node.pMaterial ~= nil
+end
+
+function ui.createMeshPtr(pGfxContext, node)
+    local rect = node.rect
+    local vertices = {
+        position = {rect.x, rect.y, rect.x + rect.width, rect.y, rect.x + rect.width, rect.y + rect.height, rect.x, rect.y + rect.height},
+        uv = {0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0},
+        color = {rect.color, rect.color, rect.color, rect.color},
+    }
+    local indices = {0, 1, 2, 2, 3, 0}
+
+    return gfx.createMeshPtrWithData(pGfxContext, ui.pUIVertexInputLayout, ui.uiVertexFormat, vertices, VK_INDEX_TYPE_UINT16, indices)
+end
+
 function ui.setup(pGfxContext, pSwapchainAttachment, assetsPath)
     ui.uiVertexFormat = {{
         name = "position",
@@ -25,7 +41,6 @@ function ui.setup(pGfxContext, pSwapchainAttachment, assetsPath)
         children = {},
     }
     ui.nodePool = {}
-    ui.drawCalls = {}
     ui.dirty = false
 end
 
@@ -33,7 +48,6 @@ function ui.teardown(pGfxContext)
     ui.removeNode(ui.rootNode)
 
     ui.dirty = nil
-    ui.drawCalls = nil
     ui.nodePool = nil
     ui.rootNode = nil
 
@@ -41,14 +55,14 @@ function ui.teardown(pGfxContext)
     ui.uiVertexFormat = nil
 end
 
-function ui.addNode(name, material, rect, parent)
+function ui.addNode(pGfxContext, name, pMaterial, rect, parent, index)
     local node = nil
     if parent then
         if #ui.nodePool > 0 then
             node = table.remove(ui.nodePool)
             node.name = name
             node.parent = parent
-            node.material = material
+            node.pMaterial = pMaterial
             node.rect = rect
             assert(#node.children == 0, "ui.addNode: node from pool has children")
         else
@@ -56,56 +70,56 @@ function ui.addNode(name, material, rect, parent)
                 name = name,
                 children = {},
                 parent = parent,
-                material = material,
+                pMaterial = pMaterial,
                 rect = rect,
             }
         end
-        table.insert(parent.children, node)
+        table.insert(parent.children, index, node)
+        if ui.isNodeVisible(node) then
+            local drawCallIndex = 0
+            for index, child in ipairs(ui.rootNode.children) do
+                if ui.isNodeVisible(child) then
+                    drawCallIndex = drawCallIndex + 1
+                    if child == node then
+                        break
+                    end
+                end
+            end
+            local pMesh = ui.createMeshPtr(node.rect)
+            node.drawCall = gfx.addDrawCallPtr(pGfxContext, uiRenderPass.pUIPipeline, node.pMaterial, pMesh, 0, drawCallIndex)
+        end
+
     end
 
     return node
 end
 
-function ui.removeNode(node)
+function ui.removeNode(pGfxContext, node)
+    for i = #node.children, 1, -1 do
+        ui.removeNode(pGfxContext, node.children[i])
+    end
+
+    if node.drawCall then
+        gfx.removeDrawCallPtr(pGfxContext, node.drawCall)
+        node.drawCall = nil
+    end
+    
     if node.parent then
-        node.parent = nil
         for i, child in ipairs(node.parent.children) do
             if child == node then
                 table.remove(node.parent.children, i)
                 break
             end
         end
+        node.parent = nil
     end
 
-    for index, child in ipairs(node.children) do
-        ui.removeNode(child)
-    end
     node.name = nil
+    node.children = {}
+    node.rect = nil
+    node.pMaterial = nil
+    node.drawCall = nil
     table.insert(ui.nodePool, node)
 end
 
-function ui.traverseNodes(node, callback)
-    callback(node)
-    for index, child in ipairs(node.children) do
-        ui.traverseNodes(child, callback)
-    end
-end
-
-function ui.updateDrawCalls(pGfxContext)
-    if ui.dirty then
-        gfx.clearDrawCalls(pGfxContext, uiRenderPass.pUIPipeline)
-        ui.drawCalls = {}
-
-        ui.traverseNodes(ui.rootNode, function(node)
-            if node.material then
-                local drawCall = gfx.addDrawCallPtr(pGfxContext, uiRenderPass.pUIPipeline, uiRenderPass.pUIMaterial, node.rect)
-                table.insert(ui.drawCalls, drawCall)
-            end
-        end)
-        ui.dirty = false
-    else
-        -- nothing
-    end
-
-end
 return ui
