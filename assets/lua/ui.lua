@@ -146,35 +146,94 @@ function ui.getNodeIndex(node)
     end
 end
 
-local function getDrawCallCount(node)
-    local count = ui.hasDrawCall(node) and 1 or 0
-    for i, child in ipairs(node.children) do
-        count = count + getDrawCallCount(child)
+function ui.traverseNode(node, callback)
+    local result = callback(node)
+    if result then
+        return result
     end
-    return count
+    for _, child in ipairs(node.children) do
+        if ui.traverseNode(child, callback) then
+            return true
+        end
+    end
+    return false
 end
+
 function ui.moveNode(pGfxContext, node, parent, index)
     assert(node, "ui.moveNode: node is nil")
     assert(node ~= ui.rootNode, "ui.moveNode: cannot move root node")
     assert(parent, "ui.moveNode: parent is nil")
+
     if node.parent == parent and index == ui.getNodeIndex(node) then
         return true
     else
-        local startIndex = 0
-        local drawCallIndex = 0
-        for i, child in ipairs(ui.rootNode.children) do
-            if ui.hasDrawCall(child) then
-                drawCallIndex = drawCallIndex + 1
-                if child == node then
-                    startIndex = drawCallIndex
-                end
-                TODO: find targer drawCall index
-            end
+        assert(parent ~= node, "ui.moveNode: parent cannot be node itself")
+        local current = parent
+        while current do
+            assert(current ~= node, "ui.moveNode: parent cannot be a descendant of node")
+            current = current.parent
         end
-        local count = getDrawCallCount(node)
     end
 
-    return false
+    local drawCalls = {}
+    ui.traverseNode(node, function(n)
+        if ui.hasDrawCall(n) then
+            table.insert(drawCalls, n.drawCall)
+        end
+    end)
+
+    if #drawCalls == 0 then
+        local originalIndex = ui.getNodeIndex(node)
+        table.remove(node.parent.children, originalIndex)
+        table.insert(parent.children, index, node)
+        node.parent = parent
+        if node.rect and node.rect.anchorMin then
+            ui.updateNodeRect(node)
+        end
+        return true
+    else
+        local drawCallStartIndex = 0
+        ui.traverseNode(ui.rootNode, function(n)
+            if n == node then
+                return true
+            else
+                if ui.hasDrawCall(n) then
+                    drawCallStartIndex = drawCallStartIndex + 1
+                end
+                return false
+            end
+        end)
+
+        for i = #drawCalls, 1, -1 do
+            local removeIndex = drawCallStartIndex + i - 1
+            gfx.removeDrawCallAt(removeIndex)
+        end
+
+        local originalIndex = ui.getNodeIndex(node)
+        table.remove(node.parent.children, originalIndex)
+        table.insert(parent.children, index, node)
+        node.parent = parent
+
+        drawCallStartIndex = 0
+        ui.traverseNode(ui.rootNode, function(n)
+            if n == node then
+                return true
+            else
+                if ui.hasDrawCall(n) then
+                    drawCallStartIndex = drawCallStartIndex + 1
+                end
+                return false
+            end
+        end)
+
+        for i, dc in ipairs(drawCalls) do
+            local insertIndex = drawCallStartIndex + i - 1
+            gfx.insertDrawCallPtr(dc, insertIndex)
+        end
+
+        return true
+    end
+
 end
 
 return ui
