@@ -50,7 +50,7 @@ function tknEngine.start(pGfxContext, assetsPath)
 
     local vertices = {
         position = {-1.0, -1.0, 0.0, 1.0, -1.0, 0.0, 0.0, 1.0, 0.0},
-        color = {0xFF0000FF, 0x00FF00FF, 0x0000FFFF},
+        color = {0xFF0000FF, 0xFF00FF00, 0xFFFF0000},
         normal = {0x1, 0x0, 0x0},
     }
 
