@@ -29,8 +29,8 @@ function tknEngine.start(pGfxContext, assetsPath)
     gfx.updateMaterialPtr(pGfxContext, tknEngine.pGlobalMaterialPtr, inputBindings)
 
     local pLightsUniformBuffer = {
-        directionalLight_color = {1.0, 1.0, 0.9, 1.0},
-        directionalLight_direction = {0.5, -1.0, 0.3, 0.0},
+        directionalLightColor = {1.0, 1.0, 0.9, 1.0},
+        directionalLightDirection = {0.5, -1.0, 0.3, 0.0},
         pointLights = {},
         pointLightCount = 0,
     }

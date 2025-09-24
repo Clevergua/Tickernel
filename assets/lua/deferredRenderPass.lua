@@ -155,15 +155,15 @@ function deferredRenderPass.setup(pGfxContext, pAttachments, assetsPath, pMeshVe
     deferredRenderPass.pLightingPipeline = lightingPipeline.createPipelinePtr(pGfxContext, deferredRenderPass.pRenderPass, pipelineIndex, assetsPath)
     pipelineIndex = pipelineIndex + 1
     deferredRenderPass.pPostProcessPipeline = postProcessPipeline.createPipelinePtr(pGfxContext, deferredRenderPass.pRenderPass, pipelineIndex, assetsPath)
-
     deferredRenderPass.pGeometryMaterial = gfx.createPipelineMaterialPtr(pGfxContext, deferredRenderPass.pGeometryPipeline)
-    gfx.createPipelineMaterialPtr(pGfxContext, deferredRenderPass.pLightingPipeline)
-    gfx.createPipelineMaterialPtr(pGfxContext, deferredRenderPass.pPostProcessPipeline)
+    deferredRenderPass.pLightingMaterial = gfx.createPipelineMaterialPtr(pGfxContext, deferredRenderPass.pLightingPipeline)
+    deferredRenderPass.pPostProcessMaterial = gfx.createPipelineMaterialPtr(pGfxContext, deferredRenderPass.pPostProcessPipeline)
 
     local pLightingDrawCall = gfx.createDrawCallPtr(pGfxContext, deferredRenderPass.pLightingPipeline, deferredRenderPass.pLightingMaterial, nil, nil)
     gfx.insertDrawCallPtr(pLightingDrawCall, 0)
     local pPostProcessDrawCall = gfx.createDrawCallPtr(pGfxContext, deferredRenderPass.pPostProcessPipeline, deferredRenderPass.pPostProcessMaterial, nil, nil)
     gfx.insertDrawCallPtr(pPostProcessDrawCall, 0)
+
 end
 
 function deferredRenderPass.teardown(pGfxContext)

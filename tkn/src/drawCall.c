@@ -68,8 +68,6 @@ void destroyDrawCallPtr(GfxContext *pGfxContext, DrawCall *pDrawCall)
 void insertDrawCallPtr(DrawCall *pDrawCall, uint32_t index)
 {
     tknAssert(pDrawCall->pPipeline != NULL, "DrawCall must be associated with a Pipeline");
-    // Remove from current position in dynamic array and insert at new position
-    tknRemoveFromDynamicArray(&pDrawCall->pPipeline->drawCallPtrDynamicArray, &pDrawCall);
     tknInsertIntoDynamicArray(&pDrawCall->pPipeline->drawCallPtrDynamicArray, &pDrawCall, index);
 }
 
