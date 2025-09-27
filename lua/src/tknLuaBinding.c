@@ -1454,6 +1454,68 @@ static int luaUpdateMaterialPtr(lua_State *pLuaState)
     return 0;
 }
 
+static int luaUpdateMeshPtr(lua_State *pLuaState)
+{
+    // Parameters: pGfxContext, pMesh, vertexLayout, vertices, indexType, indices
+    GfxContext *pGfxContext = (GfxContext *)lua_touserdata(pLuaState, -6);
+    Mesh *pMesh = (Mesh *)lua_touserdata(pLuaState, -5);
+    // vertexLayout at -4, vertices at -3, indexType at -2, indices at -1
+
+    VkDeviceSize vertexSize;
+    void *vertexData = NULL;
+    uint32_t vertexCount = 0;
+
+    if (!lua_isnil(pLuaState, -3))
+    {
+        vertexData = packDataFromLayout(pLuaState, -4, -3, &vertexSize);
+
+        // Calculate vertex count based on layout
+        VkDeviceSize layoutSize = calculateLayoutSize(pLuaState, -4);
+        if (layoutSize > 0)
+        {
+            vertexCount = (uint32_t)(vertexSize / layoutSize);
+        }
+    }
+
+    // Handle indices
+    void *indexData = NULL;
+    uint32_t indexCount = 0;
+    VkIndexType indexType = (VkIndexType)lua_tointeger(pLuaState, -2);
+    if (!lua_isnil(pLuaState, -1))
+    {
+        lua_len(pLuaState, -1);
+        indexCount = (uint32_t)lua_tointeger(pLuaState, -1);
+        lua_pop(pLuaState, 1);
+
+        size_t indexSize = (indexType == VK_INDEX_TYPE_UINT16) ? sizeof(uint16_t) : sizeof(uint32_t);
+        indexData = tknMalloc(indexSize * indexCount);
+
+        for (uint32_t i = 0; i < indexCount; i++)
+        {
+            lua_rawgeti(pLuaState, -1, i + 1);
+            if (indexType == VK_INDEX_TYPE_UINT16)
+            {
+                ((uint16_t *)indexData)[i] = (uint16_t)lua_tointeger(pLuaState, -1);
+            }
+            else
+           
+            {
+                ((uint32_t *)indexData)[i] = (uint32_t)lua_tointeger(pLuaState, -1);
+            }
+            lua_pop(pLuaState, 1);
+        }
+    }
+
+    updateMeshPtr(pGfxContext, pMesh, NULL, vertexData, vertexCount, (uint32_t)indexType, indexData, indexCount);
+
+    if (vertexData)
+        tknFree(vertexData);
+    if (indexData)
+        tknFree(indexData);
+
+    return 0;
+}
+
 void bindFunctions(lua_State *pLuaState)
 {
     luaL_Reg regs[] = {
@@ -1489,6 +1551,7 @@ void bindFunctions(lua_State *pLuaState)
         {"createPipelineMaterialPtr", luaCreatePipelineMaterialPtr},
         {"destroyPipelineMaterialPtr", luaDestroyPipelineMaterialPtr},
         {"updateMaterialPtr", luaUpdateMaterialPtr},
+        {"updateMeshPtr", luaUpdateMeshPtr},
         {NULL, NULL},
     };
     luaL_newlib(pLuaState, regs);

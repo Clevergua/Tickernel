@@ -92,6 +92,7 @@ Mesh *createMeshPtrWithData(GfxContext *pGfxContext, VertexInputLayout *pMeshVer
 Mesh *createMeshPtrWithPlyFile(GfxContext *pGfxContext, VertexInputLayout *pMeshVertexInputLayout, VkIndexType vkIndexType, const char *plyFilePath);
 void saveMeshPtrToPlyFile(uint32_t vertexPropertyCount, const char **vertexPropertyNames, const char **vertexPropertyTypes, VertexInputLayout *pMeshVertexInputLayout, void *vertices, uint32_t vertexCount, VkIndexType vkIndexType, void *indices, uint32_t indexCount, const char *plyFilePath);
 void destroyMeshPtr(GfxContext *pGfxContext, Mesh *pMesh);
+void updateMeshPtr(GfxContext *pGfxContext, Mesh *pMesh, const char *format, const void *vertices, uint32_t vertexCount, uint32_t indexType, const void *indices, uint32_t indexCount);
 
 Instance *createInstancePtr(GfxContext *pGfxContext, VertexInputLayout *pVertexInputLayout, uint32_t instanceCount, void *instances);
 void destroyInstancePtr(GfxContext *pGfxContext, Instance *pInstance);

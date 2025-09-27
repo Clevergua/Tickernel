@@ -391,6 +391,105 @@ void destroyMeshPtr(GfxContext *pGfxContext, Mesh *pMesh)
     tknFree(pMesh);
 }
 
+void updateMeshPtr(GfxContext *pGfxContext, Mesh *pMesh, const char *format, const void *vertices, uint32_t vertexCount, uint32_t indexType, const void *indices, uint32_t indexCount)
+{
+    // Update vertex buffer if vertices provided
+    if (vertices && vertexCount > 0)
+    {
+        VkDeviceSize vertexSize = vertexCount * pMesh->pVertexInputLayout->stride;
+        VkDeviceSize currentVertexSize = pMesh->vertexCount * pMesh->pVertexInputLayout->stride;
+
+        // Check if we need to recreate the vertex buffer
+        if (pMesh->vertexVkBuffer == VK_NULL_HANDLE || vertexSize > currentVertexSize)
+        {
+            // Destroy existing buffer if it exists
+            if (pMesh->vertexVkBuffer != VK_NULL_HANDLE)
+            {
+                destroyVkBuffer(pGfxContext, pMesh->vertexVkBuffer, pMesh->vertexVkDeviceMemory);
+            }
+
+            // Create new vertex buffer
+            createVkBuffer(pGfxContext, vertexSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+                           VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &pMesh->vertexVkBuffer, &pMesh->vertexVkDeviceMemory);
+        }
+
+        // Create staging buffer and copy data
+        VkBuffer stagingBuffer;
+        VkDeviceMemory stagingBufferMemory;
+        createVkBuffer(pGfxContext, vertexSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+                       VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                       &stagingBuffer, &stagingBufferMemory);
+
+        // Copy data to staging buffer
+        void *mappedData;
+        VkDevice vkDevice = pGfxContext->vkDevice;
+        vkMapMemory(vkDevice, stagingBufferMemory, 0, vertexSize, 0, &mappedData);
+        memcpy(mappedData, vertices, (size_t)vertexSize);
+        vkUnmapMemory(vkDevice, stagingBufferMemory);
+
+        // Copy from staging to device local buffer
+        copyVkBuffer(pGfxContext, stagingBuffer, pMesh->vertexVkBuffer, vertexSize);
+
+        // Clean up staging buffer
+        destroyVkBuffer(pGfxContext, stagingBuffer, stagingBufferMemory);
+
+        // Update vertex count
+        pMesh->vertexCount = vertexCount;
+    }
+
+    // Update index buffer if indices provided
+    if (indices && indexCount > 0)
+    {
+        VkIndexType vkIndexType = (VkIndexType)indexType;
+        size_t indexSize = (vkIndexType == VK_INDEX_TYPE_UINT16) ? sizeof(uint16_t) : sizeof(uint32_t);
+        VkDeviceSize indexBufferSize = indexCount * indexSize;
+        VkDeviceSize currentIndexSize = 0;
+        if (pMesh->indexVkBuffer != VK_NULL_HANDLE)
+        {
+            size_t currentIndexSizePerElement = (pMesh->vkIndexType == VK_INDEX_TYPE_UINT16) ? sizeof(uint16_t) : sizeof(uint32_t);
+            currentIndexSize = pMesh->indexCount * currentIndexSizePerElement;
+        }
+
+        // Check if we need to recreate the index buffer
+        if (pMesh->indexVkBuffer == VK_NULL_HANDLE || indexBufferSize > currentIndexSize || vkIndexType != pMesh->vkIndexType)
+        {
+            // Destroy existing buffer if it exists
+            if (pMesh->indexVkBuffer != VK_NULL_HANDLE)
+            {
+                destroyVkBuffer(pGfxContext, pMesh->indexVkBuffer, pMesh->indexVkDeviceMemory);
+            }
+
+            // Create new index buffer
+            createVkBuffer(pGfxContext, indexBufferSize, VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+                           VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &pMesh->indexVkBuffer, &pMesh->indexVkDeviceMemory);
+        }
+
+        // Create staging buffer and copy data
+        VkBuffer stagingBuffer;
+        VkDeviceMemory stagingBufferMemory;
+        createVkBuffer(pGfxContext, indexBufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+                       VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                       &stagingBuffer, &stagingBufferMemory);
+
+        // Copy data to staging buffer
+        void *mappedData;
+        VkDevice vkDevice = pGfxContext->vkDevice;
+        vkMapMemory(vkDevice, stagingBufferMemory, 0, indexBufferSize, 0, &mappedData);
+        memcpy(mappedData, indices, (size_t)indexBufferSize);
+        vkUnmapMemory(vkDevice, stagingBufferMemory);
+
+        // Copy from staging to device local buffer
+        copyVkBuffer(pGfxContext, stagingBuffer, pMesh->indexVkBuffer, indexBufferSize);
+
+        // Clean up staging buffer
+        destroyVkBuffer(pGfxContext, stagingBuffer, stagingBufferMemory);
+
+        // Update index type and count
+        pMesh->vkIndexType = vkIndexType;
+        pMesh->indexCount = indexCount;
+    }
+}
+
 void saveMeshPtrToPlyFile(uint32_t vertexPropertyCount, const char **vertexPropertyNames, const char **vertexPropertyTypes, VertexInputLayout *pMeshVertexInputLayout, void *vertices, uint32_t vertexCount, VkIndexType vkIndexType, void *indices, uint32_t indexCount, const char *plyFilePath)
 {
     // Validate that the provided property names and types match the VertexInputLayout

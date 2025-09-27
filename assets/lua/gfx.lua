@@ -155,6 +155,12 @@ if not gfx.createMeshPtrWithData then
     end
 end
 
+if not gfx.updateMeshPtr then
+    function gfx.updateMeshPtr(pGfxContext, pMesh, format, vertices, indexType, indices)
+        error("gfx.updateMeshPtr: C binding not loaded")
+    end
+end
+
 if not gfx.destroyMeshPtr then
     function gfx.destroyMeshPtr(pGfxContext, pMesh)
         error("gfx.destroyMeshPtr: C binding not loaded")

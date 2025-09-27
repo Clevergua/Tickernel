@@ -1,10 +1,84 @@
 require("gfx")
 local uiRenderPass = require("uiRenderPass")
 
-local ui = {}
+local ui = {
+    fullScreenRect = {
+        left = -1,
+        right = 1,
+        bottom = -1,
+        top = 1,
+    },
+}
 
 function ui.hasDrawCall(node)
     return node.rect ~= nil and node.pMaterial ~= nil
+end
+
+function ui.updateNodeLayout(screenWidth, screenHeight, dirtyNode)
+    ui.traverseNode(dirtyNode, function(node)
+        if node.layoutDirty then
+            local parentRect = node == ui.rootNode and ui.fullScreenRect or node.parent.rect
+            local layout = node.layout
+            if layout.type == "anchored" then
+                -- Anchored positioning with anchor and pivot
+                local anchor = layout.anchor
+                local pivot = layout.pivot
+                local width = layout.width
+                local height = layout.height
+                local x = parentRect.left + (parentRect.right - parentRect.left) * anchor.x - width * pivot.x
+                local y = parentRect.bottom + (parentRect.top - parentRect.bottom) * anchor.y - height * pivot.y
+                node.rect.left = x
+                node.rect.bottom = y
+                node.rect.right = x + width / screenWidth * 2
+                node.rect.top = y + height / screenHeight * 2
+            elseif layout.type == "relative" then
+                -- Relative positioning with pixel or percentage offsets
+                if math.type(layout.left) == "integer" then
+                    node.rect.left = parentRect.left + layout.left / screenWidth * 2
+                else
+                    node.rect.left = parentRect.left + (parentRect.right - parentRect.left) * layout.left
+                end
+                if math.type(layout.bottom) == "integer" then
+                    node.rect.bottom = parentRect.bottom + layout.bottom / screenHeight * 2
+                else
+                    node.rect.bottom = parentRect.bottom + (parentRect.top - parentRect.bottom) * layout.bottom
+                end
+                if math.type(layout.right) == "integer" then
+                    node.rect.right = parentRect.right - layout.right / screenWidth * 2
+                else
+                    node.rect.right = parentRect.right - (parentRect.right - parentRect.left) * layout.right
+                end
+                if math.type(layout.top) == "integer" then
+                    node.rect.top = parentRect.top - layout.top / screenHeight * 2
+                else
+                    node.rect.top = parentRect.top - (parentRect.top - parentRect.bottom) * layout.top
+                end
+            else
+                error("ui.updateLayout: unknown layout type " .. tostring(layout.type))
+            end
+        end
+        -- if ui.hasDrawCall(node) then
+        --     local drawCallIndex = 0
+        --     for i, child in ipairs(ui.rootNode.children) do
+        --         if ui.hasDrawCall(child) then
+        --             drawCallIndex = drawCallIndex + 1
+        --             if child == node then
+        --                 break
+        --             end
+        --         end
+        --     end
+        --     node.pMesh = ui.createMeshPtr(pGfxContext, node)
+        --     node.drawCall = gfx.createDrawCallPtr(pGfxContext, uiRenderPass.pUIPipeline, node.pMaterial, node.pMesh, nil)
+        --     gfx.insertDrawCallPtr(node.drawCall, drawCallIndex)
+        -- end
+        if node.mesh then
+            
+        else
+
+        end
+        node.layoutDirty = false
+        return false
+    end)
 end
 
 function ui.createMeshPtr(pGfxContext, node)
@@ -12,10 +86,9 @@ function ui.createMeshPtr(pGfxContext, node)
     local vertices = {
         position = {rect.left, rect.bottom, rect.right, rect.bottom, rect.right, rect.top, rect.left, rect.top},
         uv = {0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0},
-        color = {rect.color, rect.color, rect.color, rect.color},
+        color = {node.color, node.color, node.color, node.color},
     }
     local indices = {0, 1, 2, 2, 3, 0}
-
     return gfx.createMeshPtrWithData(pGfxContext, ui.pUIVertexInputLayout, ui.uiVertexFormat, vertices, VK_INDEX_TYPE_UINT16, indices)
 end
 
@@ -43,23 +116,38 @@ function ui.setup(pGfxContext, pSwapchainAttachment, assetsPath)
     ui.rootNode = {
         name = "root",
         children = {},
+        layout = {
+            type = "relative",
+            left = 0,
+            bottom = 0,
+            right = 0,
+            top = 0,
+        },
+        layoutDirty = true,
     }
     ui.nodePool = {}
-    ui.dirty = false
-end
 
+end
 function ui.teardown(pGfxContext)
     ui.removeNode(ui.rootNode)
 
-    ui.dirty = nil
     ui.nodePool = nil
     ui.rootNode = nil
 
     gfx.destroyVertexInputLayoutPtr(pGfxContext, ui.pUIVertexInputLayout)
     ui.uiVertexFormat = nil
 end
+function ui.update()
+    -- update layout
+    ui.traverseNode(ui.rootNode, function(node)
+        if node.layoutDirty then
+            ui.updateRect(node)
+        end
+        return false
+    end)
+end
 
-function ui.addNode(pGfxContext, name, pMaterial, rect, parent, index)
+function ui.addNode(pGfxContext, name, pMaterial, color, rect, parent, index, layout)
     if not parent then
         return nil
     end
@@ -70,9 +158,12 @@ function ui.addNode(pGfxContext, name, pMaterial, rect, parent, index)
         node.name = name
         node.parent = parent
         node.rect = rect
+        node.color = color
         node.pMaterial = pMaterial
         node.pMesh = nil
         node.drawCall = nil
+        node.layout = layout
+        node.layoutDirty = true
         assert(#node.children == 0, "ui.addNode: node from pool has children")
     else
         node = {
@@ -80,26 +171,16 @@ function ui.addNode(pGfxContext, name, pMaterial, rect, parent, index)
             children = {},
             parent = parent,
             rect = rect,
+            color = color,
             pMaterial = pMaterial,
             pMesh = nil,
             drawCall = nil,
+            layout = layout,
+            layoutDirty = true,
         }
     end
     table.insert(parent.children, index, node)
-    if ui.hasDrawCall(node) then
-        local drawCallIndex = 0
-        for i, child in ipairs(ui.rootNode.children) do
-            if ui.hasDrawCall(child) then
-                drawCallIndex = drawCallIndex + 1
-                if child == node then
-                    break
-                end
-            end
-        end
-        node.pMesh = ui.createMeshPtr(pGfxContext, node)
-        node.drawCall = gfx.createDrawCallPtr(pGfxContext, uiRenderPass.pUIPipeline, node.pMaterial, node.pMesh, nil)
-        gfx.insertDrawCallPtr(node.drawCall, drawCallIndex)
-    end
+
     return node
 end
 
@@ -132,9 +213,12 @@ function ui.removeNode(pGfxContext, node)
     node.name = nil
     node.children = {}
     node.rect = nil
+    node.color = nil
     node.pMaterial = nil
     node.pMesh = nil
     node.drawCall = nil
+    node.layout = nil
+    node.layoutDirty = false
     table.insert(ui.nodePool, node)
 end
 
@@ -188,8 +272,9 @@ function ui.moveNode(pGfxContext, node, parent, index)
         table.insert(parent.children, index, node)
         node.parent = parent
         if node.rect and node.rect.anchorMin then
-            ui.updateNodeRect(node)
+            ui.updateRect(node)
         end
+        node.layoutDirty = true
         return true
     else
         local drawCallStartIndex = 0
@@ -230,10 +315,9 @@ function ui.moveNode(pGfxContext, node, parent, index)
             local insertIndex = drawCallStartIndex + i - 1
             gfx.insertDrawCallPtr(dc, insertIndex)
         end
-
+        node.layoutDirty = true
         return true
     end
-
 end
 
 return ui
