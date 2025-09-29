@@ -2,11 +2,11 @@
 
 Attachment *createDynamicAttachmentPtr(GfxContext *pGfxContext, VkFormat vkFormat, VkImageUsageFlags vkImageUsageFlags, VkImageAspectFlags vkImageAspectFlags, float scaler)
 {
-    SwapchainAttachment *pswapchainAttachment = &pGfxContext->pSwapchainAttachment->attachmentUnion.swapchainAttachment;
+    SwapchainAttachment *pSwapchainAttachment = &pGfxContext->pSwapchainAttachment->attachmentUnion.swapchainAttachment;
     Attachment *pAttachment = tknMalloc(sizeof(Attachment));
     VkExtent3D vkExtent3D = {
-        .width = (uint32_t)(pswapchainAttachment->swapchainExtent.width * scaler),
-        .height = (uint32_t)(pswapchainAttachment->swapchainExtent.height * scaler),
+        .width = (uint32_t)(pSwapchainAttachment->swapchainExtent.width * scaler),
+        .height = (uint32_t)(pSwapchainAttachment->swapchainExtent.height * scaler),
         .depth = 1,
     };
 
@@ -48,10 +48,10 @@ void resizeDynamicAttachmentPtr(GfxContext *pGfxContext, Attachment *pAttachment
 {
     tknAssert(ATTACHMENT_TYPE_DYNAMIC == pAttachment->attachmentType, "Attachment type mismatch!");
     DynamicAttachment *pDynamicAttachment = &pAttachment->attachmentUnion.dynamicAttachment;
-    SwapchainAttachment *pswapchainAttachment = &pGfxContext->pSwapchainAttachment->attachmentUnion.swapchainAttachment;
+    SwapchainAttachment *pSwapchainAttachment = &pGfxContext->pSwapchainAttachment->attachmentUnion.swapchainAttachment;
     VkExtent3D vkExtent3D = {
-        .width = (uint32_t)(pswapchainAttachment->swapchainExtent.width * pDynamicAttachment->scaler),
-        .height = (uint32_t)(pswapchainAttachment->swapchainExtent.height * pDynamicAttachment->scaler),
+        .width = (uint32_t)(pSwapchainAttachment->swapchainExtent.width * pDynamicAttachment->scaler),
+        .height = (uint32_t)(pSwapchainAttachment->swapchainExtent.height * pDynamicAttachment->scaler),
         .depth = 1,
     };
     destroyVkImage(pGfxContext, pDynamicAttachment->vkImage, pDynamicAttachment->vkDeviceMemory, pDynamicAttachment->vkImageView);

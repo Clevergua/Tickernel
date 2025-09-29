@@ -121,7 +121,9 @@ void updateTknContext(TknContext *pTknContext, VkExtent2D swapchainExtent)
 
     lua_getfield(pLuaState, -1, "updateGfx");
     lua_pushlightuserdata(pLuaState, pGfxContext);
-    assertLuaResult(pLuaState, lua_pcall(pLuaState, 1, 0, -3));
+    lua_pushinteger(pLuaState, swapchainExtent.width);
+    lua_pushinteger(pLuaState, swapchainExtent.height);
+    assertLuaResult(pLuaState, lua_pcall(pLuaState, 3, 0, -3));
 
     updateGfxContextPtr(pGfxContext, swapchainExtent);
     lua_pop(pLuaState, 2);

@@ -96,7 +96,7 @@ function tknEngine.updateGameplay()
     print("Lua updateGameplay")
 end
 
-function tknEngine.updateGfx(pGfxContext)
+function tknEngine.updateGfx(pGfxContext, width, height)
     print("Lua updateGfx")
 end
 
