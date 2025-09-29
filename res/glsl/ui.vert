@@ -1,3 +1,5 @@
+#version 450
+
 #include "tickernel.glsl"
 
 layout(location = 0) in vec2 inPosition;

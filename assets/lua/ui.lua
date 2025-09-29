@@ -146,7 +146,7 @@ function ui.teardown(pGfxContext)
     gfx.destroyVertexInputLayoutPtr(pGfxContext, ui.pUIVertexInputLayout)
     ui.uiVertexFormat = nil
 end
-
+     
 function ui.update(pGfxContext, screenWidth, screenHeight)
     if ui.width ~= screenWidth or ui.height ~= screenHeight then
         ui.width = screenWidth

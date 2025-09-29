@@ -1,4 +1,5 @@
 local tknRenderPipeline = require("tknRenderPipeline")
+local ui = require("ui")
 local format = require("format")
 local tknEngine = {}
 
@@ -63,6 +64,8 @@ function tknEngine.start(pGfxContext, assetsPath)
     local deferredRenderPass = tknRenderPipeline.deferredRenderPass
     tknEngine.pDrawCall = gfx.createDrawCallPtr(pGfxContext, deferredRenderPass.pGeometryPipeline, deferredRenderPass.pGeometryMaterial, tknEngine.pMesh, tknEngine.pInstance)
     gfx.insertDrawCallPtr(tknEngine.pDrawCall, 0)
+
+    ui.setup(pGfxContext, tknRenderPipeline.pSwapchainAttachment, assetsPath, format.pUIVertexInputLayout)
 end
 
 function tknEngine.stop()
@@ -71,6 +74,7 @@ end
 
 function tknEngine.stopGfx(pGfxContext)
     print("Lua stopGfx")
+    ui.teardown(pGfxContext)
 
     gfx.destroyDrawCallPtr(pGfxContext, tknEngine.pDrawCall)
     tknEngine.pDrawCall = nil
@@ -97,6 +101,7 @@ function tknEngine.updateGameplay()
 end
 
 function tknEngine.updateGfx(pGfxContext, width, height)
+    ui.update(pGfxContext, width, height)
     print("Lua updateGfx")
 end
 
