@@ -74,13 +74,62 @@ function ui.updateRect(pGfxContext, screenWidth, screenHeight, node, parentDirty
 end
 
 function ui.createMeshPtr(pGfxContext, node)
-    local vertices = {
-        position = {0, 0, 0, 0, 0, 0, 0, 0},
-        uv = {0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0},
-        color = {node.color, node.color, node.color, node.color},
-    }
-    local indices = {0, 1, 2, 2, 3, 0}
-    node.pMesh = gfx.createMeshPtrWithData(pGfxContext, ui.pUIVertexInputLayout, ui.uiVertexFormat, vertices, VK_INDEX_TYPE_UINT16, indices)
+    if node.layout.border then
+        -- 九宫格：生成9个Quad
+        local border = node.layout.border
+        local texW = node.textureSize[1]
+        local texH = node.textureSize[2]
+        local leftPx = border.left * texW
+        local rightPx = border.right * texW
+        local topPx = border.top * texH
+        local bottomPx = border.bottom * texH
+        
+        -- 纹理UV区域
+        local uLeft = leftPx / texW
+        local uRight = 1 - rightPx / texW
+        local vBottom = bottomPx / texH
+        local vTop = 1 - topPx / texH
+        
+        -- 9个Quad的vertices (position, uv, color)
+        local vertices = {}
+        local indices = {}
+        local quadIndex = 0
+        
+        -- 辅助函数：添加Quad
+        local function addQuad(x1, y1, x2, y2, u1, v1, u2, v2)
+            local base = #vertices / 5  -- 每个顶点5个float: pos2 + uv2 + color1(uint but as float?)
+            -- 实际color是uint，但这里简化
+            local color = node.color
+            table.insert(vertices, x1) table.insert(vertices, y1) table.insert(vertices, u1) table.insert(vertices, v1) table.insert(vertices, color)
+            table.insert(vertices, x2) table.insert(vertices, y1) table.insert(vertices, u2) table.insert(vertices, v1) table.insert(vertices, color)
+            table.insert(vertices, x2) table.insert(vertices, y2) table.insert(vertices, u2) table.insert(vertices, v2) table.insert(vertices, color)
+            table.insert(vertices, x1) table.insert(vertices, y2) table.insert(vertices, u1) table.insert(vertices, v2) table.insert(vertices, color)
+            local idxBase = quadIndex * 4
+            table.insert(indices, idxBase) table.insert(indices, idxBase+1) table.insert(indices, idxBase+2)
+            table.insert(indices, idxBase+2) table.insert(indices, idxBase+3) table.insert(indices, idxBase)
+            quadIndex = quadIndex + 1   
+        end
+        
+        addQuad(0, 0, leftPx, bottomPx, 0, 0, uLeft, vBottom)
+        addQuad(leftPx, 0, texW - rightPx, bottomPx, uLeft, 0, uRight, vBottom)
+        addQuad(texW - rightPx, 0, texW, bottomPx, uRight, 0, 1, vBottom)
+        addQuad(0, bottomPx, leftPx, texH - topPx, 0, vBottom, uLeft, vTop)
+        addQuad(leftPx, bottomPx, texW - rightPx, texH - topPx, uLeft, vBottom, uRight, vTop)
+        addQuad(texW - rightPx, bottomPx, texW, texH - topPx, uRight, vBottom, 1, vTop)
+        addQuad(0, texH - topPx, leftPx, texH, 0, vTop, uLeft, 1)
+        addQuad(leftPx, texH - topPx, texW - rightPx, texH, uLeft, vTop, uRight, 1)
+        addQuad(texW - rightPx, texH - topPx, texW, texH, uRight, vTop, 1, 1)
+        
+        node.pMesh = gfx.createMeshPtrWithData(pGfxContext, ui.pUIVertexInputLayout, ui.uiVertexFormat, vertices, VK_INDEX_TYPE_UINT16, indices)
+    else
+        local vertices = {
+            position = {0, 0, 0, 0, 0, 0, 0, 0},
+            uv = {0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0},
+            color = {node.color, node.color, node.color, node.color},
+        }
+        local indices = {0, 1, 2, 2, 3, 0}
+        node.pMesh = gfx.createMeshPtrWithData(pGfxContext, ui.pUIVertexInputLayout, ui.uiVertexFormat, vertices, VK_INDEX_TYPE_UINT16, indices)
+    end
 end
 
 function ui.destroyMeshPtr(pGfxContext, node)
@@ -89,14 +138,85 @@ function ui.destroyMeshPtr(pGfxContext, node)
 end
 
 function ui.updateMeshPtr(pGfxContext, node)
-    local rect = node.rect
-    local vertices = {
-        position = {rect.left, rect.bottom, rect.right, rect.bottom, rect.right, rect.top, rect.left, rect.top},
-        uv = {0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0},
-        color = {node.color, node.color, node.color, node.color},
-    }
-    local indices = {0, 1, 2, 2, 3, 0}
-    gfx.updateMeshPtr(pGfxContext, node.pMesh, ui.uiVertexFormat, vertices, VK_INDEX_TYPE_UINT16, indices)
+    if node.layout.border then
+        -- 九宫格更新
+        local border = node.layout.border
+        local texW = node.textureSize[1]
+        local texH = node.textureSize[2]
+        local leftPx = border.left * texW
+        local rightPx = border.right * texW
+        local topPx = border.top * texH
+        local bottomPx = border.bottom * texH
+        
+        local rect = node.rect
+        local rectW = rect.right - rect.left
+        local rectH = rect.top - rect.bottom
+        
+        -- 计算拉伸后的位置
+        local leftStretch = leftPx
+        local rightStretch = rectW - (texW - rightPx)
+        local bottomStretch = bottomPx
+        local topStretch = rectH - (texH - topPx)
+        
+        -- 9个Quad的位置更新 (position only, UV不变)
+        local vertices = {}
+        local indices = {0,1,2,2,3,0, 4,5,6,6,7,0, 8,9,10,10,11,0, 12,13,14,14,15,0, 16,17,18,18,19,0, 20,21,22,22,23,0, 24,25,26,26,27,0, 28,29,30,30,31,0, 32,33,34,34,35,0}  -- 9个Quad的indices
+        
+        -- 辅助函数：添加Quad position
+        local function addQuadPos(x1, y1, x2, y2)
+            table.insert(vertices, rect.left + x1 / texW * rectW)
+            table.insert(vertices, rect.bottom + y1 / texH * rectH)
+            table.insert(vertices, rect.left + x2 / texW * rectW)
+            table.insert(vertices, rect.bottom + y1 / texH * rectH)
+            table.insert(vertices, rect.left + x2 / texW * rectW)
+            table.insert(vertices, rect.bottom + y2 / texH * rectH)
+            table.insert(vertices, rect.left + x1 / texW * rectW)
+            table.insert(vertices, rect.bottom + y2 / texH * rectH)
+        end
+        
+        -- 左下角 (固定)
+        addQuadPos(0, 0, leftPx, bottomPx)
+        -- 下边 (水平拉伸)
+        addQuadPos(leftPx, 0, texW - rightPx, bottomPx)
+        -- 右下角 (固定)
+        addQuadPos(texW - rightPx, 0, texW, bottomPx)
+        -- 左边 (垂直拉伸)
+        addQuadPos(0, bottomPx, leftPx, texH - topPx)
+        -- 中间 (双向拉伸)
+        addQuadPos(leftPx, bottomPx, texW - rightPx, texH - topPx)
+        -- 右边 (垂直拉伸)
+        addQuadPos(texW - rightPx, bottomPx, texW, texH - topPx)
+        -- 左上角 (固定)
+        addQuadPos(0, texH - topPx, leftPx, texH)
+        -- 上边 (水平拉伸)
+        addQuadPos(leftPx, texH - topPx, texW - rightPx, texH)
+        -- 右上角 (固定)
+        addQuadPos(texW - rightPx, texH - topPx, texW, texH)
+        
+        -- UV不变，从createMeshPtr
+        local uvs = {0,0, uLeft,0, uLeft,vBottom, 0,vBottom,  uLeft,0, uRight,0, uRight,vBottom, uLeft,vBottom,  uRight,0, 1,0, 1,vBottom, uRight,vBottom,  0,vBottom, uLeft,vBottom, uLeft,vTop, 0,vTop,  uLeft,vBottom, uRight,vBottom, uRight,vTop, uLeft,vTop,  uRight,vBottom, 1,vBottom, 1,vTop, uRight,vTop,  0,vTop, uLeft,vTop, uLeft,1, 0,1,  uLeft,vTop, uRight,vTop, uRight,1, uLeft,1,  uRight,vTop, 1,vTop, 1,1, uRight,1}
+        -- 合并vertices: pos + uv + color
+        local fullVertices = {}
+        for i = 1, #vertices, 2 do
+            table.insert(fullVertices, vertices[i])
+            table.insert(fullVertices, vertices[i+1])
+            table.insert(fullVertices, uvs[i])
+            table.insert(fullVertices, uvs[i+1])
+            table.insert(fullVertices, node.color)
+        end
+        
+        gfx.updateMeshPtr(pGfxContext, node.pMesh, ui.uiVertexFormat, fullVertices, VK_INDEX_TYPE_UINT16, indices)
+    else
+        -- 普通更新
+        local rect = node.rect
+        local vertices = {
+            position = {rect.left, rect.bottom, rect.right, rect.bottom, rect.right, rect.top, rect.left, rect.top},
+            uv = {0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0},
+            color = {node.color, node.color, node.color, node.color},
+        }
+        local indices = {0, 1, 2, 2, 3, 0}
+        gfx.updateMeshPtr(pGfxContext, node.pMesh, ui.uiVertexFormat, vertices, VK_INDEX_TYPE_UINT16, indices)
+    end
 end
 
 function ui.setup(pGfxContext, pSwapchainAttachment, assetsPath)
@@ -156,7 +276,7 @@ function ui.update(pGfxContext, screenWidth, screenHeight)
     ui.updateRect(pGfxContext, screenWidth, screenHeight, ui.rootNode, false)
 end
 
-function ui.addNode(pGfxContext, parent, index, name, layout, pMaterial, color)
+function ui.addNode(pGfxContext, parent, index, name, layout, pMaterial, color, textureSize)
     if not parent and ui.rootNode then
         error("ui.rootNode is already set")
     else
@@ -173,6 +293,7 @@ function ui.addNode(pGfxContext, parent, index, name, layout, pMaterial, color)
             node.pDrawCall = nil
             node.layout = layout
             node.layoutDirty = true
+            node.textureSize = textureSize  -- 纹理大小 {width, height}
         else
             node = {
                 name = name,
@@ -185,6 +306,7 @@ function ui.addNode(pGfxContext, parent, index, name, layout, pMaterial, color)
                 pDrawCall = nil,
                 layout = layout,
                 layoutDirty = true,
+                textureSize = textureSize,
             }
         end
         if parent then
@@ -215,7 +337,6 @@ function ui.addNode(pGfxContext, parent, index, name, layout, pMaterial, color)
         end
         return node
     end
-
 end
 
 function ui.removeNode(pGfxContext, node)
@@ -250,6 +371,7 @@ function ui.removeNode(pGfxContext, node)
     node.pDrawCall = nil
     node.layout = nil
     node.layoutDirty = false
+    node.textureSize = nil
     table.insert(ui.nodePool, node)
 end
 
