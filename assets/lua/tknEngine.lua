@@ -66,7 +66,7 @@ function tknEngine.start(pGfxContext, assetsPath)
     tknEngine.pDrawCall = gfx.createDrawCallPtr(pGfxContext, deferredRenderPass.pGeometryPipeline, deferredRenderPass.pGeometryMaterial, tknEngine.pMesh, tknEngine.pInstance)
     gfx.insertDrawCallPtr(tknEngine.pDrawCall, 0)
 
-    ui.setup(pGfxContext, tknRenderPipeline.pSwapchainAttachment, assetsPath, format.pUIVertexInputLayout)
+    ui.setup(pGfxContext, tknRenderPipeline.pSwapchainAttachment, assetsPath, ui.uiVertexFormat.pVertexInputLayout)
 end
 
 function tknEngine.stop()
