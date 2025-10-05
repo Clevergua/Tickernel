@@ -1,3 +1,4 @@
+local gfx = require("gfx")
 local uiPipeline = require("uiPipeline")
 local uiRenderPass = {}
 

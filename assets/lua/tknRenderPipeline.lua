@@ -1,3 +1,4 @@
+local gfx = require("gfx")
 local tknRenderPipeline = {}
 local deferredRenderPass = require("deferredRenderPass")
 tknRenderPipeline.deferredRenderPass = deferredRenderPass

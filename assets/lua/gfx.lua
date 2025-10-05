@@ -2,19 +2,19 @@
 -- This file provides type hints and documentation for the gfx module
 -- Actual implementations are provided by C bindings
 -- Initialize gfx table if not already loaded by C bindings
-_G.gfx = _G.gfx or {}
+local gfx = {}
 
 -- Type constants (will be overridden by C bindings if available)
-TYPE_UINT8 = TYPE_UINT8 or 0
-TYPE_UINT16 = TYPE_UINT16 or 1
-TYPE_UINT32 = TYPE_UINT32 or 2
-TYPE_UINT64 = TYPE_UINT64 or 3
-TYPE_INT8 = TYPE_INT8 or 4
-TYPE_INT16 = TYPE_INT16 or 5
-TYPE_INT32 = TYPE_INT32 or 6
-TYPE_INT64 = TYPE_INT64 or 7
-TYPE_FLOAT = TYPE_FLOAT or 8
-TYPE_DOUBLE = TYPE_DOUBLE or 9
+gfx.TYPE_UINT8 = 0
+gfx.TYPE_UINT16 = 1
+gfx.TYPE_UINT32 = 2
+gfx.TYPE_UINT64 = 3
+gfx.TYPE_INT8 = 4
+gfx.TYPE_INT16 = 5
+gfx.TYPE_INT32 = 6
+gfx.TYPE_INT64 = 7
+gfx.TYPE_FLOAT = 8
+gfx.TYPE_DOUBLE = 9
 
 -- Function declarations for IDE support (only used if C binding not available)
 if not gfx.getSupportedFormat then
@@ -242,3 +242,4 @@ gfx.defaultVkPipelineRasterizationStateCreateInfo = {
     depthBiasSlopeFactor = 0.0,
     lineWidth = 1.0,
 }
+return gfx

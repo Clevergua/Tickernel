@@ -1,3 +1,4 @@
+local gfx = require("gfx")
 local geometryPipeline = require("geometryPipeline")
 local lightingPipeline = require("lightingPipeline")
 local postProcessPipeline = require("postProcessPipeline")

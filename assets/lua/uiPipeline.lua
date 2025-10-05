@@ -1,5 +1,5 @@
 require("vulkan")
-require("gfx")
+local gfx = require("gfx")
 local uiPipeline = {}
 
 function uiPipeline.createPipelinePtr(pGfxContext, pRenderPass, subpassIndex, assetsPath, pUIVertexInputLayout)

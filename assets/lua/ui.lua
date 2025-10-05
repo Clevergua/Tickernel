@@ -1,10 +1,12 @@
-require("gfx")
+-- UI
+-- For Node's Layout, if we choose to update on real-time add/delete/modify operations, there might be cases where children are updated before parents, leading to redundant calculations. Therefore, we adopt a unified update approach during the update phase.
+-- The creation, deletion, and modification of drawcalls and meshes depend on the add/delete/modify operations of nodes and components.
+-- Updating mesh requires layout update first, so it always happens after the update layout phase.
+local gfx = require("gfx")
 local uiRenderPass = require("uiRenderPass")
 local image = require("image")
 local text = require("text")
-local ui = {
-    drawables = {},
-}
+local ui = {}
 
 local fullScreenRect = {
     left = -1,
@@ -109,18 +111,19 @@ function ui.updateRect(pGfxContext, screenWidth, screenHeight, node, parentDirty
 end
 
 function ui.setup(pGfxContext, pSwapchainAttachment, assetsPath)
+    ui.drawables = {}
     ui.pGfxContext = pGfxContext
     ui.uiVertexFormat = {{
         name = "position",
-        type = TYPE_FLOAT,
+        type = gfx.TYPE_FLOAT,
         count = 2,
     }, {
         name = "uv",
-        type = TYPE_FLOAT,
+        type = gfx.TYPE_FLOAT,
         count = 2,
     }, {
         name = "color",
-        type = TYPE_UINT32,
+        type = gfx.TYPE_UINT32,
         count = 1,
     }}
     ui.pUIVertexInputLayout = gfx.createVertexInputLayoutPtr(pGfxContext, ui.uiVertexFormat)
@@ -154,6 +157,7 @@ function ui.teardown(pGfxContext)
 
     gfx.destroyVertexInputLayoutPtr(pGfxContext, ui.pUIVertexInputLayout)
     ui.uiVertexFormat = nil
+    ui.drawables = nil
 end
 
 function ui.update(pGfxContext, screenWidth, screenHeight)

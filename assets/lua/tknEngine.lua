@@ -1,3 +1,4 @@
+local gfx = require("gfx")
 local tknRenderPipeline = require("tknRenderPipeline")
 local ui = require("ui")
 local format = require("format")

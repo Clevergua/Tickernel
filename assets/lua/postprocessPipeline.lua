@@ -1,5 +1,5 @@
 require("vulkan")
-require("gfx")
+local gfx = require("gfx")
 local postprocessPipeline = {}
 function postprocessPipeline.createPipelinePtr(pGfxContext, pRenderPass, subpassIndex, assetsPath)
     local postprocessPipelineSpvPaths = {

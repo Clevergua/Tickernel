@@ -1,4 +1,5 @@
+local gfx = require("gfx")
 local text = {}
-function text.createDrawCallPtr(pGfxContext, node)
+function text.createMeshPtr(pGfxContext, node)
 end
 return text
