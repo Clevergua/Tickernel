@@ -15,38 +15,6 @@ local fullScreenRect = {
     top = 1,
 }
 
-local nodeTemplate = {
-    name = "", -- node name
-    children = {}, -- children array
-    parent = nil, -- parent node (node or nil)
-    component = nil, -- component (image or text ..)
-    layout = {
-        rect = {
-            left = 0,
-            right = 0,
-            bottom = 0,
-            top = 0,
-        }, -- rectangle area in MDC coordinates
-        dirty = true, -- whether layout is dirty
-        horizontal = { -- horizontal layout
-            type = "anchored", -- "anchored" or "relative"
-            -- for anchored: anchor (0-1), pivot (0-1), width (pixels)
-            anchor = 0.5,
-            pivot = 0.5,
-            width = 100,
-            -- for relative: left, right (pixels or 0-1 ratio)
-            -- left = 0, right = 0,
-        },
-        vertical = { -- vertical layout (similar to horizontal)
-            type = "anchored",
-            anchor = 0.5,
-            pivot = 0.5,
-            height = 100,
-            -- bottom = 0, top = 0,
-        },
-    }, -- layout configuration (see layoutTemplate)
-}
-
 function ui.updateRect(pGfxContext, screenWidth, screenHeight, node, parentDirty)
     if node.layout.dirty or parentDirty then
         local parentRect = node == ui.rootNode and fullScreenRect or node.parent.layout.rect
@@ -113,21 +81,25 @@ end
 function ui.setup(pGfxContext, pSwapchainAttachment, assetsPath)
     ui.drawables = {}
     ui.pGfxContext = pGfxContext
-    ui.uiVertexFormat = {{
-        name = "position",
-        type = gfx.TYPE_FLOAT,
-        count = 2,
-    }, {
-        name = "uv",
-        type = gfx.TYPE_FLOAT,
-        count = 2,
-    }, {
-        name = "color",
-        type = gfx.TYPE_UINT32,
-        count = 1,
-    }}
-    ui.pUIVertexInputLayout = gfx.createVertexInputLayoutPtr(pGfxContext, ui.uiVertexFormat)
-    uiRenderPass.setup(pGfxContext, pSwapchainAttachment, assetsPath, ui.pUIVertexInputLayout)
+    ui.uiVertexFormat = {
+        {
+            name = "position",
+            type = gfx.TYPE_FLOAT,
+            count = 2,
+        },
+        {
+            name = "uv",
+            type = gfx.TYPE_FLOAT,
+            count = 2,
+        },
+        {
+            name = "color",
+            type = gfx.TYPE_UINT32,
+            count = 1,
+        },
+        pVertexInputLayout = gfx.createVertexInputLayoutPtr(pGfxContext, ui.uiVertexFormat),
+    }
+    uiRenderPass.setup(pGfxContext, pSwapchainAttachment, assetsPath, ui.uiVertexFormat.pVertexInputLayout)
 
     ui.rootNode = {
         name = "root",
@@ -155,7 +127,8 @@ function ui.teardown(pGfxContext)
     ui.nodePool = nil
     ui.rootNode = nil
 
-    gfx.destroyVertexInputLayoutPtr(pGfxContext, ui.pUIVertexInputLayout)
+    gfx.destroyVertexInputLayoutPtr(pGfxContext, ui.uiVertexFormat.pVertexInputLayout)
+    ui.uiVertexFormat.pVertexInputLayout = nil
     ui.uiVertexFormat = nil
     ui.drawables = nil
 end
@@ -341,4 +314,37 @@ function ui.moveNode(pGfxContext, node, parent, index)
     end
 end
 
+function ui.addComponent(pGfxContext, node, component)
+    assert(node.component == nil, "ui.addComponent: node already has a component")
+    node.component = component
+    if ui.isRenderable(node) then
+        ui.createMeshPtr(node)
+        node.component.pDrawCall = gfx.createDrawCallPtr(pGfxContext, uiRenderPass.pUIMaterial, node.component.pMesh, nil)
+        local drawCallIndex = 0
+        ui.traverseNode(ui.rootNode, function(child)
+            if child == node then
+                return true
+            else
+                if ui.isRenderable(child) then
+                    drawCallIndex = drawCallIndex + 1
+                end
+                return false
+            end
+        end)
+        gfx.insertDrawCallPtr(node.component.pDrawCall, drawCallIndex)
+    else
+
+    end
+    node.layout.dirty = true
+end
+function ui.removeComponent(pGfxContext, node)
+    if node.component then
+        gfx.removeDrawCallPtr(node.component.pDrawCall)
+        ui.destroyMeshPtr(pGfxContext, node)
+        node.component = nil
+    else
+        warn("ui.removeComponent: node has no component")
+        return
+    end
+end
 return ui

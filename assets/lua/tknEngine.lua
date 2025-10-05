@@ -8,7 +8,7 @@ function tknEngine.start(pGfxContext, assetsPath)
     print("Lua start")
     tknEngine.assetsPath = assetsPath
     format.createLayouts(pGfxContext)
-    tknRenderPipeline.setup(pGfxContext, assetsPath, format.pVoxelMeshVertexInputLayout, format.pInstanceVertexInputLayout)
+    tknRenderPipeline.setup(pGfxContext, assetsPath, format.voxelVertexFormat.pVertexInputLayout, format.instanceFormat.pVertexInputLayout)
 
     local pGlobalUniformBuffer = {
         view = {0.7071, -0.4082, 0.5774, 0, 0, 0.8165, 0.5774, 0, -0.7071, -0.4082, 0.5774, 0, 0, 0, -8.6603, 1},
@@ -27,8 +27,8 @@ function tknEngine.start(pGfxContext, assetsPath)
         pUniformBuffer = tknEngine.pGlobalUniformBuffer,
         binding = 0,
     }}
-    tknEngine.pGlobalMaterialPtr = gfx.getGlobalMaterialPtr(pGfxContext)
-    gfx.updateMaterialPtr(pGfxContext, tknEngine.pGlobalMaterialPtr, inputBindings)
+    tknEngine.pGlobalMaterial = gfx.getGlobalMaterialPtr(pGfxContext)
+    gfx.updateMaterialPtr(pGfxContext, tknEngine.pGlobalMaterial, inputBindings)
 
     local pLightsUniformBuffer = {
         directionalLightColor = {1.0, 1.0, 0.9, 1.0},
@@ -42,13 +42,13 @@ function tknEngine.start(pGfxContext, assetsPath)
     tknEngine.pLightsUniformBuffer = gfx.createUniformBufferPtr(pGfxContext, format.lightsUniformBufferFormat, pLightsUniformBuffer)
 
     local deferredRenderPass = tknRenderPipeline.deferredRenderPass
-    tknEngine.pLightingMaterialPtr = gfx.getSubpassMaterialPtr(pGfxContext, deferredRenderPass.pRenderPass, 1)
+    tknEngine.pLightingMaterial = gfx.getSubpassMaterialPtr(pGfxContext, deferredRenderPass.pRenderPass, 1)
     local lightingInputBindings = {{
         vkDescriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
         pUniformBuffer = tknEngine.pLightsUniformBuffer,
         binding = 3,
     }}
-    gfx.updateMaterialPtr(pGfxContext, tknEngine.pLightingMaterialPtr, lightingInputBindings)
+    gfx.updateMaterialPtr(pGfxContext, tknEngine.pLightingMaterial, lightingInputBindings)
 
     local vertices = {
         position = {-1.0, -1.0, 0.0, 1.0, -1.0, 0.0, 0.0, 1.0, 0.0},
@@ -56,11 +56,11 @@ function tknEngine.start(pGfxContext, assetsPath)
         normal = {0x1, 0x0, 0x0},
     }
 
-    tknEngine.pMesh = gfx.createMeshPtrWithData(pGfxContext, format.pVoxelMeshVertexInputLayout, format.voxelVertexFormat, vertices, 0, nil)
+    tknEngine.pMesh = gfx.createMeshPtrWithData(pGfxContext, format.voxelVertexFormat.pVertexInputLayout, format.voxelVertexFormat, vertices, 0, nil)
     local instances = {
         model = {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1},
     }
-    tknEngine.pInstance = gfx.createInstancePtr(pGfxContext, format.pInstanceVertexInputLayout, format.instanceFormat, instances)
+    tknEngine.pInstance = gfx.createInstancePtr(pGfxContext, format.instanceFormat.pVertexInputLayout, format.instanceFormat, instances)
 
     local deferredRenderPass = tknRenderPipeline.deferredRenderPass
     tknEngine.pDrawCall = gfx.createDrawCallPtr(pGfxContext, deferredRenderPass.pGeometryPipeline, deferredRenderPass.pGeometryMaterial, tknEngine.pMesh, tknEngine.pInstance)
@@ -85,7 +85,7 @@ function tknEngine.stopGfx(pGfxContext)
     gfx.destroyMeshPtr(pGfxContext, tknEngine.pMesh)
     tknEngine.pMesh = nil
 
-    tknEngine.pLightingMaterialPtr = nil
+    tknEngine.pLightingMaterial = nil
 
     tknRenderPipeline.teardown(pGfxContext)
 

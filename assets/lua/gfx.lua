@@ -2,7 +2,7 @@
 -- This file provides type hints and documentation for the gfx module
 -- Actual implementations are provided by C bindings
 -- Initialize gfx table if not already loaded by C bindings
-local gfx = {}
+local gfx = _G.gfx
 
 -- Type constants (will be overridden by C bindings if available)
 gfx.TYPE_UINT8 = 0
@@ -15,6 +15,71 @@ gfx.TYPE_INT32 = 6
 gfx.TYPE_INT64 = 7
 gfx.TYPE_FLOAT = 8
 gfx.TYPE_DOUBLE = 9
+
+gfx.defaultVkPipelineViewportStateCreateInfo = {
+    pViewports = {{
+        x = 0.0,
+        y = 0.0,
+        width = 0.0,
+        height = 0.0,
+        minDepth = 0.0,
+        maxDepth = 1.0,
+    }},
+    pScissors = {{
+        offset = {
+            x = 0,
+            y = 0,
+        },
+        extent = {
+            width = 0,
+            height = 0,
+        },
+    }},
+}
+gfx.defaultVkPipelineMultisampleStateCreateInfo = {
+    rasterizationSamples = VK_SAMPLE_COUNT_1_BIT,
+    sampleShadingEnable = false,
+    minSampleShading = 0,
+    pSampleMask = nil,
+    alphaToCoverageEnable = false,
+    alphaToOneEnable = false,
+}
+
+gfx.defaultVkPipelineDynamicStateCreateInfo = {
+    pDynamicStates = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR},
+}
+
+gfx.defaultVkPipelineRasterizationStateCreateInfo = {
+    depthClampEnable = false,
+    rasterizerDiscardEnable = false,
+    polygonMode = VK_POLYGON_MODE_FILL,
+    cullMode = VK_CULL_MODE_NONE,
+    frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE,
+    depthBiasEnable = false,
+    depthBiasConstantFactor = 0.0,
+    depthBiasClamp = 0.0,
+    depthBiasSlopeFactor = 0.0,
+    lineWidth = 1.0,
+}
+
+-- Creates a mesh with default zero-initialized vertex and index data
+function gfx.createDefaultMeshPtr(pGfxContext, format, pMeshVertexInputLayout, vertexCount, indexType, indexCount)
+    local vertices = {}
+    local indices = {}
+    -- Initialize vertex data with zeros for each field
+    for fieldName, fieldFormat in pairs(format) do
+        local fieldData = {}
+        for i = 1, vertexCount * fieldFormat.count do
+            table.insert(fieldData, 0)
+        end
+        vertices[fieldName] = fieldData
+    end
+    -- Initialize indices with zeros (0-based for C compatibility)
+    for i = 1, indexCount do
+        table.insert(indices, 0)
+    end
+    return gfx.createMeshPtrWithData(pGfxContext, pMeshVertexInputLayout, format, vertices, indexType, indices)
+end
 
 -- Function declarations for IDE support (only used if C binding not available)
 if not gfx.getSupportedFormat then
@@ -197,49 +262,4 @@ if not gfx.updateMaterialPtr then
     end
 end
 
-gfx.defaultVkPipelineViewportStateCreateInfo = {
-    pViewports = {{
-        x = 0.0,
-        y = 0.0,
-        width = 0.0,
-        height = 0.0,
-        minDepth = 0.0,
-        maxDepth = 1.0,
-    }},
-    pScissors = {{
-        offset = {
-            x = 0,
-            y = 0,
-        },
-        extent = {
-            width = 0,
-            height = 0,
-        },
-    }},
-}
-gfx.defaultVkPipelineMultisampleStateCreateInfo = {
-    rasterizationSamples = VK_SAMPLE_COUNT_1_BIT,
-    sampleShadingEnable = false,
-    minSampleShading = 0,
-    pSampleMask = nil,
-    alphaToCoverageEnable = false,
-    alphaToOneEnable = false,
-}
-
-gfx.defaultVkPipelineDynamicStateCreateInfo = {
-    pDynamicStates = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR},
-}
-
-gfx.defaultVkPipelineRasterizationStateCreateInfo = {
-    depthClampEnable = false,
-    rasterizerDiscardEnable = false,
-    polygonMode = VK_POLYGON_MODE_FILL,
-    cullMode = VK_CULL_MODE_NONE,
-    frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE,
-    depthBiasEnable = false,
-    depthBiasConstantFactor = 0.0,
-    depthBiasClamp = 0.0,
-    depthBiasSlopeFactor = 0.0,
-    lineWidth = 1.0,
-}
 return gfx
