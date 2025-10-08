@@ -66,18 +66,21 @@ gfx.defaultVkPipelineRasterizationStateCreateInfo = {
 function gfx.createDefaultMeshPtr(pGfxContext, format, pMeshVertexInputLayout, vertexCount, indexType, indexCount)
     local vertices = {}
     local indices = {}
+    
     -- Initialize vertex data with zeros for each field
-    for fieldName, fieldFormat in pairs(format) do
+    for i, fieldFormat in ipairs(format) do
         local fieldData = {}
-        for i = 1, vertexCount * fieldFormat.count do
+        for j = 1, vertexCount * fieldFormat.count do
             table.insert(fieldData, 0)
         end
-        vertices[fieldName] = fieldData
+        vertices[fieldFormat.name] = fieldData
     end
+    
     -- Initialize indices with zeros (0-based for C compatibility)
     for i = 1, indexCount do
         table.insert(indices, 0)
     end
+
     return gfx.createMeshPtrWithData(pGfxContext, pMeshVertexInputLayout, format, vertices, indexType, indices)
 end
 

@@ -15,7 +15,7 @@ local fullScreenRect = {
     top = 1,
 }
 
-function ui.updateRect(pGfxContext, screenWidth, screenHeight, node, parentDirty)
+local function updateRect(pGfxContext, screenWidth, screenHeight, node, parentDirty)
     if node.layout.dirty or parentDirty then
         local parentRect = node == ui.rootNode and fullScreenRect or node.parent.layout.rect
         local layout = node.layout
@@ -64,24 +64,74 @@ function ui.updateRect(pGfxContext, screenWidth, screenHeight, node, parentDirty
             error("ui.calculateRect: unknown vertical layout type " .. tostring(layout.vertical.type))
         end
 
-        if ui.isRenderable(node) then
-            ui.updateMeshPtr(pGfxContext, node)
+        -- Update mesh
+        if node.component and node.component.pMesh then
+            if node.component.type == "image" then
+                image.updateMeshPtr(ui.pGfxContext, node.component, node.layout.rect, ui.vertexFormat)
+            else
+                error("ui.updateRect: unsupported component type " .. tostring(node.component.type))
+            end
         end
+
         node.layout.dirty = false
         for i, child in ipairs(node.children) do
-            ui.updateRect(pGfxContext, screenWidth, screenHeight, child, true)
+            updateRect(pGfxContext, screenWidth, screenHeight, child, true)
         end
     else
         for i, child in ipairs(node.children) do
-            ui.updateRect(pGfxContext, screenWidth, screenHeight, child, false)
+            updateRect(pGfxContext, screenWidth, screenHeight, child, false)
         end
     end
 end
 
+local function addComponent(pGfxContext, node, component)
+    if node.component then
+        warn("ui.addComponent: node already has a component")
+    else
+        node.component = component
+        if component.pDrawCall then
+            local drawCallIndex = 0
+            ui.traverseNode(ui.rootNode, function(child)
+                if child == node then
+                    return true
+                else
+                    if child.component and child.component.pDrawCall then
+                        drawCallIndex = drawCallIndex + 1
+                    end
+                    return false
+                end
+            end)
+            gfx.insertDrawCallPtr(node.component, drawCallIndex)
+        end
+    end
+end
+
+local function removeComponent(pGfxContext, node)
+    local component = node.component
+    if component then
+        if component.pDrawCall then
+            local drawCallIndex = 0
+            ui.traverseNode(ui.rootNode, function(child)
+                if child == node then
+                    return true
+                else
+                    if child.component and child.component.pDrawCall then
+                        drawCallIndex = drawCallIndex + 1
+                    end
+                    return false
+                end
+            end)
+            gfx.removeDrawCallAt(drawCallIndex)
+        end
+    else
+        warn("ui.removeComponent: node has no component")
+        return
+    end
+end
+
 function ui.setup(pGfxContext, pSwapchainAttachment, assetsPath)
-    ui.drawables = {}
     ui.pGfxContext = pGfxContext
-    ui.uiVertexFormat = {
+    ui.vertexFormat = {
         {
             name = "position",
             type = gfx.TYPE_FLOAT,
@@ -97,10 +147,9 @@ function ui.setup(pGfxContext, pSwapchainAttachment, assetsPath)
             type = gfx.TYPE_UINT32,
             count = 1,
         },
-        pVertexInputLayout = gfx.createVertexInputLayoutPtr(pGfxContext, ui.uiVertexFormat),
+        pVertexInputLayout = gfx.createVertexInputLayoutPtr(pGfxContext, ui.vertexFormat),
     }
-    uiRenderPass.setup(pGfxContext, pSwapchainAttachment, assetsPath, ui.uiVertexFormat.pVertexInputLayout)
-
+    uiRenderPass.setup(pGfxContext, pSwapchainAttachment, assetsPath, ui.vertexFormat.pVertexInputLayout)
     ui.rootNode = {
         name = "root",
         children = {},
@@ -127,31 +176,18 @@ function ui.teardown(pGfxContext)
     ui.nodePool = nil
     ui.rootNode = nil
 
-    gfx.destroyVertexInputLayoutPtr(pGfxContext, ui.uiVertexFormat.pVertexInputLayout)
-    ui.uiVertexFormat.pVertexInputLayout = nil
-    ui.uiVertexFormat = nil
-    ui.drawables = nil
+    gfx.destroyVertexInputLayoutPtr(pGfxContext, ui.vertexFormat.pVertexInputLayout)
+    ui.vertexFormat.pVertexInputLayout = nil
+    ui.vertexFormat = nil
 end
 
-function ui.update(pGfxContext, screenWidth, screenHeight)
+function ui.updateLayout(pGfxContext, screenWidth, screenHeight)
     if ui.width ~= screenWidth or ui.height ~= screenHeight then
         ui.width = screenWidth
         ui.height = screenHeight
         ui.rootNode.layout.dirty = true
     end
-    ui.updateRect(pGfxContext, screenWidth, screenHeight, ui.rootNode, false)
-end
-
-function ui.isRenderable(node)
-    if node.component then
-        if node.component.type == "image" then
-            return image.isRenderable(node.component)
-        elseif node.component.type == "text" then
-            return text.isRenderable(node.component)
-        end
-    else
-        return false
-    end
+    updateRect(pGfxContext, screenWidth, screenHeight, ui.rootNode, false)
 end
 
 function ui.getNodeIndex(node)
@@ -173,15 +209,6 @@ function ui.traverseNode(node, callback)
         end
     end
     return false
-end
-
-function ui.createMeshPtr(node)
-    if node.component.type == "image" then
-        image.createMeshPtr(ui.pGfxContext, node.component, node.layout.rect)
-    elseif node.component.type == "text" then
-        text.createMeshPtr(ui.pGfxContext, node.component, node.layout.rect)
-    end
-
 end
 
 function ui.addNode(pGfxContext, parent, index, name, layout)
@@ -212,27 +239,7 @@ function ui.removeNode(pGfxContext, node)
     for i = #node.children, 1, -1 do
         ui.removeNode(pGfxContext, node.children[i])
     end
-    if node.component then
-        image.destroyImageComponent(pGfxContext, node.component)
-    end
-    if node.component.pDrawCall then
-        gfx.removeDrawCallPtr(node.component.pDrawCall)
-        gfx.destroyDrawCallPtr(pGfxContext, node.component.pDrawCall)
-        node.component.pDrawCall = nil
-    end
-
-    ui.destroyMeshPtr(pGfxContext, node)
-
-    if node.parent then
-        for i, child in ipairs(node.parent.children) do
-            if child == node then
-                table.remove(node.parent.children, i)
-                break
-            end
-        end
-        node.parent = nil
-    end
-
+    removeComponent(pGfxContext, node)
     node.name = nil
     node.children = {}
     node.component = nil
@@ -258,7 +265,7 @@ function ui.moveNode(pGfxContext, node, parent, index)
 
     local drawCalls = {}
     ui.traverseNode(node, function(child)
-        if ui.isRenderable(child) then
+        if child.component and child.component.pDrawCall then
             table.insert(drawCalls, child.component.pDrawCall)
         end
     end)
@@ -276,7 +283,7 @@ function ui.moveNode(pGfxContext, node, parent, index)
             if child == node then
                 return true
             else
-                if ui.isRenderable(child) then
+                if child.component and child.component.pDrawCall then
                     drawCallStartIndex = drawCallStartIndex + 1
                 end
                 return false
@@ -298,7 +305,7 @@ function ui.moveNode(pGfxContext, node, parent, index)
             if child == node then
                 return true
             else
-                if ui.isRenderable(child) then
+                if child.component and child.component.pDrawCall then
                     drawCallStartIndex = drawCallStartIndex + 1
                 end
                 return false
@@ -314,37 +321,16 @@ function ui.moveNode(pGfxContext, node, parent, index)
     end
 end
 
-function ui.addComponent(pGfxContext, node, component)
-    assert(node.component == nil, "ui.addComponent: node already has a component")
-    node.component = component
-    if ui.isRenderable(node) then
-        ui.createMeshPtr(node)
-        node.component.pDrawCall = gfx.createDrawCallPtr(pGfxContext, uiRenderPass.pUIMaterial, node.component.pMesh, nil)
-        local drawCallIndex = 0
-        ui.traverseNode(ui.rootNode, function(child)
-            if child == node then
-                return true
-            else
-                if ui.isRenderable(child) then
-                    drawCallIndex = drawCallIndex + 1
-                end
-                return false
-            end
-        end)
-        gfx.insertDrawCallPtr(node.component.pDrawCall, drawCallIndex)
-    else
+function ui.addImageComponent(pGfxContext, color, slice, pMaterial, node)
+    local component = image.createComponent(pGfxContext, color, slice, pMaterial, ui.vertexFormat, node)
+    addComponent(pGfxContext, node, component)
+    return component
+end
 
-    end
-    node.layout.dirty = true
+function ui.removeImageComponent(pGfxContext, node)
+    assert(node.component and node.component.type == "image", "ui.removeImageComponent: node has no image component")
+    image.destroyComponent(pGfxContext, node.component)
+    removeComponent(pGfxContext, node)
 end
-function ui.removeComponent(pGfxContext, node)
-    if node.component then
-        gfx.removeDrawCallPtr(node.component.pDrawCall)
-        ui.destroyMeshPtr(pGfxContext, node)
-        node.component = nil
-    else
-        warn("ui.removeComponent: node has no component")
-        return
-    end
-end
+
 return ui

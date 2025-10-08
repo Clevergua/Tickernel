@@ -66,7 +66,7 @@ function tknEngine.start(pGfxContext, assetsPath)
     tknEngine.pDrawCall = gfx.createDrawCallPtr(pGfxContext, deferredRenderPass.pGeometryPipeline, deferredRenderPass.pGeometryMaterial, tknEngine.pMesh, tknEngine.pInstance)
     gfx.insertDrawCallPtr(tknEngine.pDrawCall, 0)
 
-    ui.setup(pGfxContext, tknRenderPipeline.pSwapchainAttachment, assetsPath, ui.uiVertexFormat.pVertexInputLayout)
+    ui.setup(pGfxContext, tknRenderPipeline.pSwapchainAttachment, assetsPath)
 end
 
 function tknEngine.stop()
@@ -102,8 +102,7 @@ function tknEngine.updateGameplay()
 end
 
 function tknEngine.updateGfx(pGfxContext, width, height)
-
-    ui.update(pGfxContext, width, height)
+    ui.updateLayout(pGfxContext, width, height)
     print("Lua updateGfx")
 end
 
