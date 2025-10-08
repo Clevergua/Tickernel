@@ -1,5 +1,16 @@
 local gameMath = require("gameMath")
-local floor = require("floor")
+
+-- Floor types enumeration
+local floor = {
+    snow = 0,
+    ice = 1,
+    sand = 2,
+    grass = 3,
+    water = 4,
+    lava = 5,
+    volcanic = 6,
+}
+
 local game = {
     seed = 0,
     temperatureSeed = 0,

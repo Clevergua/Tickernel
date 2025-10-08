@@ -86,7 +86,7 @@ end
 
 local function addComponent(pGfxContext, node, component)
     if node.component then
-        warn("ui.addComponent: node already has a component")
+        print("WARNING: ui.addComponent: node already has a component")
     else
         node.component = component
         if component.pDrawCall then
@@ -124,7 +124,7 @@ local function removeComponent(pGfxContext, node)
             gfx.removeDrawCallAt(drawCallIndex)
         end
     else
-        warn("ui.removeComponent: node has no component")
+        print("WARNING: ui.removeComponent: node has no component")
         return
     end
 end
