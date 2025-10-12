@@ -94,6 +94,8 @@ static int luaSetAudioPosition(lua_State *L) {
 
 @implementation EngineBinding
 
+
+
 VKAPI_ATTR VkBool32 VKAPI_CALL
 debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
               VkDebugUtilsMessageTypeFlagsEXT messageType,
@@ -238,13 +240,13 @@ debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
     [self destroyVkInstance];
 }
 
-- (void)updateEngine:(uint32_t)width height:(uint32_t)height;
+- (void)updateEngine:(uint32_t)width height:(uint32_t)height keyStates:(BOOL*)keyStates;
 {
     VkExtent2D swapchainExtent = {
         width = width,
         height = height,
     };
-    updateTknContext(self.pTknContext, swapchainExtent);
+    updateTknContext(self.pTknContext, swapchainExtent, KEY_CODE_MAX_ENUM, (bool*)keyStates);
 }
 
 @end

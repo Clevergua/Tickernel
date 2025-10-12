@@ -3,13 +3,15 @@
 @implementation AppView
 
 - (void)mtkView:(MTKView *)view drawableSizeWillChange:(CGSize)size {
-    [self.pEngineBinding updateEngine:size.width height:size.height];
+    [self.pEngineBinding updateEngine:size.width height:size.height keyStates:self.keyCodeStates];
 }
 
 - (void)drawInMTKView:(MTKView *)view {
     NSCAssert([NSThread isMainThread], @"Rendering must be on main thread!");
+    
     [self.pEngineBinding updateEngine:view.drawableSize.width
-                               height:view.drawableSize.height];
+                               height:view.drawableSize.height
+                             keyStates:self.keyCodeStates];
 }
 
 - (BOOL)acceptsFirstResponder {

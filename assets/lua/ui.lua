@@ -131,24 +131,20 @@ end
 
 function ui.setup(pGfxContext, pSwapchainAttachment, assetsPath)
     ui.pGfxContext = pGfxContext
-    ui.vertexFormat = {
-        {
-            name = "position",
-            type = gfx.type.float,
-            count = 2,
-        },
-        {
-            name = "uv",
-            type = gfx.type.float,
-            count = 2,
-        },
-        {
-            name = "color",
-            type = gfx.type.uint32,
-            count = 1,
-        },
-        pVertexInputLayout = gfx.createVertexInputLayoutPtr(pGfxContext, ui.vertexFormat),
-    }
+    ui.vertexFormat = {{
+        name = "position",
+        type = gfx.type.float,
+        count = 2,
+    }, {
+        name = "uv",
+        type = gfx.type.float,
+        count = 2,
+    }, {
+        name = "color",
+        type = gfx.type.uint32,
+        count = 1,
+    }}
+    ui.vertexFormat.pVertexInputLayout = gfx.createVertexInputLayoutPtr(pGfxContext, ui.vertexFormat)
     uiRenderPass.setup(pGfxContext, pSwapchainAttachment, assetsPath, ui.vertexFormat.pVertexInputLayout)
     ui.rootNode = {
         name = "root",

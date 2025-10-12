@@ -2,6 +2,7 @@
 -- This file provides type hints and documentation for the gfx module
 -- Actual implementations are provided by C bindings
 -- Initialize gfx table if not already loaded by C bindings
+require("vulkan")
 local gfx = _G.gfx
 
 -- Type constants (Lua style naming)
@@ -22,8 +23,8 @@ gfx.defaultVkPipelineViewportStateCreateInfo = {
     pViewports = {{
         x = 0.0,
         y = 0.0,
-        width = 0.0,
-        height = 0.0,
+        width = 1.0,
+        height = 1.0,
         minDepth = 0.0,
         maxDepth = 1.0,
     }},
@@ -38,6 +39,7 @@ gfx.defaultVkPipelineViewportStateCreateInfo = {
         },
     }},
 }
+
 gfx.defaultVkPipelineMultisampleStateCreateInfo = {
     rasterizationSamples = VK_SAMPLE_COUNT_1_BIT,
     sampleShadingEnable = false,

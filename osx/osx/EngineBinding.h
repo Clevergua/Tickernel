@@ -113,6 +113,6 @@ typedef enum {
 
 - (void)setupEngine: (uint32_t)width height:(uint32_t)height resourcePath:(NSString*)resourcePath pView:(void*)pView;
 - (void)teardownEngine;
-- (void)updateEngine: (uint32_t)width height:(uint32_t)height;
+- (void)updateEngine: (uint32_t)width height:(uint32_t)height keyStates:(BOOL*)keyStates;
 
 @end

@@ -108,9 +108,28 @@ void destroyTknContextPtr(TknContext *pTknContext)
     tknFree(pTknContext);
 }
 
-void updateTknContext(TknContext *pTknContext, VkExtent2D swapchainExtent)
+void updateTknContext(TknContext *pTknContext, VkExtent2D swapchainExtent,uint32_t keyStateCount, bool* keyStates)
 {
     lua_State *pLuaState = pTknContext->pLuaState;
+    
+    // Update input states first
+    if (keyStates && keyStateCount > 0) {
+        lua_getglobal(pLuaState, "require");
+        lua_pushstring(pLuaState, "input");
+        lua_call(pLuaState, 1, 1);
+        
+        lua_getfield(pLuaState, -1, "keyCodeStates");
+        
+        // Use the actual keyStateCount parameter for safety
+        for (uint32_t i = 0; i < keyStateCount; i++) {
+            lua_pushinteger(pLuaState, i);
+            lua_pushboolean(pLuaState, keyStates[i]);
+            lua_settable(pLuaState, -3);
+        }
+        
+        lua_pop(pLuaState, 2); // Clean up input module and keyCodeStates table
+    }
+    
     lua_pushcfunction(pLuaState, errorHandler);
     lua_getglobal(pLuaState, "tknEngine");
     lua_getfield(pLuaState, -1, "updateGameplay");
