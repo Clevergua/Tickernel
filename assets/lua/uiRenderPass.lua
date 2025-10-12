@@ -31,6 +31,7 @@ function uiRenderPass.setup(pGfxContext, pSwapchainAttachment, assetsPath, pUIVe
 
     local vkSubpassDescriptions = {uiSubpassDescription}
 
+    -- TODO
     local spvPathsArray = {{}}
 
     local vkSubpassDependencies = {{

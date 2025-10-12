@@ -134,17 +134,17 @@ function ui.setup(pGfxContext, pSwapchainAttachment, assetsPath)
     ui.vertexFormat = {
         {
             name = "position",
-            type = gfx.TYPE_FLOAT,
+            type = gfx.type.float,
             count = 2,
         },
         {
             name = "uv",
-            type = gfx.TYPE_FLOAT,
+            type = gfx.type.float,
             count = 2,
         },
         {
             name = "color",
-            type = gfx.TYPE_UINT32,
+            type = gfx.type.uint32,
             count = 1,
         },
         pVertexInputLayout = gfx.createVertexInputLayoutPtr(pGfxContext, ui.vertexFormat),

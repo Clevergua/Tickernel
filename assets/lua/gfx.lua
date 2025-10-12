@@ -4,17 +4,19 @@
 -- Initialize gfx table if not already loaded by C bindings
 local gfx = _G.gfx
 
--- Type constants (will be overridden by C bindings if available)
-gfx.TYPE_UINT8 = 0
-gfx.TYPE_UINT16 = 1
-gfx.TYPE_UINT32 = 2
-gfx.TYPE_UINT64 = 3
-gfx.TYPE_INT8 = 4
-gfx.TYPE_INT16 = 5
-gfx.TYPE_INT32 = 6
-gfx.TYPE_INT64 = 7
-gfx.TYPE_FLOAT = 8
-gfx.TYPE_DOUBLE = 9
+-- Type constants (Lua style naming)
+gfx.type = {
+    uint8 = 0,
+    uint16 = 1,
+    uint32 = 2,
+    uint64 = 3,
+    int8 = 4,
+    int16 = 5,
+    int32 = 6,
+    int64 = 7,
+    float = 8,
+    double = 9
+}
 
 gfx.defaultVkPipelineViewportStateCreateInfo = {
     pViewports = {{

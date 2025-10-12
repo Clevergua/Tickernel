@@ -1250,7 +1250,6 @@ static int luaDestroyMeshPtr(lua_State *pLuaState)
 static int luaSaveMeshPtrToPlyFile(lua_State *pLuaState)
 {
     // Parameters: vertexPropertyNames, vertexPropertyTypes, vertexInputLayout, vertices, indices, filePath
-
     // Get vertexPropertyNames array
     lua_len(pLuaState, -6);
     uint32_t vertexPropertyCount = (uint32_t)lua_tointeger(pLuaState, -1);
