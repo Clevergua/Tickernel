@@ -6,12 +6,6 @@
 static NSString * const AppName = @"Tickernel";
 
 typedef enum {
-    KEY_CODE_STATE_IDLE,
-    KEY_CODE_STATE_DOWN,
-    KEY_CODE_STATE_UP,
-}KeyCodeState;
-
-typedef enum {
    KEY_CODE_A,
    KEY_CODE_B,
    KEY_CODE_C,
