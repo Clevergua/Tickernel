@@ -3,6 +3,9 @@
    version = "1.0">
    <ContextStates>
       <ContextState
+         contextName = "createSubpass:renderPass.c">
+      </ContextState>
+      <ContextState
          contextName = "createPipelinePtr:pipeline.c">
          <PersistentStrings>
             <PersistentString
@@ -17,16 +20,16 @@
             <PersistentString
                value = "vkVertexInputAttributeDescriptions[6]">
             </PersistentString>
+            <PersistentString
+               value = "pipelineShaderStageCreateInfos[1]">
+            </PersistentString>
          </PersistentStrings>
-      </ContextState>
-      <ContextState
-         contextName = "tknAddToHashSet:tknCore.c">
       </ContextState>
       <ContextState
          contextName = "packDataFromLayout:tknLuaBinding.c">
       </ContextState>
       <ContextState
-         contextName = "createSubpass:renderPass.c">
+         contextName = "tknAddToHashSet:tknCore.c">
       </ContextState>
    </ContextStates>
 </VariablesViewState>
