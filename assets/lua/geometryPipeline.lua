@@ -42,7 +42,6 @@ function geometryPipeline.createPipelinePtr(pGfxContext, pRenderPass, subpassInd
         blendConstants = {0.0, 0.0, 0.0, 0.0},
     }
 
-    print("@@@" .. gfx.defaultVkPipelineMultisampleStateCreateInfo.rasterizationSamples)
     return gfx.createPipelinePtr(pGfxContext, pRenderPass, subpassIndex, geometryPipelineSpvPaths, pMeshVertexInputLayout, pInstanceVertexInputLayout, vkPipelineInputAssemblyStateCreateInfo, gfx.defaultVkPipelineViewportStateCreateInfo, gfx.defaultVkPipelineRasterizationStateCreateInfo, gfx.defaultVkPipelineMultisampleStateCreateInfo, vkPipelineDepthStencilStateCreateInfo, vkPipelineColorBlendStateCreateInfo, gfx.defaultVkPipelineDynamicStateCreateInfo)
 end
 

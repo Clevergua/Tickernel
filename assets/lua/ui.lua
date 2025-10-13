@@ -124,7 +124,7 @@ local function removeComponent(pGfxContext, node)
             gfx.removeDrawCallAt(drawCallIndex)
         end
     else
-        print("WARNING: ui.removeComponent: node has no component")
+        print("ui.removeComponent: node has no component")
         return
     end
 end
@@ -161,13 +161,14 @@ function ui.setup(pGfxContext, pSwapchainAttachment, assetsPath)
                 bottom = 0,
                 top = 0,
             },
+            rect = {},
         },
     }
     ui.nodePool = {}
 end
 
 function ui.teardown(pGfxContext)
-    ui.removeNode(ui.rootNode)
+    ui.removeNode(pGfxContext, ui.rootNode)
 
     ui.nodePool = nil
     ui.rootNode = nil
@@ -232,6 +233,7 @@ function ui.addNode(pGfxContext, parent, index, name, layout)
 end
 
 function ui.removeNode(pGfxContext, node)
+    print(node)
     for i = #node.children, 1, -1 do
         ui.removeNode(pGfxContext, node.children[i])
     end

@@ -130,20 +130,24 @@ void updateTknContext(TknContext *pTknContext, VkExtent2D swapchainExtent,uint32
         lua_pop(pLuaState, 2); // Clean up input module and keyCodeStates table
     }
     
+    // Push error handler once at the beginning
     lua_pushcfunction(pLuaState, errorHandler);
     lua_getglobal(pLuaState, "tknEngine");
+    
+    // Call updateGameplay
     lua_getfield(pLuaState, -1, "updateGameplay");
     assertLuaResult(pLuaState, lua_pcall(pLuaState, 0, 0, -3));
 
     GfxContext *pGfxContext = pTknContext->pGfxContext;
     waitGfxRenderFence(pGfxContext);
 
-    lua_getfield(pLuaState, -1, "updateGfx");
+    // Call updateGfx (errorHandler still at bottom of our stack section)
+    lua_getfield(pLuaState, -1, "updateGfx"); // get updateGfx from tknEngine
     lua_pushlightuserdata(pLuaState, pGfxContext);
     lua_pushinteger(pLuaState, swapchainExtent.width);
     lua_pushinteger(pLuaState, swapchainExtent.height);
-    assertLuaResult(pLuaState, lua_pcall(pLuaState, 3, 0, -3));
+    assertLuaResult(pLuaState, lua_pcall(pLuaState, 3, 0, -6)); // errorHandler is at -6 relative to current top
 
     updateGfxContextPtr(pGfxContext, swapchainExtent);
-    lua_pop(pLuaState, 2);
+    lua_pop(pLuaState, 2); // Pop errorHandler and tknEngine table
 }
