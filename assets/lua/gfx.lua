@@ -269,4 +269,16 @@ if not gfx.updateMaterialPtr then
     end
 end
 
+if not gfx.createImagePtr then
+    function gfx.createImagePtr(pGfxContext, vkExtent3D, vkFormat, vkImageTiling, vkImageUsageFlags, vkMemoryPropertyFlags, vkImageAspectFlags, data)
+        error("gfx.createImagePtr: C binding not loaded")
+    end
+end
+
+if not gfx.destroyImagePtr then
+    function gfx.destroyImagePtr(pGfxContext, pImage)
+        error("gfx.destroyImagePtr: C binding not loaded")
+    end
+end
+
 return gfx
