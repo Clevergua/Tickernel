@@ -73,7 +73,18 @@ void destroyMaterialPtr(GfxContext *pGfxContext, Material *pMaterial)
             }
             else if (VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER == vkDescriptorType)
             {
-                tknError("Combined image sampler not yet implemented");
+                Sampler *pSampler = pBinding->bindingUnion.combinedImageSamplerBinding.pSampler;
+                Image *pImage = pBinding->bindingUnion.combinedImageSamplerBinding.pImage;
+                if (NULL == pSampler && NULL == pImage)
+                {
+                    // Nothing
+                }
+                else
+                {
+                    // Current sampler deref descriptor
+                    tknRemoveFromHashSet(&pSampler->bindingPtrHashSet, &pBinding);
+                    tknRemoveFromHashSet(&pImage->bindingPtrHashSet, &pBinding);
+                }
             }
             else if (VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE == vkDescriptorType)
             {
@@ -578,13 +589,17 @@ InputBindingUnion getEmptyInputBindingUnion(GfxContext *pGfxContext, VkDescripto
     // Create appropriate empty binding union based on descriptor type
     switch (vkDescriptorType)
     {
+    case VK_DESCRIPTOR_TYPE_SAMPLER:
+        emptyUnion.samplerBinding.pSampler = pGfxContext->pEmptySampler;
+        break;
+    case VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER:
+        emptyUnion.combinedImageSamplerBinding.pSampler = pGfxContext->pEmptySampler;
+        emptyUnion.combinedImageSamplerBinding.pImage = pGfxContext->pEmptyImage;
+        break;
     case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
         emptyUnion.uniformBufferBinding.pUniformBuffer = pGfxContext->pEmptyUniformBuffer;
         break;
-    case VK_DESCRIPTOR_TYPE_SAMPLER:
-    case VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER:
-        emptyUnion.samplerBinding.pSampler = pGfxContext->pEmptySampler;
-        break;
+
     default:
         // For unsupported types, default to uniform buffer as a safe fallback
         emptyUnion.uniformBufferBinding.pUniformBuffer = pGfxContext->pEmptyUniformBuffer;

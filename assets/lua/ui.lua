@@ -172,7 +172,8 @@ function ui.teardown(pGfxContext)
 
     ui.nodePool = nil
     ui.rootNode = nil
-
+    print("ui.teardown")
+    uiRenderPass.teardown(pGfxContext)
     gfx.destroyVertexInputLayoutPtr(pGfxContext, ui.vertexFormat.pVertexInputLayout)
     ui.vertexFormat.pVertexInputLayout = nil
     ui.vertexFormat = nil

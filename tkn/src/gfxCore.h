@@ -121,8 +121,8 @@ typedef struct
 
 typedef union
 {
-    // VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER = 1,
     SamplerBinding samplerBinding;
+    CombinedImageSamplerBinding combinedImageSamplerBinding;
     // VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE = 2,
     // VK_DESCRIPTOR_TYPE_STORAGE_IMAGE = 3,
     // VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER = 4,

@@ -1423,7 +1423,14 @@ static int luaUpdateMaterialPtr(lua_State *pLuaState)
         inputBindings[i].binding = binding;
 
         // Parse different descriptor types based on current supported types
-        if (vkDescriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER)
+        if (vkDescriptorType == VK_DESCRIPTOR_TYPE_SAMPLER)
+        {
+            lua_getfield(pLuaState, -1, "pSampler");
+            Sampler *pSampler = (Sampler *)lua_touserdata(pLuaState, -1);
+            lua_pop(pLuaState, 1);
+            inputBindings[i].inputBindingUnion.combinedImageSamplerBinding.pSampler = pSampler;
+        }
+        else if (vkDescriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER)
         {
             lua_getfield(pLuaState, -1, "pUniformBuffer");
             UniformBuffer *pUniformBuffer = (UniformBuffer *)lua_touserdata(pLuaState, -1);
@@ -1436,8 +1443,12 @@ static int luaUpdateMaterialPtr(lua_State *pLuaState)
             lua_getfield(pLuaState, -1, "pSampler");
             Sampler *pSampler = (Sampler *)lua_touserdata(pLuaState, -1);
             lua_pop(pLuaState, 1);
+            inputBindings[i].inputBindingUnion.combinedImageSamplerBinding.pSampler = pSampler;
 
-            inputBindings[i].inputBindingUnion.samplerBinding.pSampler = pSampler;
+            lua_getfield(pLuaState, -1, "pImage");
+            Image *pImage = (Image *)lua_touserdata(pLuaState, -1);
+            lua_pop(pLuaState, 1);
+            inputBindings[i].inputBindingUnion.combinedImageSamplerBinding.pImage = pImage;
         }
         else
         {
@@ -1497,7 +1508,7 @@ static int luaUpdateMeshPtr(lua_State *pLuaState)
                 ((uint16_t *)indexData)[i] = (uint16_t)lua_tointeger(pLuaState, -1);
             }
             else
-           
+
             {
                 ((uint32_t *)indexData)[i] = (uint32_t)lua_tointeger(pLuaState, -1);
             }

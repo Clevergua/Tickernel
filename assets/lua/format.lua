@@ -83,6 +83,7 @@ function format.createLayouts(pGfxContext)
 end
 
 function format.destroyLayouts(pGfxContext)
+    print("format.destroyLayouts")
     gfx.destroyVertexInputLayoutPtr(pGfxContext, format.instanceFormat.pVertexInputLayout)
     gfx.destroyVertexInputLayoutPtr(pGfxContext, format.voxelVertexFormat.pVertexInputLayout)
     format.instanceFormat.pVertexInputLayout = nil
