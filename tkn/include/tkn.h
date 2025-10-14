@@ -87,7 +87,7 @@ void removeDrawCallAtIndex(Pipeline *pPipeline, uint32_t index);
 DrawCall *getDrawCallAtIndex(Pipeline *pPipeline, uint32_t index);
 uint32_t getDrawCallCount(Pipeline *pPipeline);
 
-Image *createImagePtr(GfxContext *pGfxContext, VkExtent3D vkExtent3D, VkFormat vkFormat, VkImageTiling vkImageTiling, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags);
+Image *createImagePtr(GfxContext *pGfxContext, VkExtent3D vkExtent3D, VkFormat vkFormat, VkImageTiling vkImageTiling, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags, void *data);
 void destroyImagePtr(GfxContext *pGfxContext, Image *pImage);
 
 UniformBuffer *createUniformBufferPtr(GfxContext *pGfxContext, const void *data, VkDeviceSize size);

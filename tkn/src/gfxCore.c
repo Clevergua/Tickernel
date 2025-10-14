@@ -455,3 +455,42 @@ VkFormat getSupportedFormat(GfxContext *pGfxContext, uint32_t candidateCount, Vk
     fprintf(stderr, "Error: No supported format found for the given requirements\n");
     return VK_FORMAT_MAX_ENUM;
 }
+
+VkCommandBuffer beginSingleTimeCommands(GfxContext *pGfxContext)
+{
+    VkDevice vkDevice = pGfxContext->vkDevice;
+
+    VkCommandBufferAllocateInfo vkCommandBufferAllocateInfo = {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+        .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+        .commandPool = pGfxContext->gfxVkCommandPool,
+        .commandBufferCount = 1};
+
+    VkCommandBuffer vkCommandBuffer;
+    assertVkResult(vkAllocateCommandBuffers(vkDevice, &vkCommandBufferAllocateInfo, &vkCommandBuffer));
+
+    VkCommandBufferBeginInfo vkCommandBufferBeginInfo = {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+        .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
+    };
+
+    assertVkResult(vkBeginCommandBuffer(vkCommandBuffer, &vkCommandBufferBeginInfo));
+    return vkCommandBuffer;
+}
+
+void endSingleTimeCommands(GfxContext *pGfxContext, VkCommandBuffer vkCommandBuffer)
+{
+    VkDevice vkDevice = pGfxContext->vkDevice;
+
+    assertVkResult(vkEndCommandBuffer(vkCommandBuffer));
+
+    VkSubmitInfo submitInfo = {
+        .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+        .commandBufferCount = 1,
+        .pCommandBuffers = &vkCommandBuffer};
+
+    assertVkResult(vkQueueSubmit(pGfxContext->vkGfxQueue, 1, &submitInfo, VK_NULL_HANDLE));
+    assertVkResult(vkQueueWaitIdle(pGfxContext->vkGfxQueue));
+
+    vkFreeCommandBuffers(vkDevice, pGfxContext->gfxVkCommandPool, 1, &vkCommandBuffer);
+}
