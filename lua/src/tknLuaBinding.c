@@ -1526,6 +1526,76 @@ static int luaUpdateMeshPtr(lua_State *pLuaState)
     return 0;
 }
 
+static int luaCreateImagePtr(lua_State *pLuaState)
+{
+    // Parameters: pGfxContext, vkExtent3D, vkFormat, vkImageTiling, vkImageUsageFlags, vkMemoryPropertyFlags, vkImageAspectFlags, data (optional)
+    GfxContext *pGfxContext = (GfxContext *)lua_touserdata(pLuaState, -8);
+    
+    // Parse VkExtent3D (table with width, height, depth)
+    VkExtent3D vkExtent3D;
+    lua_getfield(pLuaState, -7, "width");
+    vkExtent3D.width = (uint32_t)lua_tointeger(pLuaState, -1);
+    lua_pop(pLuaState, 1);
+    
+    lua_getfield(pLuaState, -7, "height");
+    vkExtent3D.height = (uint32_t)lua_tointeger(pLuaState, -1);
+    lua_pop(pLuaState, 1);
+    
+    lua_getfield(pLuaState, -7, "depth");
+    vkExtent3D.depth = (uint32_t)lua_tointeger(pLuaState, -1);
+    lua_pop(pLuaState, 1);
+    
+    VkFormat vkFormat = (VkFormat)lua_tointeger(pLuaState, -6);
+    VkImageTiling vkImageTiling = (VkImageTiling)lua_tointeger(pLuaState, -5);
+    VkImageUsageFlags vkImageUsageFlags = (VkImageUsageFlags)lua_tointeger(pLuaState, -4);
+    VkMemoryPropertyFlags vkMemoryPropertyFlags = (VkMemoryPropertyFlags)lua_tointeger(pLuaState, -3);
+    VkImageAspectFlags vkImageAspectFlags = (VkImageAspectFlags)lua_tointeger(pLuaState, -2);
+    
+    // Handle optional data parameter
+    void *data = NULL;
+    if (!lua_isnil(pLuaState, -1))
+    {
+        // If data is provided, it should be a table of bytes
+        lua_len(pLuaState, -1);
+        size_t dataSize = lua_tointeger(pLuaState, -1);
+        lua_pop(pLuaState, 1);
+        
+        if (dataSize > 0)
+        {
+            data = tknMalloc(dataSize);
+            uint8_t *dataPtr = (uint8_t *)data;
+            
+            for (size_t i = 0; i < dataSize; i++)
+            {
+                lua_rawgeti(pLuaState, -1, i + 1);
+                dataPtr[i] = (uint8_t)lua_tointeger(pLuaState, -1);
+                lua_pop(pLuaState, 1);
+            }
+        }
+    }
+    
+    Image *pImage = createImagePtr(pGfxContext, vkExtent3D, vkFormat, vkImageTiling, 
+                                   vkImageUsageFlags, vkMemoryPropertyFlags, 
+                                   vkImageAspectFlags, data);
+    
+    // Clean up temporary data
+    if (data != NULL)
+    {
+        tknFree(data);
+    }
+    
+    lua_pushlightuserdata(pLuaState, pImage);
+    return 1;
+}
+
+static int luaDestroyImagePtr(lua_State *pLuaState)
+{
+    GfxContext *pGfxContext = (GfxContext *)lua_touserdata(pLuaState, -2);
+    Image *pImage = (Image *)lua_touserdata(pLuaState, -1);
+    destroyImagePtr(pGfxContext, pImage);
+    return 0;
+}
+
 void bindFunctions(lua_State *pLuaState)
 {
     luaL_Reg regs[] = {
@@ -1548,6 +1618,8 @@ void bindFunctions(lua_State *pLuaState)
         {"removeDrawCallAtIndex", luaRemoveDrawCallAtIndex},
         {"getDrawCallAtIndex", luaGetDrawCallAtIndex},
         {"getDrawCallCount", luaGetDrawCallCount},
+        {"createImagePtr", luaCreateImagePtr},
+        {"destroyImagePtr", luaDestroyImagePtr},
         {"createUniformBufferPtr", luaCreateUniformBufferPtr},
         {"destroyUniformBufferPtr", luaDestroyUniformBufferPtr},
         {"updateUniformBufferPtr", luaUpdateUniformBufferPtr},

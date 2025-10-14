@@ -245,9 +245,10 @@ Image *createImagePtr(GfxContext *pGfxContext, VkExtent3D vkExtent3D, VkFormat v
     };
     *pImage = image;
     
-    // If data is provided, upload it immediately
+    // Handle image layout initialization based on usage
     if (data != NULL)
     {
+        // Data provided - upload it immediately
         uint32_t width = vkExtent3D.width;
         uint32_t height = vkExtent3D.height;
         uint32_t bytesPerPixel = getBytesPerPixel(vkFormat);
@@ -282,7 +283,8 @@ Image *createImagePtr(GfxContext *pGfxContext, VkExtent3D vkExtent3D, VkFormat v
             tknError("Invalid size calculation during image creation: width=%u, height=%u, bytesPerPixel=%u", width, height, bytesPerPixel);
         }
     }
-    
+    // Note: Empty images (data == NULL) remain in VK_IMAGE_LAYOUT_UNDEFINED state
+    // Layout transitions will be handled when the image is actually used
     return pImage;
 }
 void destroyImagePtr(GfxContext *pGfxContext, Image *pImage)
