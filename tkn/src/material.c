@@ -483,7 +483,61 @@ void updateMaterialPtr(GfxContext *pGfxContext, Material *pMaterial, uint32_t in
             }
             else if (VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER == vkDescriptorType)
             {
-                tknError("Combined image sampler not yet implemented");
+                Sampler *pInputSampler = inputBinding.inputBindingUnion.combinedImageSamplerBinding.pSampler;
+                Image *pInputImage = inputBinding.inputBindingUnion.combinedImageSamplerBinding.pImage;
+                Sampler *pSampler = pBinding->bindingUnion.combinedImageSamplerBinding.pSampler;
+                Image *pImage = pBinding->bindingUnion.combinedImageSamplerBinding.pImage;
+                
+                if (pInputSampler == pSampler && pInputImage == pImage)
+                {
+                    // No change, skip
+                }
+                else
+                {
+                    // Remove old references
+                    if (NULL != pSampler)
+                    {
+                        tknRemoveFromHashSet(&pSampler->bindingPtrHashSet, &pBinding);
+                    }
+                    if (NULL != pImage)
+                    {
+                        tknRemoveFromHashSet(&pImage->bindingPtrHashSet, &pBinding);
+                    }
+
+                    // Update bindings
+                    pBinding->bindingUnion.combinedImageSamplerBinding.pSampler = pInputSampler;
+                    pBinding->bindingUnion.combinedImageSamplerBinding.pImage = pInputImage;
+                    
+                    if (NULL == pInputSampler || NULL == pInputImage)
+                    {
+                        tknError("Cannot bind NULL sampler or image in combined image sampler");
+                    }
+                    else
+                    {
+                        // Add new references
+                        tknAddToHashSet(&pInputSampler->bindingPtrHashSet, &pBinding);
+                        tknAddToHashSet(&pInputImage->bindingPtrHashSet, &pBinding);
+                        
+                        vkDescriptorImageInfos[vkWriteDescriptorSetCount] = (VkDescriptorImageInfo){
+                            .sampler = pInputSampler->vkSampler,
+                            .imageView = pInputImage->vkImageView,
+                            .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                        };
+                    }
+                    VkWriteDescriptorSet vkWriteDescriptorSet = {
+                        .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+                        .dstSet = pMaterial->vkDescriptorSet,
+                        .dstBinding = binding,
+                        .dstArrayElement = 0,
+                        .descriptorCount = 1,
+                        .descriptorType = vkDescriptorType,
+                        .pImageInfo = &vkDescriptorImageInfos[vkWriteDescriptorSetCount],
+                        .pBufferInfo = NULL,
+                        .pTexelBufferView = NULL,
+                    };
+                    vkWriteDescriptorSets[vkWriteDescriptorSetCount] = vkWriteDescriptorSet;
+                    vkWriteDescriptorSetCount++;
+                }
             }
             else if (VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE == vkDescriptorType)
             {
