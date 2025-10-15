@@ -1,4 +1,5 @@
 #include "tknLuaBinding.h"
+#include "astc.h"
 #include <string.h>
 
 // Helper function to calculate size from layout
@@ -1596,6 +1597,85 @@ static int luaDestroyImagePtr(lua_State *pLuaState)
     return 0;
 }
 
+
+
+
+static int luaCreateASTCFromMemory(lua_State *pLuaState)
+{
+    // Parameters: buffer (userdata or table), size (for userdata only)
+    uint8_t *buffer = NULL;
+    size_t bufferSize = 0;
+    bool needFree = false;
+    
+    if (lua_isuserdata(pLuaState, 1)) {
+        // Case 1: userdata buffer with explicit size
+        if (lua_gettop(pLuaState) < 2 || !lua_isinteger(pLuaState, 2)) {
+            lua_pushnil(pLuaState);
+            return 1;
+        }
+        buffer = (uint8_t*)lua_touserdata(pLuaState, 1);
+        bufferSize = lua_tointeger(pLuaState, 2);
+        needFree = false;  // Don't free userdata - it's managed elsewhere
+    }
+    else if (lua_istable(pLuaState, 1)) {
+        // Case 2: table of bytes
+        lua_len(pLuaState, 1);
+        bufferSize = lua_tointeger(pLuaState, -1);
+        lua_pop(pLuaState, 1);
+        
+        if (bufferSize == 0) {
+            lua_pushnil(pLuaState);
+            return 1;
+        }
+        
+        // Convert Lua table to byte array
+        buffer = tknMalloc(bufferSize);
+        needFree = true;
+        for (size_t i = 0; i < bufferSize; i++) {
+            lua_rawgeti(pLuaState, 1, i + 1); // Lua arrays are 1-indexed
+            buffer[i] = (uint8_t)lua_tointeger(pLuaState, -1);
+            lua_pop(pLuaState, 1);
+        }
+    }
+    else {
+        lua_pushnil(pLuaState);
+        return 1;
+    }
+    
+    if (!buffer || bufferSize == 0) {
+        if (needFree && buffer) tknFree(buffer);
+        lua_pushnil(pLuaState);
+        return 1;
+    }
+    
+    ASTCImage *astcImage = createASTCFromMemory(buffer, bufferSize);
+    if (needFree) tknFree(buffer);
+    
+    if (!astcImage) {
+        lua_pushnil(pLuaState);
+        return 1;
+    }
+    
+    // Return multiple values: userdata, width, height, vkFormat, dataSize
+    lua_pushlightuserdata(pLuaState, astcImage);           // userdata
+    lua_pushinteger(pLuaState, astcImage->width);          // width
+    lua_pushinteger(pLuaState, astcImage->height);         // height
+    lua_pushinteger(pLuaState, astcImage->vkFormat);       // vkFormat
+    lua_pushinteger(pLuaState, astcImage->dataSize);       // dataSize
+    
+    return 5;
+}
+
+static int luaDestroyASTCImage(lua_State *pLuaState)
+{
+    // Parameters: astcImage (as lightuserdata)
+    ASTCImage *astcImage = (ASTCImage *)lua_touserdata(pLuaState, -1);
+    if (astcImage) {
+        destroyASTCImage(astcImage);
+    }
+    return 0;
+}
+
 void bindFunctions(lua_State *pLuaState)
 {
     luaL_Reg regs[] = {
@@ -1620,6 +1700,8 @@ void bindFunctions(lua_State *pLuaState)
         {"getDrawCallCount", luaGetDrawCallCount},
         {"createImagePtr", luaCreateImagePtr},
         {"destroyImagePtr", luaDestroyImagePtr},
+        {"createASTCFromMemory", luaCreateASTCFromMemory},
+        {"destroyASTCImage", luaDestroyASTCImage},
         {"createUniformBufferPtr", luaCreateUniformBufferPtr},
         {"destroyUniformBufferPtr", luaDestroyUniformBufferPtr},
         {"updateUniformBufferPtr", luaUpdateUniformBufferPtr},
