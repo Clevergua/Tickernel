@@ -2,6 +2,7 @@ local gfx = require("gfx")
 local tknRenderPipeline = require("tknRenderPipeline")
 local ui = require("ui")
 local format = require("format")
+local input = require("input")
 local tknEngine = {}
 
 function tknEngine.start(pGfxContext, assetsPath)
@@ -102,7 +103,9 @@ function tknEngine.updateGameplay()
 end
 
 function tknEngine.updateUI(pGfxContext)
-    
+    if input.isKeyDown(input.keyCode.a) then
+        print("A key is pressed")
+    end
 end
 
 function tknEngine.updateGfx(pGfxContext, width, height)

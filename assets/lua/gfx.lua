@@ -281,7 +281,6 @@ if not gfx.destroyImagePtr then
     end
 end
 
-
 if not gfx.createASTCFromMemory then
     function gfx.createASTCFromMemory(buffer, size)
         error("gfx.createASTCFromMemory: C binding not loaded")

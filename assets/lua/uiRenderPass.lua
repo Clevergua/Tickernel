@@ -53,7 +53,6 @@ function uiRenderPass.setup(pGfxContext, pSwapchainAttachment, assetsPath, pUIVe
 
     uiRenderPass.pRenderPass = gfx.createRenderPassPtr(pGfxContext, vkAttachmentDescriptions, {pSwapchainAttachment}, vkClearValues, vkSubpassDescriptions, spvPathsArray, vkSubpassDependencies, 0)
     uiRenderPass.pUIPipeline = uiPipeline.createPipelinePtr(pGfxContext, uiRenderPass.pRenderPass, 0, assetsPath, pUIVertexInputLayout)
-
     uiRenderPass.pUIMaterial = gfx.createPipelineMaterialPtr(pGfxContext, uiRenderPass.pUIPipeline)
 end
 

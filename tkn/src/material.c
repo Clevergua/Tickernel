@@ -10,12 +10,16 @@ Material *createMaterialPtr(GfxContext *pGfxContext, DescriptorSet *pDescriptorS
     for (uint32_t descriptorIndex = 0; descriptorIndex < descriptorCount; descriptorIndex++)
     {
         VkDescriptorType vkDescriptorType = pDescriptorSet->vkDescriptorTypes[descriptorIndex];
+        
+        // Initialize binding with empty values first
         bindings[descriptorIndex] = (Binding){
             .vkDescriptorType = vkDescriptorType,
             .bindingUnion = {0},
             .pMaterial = pMaterial,
             .binding = descriptorIndex,
         };
+        
+        // Bindings will be initialized by updateMaterialPtr call below
     }
     VkDescriptorPoolCreateInfo vkDescriptorPoolCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
@@ -44,6 +48,34 @@ Material *createMaterialPtr(GfxContext *pGfxContext, DescriptorSet *pDescriptorS
         .drawCallPtrHashSet = drawCallPtrHashSet,
     };
     tknAddToHashSet(&pDescriptorSet->materialPtrHashSet, &pMaterial);
+    
+    // Initialize all bindings with empty resources using updateMaterialPtr
+    uint32_t inputBindingCount = 0;
+    InputBinding *inputBindings = tknMalloc(sizeof(InputBinding) * descriptorCount);
+    
+    for (uint32_t i = 0; i < descriptorCount; i++)
+    {
+        VkDescriptorType vkDescriptorType = bindings[i].vkDescriptorType;
+        if (vkDescriptorType != VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT)
+        {
+            // Get empty binding for this descriptor type
+            InputBindingUnion inputBindingUnion = getEmptyInputBindingUnion(pGfxContext, vkDescriptorType);
+            
+            inputBindings[inputBindingCount] = (InputBinding){
+                .binding = i,
+                .vkDescriptorType = vkDescriptorType,
+                .inputBindingUnion = inputBindingUnion,
+            };
+            inputBindingCount++;
+        }
+    }
+    
+    if (inputBindingCount > 0)
+    {
+        updateMaterialPtr(pGfxContext, pMaterial, inputBindingCount, inputBindings);
+    }
+    tknFree(inputBindings);
+    
     return pMaterial;
 }
 void destroyMaterialPtr(GfxContext *pGfxContext, Material *pMaterial)
