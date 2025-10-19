@@ -1,6 +1,13 @@
 local input = {}
 input.keyCodeStates = {}
 
+-- Key state constants - corresponding to C enum KeyState
+input.keyState = {
+    idle = 0,
+    down = 1,
+    up = 2
+}
+
 -- Key codes - directly corresponding to C enum KeyCode
 input.keyCode = {
     a = 0,
@@ -100,8 +107,27 @@ input.keyCode = {
     numpad_decimal = 94,
 }
 
+-- Get the raw key state value (primary interface)
+function input.getKeyState(key)
+    return input.keyCodeStates[key] or input.keyState.idle
+end
+
+-- Convenience functions (optional - can be removed if you prefer direct state checking)
+function input.isKeyPressed(key)
+    return input.getKeyState(key) == input.keyState.down
+end
+
+function input.isKeyReleased(key)
+    return input.getKeyState(key) == input.keyState.up
+end
+
+function input.isKeyIdle(key)
+    return input.getKeyState(key) == input.keyState.idle
+end
+
+-- Legacy function for backward compatibility
 function input.isKeyDown(key)
-    return input.keyCodeStates[key] or false
+    return input.isKeyPressed(key)
 end
 
 return input

@@ -11,15 +11,12 @@ Material *createMaterialPtr(GfxContext *pGfxContext, DescriptorSet *pDescriptorS
     {
         VkDescriptorType vkDescriptorType = pDescriptorSet->vkDescriptorTypes[descriptorIndex];
         
-        // Initialize binding with empty values first
-        bindings[descriptorIndex] = (Binding){
-            .vkDescriptorType = vkDescriptorType,
-            .bindingUnion = {0},
-            .pMaterial = pMaterial,
-            .binding = descriptorIndex,
-        };
-        
-        // Bindings will be initialized by updateMaterialPtr call below
+        // Initialize binding with explicit zero values
+        bindings[descriptorIndex].vkDescriptorType = vkDescriptorType;
+        bindings[descriptorIndex].pMaterial = pMaterial;
+        bindings[descriptorIndex].binding = descriptorIndex;
+        // Explicitly zero out the entire binding union
+        memset(&bindings[descriptorIndex].bindingUnion, 0, sizeof(bindings[descriptorIndex].bindingUnion));
     }
     VkDescriptorPoolCreateInfo vkDescriptorPoolCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
@@ -78,6 +75,7 @@ Material *createMaterialPtr(GfxContext *pGfxContext, DescriptorSet *pDescriptorS
     
     return pMaterial;
 }
+
 void destroyMaterialPtr(GfxContext *pGfxContext, Material *pMaterial)
 {
     tknAssert(0 == pMaterial->drawCallPtrHashSet.count, "Material still has draw calls attached!");
@@ -671,7 +669,10 @@ void updateMaterialPtr(GfxContext *pGfxContext, Material *pMaterial, uint32_t in
 
 InputBindingUnion getEmptyInputBindingUnion(GfxContext *pGfxContext, VkDescriptorType vkDescriptorType)
 {
-    InputBindingUnion emptyUnion = {0};
+    InputBindingUnion emptyUnion;
+    // Explicitly zero out the entire union
+    memset(&emptyUnion, 0, sizeof(emptyUnion));
+    
     // Create appropriate empty binding union based on descriptor type
     switch (vkDescriptorType)
     {

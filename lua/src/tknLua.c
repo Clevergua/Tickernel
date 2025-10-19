@@ -108,7 +108,7 @@ void destroyTknContextPtr(TknContext *pTknContext)
     tknFree(pTknContext);
 }
 
-void updateTknContext(TknContext *pTknContext, VkExtent2D swapchainExtent,uint32_t keyStateCount, bool* keyStates)
+void updateTknContext(TknContext *pTknContext, VkExtent2D swapchainExtent,uint32_t keyStateCount, KeyState* keyStates)
 {
     lua_State *pLuaState = pTknContext->pLuaState;
     
@@ -123,7 +123,7 @@ void updateTknContext(TknContext *pTknContext, VkExtent2D swapchainExtent,uint32
         // Use the actual keyStateCount parameter for safety
         for (uint32_t i = 0; i < keyStateCount; i++) {
             lua_pushinteger(pLuaState, i);
-            lua_pushboolean(pLuaState, keyStates[i]);
+            lua_pushinteger(pLuaState, keyStates[i]); // Push KeyState enum value as integer
             lua_settable(pLuaState, -3);
         }
         

@@ -727,14 +727,14 @@ static void setupRenderPipelineAndResources(GfxContext *pGfxContext, uint32_t sp
     pGfxContext->pEmptySampler->bindingPtrHashSet = tknCreateHashSet(sizeof(Binding *));
     assertVkResult(vkCreateSampler(pGfxContext->vkDevice, &samplerCreateInfo, NULL, &pGfxContext->pEmptySampler->vkSampler));
 
-    // Create empty image for input attachments
+    // Create empty image for input attachments, sampling, and storage
     VkExtent3D emptyImageExtent = {.width = 1, .height = 1, .depth = 1};
     pGfxContext->pEmptyImage = createImagePtr(
         pGfxContext,
         emptyImageExtent,
         VK_FORMAT_R8G8B8A8_UNORM,
         VK_IMAGE_TILING_OPTIMAL,
-        VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT,
+        VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
         VK_IMAGE_ASPECT_COLOR_BIT,
         NULL);

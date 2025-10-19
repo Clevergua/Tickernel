@@ -103,9 +103,20 @@ function tknEngine.updateGameplay()
 end
 
 function tknEngine.updateUI(pGfxContext)
-    if input.isKeyDown(input.keyCode.a) then
-        print("A key is pressed")
+    local aKeyState = input.getKeyState(input.keyCode.a)
+    
+    if aKeyState == input.keyState.down then
+        print("A key was just pressed this frame")
+    elseif aKeyState == input.keyState.up then
+        print("A key was just released this frame")
+    elseif aKeyState == input.keyState.idle then
+        -- Key is idle, no action needed
     end
+    
+    -- Alternative: using convenience functions if you prefer
+    -- if input.isKeyPressed(input.keyCode.a) then
+    --     print("A key was just pressed this frame")
+    -- end
 end
 
 function tknEngine.updateGfx(pGfxContext, width, height)
