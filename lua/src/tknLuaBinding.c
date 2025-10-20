@@ -1676,115 +1676,6 @@ static int luaDestroyASTCImage(lua_State *pLuaState)
     return 0;
 }
 
-// File system operations
-static int luaDirectoryExists(lua_State *pLuaState) {
-    const char *path = luaL_checkstring(pLuaState, 1);
-    lua_pushboolean(pLuaState, directoryExists(path));
-    return 1;
-}
-
-static int luaCreateDirectory(lua_State *pLuaState) {
-    const char *path = luaL_checkstring(pLuaState, 1);
-    lua_pushboolean(pLuaState, createDirectory(path));
-    return 1;
-}
-
-static int luaRemoveDirectory(lua_State *pLuaState) {
-    const char *path = luaL_checkstring(pLuaState, 1);
-    lua_pushboolean(pLuaState, removeDirectory(path));
-    return 1;
-}
-
-static int luaListDirectory(lua_State *pLuaState) {
-    const char *path = luaL_checkstring(pLuaState, 1);
-    DirectoryListing *listing = listDirectory(path);
-    
-    if (!listing) {
-        lua_pushnil(pLuaState);
-        return 1;
-    }
-    
-    // Create Lua table with directory entries
-    lua_createtable(pLuaState, listing->count, 0);
-    
-    for (uint32_t i = 0; i < listing->count; i++) {
-        lua_createtable(pLuaState, 0, 2); // Table for each entry
-        
-        lua_pushstring(pLuaState, "name");
-        lua_pushstring(pLuaState, listing->entries[i].name);
-        lua_settable(pLuaState, -3);
-        
-        lua_pushstring(pLuaState, "isDirectory");
-        lua_pushboolean(pLuaState, listing->entries[i].isDirectory);
-        lua_settable(pLuaState, -3);
-        
-        lua_rawseti(pLuaState, -2, i + 1); // Add to main table (1-indexed)
-    }
-    
-    freeDirectoryListing(listing);
-    return 1;
-}
-
-static int luaCopyFile(lua_State *pLuaState) {
-    const char *srcPath = luaL_checkstring(pLuaState, 1);
-    const char *dstPath = luaL_checkstring(pLuaState, 2);
-    lua_pushboolean(pLuaState, copyFile(srcPath, dstPath));
-    return 1;
-}
-
-static int luaMoveFile(lua_State *pLuaState) {
-    const char *srcPath = luaL_checkstring(pLuaState, 1);
-    const char *dstPath = luaL_checkstring(pLuaState, 2);
-    lua_pushboolean(pLuaState, moveFile(srcPath, dstPath));
-    return 1;
-}
-
-static int luaDeleteFile(lua_State *pLuaState) {
-    const char *path = luaL_checkstring(pLuaState, 1);
-    lua_pushboolean(pLuaState, deleteFile(path));
-    return 1;
-}
-
-static int luaFileExists(lua_State *pLuaState) {
-    const char *path = luaL_checkstring(pLuaState, 1);
-    lua_pushboolean(pLuaState, fileExists(path));
-    return 1;
-}
-
-static int luaGetFileSize(lua_State *pLuaState) {
-    const char *path = luaL_checkstring(pLuaState, 1);
-    lua_pushinteger(pLuaState, getFileSize(path));
-    return 1;
-}
-
-static int luaReadFile(lua_State *pLuaState) {
-    const char *path = luaL_checkstring(pLuaState, 1);
-    uint64_t fileSize;
-    char *data = readFile(path, &fileSize);
-    
-    if (!data) {
-        lua_pushnil(pLuaState);
-        lua_pushinteger(pLuaState, 0);
-        return 2;
-    }
-    
-    // Push as string (Lua can handle binary data in strings)
-    lua_pushlstring(pLuaState, data, fileSize);
-    lua_pushinteger(pLuaState, fileSize);
-    
-    tknFree(data); // Clean up the allocated buffer
-    return 2; // Returns content, size
-}
-
-static int luaWriteFile(lua_State *pLuaState) {
-    const char *path = luaL_checkstring(pLuaState, 1);
-    size_t dataSize;
-    const char *data = luaL_checklstring(pLuaState, 2, &dataSize);
-    
-    lua_pushboolean(pLuaState, writeFile(path, data, dataSize));
-    return 1;
-}
-
 void bindFunctions(lua_State *pLuaState)
 {
     luaL_Reg regs[] = {
@@ -1827,18 +1718,6 @@ void bindFunctions(lua_State *pLuaState)
         {"destroyPipelineMaterialPtr", luaDestroyPipelineMaterialPtr},
         {"updateMaterialPtr", luaUpdateMaterialPtr},
         {"updateMeshPtr", luaUpdateMeshPtr},
-        // File system operations
-        {"directoryExists", luaDirectoryExists},
-        {"createDirectory", luaCreateDirectory},
-        {"removeDirectory", luaRemoveDirectory},
-        {"listDirectory", luaListDirectory},
-        {"copyFile", luaCopyFile},
-        {"moveFile", luaMoveFile},
-        {"deleteFile", luaDeleteFile},
-        {"fileExists", luaFileExists},
-        {"getFileSize", luaGetFileSize},
-        {"readFile", luaReadFile},
-        {"writeFile", luaWriteFile},
         {NULL, NULL},
     };
     luaL_newlib(pLuaState, regs);
