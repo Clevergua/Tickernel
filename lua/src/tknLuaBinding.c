@@ -1,5 +1,4 @@
 #include "tknLuaBinding.h"
-#include "astc.h"
 #include <string.h>
 
 // Helper function to calculate size from layout
@@ -1589,6 +1588,39 @@ static int luaCreateImagePtr(lua_State *pLuaState)
     return 1;
 }
 
+static int luaCreateSamplerPtr(lua_State *pLuaState)
+{
+    // Parameters: pGfxContext, magFilter, minFilter, mipmapMode, addressModeU, addressModeV, addressModeW, mipLodBias, anisotropyEnable, maxAnisotropy, minLod, maxLod, borderColor
+    GfxContext *pGfxContext = (GfxContext *)lua_touserdata(pLuaState, -13);
+    VkFilter magFilter = (VkFilter)lua_tointeger(pLuaState, -12);
+    VkFilter minFilter = (VkFilter)lua_tointeger(pLuaState, -11);
+    VkSamplerMipmapMode mipmapMode = (VkSamplerMipmapMode)lua_tointeger(pLuaState, -10);
+    VkSamplerAddressMode addressModeU = (VkSamplerAddressMode)lua_tointeger(pLuaState, -9);
+    VkSamplerAddressMode addressModeV = (VkSamplerAddressMode)lua_tointeger(pLuaState, -8);
+    VkSamplerAddressMode addressModeW = (VkSamplerAddressMode)lua_tointeger(pLuaState, -7);
+    float mipLodBias = (float)lua_tonumber(pLuaState, -6);
+    VkBool32 anisotropyEnable = (VkBool32)lua_toboolean(pLuaState, -5);
+    float maxAnisotropy = (float)lua_tonumber(pLuaState, -4);
+    float minLod = (float)lua_tonumber(pLuaState, -3);
+    float maxLod = (float)lua_tonumber(pLuaState, -2);
+    VkBorderColor borderColor = (VkBorderColor)lua_tointeger(pLuaState, -1);
+    
+    Sampler *pSampler = createSamplerPtr(pGfxContext, magFilter, minFilter, mipmapMode, 
+                                        addressModeU, addressModeV, addressModeW, mipLodBias,
+                                        anisotropyEnable, maxAnisotropy, minLod, maxLod, borderColor);
+    
+    lua_pushlightuserdata(pLuaState, pSampler);
+    return 1;
+}
+
+static int luaDestroySamplerPtr(lua_State *pLuaState)
+{
+    GfxContext *pGfxContext = (GfxContext *)lua_touserdata(pLuaState, -2);
+    Sampler *pSampler = (Sampler *)lua_touserdata(pLuaState, -1);
+    destroySamplerPtr(pGfxContext, pSampler);
+    return 0;
+}
+
 static int luaDestroyImagePtr(lua_State *pLuaState)
 {
     GfxContext *pGfxContext = (GfxContext *)lua_touserdata(pLuaState, -2);
@@ -1700,6 +1732,8 @@ void bindFunctions(lua_State *pLuaState)
         {"getDrawCallCount", luaGetDrawCallCount},
         {"createImagePtr", luaCreateImagePtr},
         {"destroyImagePtr", luaDestroyImagePtr},
+        {"createSamplerPtr", luaCreateSamplerPtr},
+        {"destroySamplerPtr", luaDestroySamplerPtr},
         {"createASTCFromMemory", luaCreateASTCFromMemory},
         {"destroyASTCImage", luaDestroyASTCImage},
         {"createUniformBufferPtr", luaCreateUniformBufferPtr},

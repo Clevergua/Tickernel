@@ -66,8 +66,18 @@ function tknEngine.start(pGfxContext, assetsPath)
     local deferredRenderPass = tknRenderPipeline.deferredRenderPass
     tknEngine.pDrawCall = gfx.createDrawCallPtr(pGfxContext, deferredRenderPass.pGeometryPipeline, deferredRenderPass.pGeometryMaterial, tknEngine.pMesh, tknEngine.pInstance)
     gfx.insertDrawCallPtr(tknEngine.pDrawCall, 0)
-
     ui.setup(pGfxContext, tknRenderPipeline.pSwapchainAttachment, assetsPath)
+
+    tknEngine.pTestUIMaterial = gfx.createPipelineMaterialPtr(pGfxContext, ui.renderPass.pRenderPass)
+    
+    tknEngine.pTestUIImage = gfx.createImagePtr(pGfxContext, vkExtent3D, imageVkFormat, VK_IMAGE_TILING_LINEAR, VK_IMAGE_USAGE_TEXTURE_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, VK_IMAGE_ASPECT_COLOR_BIT, data)
+    local inputBindings = {{
+        vkDescriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+        pImage = tknEngine.pTestUIImage,
+        pSampler = ui.pSampler,
+        binding = 0,
+    }}
+    gfx.updateMaterialPtr(pGfxContext, tknEngine.pTestUIMaterial, inputBindings)
 end
 
 function tknEngine.stop()
@@ -104,19 +114,23 @@ end
 
 function tknEngine.updateUI(pGfxContext)
     local aKeyState = input.getKeyState(input.keyCode.a)
-    
     if aKeyState == input.keyState.down then
         print("A key was just pressed this frame")
     elseif aKeyState == input.keyState.up then
         print("A key was just released this frame")
+        -- function ui.addNode(pGfxContext, parent, index, name, layout)
+        local node = ui.addNode(pGfxContext, ui.rootNode, #ui.rootNode.children + 1, "NewNode", {
+            type = "absolute",
+            left = 100,
+            top = 100,
+            width = 100,
+            height = 100,
+        })
+        -- function ui.addImageComponent(pGfxContext, color, slice, pMaterial, node)
+        ui.addImageComponent(pGfxContext, 0xFFFFFFFF, nil, pMaterial, node)
     elseif aKeyState == input.keyState.idle then
         -- Key is idle, no action needed
     end
-    
-    -- Alternative: using convenience functions if you prefer
-    -- if input.isKeyPressed(input.keyCode.a) then
-    --     print("A key was just pressed this frame")
-    -- end
 end
 
 function tknEngine.updateGfx(pGfxContext, width, height)

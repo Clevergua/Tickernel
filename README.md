@@ -22,5 +22,5 @@ In multi-level nesting, using i, j, k as indices may cause confusion. Therefore,
 ## Minimal Conditional Checks in Non-Essential Code
 Unnecessary code will minimize conditional checks, as excessive checks can slow down runtime performance and increase code volume.
 
-# Directory Structure and Introduction
-
+## Graphics API Design Principles
+Since there will always be cases where parameters need to be parsed to populate createInfo structures, all GFX APIs are designed as parameter-based and will not fully expose CreateInfo structures as parameters for users to fill out.

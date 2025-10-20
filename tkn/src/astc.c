@@ -1,4 +1,3 @@
-#include "astc.h"
 #include "gfxCore.h"
 
 // ASTC file header structure

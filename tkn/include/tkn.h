@@ -56,6 +56,19 @@ typedef struct
     uint32_t binding;
 } InputBinding;
 
+// ASTC image data
+typedef struct
+{
+    uint32_t width;    // Image width
+    uint32_t height;   // Image height
+    VkFormat vkFormat; // Corresponding Vulkan ASTC format
+    uint32_t dataSize; // Compressed data size
+    uint8_t *data;     // Compressed ASTC data
+} ASTCImage;
+
+ASTCImage *createASTCFromMemory(const uint8_t *buffer, size_t bufferSize);
+void destroyASTCImage(ASTCImage *astcImage);
+
 VkFormat getSupportedFormat(GfxContext *pGfxContext, uint32_t candidateCount, VkFormat *candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
 
 GfxContext *createGfxContextPtr(int targetSwapchainImageCount, VkSurfaceFormatKHR targetVkSurfaceFormat, VkPresentModeKHR targetVkPresentMode, VkInstance vkInstance, VkSurfaceKHR vkSurface, VkExtent2D swapchainExtent, uint32_t spvPathCount, const char **spvPaths);
@@ -90,6 +103,8 @@ uint32_t getDrawCallCount(Pipeline *pPipeline);
 Image *createImagePtr(GfxContext *pGfxContext, VkExtent3D vkExtent3D, VkFormat vkFormat, VkImageTiling vkImageTiling, VkImageUsageFlags vkImageUsageFlags, VkMemoryPropertyFlags vkMemoryPropertyFlags, VkImageAspectFlags vkImageAspectFlags, void *data);
 void destroyImagePtr(GfxContext *pGfxContext, Image *pImage);
 
+Sampler *createSamplerPtr(GfxContext *pGfxContext, VkFilter magFilter, VkFilter minFilter, VkSamplerMipmapMode mipmapMode, VkSamplerAddressMode addressModeU, VkSamplerAddressMode addressModeV, VkSamplerAddressMode addressModeW, float mipLodBias, VkBool32 anisotropyEnable, float maxAnisotropy, float minLod, float maxLod, VkBorderColor borderColor);
+void destroySamplerPtr(GfxContext *pGfxContext, Sampler *pSampler);
 UniformBuffer *createUniformBufferPtr(GfxContext *pGfxContext, const void *data, VkDeviceSize size);
 void destroyUniformBufferPtr(GfxContext *pGfxContext, UniformBuffer *pUniformBuffer);
 void updateUniformBufferPtr(GfxContext *pGfxContext, UniformBuffer *pUniformBuffer, const void *data, VkDeviceSize size);

@@ -165,11 +165,15 @@ function ui.setup(pGfxContext, pSwapchainAttachment, assetsPath)
         },
     }
     ui.nodePool = {}
+    ui.pSampler = gfx.createSamplerPtr(pGfxContext, VK_FILTER_LINEAR, VK_FILTER_LINEAR, VK_SAMPLER_MIPMAP_MODE_LINEAR, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, 0.0, false, 0.0, 0.0, 0.0, VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK)
+    ui.renderPass = uiRenderPass
 end
 
 function ui.teardown(pGfxContext)
     ui.removeNode(pGfxContext, ui.rootNode)
-
+    ui.renderPass = nil
+    gfx.destroySamplerPtr(pGfxContext, ui.pSampler)
+    ui.pSampler = nil
     ui.nodePool = nil
     ui.rootNode = nil
     print("ui.teardown")

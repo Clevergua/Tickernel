@@ -60,7 +60,6 @@ function uiRenderPass.teardown(pGfxContext)
     uiPipeline.destroyPipelinePtr(pGfxContext, uiRenderPass.pUIPipeline)
     uiRenderPass.pUIMaterial = nil
     gfx.destroyRenderPassPtr(pGfxContext, uiRenderPass.pRenderPass)
-
     uiRenderPass.pRenderPass = nil
     uiRenderPass.pUIPipeline = nil
 end

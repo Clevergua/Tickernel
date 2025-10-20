@@ -293,4 +293,17 @@ if not gfx.destroyASTCImage then
     end
 end
 
+-- Sampler creation convenience functions
+if not gfx.createSamplerPtr then
+    function gfx.createSamplerPtr(pGfxContext, magFilter, minFilter, mipmapMode, addressModeU, addressModeV, addressModeW, mipLodBias, anisotropyEnable, maxAnisotropy, minLod, maxLod, borderColor)
+        error("gfx.createSamplerPtr: C binding not loaded")
+    end
+end
+
+if not gfx.destroySamplerPtr then
+    function gfx.destroySamplerPtr(pGfxContext, pSampler)
+        error("gfx.destroySamplerPtr: C binding not loaded")
+    end
+end
+
 return gfx
