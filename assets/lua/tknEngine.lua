@@ -69,15 +69,29 @@ function tknEngine.start(pGfxContext, assetsPath)
     ui.setup(pGfxContext, tknRenderPipeline.pSwapchainAttachment, assetsPath)
 
     tknEngine.pTestUIMaterial = gfx.createPipelineMaterialPtr(pGfxContext, ui.renderPass.pRenderPass)
-    
-    tknEngine.pTestUIImage = gfx.createImagePtr(pGfxContext, vkExtent3D, imageVkFormat, VK_IMAGE_TILING_LINEAR, VK_IMAGE_USAGE_TEXTURE_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, VK_IMAGE_ASPECT_COLOR_BIT, data)
-    local inputBindings = {{
-        vkDescriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-        pImage = tknEngine.pTestUIImage,
-        pSampler = ui.pSampler,
-        binding = 0,
-    }}
-    gfx.updateMaterialPtr(pGfxContext, tknEngine.pTestUIMaterial, inputBindings)
+
+    local astcFile = io.open(assetsPath .. "/textures/default.astc", "rb")
+    if astcFile then
+        local content = astcFile:read("*all")
+        astcFile:close()
+        tknEngine.pTestUIImage = gfx.createASTCFromMemory(content)
+        
+        if not tknEngine.pTestUIImage then
+            print("Failed to create ASTC image from memory")
+        end
+    else
+        print("Failed to open ASTC file: " .. assetsPath .. "/textures/default.astc")
+        tknEngine.pTestUIImage = nil
+    end
+    if tknEngine.pTestUIImage then
+        local inputBindings = {{
+            vkDescriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+            pImage = tknEngine.pTestUIImage,
+            pSampler = ui.pSampler,
+            binding = 0,
+        }}
+        gfx.updateMaterialPtr(pGfxContext, tknEngine.pTestUIMaterial, inputBindings)
+    end
 end
 
 function tknEngine.stop()
