@@ -54,7 +54,7 @@ static VkFormat getASTCVulkanFormat(uint32_t blockWidth, uint32_t blockHeight) {
 
 
 
-ASTCImage* createASTCFromMemory(const uint8_t* buffer, size_t bufferSize) {
+ASTCImage* createASTCFromMemory(const char* buffer, size_t bufferSize) {
     if (!buffer || bufferSize < sizeof(ASTCHeader)) {
         printf("Error: Invalid buffer or buffer too small\n");
         return NULL;
@@ -87,11 +87,11 @@ ASTCImage* createASTCFromMemory(const uint8_t* buffer, size_t bufferSize) {
     // Calculate compressed data size
     uint32_t blocksX = (width + blockWidth - 1) / blockWidth;
     uint32_t blocksY = (height + blockHeight - 1) / blockHeight;
-    uint32_t compressedDataSize = blocksX * blocksY * 16; // Each ASTC block is 128 bits (16 bytes)
+    uint32_t compressedSize = blocksX * blocksY * 16; // Each ASTC block is 128 bits (16 bytes)
     
-    if (sizeof(ASTCHeader) + compressedDataSize != bufferSize) {
+    if (sizeof(ASTCHeader) + compressedSize != bufferSize) {
         printf("Error: ASTC file size mismatch. Expected %zu, got %zu\n", 
-               sizeof(ASTCHeader) + compressedDataSize, bufferSize);
+               sizeof(ASTCHeader) + compressedSize, bufferSize);
         return NULL;
     }
     
@@ -106,14 +106,14 @@ ASTCImage* createASTCFromMemory(const uint8_t* buffer, size_t bufferSize) {
     astcImage->width = width;
     astcImage->height = height;
     astcImage->vkFormat = vkFormat;
-    astcImage->dataSize = compressedDataSize;
+    astcImage->size = compressedSize;
     
     // Copy compressed data
-    astcImage->data = tknMalloc(compressedDataSize);
-    memcpy(astcImage->data, buffer + sizeof(ASTCHeader), compressedDataSize);
+    astcImage->data = tknMalloc(compressedSize);
+    memcpy(astcImage->data, buffer + sizeof(ASTCHeader), compressedSize);
     
     printf("Loaded ASTC image: %dx%d, blocks: %dx%d, format: %d, size: %u bytes\n", 
-           width, height, blockWidth, blockHeight, vkFormat, compressedDataSize);
+           width, height, blockWidth, blockHeight, vkFormat, compressedSize);
     
     return astcImage;
 }

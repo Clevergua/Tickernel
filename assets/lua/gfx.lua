@@ -16,7 +16,7 @@ gfx.type = {
     int32 = 6,
     int64 = 7,
     float = 8,
-    double = 9
+    double = 9,
 }
 
 gfx.defaultVkPipelineViewportStateCreateInfo = {
@@ -65,12 +65,36 @@ gfx.defaultVkPipelineRasterizationStateCreateInfo = {
     depthBiasSlopeFactor = 0.0,
     lineWidth = 1.0,
 }
+function gfx.createImagePtrWithPath(gfxContext, path)
+    local astcFile = io.open(path, "rb")
+    if astcFile then
+        local content = astcFile:read("*all")
+        astcFile:close()
+        local pASTC, data, width, height, vkFormat, size = gfx.createASTCFromMemory(content)
+        if pASTC then
+            local vkExtent3D = {
+                width = width,
+                height = height,
+                depth = 1,
+            }
+            local pImage = gfx.createImagePtr(gfxContext, vkExtent3D, vkFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TEXTURE_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_IMAGE_ASPECT_COLOR_BIT, data)
+            gfx.destroyASTCImage(pASTC)
+            return pImage
+        else
+            print("Failed to create ASTC image from file: " .. path)
+            return nil
+        end
+    else
+        print("Failed to open ASTC file: " .. path)
+        return nil
+    end
+end
 
 -- Creates a mesh with default zero-initialized vertex and index data
 function gfx.createDefaultMeshPtr(pGfxContext, format, pMeshVertexInputLayout, vertexCount, indexType, indexCount)
     local vertices = {}
     local indices = {}
-    
+
     -- Initialize vertex data with zeros for each field
     for i, fieldFormat in ipairs(format) do
         local fieldData = {}
@@ -79,7 +103,7 @@ function gfx.createDefaultMeshPtr(pGfxContext, format, pMeshVertexInputLayout, v
         end
         vertices[fieldFormat.name] = fieldData
     end
-    
+
     -- Initialize indices with zeros (0-based for C compatibility)
     for i = 1, indexCount do
         table.insert(indices, 0)

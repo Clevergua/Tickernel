@@ -3,10 +3,9 @@
 -- The creation, deletion, and modification of drawcalls and meshes depend on the add/delete/modify operations of nodes and components.
 -- Updating mesh requires layout update first, so it always happens after the update layout phase.
 local gfx = require("gfx")
--- TODO: Add to ui.uiRenderPass
-local uiRenderPass = require("uiRenderPass")
 local image = require("image")
 local text = require("text")
+local uiRenderPass = require("uiRenderPass")
 local ui = {}
 
 local fullScreenRect = {
@@ -335,6 +334,20 @@ function ui.removeImageComponent(pGfxContext, node)
     assert(node.component and node.component.type == "image", "ui.removeImageComponent: node has no image component")
     image.destroyComponent(pGfxContext, node.component)
     removeComponent(pGfxContext, node)
+end
+
+function ui.createMaterialPtr(pGfxContext, pImage)
+    local material = gfx.createPipelineMaterialPtr(pGfxContext, ui.renderPass.pRenderPass)
+    if pImage then
+        local inputBindings = {{
+            vkDescriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+            pImage = pImage,
+            pSampler = ui.pSampler,
+            binding = 0,
+        }}
+        gfx.updateMaterialPtr(pGfxContext, material, inputBindings)
+    end
+    return material
 end
 
 return ui

@@ -68,30 +68,33 @@ function tknEngine.start(pGfxContext, assetsPath)
     gfx.insertDrawCallPtr(tknEngine.pDrawCall, 0)
     ui.setup(pGfxContext, tknRenderPipeline.pSwapchainAttachment, assetsPath)
 
-    tknEngine.pTestUIMaterial = gfx.createPipelineMaterialPtr(pGfxContext, ui.renderPass.pRenderPass)
-
-    local astcFile = io.open(assetsPath .. "/textures/default.astc", "rb")
-    if astcFile then
-        local content = astcFile:read("*all")
-        astcFile:close()
-        tknEngine.pTestUIImage = gfx.createASTCFromMemory(content)
-        
-        if not tknEngine.pTestUIImage then
-            print("Failed to create ASTC image from memory")
-        end
+    -- Check ASTC format support before loading
+    local linearFeatures, optimalFeatures, bufferFeatures = gfx.getFormatProperties(pGfxContext, VK_FORMAT_ASTC_6x6_UNORM_BLOCK)
+    local astcSupported = (optimalFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT) ~= 0
+    
+    print(string.format("ASTC 6x6 Format Support Check:"))
+    print(string.format("  Linear Features:  0x%08X", linearFeatures))
+    print(string.format("  Optimal Features: 0x%08X", optimalFeatures))
+    print(string.format("  Buffer Features:  0x%08X", bufferFeatures))
+    print(string.format("  Can use as texture: %s", astcSupported and "YES" or "NO"))
+    
+    if astcSupported then
+        print("Loading ASTC texture...")
+        tknEngine.pDefaultImage = gfx.createImagePtrWithPath(pGfxContext, assetsPath .. "/textures/default.astc")
     else
-        print("Failed to open ASTC file: " .. assetsPath .. "/textures/default.astc")
-        tknEngine.pTestUIImage = nil
+        print("WARNING: ASTC format not supported by GPU, skipping ASTC texture loading")
+        tknEngine.pDefaultImage = nil
     end
-    if tknEngine.pTestUIImage then
-        local inputBindings = {{
-            vkDescriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-            pImage = tknEngine.pTestUIImage,
-            pSampler = ui.pSampler,
-            binding = 0,
-        }}
-        gfx.updateMaterialPtr(pGfxContext, tknEngine.pTestUIMaterial, inputBindings)
-    end
+    
+    tknEngine.pDefaultMaterial = ui.createMaterialPtr(pGfxContext, tknEngine.pDefaultImage)
+    tknEngine.testNode =  ui.addNode(pGfxContext, ui.rootNode, #ui.rootNode.children + 1, "testNode", {
+        type = "absolute",
+        left = 100,
+        top = 100,
+        width = 100,
+        height = 100,
+    })
+    ui.addImageComponent(pGfxContext, 0xFFFFFFFF, nil, tknEngine.pDefaultMaterial, tknEngine.testNode)
 end
 
 function tknEngine.stop()
@@ -100,6 +103,8 @@ end
 
 function tknEngine.stopGfx(pGfxContext)
     print("Lua stopGfx")
+    gfx.destroyPipelineMaterialPtr(pGfxContext, tknEngine.pDefaultMaterial)
+    gfx.destroyImagePtr(pGfxContext, tknEngine.pDefaultImage)
     ui.teardown(pGfxContext)
 
     gfx.destroyDrawCallPtr(pGfxContext, tknEngine.pDrawCall)

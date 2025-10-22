@@ -194,6 +194,22 @@ static void *packDataFromLayout(lua_State *pLuaState, int layoutIndex, int dataI
     return data;
 }
 
+static int luaGetFormatProperties(lua_State *pLuaState)
+{
+    GfxContext *pGfxContext = (GfxContext *)lua_touserdata(pLuaState, -2);
+    VkFormat format = (VkFormat)lua_tointeger(pLuaState, -1);
+    
+    VkFormatFeatureFlags linearFeatures, optimalFeatures, bufferFeatures;
+    getFormatProperties(pGfxContext, format, &linearFeatures, &optimalFeatures, &bufferFeatures);
+    
+    // Return three values: linear, optimal, buffer features
+    lua_pushinteger(pLuaState, (lua_Integer)linearFeatures);
+    lua_pushinteger(pLuaState, (lua_Integer)optimalFeatures);
+    lua_pushinteger(pLuaState, (lua_Integer)bufferFeatures);
+    
+    return 3;
+}
+
 static int luaGetSupportedFormat(lua_State *pLuaState)
 {
     GfxContext *pGfxContext = (GfxContext *)lua_touserdata(pLuaState, -4);
@@ -1530,60 +1546,51 @@ static int luaCreateImagePtr(lua_State *pLuaState)
 {
     // Parameters: pGfxContext, vkExtent3D, vkFormat, vkImageTiling, vkImageUsageFlags, vkMemoryPropertyFlags, vkImageAspectFlags, data (optional)
     GfxContext *pGfxContext = (GfxContext *)lua_touserdata(pLuaState, -8);
-    
+
     // Parse VkExtent3D (table with width, height, depth)
     VkExtent3D vkExtent3D;
     lua_getfield(pLuaState, -7, "width");
     vkExtent3D.width = (uint32_t)lua_tointeger(pLuaState, -1);
     lua_pop(pLuaState, 1);
-    
+
     lua_getfield(pLuaState, -7, "height");
     vkExtent3D.height = (uint32_t)lua_tointeger(pLuaState, -1);
     lua_pop(pLuaState, 1);
-    
+
     lua_getfield(pLuaState, -7, "depth");
     vkExtent3D.depth = (uint32_t)lua_tointeger(pLuaState, -1);
     lua_pop(pLuaState, 1);
-    
+
     VkFormat vkFormat = (VkFormat)lua_tointeger(pLuaState, -6);
     VkImageTiling vkImageTiling = (VkImageTiling)lua_tointeger(pLuaState, -5);
     VkImageUsageFlags vkImageUsageFlags = (VkImageUsageFlags)lua_tointeger(pLuaState, -4);
     VkMemoryPropertyFlags vkMemoryPropertyFlags = (VkMemoryPropertyFlags)lua_tointeger(pLuaState, -3);
     VkImageAspectFlags vkImageAspectFlags = (VkImageAspectFlags)lua_tointeger(pLuaState, -2);
-    
+
     // Handle optional data parameter
     void *data = NULL;
     if (!lua_isnil(pLuaState, -1))
     {
-        // If data is provided, it should be a table of bytes
-        lua_len(pLuaState, -1);
-        size_t dataSize = lua_tointeger(pLuaState, -1);
-        lua_pop(pLuaState, 1);
-        
-        if (dataSize > 0)
+        // If data is provided, it should be a Lua string (char*)
+        if (lua_isstring(pLuaState, -1))
         {
-            data = tknMalloc(dataSize);
-            uint8_t *dataPtr = (uint8_t *)data;
-            
-            for (size_t i = 0; i < dataSize; i++)
+            size_t dataSize;
+            const char *luaData = lua_tolstring(pLuaState, -1, &dataSize);
+            if (dataSize > 0)
             {
-                lua_rawgeti(pLuaState, -1, i + 1);
-                dataPtr[i] = (uint8_t)lua_tointeger(pLuaState, -1);
-                lua_pop(pLuaState, 1);
+                data = tknMalloc(dataSize);
+                memcpy(data, luaData, dataSize);
             }
         }
     }
-    
-    Image *pImage = createImagePtr(pGfxContext, vkExtent3D, vkFormat, vkImageTiling, 
-                                   vkImageUsageFlags, vkMemoryPropertyFlags, 
+
+    Image *pImage = createImagePtr(pGfxContext, vkExtent3D, vkFormat, vkImageTiling,
+                                   vkImageUsageFlags, vkMemoryPropertyFlags,
                                    vkImageAspectFlags, data);
-    
-    // Clean up temporary data
     if (data != NULL)
     {
         tknFree(data);
     }
-    
     lua_pushlightuserdata(pLuaState, pImage);
     return 1;
 }
@@ -1604,11 +1611,11 @@ static int luaCreateSamplerPtr(lua_State *pLuaState)
     float minLod = (float)lua_tonumber(pLuaState, -3);
     float maxLod = (float)lua_tonumber(pLuaState, -2);
     VkBorderColor borderColor = (VkBorderColor)lua_tointeger(pLuaState, -1);
-    
-    Sampler *pSampler = createSamplerPtr(pGfxContext, magFilter, minFilter, mipmapMode, 
-                                        addressModeU, addressModeV, addressModeW, mipLodBias,
-                                        anisotropyEnable, maxAnisotropy, minLod, maxLod, borderColor);
-    
+
+    Sampler *pSampler = createSamplerPtr(pGfxContext, magFilter, minFilter, mipmapMode,
+                                         addressModeU, addressModeV, addressModeW, mipLodBias,
+                                         anisotropyEnable, maxAnisotropy, minLod, maxLod, borderColor);
+
     lua_pushlightuserdata(pLuaState, pSampler);
     return 1;
 }
@@ -1629,48 +1636,43 @@ static int luaDestroyImagePtr(lua_State *pLuaState)
     return 0;
 }
 
-
-
-
 static int luaCreateASTCFromMemory(lua_State *pLuaState)
 {
     // Parameter: Lua string (from io.open():read("*all"))
-    if (!lua_isstring(pLuaState, 1)) {
+    if (!lua_isstring(pLuaState, 1))
+    {
         lua_pushnil(pLuaState);
         return 1;
     }
-    
     size_t bufferSize;
     const char *data = lua_tolstring(pLuaState, 1, &bufferSize);
-    uint8_t *buffer = (uint8_t*)data;
-    
-    if (!buffer || bufferSize == 0) {
+    if (!data || bufferSize == 0)
+    {
         lua_pushnil(pLuaState);
         return 1;
     }
-    
-    ASTCImage *astcImage = createASTCFromMemory(buffer, bufferSize);
-    
-    if (!astcImage) {
+    ASTCImage *astcImage = createASTCFromMemory(data, bufferSize);
+    if (!astcImage)
+    {
         lua_pushnil(pLuaState);
         return 1;
     }
-    
-    // Return multiple values: userdata, width, height, vkFormat, dataSize
-    lua_pushlightuserdata(pLuaState, astcImage);           // userdata
-    lua_pushinteger(pLuaState, astcImage->width);          // width
-    lua_pushinteger(pLuaState, astcImage->height);         // height
-    lua_pushinteger(pLuaState, astcImage->vkFormat);       // vkFormat
-    lua_pushinteger(pLuaState, astcImage->dataSize);       // dataSize
-    
-    return 5;
+    // Return multiple values: astcImage pointer, data, width, height, vkFormat, dataSize
+    lua_pushlightuserdata(pLuaState, astcImage);                  // ASTCImage pointer
+    lua_pushlstring(pLuaState, astcImage->data, astcImage->size); // Binary data with exact length
+    lua_pushinteger(pLuaState, astcImage->width);                 // width
+    lua_pushinteger(pLuaState, astcImage->height);                // height
+    lua_pushinteger(pLuaState, astcImage->vkFormat);              // vkFormat
+    lua_pushinteger(pLuaState, astcImage->size);                  // dataSize
+    return 6;
 }
 
 static int luaDestroyASTCImage(lua_State *pLuaState)
 {
     // Parameters: astcImage (as lightuserdata)
     ASTCImage *astcImage = (ASTCImage *)lua_touserdata(pLuaState, -1);
-    if (astcImage) {
+    if (astcImage)
+    {
         destroyASTCImage(astcImage);
     }
     return 0;
@@ -1679,6 +1681,7 @@ static int luaDestroyASTCImage(lua_State *pLuaState)
 void bindFunctions(lua_State *pLuaState)
 {
     luaL_Reg regs[] = {
+        {"getFormatProperties", luaGetFormatProperties},
         {"getSupportedFormat", luaGetSupportedFormat},
         {"createDynamicAttachmentPtr", luaCreateDynamicAttachmentPtr},
         {"createFixedAttachmentPtr", luaCreateFixedAttachmentPtr},

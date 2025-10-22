@@ -39,20 +39,20 @@ static void copyVkBuffer(GfxContext *pGfxContext, VkBuffer srcVkBuffer, VkBuffer
     endSingleTimeCommands(pGfxContext, vkCommandBuffer);
 }
 
-static bool readBinaryData(FILE *file, void **data, size_t dataSize, const char *dataType)
+static bool readBinaryData(FILE *file, void **data, size_t size, const char *dataType)
 {
-    if (dataSize == 0)
+    if (size == 0)
     {
         *data = NULL;
         return true;
     }
     
-    *data = tknMalloc(dataSize);
-    size_t bytesRead = fread(*data, 1, dataSize, file);
-    if (bytesRead != dataSize)
+    *data = tknMalloc(size);
+    size_t bytesRead = fread(*data, 1, size, file);
+    if (bytesRead != size)
     {
         tknWarning("Failed to read %s data from PLY file: expected %zu bytes, got %zu",
-                   dataType, dataSize, bytesRead);
+                   dataType, size, bytesRead);
         tknFree(*data);
         *data = NULL;
         return false;
