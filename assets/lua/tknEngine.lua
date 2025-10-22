@@ -9,7 +9,8 @@ function tknEngine.start(pGfxContext, assetsPath)
     print("Lua start")
     tknEngine.assetsPath = assetsPath
     format.createLayouts(pGfxContext)
-    tknRenderPipeline.setup(pGfxContext, assetsPath, format.voxelVertexFormat.pVertexInputLayout, format.instanceFormat.pVertexInputLayout)
+    local renderPassIndex = 0
+    tknRenderPipeline.setup(pGfxContext, assetsPath, format.voxelVertexFormat.pVertexInputLayout, format.instanceFormat.pVertexInputLayout, renderPassIndex)
 
     local pGlobalUniformBuffer = {
         view = {0.7071, -0.4082, 0.5774, 0, 0, 0.8165, 0.5774, 0, -0.7071, -0.4082, 0.5774, 0, 0, 0, -8.6603, 1},
@@ -66,7 +67,9 @@ function tknEngine.start(pGfxContext, assetsPath)
     local deferredRenderPass = tknRenderPipeline.deferredRenderPass
     tknEngine.pDrawCall = gfx.createDrawCallPtr(pGfxContext, deferredRenderPass.pGeometryPipeline, deferredRenderPass.pGeometryMaterial, tknEngine.pMesh, tknEngine.pInstance)
     gfx.insertDrawCallPtr(tknEngine.pDrawCall, 0)
-    ui.setup(pGfxContext, tknRenderPipeline.pSwapchainAttachment, assetsPath)
+
+    renderPassIndex = renderPassIndex + 1
+    ui.setup(pGfxContext, tknRenderPipeline.pSwapchainAttachment, assetsPath, renderPassIndex)
 
     tknEngine.pDefaultImage = gfx.createImagePtrWithPath(pGfxContext, assetsPath .. "/textures/default.astc")
     tknEngine.pDefaultMaterial = ui.createMaterialPtr(pGfxContext, tknEngine.pDefaultImage)
@@ -75,12 +78,12 @@ function tknEngine.start(pGfxContext, assetsPath)
         horizontal = {
             type = "relative",
             left = 100,
-            right = 0,
+            right = 100,
         },
         vertical = {
             type = "relative",
             bottom = 100,
-            top = 0,
+            top = 100,
         },
         rect = {},
     })

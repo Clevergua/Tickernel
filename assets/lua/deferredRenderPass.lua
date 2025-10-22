@@ -164,7 +164,7 @@ function deferredRenderPass.setup(pGfxContext, pAttachments, assetsPath, pMeshVe
     gfx.insertDrawCallPtr(pLightingDrawCall, 0)
     local pPostProcessDrawCall = gfx.createDrawCallPtr(pGfxContext, deferredRenderPass.pPostProcessPipeline, deferredRenderPass.pPostProcessMaterial, nil, nil)
     gfx.insertDrawCallPtr(pPostProcessDrawCall, 0)
-
+    return renderPassIndex
 end
 
 function deferredRenderPass.teardown(pGfxContext)

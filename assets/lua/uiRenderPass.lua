@@ -2,10 +2,10 @@ local gfx = require("gfx")
 local uiPipeline = require("uiPipeline")
 local uiRenderPass = {}
 
-function uiRenderPass.setup(pGfxContext, pSwapchainAttachment, assetsPath, pUIVertexInputLayout)
+function uiRenderPass.setup(pGfxContext, pSwapchainAttachment, assetsPath, pUIVertexInputLayout, renderPassIndex)
     local swapchainAttachmentDescription = {
         samples = VK_SAMPLE_COUNT_1_BIT,
-        loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+        loadOp = VK_ATTACHMENT_LOAD_OP_LOAD,
         storeOp = VK_ATTACHMENT_STORE_OP_STORE,
         stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
         stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
@@ -51,7 +51,7 @@ function uiRenderPass.setup(pGfxContext, pSwapchainAttachment, assetsPath, pUIVe
         dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT,
     }}
 
-    uiRenderPass.pRenderPass = gfx.createRenderPassPtr(pGfxContext, vkAttachmentDescriptions, {pSwapchainAttachment}, vkClearValues, vkSubpassDescriptions, spvPathsArray, vkSubpassDependencies, 0)
+    uiRenderPass.pRenderPass = gfx.createRenderPassPtr(pGfxContext, vkAttachmentDescriptions, {pSwapchainAttachment}, vkClearValues, vkSubpassDescriptions, spvPathsArray, vkSubpassDependencies, renderPassIndex)
     uiRenderPass.pPipeline = uiPipeline.createPipelinePtr(pGfxContext, uiRenderPass.pRenderPass, 0, assetsPath, pUIVertexInputLayout)
     print(pUIVertexInputLayout)
 end

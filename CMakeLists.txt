@@ -69,7 +69,7 @@ if(ASTCENC)
 
         add_custom_command(
             OUTPUT ${ASTC_OUTPUT}
-            COMMAND ${ASTCENC} -cl ${TEXTURE} ${ASTC_OUTPUT} 6x6 -medium
+            COMMAND ${ASTCENC} -cl ${TEXTURE} ${ASTC_OUTPUT} 4x4 -medium
             MAIN_DEPENDENCY ${TEXTURE}
             COMMENT "Compressing texture: ${TEXTURE_NAME_WE}"
             VERBATIM

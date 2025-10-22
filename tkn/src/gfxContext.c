@@ -613,22 +613,40 @@ static void recordCommandBuffer(GfxContext *pGfxContext, uint32_t swapchainIndex
                     }
                     tknFree(vkDescriptorSets);
                     Mesh *pMesh = pDrawCall->pMesh;
-                    if (pMesh != NULL && pDrawCall->pInstance != NULL && pDrawCall->pInstance->instanceCount > 0)
+                    if (pMesh != NULL)
                     {
-                        tknAssert(pDrawCall->pMesh->vertexCount > 0, "Mesh has no vertices");
-                        VkBuffer vertexBuffers[] = {pMesh->vertexVkBuffer, pDrawCall->pInstance->instanceVkBuffer};
-                        if (pMesh->indexCount > 0)
+                        if (pDrawCall->pInstance != NULL && pDrawCall->pInstance->instanceCount > 0)
                         {
+                            tknAssert(pDrawCall->pMesh->vertexCount > 0, "Mesh has no vertices");
+                            VkBuffer vertexBuffers[] = {pMesh->vertexVkBuffer, pDrawCall->pInstance->instanceVkBuffer};
                             VkDeviceSize offsets[] = {0, 0};
                             vkCmdBindVertexBuffers(vkCommandBuffer, 0, 2, vertexBuffers, offsets);
-                            vkCmdBindIndexBuffer(vkCommandBuffer, pMesh->indexVkBuffer, 0, pMesh->vkIndexType);
-                            vkCmdDrawIndexed(vkCommandBuffer, pMesh->indexCount, pDrawCall->pInstance->instanceCount, 0, 0, 0);
+                            if (pMesh->indexCount > 0)
+                            {
+                                vkCmdBindIndexBuffer(vkCommandBuffer, pMesh->indexVkBuffer, 0, pMesh->vkIndexType);
+                                vkCmdDrawIndexed(vkCommandBuffer, pMesh->indexCount, pDrawCall->pInstance->instanceCount, 0, 0, 0);
+                            }
+                            else
+                            {
+                                vkCmdDraw(vkCommandBuffer, pMesh->vertexCount, pDrawCall->pInstance->instanceCount, 0, 0);
+                            }
                         }
                         else
                         {
-                            VkDeviceSize offsets[] = {0, 0};
-                            vkCmdBindVertexBuffers(vkCommandBuffer, 0, 2, vertexBuffers, offsets);
-                            vkCmdDraw(vkCommandBuffer, pMesh->vertexCount, pDrawCall->pInstance->instanceCount, 0, 0);
+                            // Simple case: only bind vertex buffer (no instancing)
+                            VkBuffer vertexBuffers[] = {pMesh->vertexVkBuffer};
+                            VkDeviceSize offsets[] = {0};
+                            vkCmdBindVertexBuffers(vkCommandBuffer, 0, 1, vertexBuffers, offsets);
+
+                            if (pMesh->indexCount > 0)
+                            {
+                                vkCmdBindIndexBuffer(vkCommandBuffer, pMesh->indexVkBuffer, 0, pMesh->vkIndexType);
+                                vkCmdDrawIndexed(vkCommandBuffer, pMesh->indexCount, 1, 0, 0, 0);
+                            }
+                            else
+                            {
+                                vkCmdDraw(vkCommandBuffer, pMesh->vertexCount, 1, 0, 0);
+                            }
                         }
                     }
                     else

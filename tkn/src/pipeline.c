@@ -144,18 +144,29 @@ Pipeline *createPipelinePtr(GfxContext *pGfxContext, RenderPass *pRenderPass, ui
         {
             if (pMeshVertexInputLayout != NULL || pInstanceVertexInputLayout != NULL)
             {
-                vkVertexInputBindingDescriptionCount = MAX_VERTEX_BINDING_DESCRIPTION;
+                // Dynamically determine binding count based on what we actually have
+                vkVertexInputBindingDescriptionCount = (pInstanceVertexInputLayout != NULL) ? 2 : 1;
                 vkVertexInputBindingDescriptions = tknMalloc(sizeof(VkVertexInputBindingDescription) * vkVertexInputBindingDescriptionCount);
-                vkVertexInputBindingDescriptions[VERTEX_BINDING_DESCRIPTION] = (VkVertexInputBindingDescription){
-                    .binding = VERTEX_BINDING_DESCRIPTION,
-                    .stride = (pMeshVertexInputLayout != NULL) ? pMeshVertexInputLayout->stride : 0,
-                    .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
-                };
-                vkVertexInputBindingDescriptions[INSTANCE_BINDING_DESCRIPTION] = (VkVertexInputBindingDescription){
-                    .binding = INSTANCE_BINDING_DESCRIPTION,
-                    .stride = (pInstanceVertexInputLayout != NULL) ? pInstanceVertexInputLayout->stride : 0,
-                    .inputRate = VK_VERTEX_INPUT_RATE_INSTANCE,
-                };
+                
+                // Always create vertex binding if mesh layout exists
+                if (pMeshVertexInputLayout != NULL)
+                {
+                    vkVertexInputBindingDescriptions[VERTEX_BINDING_DESCRIPTION] = (VkVertexInputBindingDescription){
+                        .binding = VERTEX_BINDING_DESCRIPTION,
+                        .stride = pMeshVertexInputLayout->stride,
+                        .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
+                    };
+                }
+                
+                // Only create instance binding if instance layout exists
+                if (pInstanceVertexInputLayout != NULL)
+                {
+                    vkVertexInputBindingDescriptions[INSTANCE_BINDING_DESCRIPTION] = (VkVertexInputBindingDescription){
+                        .binding = INSTANCE_BINDING_DESCRIPTION,
+                        .stride = pInstanceVertexInputLayout->stride,
+                        .inputRate = VK_VERTEX_INPUT_RATE_INSTANCE,
+                    };
+                }
                 vkVertexInputAttributeDescriptions = tknMalloc(sizeof(VkVertexInputAttributeDescription) * pGfxContext->vkPhysicalDeviceProperties.limits.maxVertexInputAttributes);
                 for (uint32_t inputVariableIndex = 0; inputVariableIndex < spvReflectShaderModule.input_variable_count; inputVariableIndex++)
                 {

@@ -16,7 +16,7 @@ local fullScreenRect = {
 }
 
 local function updateRect(pGfxContext, screenWidth, screenHeight, node, parentDirty)
-    
+
     if node.layout.dirty or parentDirty then
         local parentRect = node == ui.rootNode and fullScreenRect or node.parent.layout.rect
         local layout = node.layout
@@ -130,7 +130,7 @@ local function removeComponent(pGfxContext, node)
     end
 end
 
-function ui.setup(pGfxContext, pSwapchainAttachment, assetsPath)
+function ui.setup(pGfxContext, pSwapchainAttachment, assetsPath, renderPassIndex)
     ui.pGfxContext = pGfxContext
     ui.vertexFormat = {{
         name = "position",
@@ -146,7 +146,7 @@ function ui.setup(pGfxContext, pSwapchainAttachment, assetsPath)
         count = 1,
     }}
     ui.vertexFormat.pVertexInputLayout = gfx.createVertexInputLayoutPtr(pGfxContext, ui.vertexFormat)
-    uiRenderPass.setup(pGfxContext, pSwapchainAttachment, assetsPath, ui.vertexFormat.pVertexInputLayout)
+    uiRenderPass.setup(pGfxContext, pSwapchainAttachment, assetsPath, ui.vertexFormat.pVertexInputLayout, renderPassIndex)
     ui.rootNode = {
         name = "root",
         children = {},
@@ -244,7 +244,7 @@ function ui.removeNode(pGfxContext, node)
         ui.removeNode(pGfxContext, node.children[i])
     end
     removeComponent(pGfxContext, node)
-    
+
     -- Remove node from parent's children list
     if node.parent then
         local nodeIndex = ui.getNodeIndex(node)
@@ -252,7 +252,7 @@ function ui.removeNode(pGfxContext, node)
             table.remove(node.parent.children, nodeIndex)
         end
     end
-    
+
     node.name = nil
     node.parent = nil
     node.children = {}
