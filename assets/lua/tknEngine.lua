@@ -65,14 +65,14 @@ function tknEngine.start(pGfxContext, assetsPath)
     tknEngine.pInstance = gfx.createInstancePtr(pGfxContext, format.instanceFormat.pVertexInputLayout, format.instanceFormat, instances)
 
     local deferredRenderPass = tknRenderPipeline.deferredRenderPass
-    tknEngine.pDrawCall = gfx.createDrawCallPtr(pGfxContext, deferredRenderPass.pGeometryPipeline, deferredRenderPass.pGeometryMaterial, tknEngine.pMesh, tknEngine.pInstance)
-    gfx.insertDrawCallPtr(tknEngine.pDrawCall, 0)
+    tknEngine.pGeometryDrawCall = gfx.createDrawCallPtr(pGfxContext, deferredRenderPass.pGeometryPipeline, deferredRenderPass.pGeometryMaterial, tknEngine.pMesh, tknEngine.pInstance)
+    gfx.insertDrawCallPtr(tknEngine.pGeometryDrawCall, 0)
 
     renderPassIndex = renderPassIndex + 1
     ui.setup(pGfxContext, tknRenderPipeline.pSwapchainAttachment, assetsPath, renderPassIndex)
 
     tknEngine.pDefaultImage = gfx.createImagePtrWithPath(pGfxContext, assetsPath .. "/textures/default.astc")
-    tknEngine.pDefaultMaterial = ui.createMaterialPtr(pGfxContext, tknEngine.pDefaultImage)
+    tknEngine.pDefaultUIMaterial = ui.createMaterialPtr(pGfxContext, tknEngine.pDefaultImage)
     tknEngine.testNode = ui.addNode(pGfxContext, ui.rootNode, #ui.rootNode.children + 1, "testNode", {
         dirty = true,
         horizontal = {
@@ -87,7 +87,7 @@ function tknEngine.start(pGfxContext, assetsPath)
         },
         rect = {},
     })
-    ui.addImageComponent(pGfxContext, 0xFFFFFFFF, nil, tknEngine.pDefaultMaterial, tknEngine.testNode)
+    ui.addImageComponent(pGfxContext, 0xFFFFFFFF, nil, tknEngine.pDefaultUIMaterial, tknEngine.testNode)
 end
 
 function tknEngine.stop()
@@ -96,26 +96,24 @@ end
 
 function tknEngine.stopGfx(pGfxContext)
     print("Lua stopGfx")
-    gfx.destroyPipelineMaterialPtr(pGfxContext, tknEngine.pDefaultMaterial)
-    gfx.destroyImagePtr(pGfxContext, tknEngine.pDefaultImage)
     ui.teardown(pGfxContext)
-
-    gfx.destroyDrawCallPtr(pGfxContext, tknEngine.pDrawCall)
-    tknEngine.pDrawCall = nil
-
+    tknEngine.pDefaultUIMaterial = nil
+    -- gfx.destroyPipelineMaterialPtr(pGfxContext, tknEngine.pDefaultUIMaterial)
+    gfx.destroyImagePtr(pGfxContext, tknEngine.pDefaultImage)
+    print("Destroying draw call and instance")
+    gfx.destroyDrawCallPtr(pGfxContext, tknEngine.pGeometryDrawCall)
+    tknEngine.pGeometryDrawCall = nil
     gfx.destroyInstancePtr(pGfxContext, tknEngine.pInstance)
     tknEngine.pInstance = nil
     gfx.destroyMeshPtr(pGfxContext, tknEngine.pMesh)
     tknEngine.pMesh = nil
-
     tknEngine.pLightingMaterial = nil
-
-    tknRenderPipeline.teardown(pGfxContext)
-
+    print("Tearing down render pipeline")
     gfx.destroyUniformBufferPtr(pGfxContext, tknEngine.pGlobalUniformBuffer)
     tknEngine.pGlobalUniformBuffer = nil
     gfx.destroyUniformBufferPtr(pGfxContext, tknEngine.pLightsUniformBuffer)
     tknEngine.pLightsUniformBuffer = nil
+    tknRenderPipeline.teardown(pGfxContext)
 
     format.destroyLayouts(pGfxContext)
 end

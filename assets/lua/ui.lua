@@ -130,6 +130,13 @@ local function removeComponent(pGfxContext, node)
     end
 end
 
+local function destroyMaterials()
+    for _, material in ipairs(ui.materials) do
+        gfx.destroyPipelineMaterialPtr(ui.pGfxContext, material)
+    end
+    ui.materials = {}
+end
+
 function ui.setup(pGfxContext, pSwapchainAttachment, assetsPath, renderPassIndex)
     ui.pGfxContext = pGfxContext
     ui.vertexFormat = {{
@@ -168,6 +175,7 @@ function ui.setup(pGfxContext, pSwapchainAttachment, assetsPath, renderPassIndex
     ui.nodePool = {}
     ui.pSampler = gfx.createSamplerPtr(pGfxContext, VK_FILTER_LINEAR, VK_FILTER_LINEAR, VK_SAMPLER_MIPMAP_MODE_LINEAR, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, 0.0, false, 0.0, 0.0, 0.0, VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK)
     ui.renderPass = uiRenderPass
+    ui.materials = {}
 end
 
 function ui.teardown(pGfxContext)
@@ -177,7 +185,6 @@ function ui.teardown(pGfxContext)
     ui.pSampler = nil
     ui.nodePool = nil
     ui.rootNode = nil
-    print("ui.teardown")
     uiRenderPass.teardown(pGfxContext)
     gfx.destroyVertexInputLayoutPtr(pGfxContext, ui.vertexFormat.pVertexInputLayout)
     ui.vertexFormat.pVertexInputLayout = nil
@@ -239,11 +246,18 @@ function ui.addNode(pGfxContext, parent, index, name, layout)
 end
 
 function ui.removeNode(pGfxContext, node)
-    print(node)
+    print("Removing node: " .. node.name)
     for i = #node.children, 1, -1 do
         ui.removeNode(pGfxContext, node.children[i])
     end
-    removeComponent(pGfxContext, node)
+
+    if node.component then
+        if node.component.type == "image" then
+            ui.removeImageComponent(pGfxContext, node)
+        else
+            error("ui.removeNode: unsupported component type " .. tostring(node.component.type))
+        end
+    end
 
     -- Remove node from parent's children list
     if node.parent then
@@ -343,6 +357,7 @@ end
 
 function ui.removeImageComponent(pGfxContext, node)
     assert(node.component and node.component.type == "image", "ui.removeImageComponent: node has no image component")
+    print("Removing image component")
     image.destroyComponent(pGfxContext, node.component)
     removeComponent(pGfxContext, node)
 end
@@ -358,6 +373,7 @@ function ui.createMaterialPtr(pGfxContext, pImage)
         }}
         gfx.updateMaterialPtr(pGfxContext, material, inputBindings)
     end
+    table.insert(ui.materials, material)
     return material
 end
 
