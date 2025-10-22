@@ -70,7 +70,6 @@ ASTCImage *createASTCFromMemory(const char *buffer, size_t bufferSize);
 void destroyASTCImage(ASTCImage *astcImage);
 
 VkFormat getSupportedFormat(GfxContext *pGfxContext, uint32_t candidateCount, VkFormat *candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
-void getFormatProperties(GfxContext *pGfxContext, VkFormat format, VkFormatFeatureFlags *linearFeatures, VkFormatFeatureFlags *optimalFeatures, VkFormatFeatureFlags *bufferFeatures);
 
 GfxContext *createGfxContextPtr(int targetSwapchainImageCount, VkSurfaceFormatKHR targetVkSurfaceFormat, VkPresentModeKHR targetVkPresentMode, VkInstance vkInstance, VkSurfaceKHR vkSurface, VkExtent2D swapchainExtent, uint32_t spvPathCount, const char **spvPaths);
 void waitGfxRenderFence(GfxContext *pGfxContext);

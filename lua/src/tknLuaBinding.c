@@ -194,22 +194,6 @@ static void *packDataFromLayout(lua_State *pLuaState, int layoutIndex, int dataI
     return data;
 }
 
-static int luaGetFormatProperties(lua_State *pLuaState)
-{
-    GfxContext *pGfxContext = (GfxContext *)lua_touserdata(pLuaState, -2);
-    VkFormat format = (VkFormat)lua_tointeger(pLuaState, -1);
-    
-    VkFormatFeatureFlags linearFeatures, optimalFeatures, bufferFeatures;
-    getFormatProperties(pGfxContext, format, &linearFeatures, &optimalFeatures, &bufferFeatures);
-    
-    // Return three values: linear, optimal, buffer features
-    lua_pushinteger(pLuaState, (lua_Integer)linearFeatures);
-    lua_pushinteger(pLuaState, (lua_Integer)optimalFeatures);
-    lua_pushinteger(pLuaState, (lua_Integer)bufferFeatures);
-    
-    return 3;
-}
-
 static int luaGetSupportedFormat(lua_State *pLuaState)
 {
     GfxContext *pGfxContext = (GfxContext *)lua_touserdata(pLuaState, -4);
@@ -1681,7 +1665,6 @@ static int luaDestroyASTCImage(lua_State *pLuaState)
 void bindFunctions(lua_State *pLuaState)
 {
     luaL_Reg regs[] = {
-        {"getFormatProperties", luaGetFormatProperties},
         {"getSupportedFormat", luaGetSupportedFormat},
         {"createDynamicAttachmentPtr", luaCreateDynamicAttachmentPtr},
         {"createFixedAttachmentPtr", luaCreateFixedAttachmentPtr},
