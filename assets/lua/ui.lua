@@ -16,6 +16,7 @@ local fullScreenRect = {
 }
 
 local function updateRect(pGfxContext, screenWidth, screenHeight, node, parentDirty)
+    
     if node.layout.dirty or parentDirty then
         local parentRect = node == ui.rootNode and fullScreenRect or node.parent.layout.rect
         local layout = node.layout
@@ -101,7 +102,7 @@ local function addComponent(pGfxContext, node, component)
                     return false
                 end
             end)
-            gfx.insertDrawCallPtr(node.component, drawCallIndex)
+            gfx.insertDrawCallPtr(node.component.pDrawCall, drawCallIndex)
         end
     end
 end
@@ -243,7 +244,17 @@ function ui.removeNode(pGfxContext, node)
         ui.removeNode(pGfxContext, node.children[i])
     end
     removeComponent(pGfxContext, node)
+    
+    -- Remove node from parent's children list
+    if node.parent then
+        local nodeIndex = ui.getNodeIndex(node)
+        if nodeIndex then
+            table.remove(node.parent.children, nodeIndex)
+        end
+    end
+    
     node.name = nil
+    node.parent = nil
     node.children = {}
     node.component = nil
     node.layout = nil
@@ -337,7 +348,7 @@ function ui.removeImageComponent(pGfxContext, node)
 end
 
 function ui.createMaterialPtr(pGfxContext, pImage)
-    local material = gfx.createPipelineMaterialPtr(pGfxContext, ui.renderPass.pRenderPass)
+    local material = gfx.createPipelineMaterialPtr(pGfxContext, ui.renderPass.pPipeline)
     if pImage then
         local inputBindings = {{
             vkDescriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,

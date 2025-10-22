@@ -1553,15 +1553,17 @@ static int luaCreateImagePtr(lua_State *pLuaState)
 
     // Handle optional data parameter
     void *data = NULL;
+    VkDeviceSize dataSize = 0;
     if (!lua_isnil(pLuaState, -1))
     {
         // If data is provided, it should be a Lua string (char*)
         if (lua_isstring(pLuaState, -1))
         {
-            size_t dataSize;
-            const char *luaData = lua_tolstring(pLuaState, -1, &dataSize);
-            if (dataSize > 0)
+            size_t luaDataSize;
+            const char *luaData = lua_tolstring(pLuaState, -1, &luaDataSize);
+            if (luaDataSize > 0)
             {
+                dataSize = (VkDeviceSize)luaDataSize;
                 data = tknMalloc(dataSize);
                 memcpy(data, luaData, dataSize);
             }
@@ -1570,7 +1572,7 @@ static int luaCreateImagePtr(lua_State *pLuaState)
 
     Image *pImage = createImagePtr(pGfxContext, vkExtent3D, vkFormat, vkImageTiling,
                                    vkImageUsageFlags, vkMemoryPropertyFlags,
-                                   vkImageAspectFlags, data);
+                                   vkImageAspectFlags, data, dataSize);
     if (data != NULL)
     {
         tknFree(data);

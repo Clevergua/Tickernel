@@ -52,16 +52,15 @@ function uiRenderPass.setup(pGfxContext, pSwapchainAttachment, assetsPath, pUIVe
     }}
 
     uiRenderPass.pRenderPass = gfx.createRenderPassPtr(pGfxContext, vkAttachmentDescriptions, {pSwapchainAttachment}, vkClearValues, vkSubpassDescriptions, spvPathsArray, vkSubpassDependencies, 0)
-    uiRenderPass.pUIPipeline = uiPipeline.createPipelinePtr(pGfxContext, uiRenderPass.pRenderPass, 0, assetsPath, pUIVertexInputLayout)
-    uiRenderPass.pUIMaterial = gfx.createPipelineMaterialPtr(pGfxContext, uiRenderPass.pUIPipeline)
+    uiRenderPass.pPipeline = uiPipeline.createPipelinePtr(pGfxContext, uiRenderPass.pRenderPass, 0, assetsPath, pUIVertexInputLayout)
+    print(pUIVertexInputLayout)
 end
 
 function uiRenderPass.teardown(pGfxContext)
-    uiPipeline.destroyPipelinePtr(pGfxContext, uiRenderPass.pUIPipeline)
-    uiRenderPass.pUIMaterial = nil
+    uiPipeline.destroyPipelinePtr(pGfxContext, uiRenderPass.pPipeline)
     gfx.destroyRenderPassPtr(pGfxContext, uiRenderPass.pRenderPass)
     uiRenderPass.pRenderPass = nil
-    uiRenderPass.pUIPipeline = nil
+    uiRenderPass.pPipeline = nil
 end
 
 return uiRenderPass

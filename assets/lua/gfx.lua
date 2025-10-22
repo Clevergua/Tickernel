@@ -79,7 +79,7 @@ function gfx.createImagePtrWithPath(gfxContext, path)
             }
             local pImage = gfx.createImagePtr(gfxContext, vkExtent3D, vkFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TEXTURE_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_IMAGE_ASPECT_COLOR_BIT, data)
             gfx.destroyASTCImage(pASTC)
-            return pImage
+            return pImage, width, height
         else
             print("Failed to create ASTC image from file: " .. path)
             return nil
@@ -102,6 +102,12 @@ function gfx.createDefaultMeshPtr(pGfxContext, format, pMeshVertexInputLayout, v
             table.insert(fieldData, 0)
         end
         vertices[fieldFormat.name] = fieldData
+    end
+
+    -- Print vertices table for debugging
+    print("vertices table contents:")
+    for fieldName, fieldData in pairs(vertices) do
+        print("  " .. fieldName .. ": [" .. table.concat(fieldData, ", ") .. "]")
     end
 
     -- Initialize indices with zeros (0-based for C compatibility)

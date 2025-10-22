@@ -70,12 +70,19 @@ function tknEngine.start(pGfxContext, assetsPath)
 
     tknEngine.pDefaultImage = gfx.createImagePtrWithPath(pGfxContext, assetsPath .. "/textures/default.astc")
     tknEngine.pDefaultMaterial = ui.createMaterialPtr(pGfxContext, tknEngine.pDefaultImage)
-    tknEngine.testNode =  ui.addNode(pGfxContext, ui.rootNode, #ui.rootNode.children + 1, "testNode", {
-        type = "absolute",
-        left = 100,
-        top = 100,
-        width = 100,
-        height = 100,
+    tknEngine.testNode = ui.addNode(pGfxContext, ui.rootNode, #ui.rootNode.children + 1, "testNode", {
+        dirty = true,
+        horizontal = {
+            type = "relative",
+            left = 100,
+            right = 0,
+        },
+        vertical = {
+            type = "relative",
+            bottom = 100,
+            top = 0,
+        },
+        rect = {},
     })
     ui.addImageComponent(pGfxContext, 0xFFFFFFFF, nil, tknEngine.pDefaultMaterial, tknEngine.testNode)
 end
@@ -120,16 +127,16 @@ function tknEngine.updateUI(pGfxContext)
         print("A key was just pressed this frame")
     elseif aKeyState == input.keyState.up then
         print("A key was just released this frame")
-        -- function ui.addNode(pGfxContext, parent, index, name, layout)
-        local node = ui.addNode(pGfxContext, ui.rootNode, #ui.rootNode.children + 1, "NewNode", {
-            type = "absolute",
-            left = 100,
-            top = 100,
-            width = 100,
-            height = 100,
-        })
-        -- function ui.addImageComponent(pGfxContext, color, slice, pMaterial, node)
-        ui.addImageComponent(pGfxContext, 0xFFFFFFFF, nil, pMaterial, node)
+        -- -- function ui.addNode(pGfxContext, parent, index, name, layout)
+        -- local node = ui.addNode(pGfxContext, ui.rootNode, #ui.rootNode.children + 1, "NewNode", {
+        --     type = "absolute",
+        --     left = 100,
+        --     top = 100,
+        --     width = 100,
+        --     height = 100,
+        -- })
+        -- -- function ui.addImageComponent(pGfxContext, color, slice, pMaterial, node)
+        -- ui.addImageComponent(pGfxContext, 0xFFFFFFFF, nil, pMaterial, node)
     elseif aKeyState == input.keyState.idle then
         -- Key is idle, no action needed
     end
