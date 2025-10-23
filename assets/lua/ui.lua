@@ -16,7 +16,6 @@ local fullScreenRect = {
 }
 
 local function updateRect(pGfxContext, screenWidth, screenHeight, node, parentDirty)
-
     if node.layout.dirty or parentDirty then
         local parentRect = node == ui.rootNode and fullScreenRect or node.parent.layout.rect
         local layout = node.layout

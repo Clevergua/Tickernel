@@ -73,21 +73,8 @@ function tknEngine.start(pGfxContext, assetsPath)
 
     tknEngine.pDefaultImage = gfx.createImagePtrWithPath(pGfxContext, assetsPath .. "/textures/default.astc")
     tknEngine.pDefaultUIMaterial = ui.createMaterialPtr(pGfxContext, tknEngine.pDefaultImage)
-    tknEngine.testNode = ui.addNode(pGfxContext, ui.rootNode, #ui.rootNode.children + 1, "testNode", {
-        dirty = true,
-        horizontal = {
-            type = "relative",
-            left = 100,
-            right = 100,
-        },
-        vertical = {
-            type = "relative",
-            bottom = 100,
-            top = 100,
-        },
-        rect = {},
-    })
-    ui.addImageComponent(pGfxContext, 0xFFFFFFFF, nil, tknEngine.pDefaultUIMaterial, tknEngine.testNode)
+    tknEngine.currentNode = ui.rootNode
+
 end
 
 function tknEngine.stop()
@@ -114,7 +101,6 @@ function tknEngine.stopGfx(pGfxContext)
     gfx.destroyUniformBufferPtr(pGfxContext, tknEngine.pLightsUniformBuffer)
     tknEngine.pLightsUniformBuffer = nil
     tknRenderPipeline.teardown(pGfxContext)
-
     format.destroyLayouts(pGfxContext)
 end
 
@@ -128,16 +114,21 @@ function tknEngine.updateUI(pGfxContext)
         print("A key was just pressed this frame")
     elseif aKeyState == input.keyState.up then
         print("A key was just released this frame")
-        -- -- function ui.addNode(pGfxContext, parent, index, name, layout)
-        -- local node = ui.addNode(pGfxContext, ui.rootNode, #ui.rootNode.children + 1, "NewNode", {
-        --     type = "absolute",
-        --     left = 100,
-        --     top = 100,
-        --     width = 100,
-        --     height = 100,
-        -- })
-        -- -- function ui.addImageComponent(pGfxContext, color, slice, pMaterial, node)
-        -- ui.addImageComponent(pGfxContext, 0xFFFFFFFF, nil, pMaterial, node)
+        tknEngine.currentNode = ui.addNode(pGfxContext, tknEngine.currentNode, 1, "testNode", {
+            dirty = true,
+            horizontal = {
+                type = "relative",
+                left = 100,
+                right = 100,
+            },
+            vertical = {
+                type = "relative",
+                bottom = 100,
+                top = 100,
+            },
+            rect = {},
+        })
+        ui.addImageComponent(pGfxContext, 0xFFFFFFFF, nil, tknEngine.pDefaultUIMaterial, tknEngine.currentNode)
     elseif aKeyState == input.keyState.idle then
         -- Key is idle, no action needed
     end
