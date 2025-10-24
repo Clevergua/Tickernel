@@ -28,16 +28,25 @@ local function updateRect(pGfxContext, screenWidth, screenHeight, node, parentDi
             node.layout.rect.left = x
             node.layout.rect.right = x + width / screenWidth * 2
         elseif layout.horizontal.type == "relative" then
+            local left, right
             if math.type(layout.horizontal.left) == "integer" then
-                node.layout.rect.left = parentRect.left + layout.horizontal.left / screenWidth * 2
+                left = parentRect.left + layout.horizontal.left / screenWidth * 2
             else
-                node.layout.rect.left = parentRect.left + (parentRect.right - parentRect.left) * layout.horizontal.left
+                left = parentRect.left + (parentRect.right - parentRect.left) * layout.horizontal.left
             end
             if math.type(layout.horizontal.right) == "integer" then
-                node.layout.rect.right = parentRect.right - layout.horizontal.right / screenWidth * 2
+                right = parentRect.right - layout.horizontal.right / screenWidth * 2
             else
-                node.layout.rect.right = parentRect.right - (parentRect.right - parentRect.left) * layout.horizontal.right
+                right = parentRect.right - (parentRect.right - parentRect.left) * layout.horizontal.right
             end
+            -- 确保left不会超过right
+            if left > right then
+                local center = (left + right) * 0.5
+                left = center
+                right = center
+            end
+            node.layout.rect.left = left
+            node.layout.rect.right = right
         else
             error("ui.calculateRect: unknown horizontal layout type " .. tostring(layout.horizontal.type))
         end
@@ -50,16 +59,25 @@ local function updateRect(pGfxContext, screenWidth, screenHeight, node, parentDi
             node.layout.rect.bottom = y
             node.layout.rect.top = y + height / screenHeight * 2
         elseif layout.vertical.type == "relative" then
+            local bottom, top
             if math.type(layout.vertical.bottom) == "integer" then
-                node.layout.rect.bottom = parentRect.bottom + layout.vertical.bottom / screenHeight * 2
+                bottom = parentRect.bottom + layout.vertical.bottom / screenHeight * 2
             else
-                node.layout.rect.bottom = parentRect.bottom + (parentRect.top - parentRect.bottom) * layout.vertical.bottom
+                bottom = parentRect.bottom + (parentRect.top - parentRect.bottom) * layout.vertical.bottom
             end
             if math.type(layout.vertical.top) == "integer" then
-                node.layout.rect.top = parentRect.top - layout.vertical.top / screenHeight * 2
+                top = parentRect.top - layout.vertical.top / screenHeight * 2
             else
-                node.layout.rect.top = parentRect.top - (parentRect.top - parentRect.bottom) * layout.vertical.top
+                top = parentRect.top - (parentRect.top - parentRect.bottom) * layout.vertical.top
             end
+            -- 确保bottom不会超过top
+            if bottom > top then
+                local center = (bottom + top) * 0.5
+                bottom = center
+                top = center
+            end
+            node.layout.rect.bottom = bottom
+            node.layout.rect.top = top
         else
             error("ui.calculateRect: unknown vertical layout type " .. tostring(layout.vertical.type))
         end
