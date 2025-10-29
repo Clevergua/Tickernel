@@ -1,4 +1,5 @@
 local gfx = require("gfx")
+local ui = require("ui")
 local image = {
     pool = {},
 }
@@ -7,9 +8,9 @@ function image.createComponent(pGfxContext, color, slice, pMaterial, vertexForma
     local component = nil
     local pMesh = gfx.createDefaultMeshPtr(pGfxContext, vertexFormat, vertexFormat.pVertexInputLayout, 16, VK_INDEX_TYPE_UINT16, 54)
     -- Get pipeline from the UI render pass
-    local ui = require("ui")
+
     local pDrawCall = gfx.createDrawCallPtr(pGfxContext, ui.renderPass.pPipeline, pMaterial, pMesh, nil)
-    
+
     if #image.pool > 0 then
         component = table.remove(image.pool)
         component.color = color

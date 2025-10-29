@@ -118,7 +118,9 @@
         "gfxresource.h": "c",
         "gfxcore.h": "c",
         "filesystem": "c",
-        "iomanip": "c"
+        "iomanip": "c",
+        "tkntext.h": "c",
+        "ft2build.h": "c"
     },
     "cmake.sourceDirectory": "/Users/forgemastergua/Documents/GitHub/Tickernel"
 }

@@ -5,6 +5,7 @@ project(TickernelEngine LANGUAGES C)
 find_package(Vulkan REQUIRED)
 
 # Add subdirectories
+add_subdirectory(freetype)
 add_subdirectory(tkn)
 add_subdirectory(lua)
 
