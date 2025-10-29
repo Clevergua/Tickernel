@@ -1,3 +1,6 @@
 [submodule "freetype"]
 	path = freetype
 	url = https://github.com/freetype/freetype.git
+[submodule "tkn/external/cglm"]
+	path = tkn/external/cglm
+	url = https://github.com/recp/cglm.git
