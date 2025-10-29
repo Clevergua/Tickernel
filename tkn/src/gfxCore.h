@@ -1,8 +1,8 @@
 #pragma once
 #include <stdio.h>
-#include "cglm.h"
+#include <cglm/cglm.h>
 #include "tknCore.h"
-#include "spirv_reflect.h"
+#include <spirv_reflect.h>
 
 struct Sampler
 {

@@ -15,6 +15,7 @@ set(PUBLIC_INCLUDE_DIRS
 add_library(${PROJECT_NAME} SHARED ${SOURCE_FILES})
 target_link_libraries(${PROJECT_NAME} PRIVATE Tickernel)
 target_link_libraries(${PROJECT_NAME} PRIVATE freetype)
+target_link_libraries(${PROJECT_NAME} PRIVATE cglm)
 target_include_directories(${PROJECT_NAME} PUBLIC ${PUBLIC_INCLUDE_DIRS})
 target_include_directories(${PROJECT_NAME} PRIVATE ${PRIVATE_INCLUDE_DIRS})
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../freetype/include)

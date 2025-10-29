@@ -6,6 +6,10 @@ find_package(Vulkan REQUIRED)
 
 # Add subdirectories
 add_subdirectory(freetype)
+add_subdirectory(cglm)
+set(SPIRV_REFLECT_STATIC_LIB ON CACHE BOOL "Build SPIRV-Reflect static library" FORCE)
+set(SPIRV_REFLECT_EXECUTABLE OFF CACHE BOOL "Build spirv-reflect executable" FORCE)
+add_subdirectory(spirv_reflect)
 add_subdirectory(tkn)
 add_subdirectory(lua)
 
