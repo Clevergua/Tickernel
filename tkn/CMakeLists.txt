@@ -9,30 +9,19 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 # Output configuration information
 message(STATUS "Configuring ${PROJECT_NAME} v${PROJECT_VERSION}")
 
-file(GLOB_RECURSE SOURCE_FILES
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/*.c
-)
+file(GLOB_RECURSE SOURCE_FILES ${CMAKE_CURRENT_SOURCE_DIR}/src/*.c)
 
-set(PUBLIC_INCLUDE_DIRS
-    ${Vulkan_INCLUDE_DIRS}
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
-)
-
-# Libraries
-set(LINK_LIBRARIES
-    ${Vulkan_LIBRARIES}
-)
+set(PUBLIC_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 # Print configuration
 message(Sources: ${SOURCE_FILES})
 message(Include directories: ${PUBLIC_INCLUDE_DIRS})
-message(Link libraries: ${LINK_LIBRARIES})
 
 
 # Build shared library
 add_library(${PROJECT_NAME} SHARED ${SOURCE_FILES})
 target_include_directories(${PROJECT_NAME} PUBLIC ${PUBLIC_INCLUDE_DIRS})
-target_link_libraries(${PROJECT_NAME} PUBLIC ${LINK_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} PUBLIC Vulkan::Vulkan)
 target_link_libraries(${PROJECT_NAME} PUBLIC cglm)
 target_link_libraries(${PROJECT_NAME} PUBLIC spirv-reflect-static)
 
