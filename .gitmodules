@@ -6,4 +6,4 @@
 	url = https://github.com/recp/cglm.git
 [submodule "spirv_reflect"]
 	path = spirv_reflect
-	url = https://github.com/Clevergua/SPIRV-Reflect.git
+	url = https://github.com/KhronosGroup/SPIRV-Reflect.git
