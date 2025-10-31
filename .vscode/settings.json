@@ -120,7 +120,8 @@
         "filesystem": "c",
         "iomanip": "c",
         "tkntext.h": "c",
-        "ft2build.h": "c"
+        "ft2build.h": "c",
+        "tknfont.h": "c"
     },
     "cmake.sourceDirectory": "/Users/forgemastergua/Documents/GitHub/Tickernel"
 }

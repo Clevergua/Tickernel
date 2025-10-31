@@ -191,6 +191,31 @@ void tknDestroyHashSet(TknHashSet tknHashSet)
 
 bool tknAddToHashSet(TknHashSet *pTknHashSet, const void *pData)
 {
+    if (pTknHashSet->count >= pTknHashSet->capacity * 3 / 4)
+    {
+        uint32_t newCapacity = pTknHashSet->capacity * 2;
+        TknListNode **newNodePtrs = tknMalloc(sizeof(TknListNode *) * newCapacity);
+        memset(newNodePtrs, 0, sizeof(TknListNode *) * newCapacity);
+        for (uint32_t i = 0; i < pTknHashSet->capacity; i++)
+        {
+            TknListNode *node = pTknHashSet->nodePtrs[i];
+            while (node)
+            {
+                size_t newIndex = 0;
+                memcpy(&newIndex, node->data, sizeof(newIndex) < pTknHashSet->dataSize ? sizeof(newIndex) : pTknHashSet->dataSize);
+                newIndex &= (newCapacity - 1);
+
+                TknListNode *nextNode = node->pNextNode;
+                node->pNextNode = newNodePtrs[newIndex];
+                newNodePtrs[newIndex] = node;
+                node = nextNode;
+            }
+        }
+        tknFree(pTknHashSet->nodePtrs);
+        pTknHashSet->nodePtrs = newNodePtrs;
+        pTknHashSet->capacity = newCapacity;
+    }
+
     size_t index = 0;
     memcpy(&index, pData, sizeof(index) < pTknHashSet->dataSize ? sizeof(index) : pTknHashSet->dataSize);
     index &= (pTknHashSet->capacity - 1);

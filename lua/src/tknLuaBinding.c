@@ -1,6 +1,7 @@
 #include "tknLuaBinding.h"
 #include <string.h>
-
+#include <ft2build.h>
+#include FT_FREETYPE_H
 // Helper function to calculate size from layout
 static VkDeviceSize calculateLayoutSize(lua_State *pLuaState, int layoutIndex)
 {
@@ -1664,6 +1665,60 @@ static int luaDestroyASTCImage(lua_State *pLuaState)
     return 0;
 }
 
+static void assertFTError(FT_Error error)
+{
+    if (error != 0)
+    {
+        fprintf(stderr, "FreeType error: %d\n", error);
+        abort();
+    }
+}
+
+static int luaCreateFTLibraryPtr(lua_State *pLuaState)
+{
+    FT_Library *pFTLibrary = malloc(sizeof(FT_Library));
+    assertFTError(FT_Init_FreeType(pFTLibrary));
+    lua_pushlightuserdata(pLuaState, pFTLibrary);
+    return 1;
+}
+static int luaDestroyFTLibraryPtr(lua_State *pLuaState)
+{
+    FT_Library *pFTLibrary = (FT_Library *)lua_touserdata(pLuaState, -1);
+    FT_Done_FreeType(*pFTLibrary);
+    free(pFTLibrary);
+    return 0;
+}
+
+static int luaCreateFTFacePtr(lua_State *pLuaState)
+{
+    FT_Library *pFTLibrary = (FT_Library *)lua_touserdata(pLuaState, -3);
+    const char *fontFilePath = lua_tostring(pLuaState, -2);
+    float fontSize = luaL_checknumber(pLuaState, -1);
+    FT_Face *pFTFace = malloc(sizeof(FT_Face));
+    assertFTError(FT_New_Face(*pFTLibrary, fontFilePath, 0, pFTFace));
+    FT_Set_Pixel_Sizes(*pFTFace, 0, fontSize);
+    lua_pushlightuserdata(pLuaState, pFTFace);
+    return 1;
+}
+static int luaDestroyFTFacePtr(lua_State *pLuaState)
+{
+    FT_Face *pFTFace = (FT_Face *)lua_touserdata(pLuaState, -1);
+    assertFTError(FT_Done_Face(*pFTFace));
+    free(pFTFace);
+    return 0;
+}
+
+static int luaLoadFTChar(lua_State *pLuaState)
+{
+    FT_Face *pFTFace = (FT_Face *)lua_touserdata(pLuaState, -2);
+    uint32_t charCode = (uint32_t)lua_tointeger(pLuaState, -1);
+    
+    assertFTError(FT_Load_Char(*pFTFace, charCode, FT_LOAD_RENDER));
+    FT_GlyphSlot slot = (*pFTFace)->glyph;
+
+    return 0;
+}
+
 void bindFunctions(lua_State *pLuaState)
 {
     luaL_Reg regs[] = {
@@ -1706,6 +1761,7 @@ void bindFunctions(lua_State *pLuaState)
         {"destroyPipelineMaterialPtr", luaDestroyPipelineMaterialPtr},
         {"updateMaterialPtr", luaUpdateMaterialPtr},
         {"updateMeshPtr", luaUpdateMeshPtr},
+        {"loadFTChar", luaLoadFTChar},
         {NULL, NULL},
     };
     luaL_newlib(pLuaState, regs);
