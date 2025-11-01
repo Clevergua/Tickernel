@@ -1,4 +1,5 @@
 #include "tknLuaBinding.h"
+#include "tknFont.h"
 #include <string.h>
 #include <ft2build.h>
 #include FT_FREETYPE_H
@@ -1665,58 +1666,64 @@ static int luaDestroyASTCImage(lua_State *pLuaState)
     return 0;
 }
 
-static void assertFTError(FT_Error error)
+// Font library functions
+static int luaCreateTknFontLibraryPtr(lua_State *pLuaState)
 {
-    if (error != 0)
+    TknFontLibrary *pTknFontLibrary = createTknFontLibraryPtr();
+    lua_pushlightuserdata(pLuaState, pTknFontLibrary);
+    return 1;
+}
+
+static int luaDestroyTknFontLibraryPtr(lua_State *pLuaState)
+{
+    TknFontLibrary *pTknFontLibrary = (TknFontLibrary *)lua_touserdata(pLuaState, -1);
+    destroyTknFontLibraryPtr(pTknFontLibrary);
+    return 0;
+}
+
+static int luaCreateTknFontPtr(lua_State *pLuaState)
+{
+    TknFontLibrary *pTknFontLibrary = (TknFontLibrary *)lua_touserdata(pLuaState, -5);
+    const char *fontPath = lua_tostring(pLuaState, -4);
+    uint32_t fontSize = (uint32_t)lua_tointeger(pLuaState, -3);
+    uint32_t initialCharCapacity = (uint32_t)lua_tointeger(pLuaState, -2);
+    uint32_t maxAtlasLength = (uint32_t)lua_tointeger(pLuaState, -1);
+
+    TknFont *pTknFont = createTknFontPtr(pTknFontLibrary, fontPath, fontSize, initialCharCapacity, maxAtlasLength);
+    lua_pushlightuserdata(pLuaState, pTknFont);
+    return 1;
+}
+
+static int luaDestroyTknFontPtr(lua_State *pLuaState)
+{
+    TknFont *pTknFont = (TknFont *)lua_touserdata(pLuaState, -1);
+    destroyTknFontPtr(pTknFont);
+    return 0;
+}
+
+static int luaLoadTknChar(lua_State *pLuaState)
+{
+    TknFont *pTknFont = (TknFont *)lua_touserdata(pLuaState, -2);
+    uint32_t unicode = (uint32_t)lua_tointeger(pLuaState, -1);
+
+    TknChar *pTknChar = loadTknChar(pTknFont, unicode);
+    if (pTknChar)
     {
-        fprintf(stderr, "FreeType error: %d\n", error);
-        abort();
+        lua_pushlightuserdata(pLuaState, pTknChar);
+        lua_pushinteger(pLuaState, pTknChar->x);
+        lua_pushinteger(pLuaState, pTknChar->y);
+        lua_pushinteger(pLuaState, pTknChar->width);
+        lua_pushinteger(pLuaState, pTknChar->height);
+        lua_pushinteger(pLuaState, pTknChar->bearingX);
+        lua_pushinteger(pLuaState, pTknChar->bearingY);
+        lua_pushinteger(pLuaState, pTknChar->advance);
+        return 8;
     }
-}
-
-static int luaCreateFTLibraryPtr(lua_State *pLuaState)
-{
-    FT_Library *pFTLibrary = malloc(sizeof(FT_Library));
-    assertFTError(FT_Init_FreeType(pFTLibrary));
-    lua_pushlightuserdata(pLuaState, pFTLibrary);
-    return 1;
-}
-static int luaDestroyFTLibraryPtr(lua_State *pLuaState)
-{
-    FT_Library *pFTLibrary = (FT_Library *)lua_touserdata(pLuaState, -1);
-    FT_Done_FreeType(*pFTLibrary);
-    free(pFTLibrary);
-    return 0;
-}
-
-static int luaCreateFTFacePtr(lua_State *pLuaState)
-{
-    FT_Library *pFTLibrary = (FT_Library *)lua_touserdata(pLuaState, -3);
-    const char *fontFilePath = lua_tostring(pLuaState, -2);
-    float fontSize = luaL_checknumber(pLuaState, -1);
-    FT_Face *pFTFace = malloc(sizeof(FT_Face));
-    assertFTError(FT_New_Face(*pFTLibrary, fontFilePath, 0, pFTFace));
-    FT_Set_Pixel_Sizes(*pFTFace, 0, fontSize);
-    lua_pushlightuserdata(pLuaState, pFTFace);
-    return 1;
-}
-static int luaDestroyFTFacePtr(lua_State *pLuaState)
-{
-    FT_Face *pFTFace = (FT_Face *)lua_touserdata(pLuaState, -1);
-    assertFTError(FT_Done_Face(*pFTFace));
-    free(pFTFace);
-    return 0;
-}
-
-static int luaLoadFTChar(lua_State *pLuaState)
-{
-    FT_Face *pFTFace = (FT_Face *)lua_touserdata(pLuaState, -2);
-    uint32_t charCode = (uint32_t)lua_tointeger(pLuaState, -1);
-    
-    assertFTError(FT_Load_Char(*pFTFace, charCode, FT_LOAD_RENDER));
-    FT_GlyphSlot slot = (*pFTFace)->glyph;
-
-    return 0;
+    else
+    {
+        lua_pushnil(pLuaState);
+        return 1;
+    }
 }
 
 void bindFunctions(lua_State *pLuaState)
@@ -1761,7 +1768,11 @@ void bindFunctions(lua_State *pLuaState)
         {"destroyPipelineMaterialPtr", luaDestroyPipelineMaterialPtr},
         {"updateMaterialPtr", luaUpdateMaterialPtr},
         {"updateMeshPtr", luaUpdateMeshPtr},
-        {"loadFTChar", luaLoadFTChar},
+        {"createTknFontLibraryPtr", luaCreateTknFontLibraryPtr},
+        {"destroyTknFontLibraryPtr", luaDestroyTknFontLibraryPtr},
+        {"createTknFontPtr", luaCreateTknFontPtr},
+        {"destroyTknFontPtr", luaDestroyTknFontPtr},
+        {"loadTknChar", luaLoadTknChar},
         {NULL, NULL},
     };
     luaL_newlib(pLuaState, regs);

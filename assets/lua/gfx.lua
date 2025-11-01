@@ -336,4 +336,35 @@ if not gfx.destroySamplerPtr then
     end
 end
 
+-- Font library functions
+if not gfx.createTknFontLibraryPtr then
+    function gfx.createTknFontLibraryPtr()
+        error("gfx.createTknFontLibraryPtr: C binding not loaded")
+    end
+end
+
+if not gfx.destroyTknFontLibraryPtr then
+    function gfx.destroyTknFontLibraryPtr(pTknFontLibrary)
+        error("gfx.destroyTknFontLibraryPtr: C binding not loaded")
+    end
+end
+
+if not gfx.createTknFontPtr then
+    function gfx.createTknFontPtr(pTknFontLibrary, fontPath, fontSize, initialCharCapacity, maxAtlasLength)
+        error("gfx.createTknFontPtr: C binding not loaded")
+    end
+end
+
+if not gfx.destroyTknFontPtr then
+    function gfx.destroyTknFontPtr(pTknFont)
+        error("gfx.destroyTknFontPtr: C binding not loaded")
+    end
+end
+
+if not gfx.loadTknChar then
+    function gfx.loadTknChar(pTknFont, unicode)
+        error("gfx.loadTknChar: C binding not loaded")
+    end
+end
+
 return gfx
